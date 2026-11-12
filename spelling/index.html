@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="apple-touch-icon" href="/icons/icon-180.png"/>
+<link rel="icon" type="image/png" href="/icons/icon-192.png"/>
+<link rel="manifest" href="/manifest.webmanifest"/>
+<meta name="apple-mobile-web-app-title" content="꼬비샘 게임방"/>
+<meta name="theme-color" content="#2a2860"/>
 <title>맞춤법 게임(초급)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
@@ -13,6 +18,7 @@
     --sun:#ffcf4a;
   }
   * { box-sizing:border-box; margin:0; padding:0; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; }
+  html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
   html, body { width:100%; height:100%; overflow:hidden; background:#a4e1fd; font-family:'Jua','Apple SD Gothic Neo','Malgun Gothic',sans-serif; color:var(--ink); }
   #game-container { position:fixed; inset:0; }
   canvas { display:block; width:100%; height:100%; touch-action:none; background:#a4e1fd; }
@@ -410,7 +416,22 @@ function resize() {
   }
 }
 window.addEventListener('resize', resize);
-window.addEventListener('orientationchange', resize);
+window.addEventListener('orientationchange', () => {
+  // 아이폰에서 화면을 돌린 뒤 터치 위치가 어긋나지 않도록 다시 맞춤
+  setTimeout(() => { window.scrollTo(0, 0); resize(); fitOverlay(); }, 300);
+});
+
+// 아이폰 홈 화면 바로가기 등에서 '클릭'이 안 생기는 경우를 대비해,
+// 버튼은 손가락을 떼는 순간 바로 눌린 것으로 처리
+document.addEventListener('touchend', (e) => {
+  const btn = e.target.closest && e.target.closest('#overlay button, .topbar button, .topbar a, #music-toggle');
+  if (!btn || btn.disabled || e.changedTouches.length !== 1) return;
+  const t = e.changedTouches[0];
+  const r = btn.getBoundingClientRect();
+  if (t.clientX < r.left || t.clientX > r.right || t.clientY < r.top || t.clientY > r.bottom) return;
+  e.preventDefault();   // 아래에서 직접 누르므로 브라우저의 클릭은 막음 (두 번 눌림 방지)
+  btn.click();
+}, { passive: false });
 
 // ============================================================
 //  AUDIO
