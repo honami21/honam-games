@@ -43,6 +43,26 @@
   .btn.jump { background:#bfeab0; }
   @media (pointer:coarse) { #controls { display:flex; } }
   body.menu #controls { display:none; }
+  /* 휴대폰 가로 화면: 버튼을 조금 작게, 양쪽 구석으로 */
+  @media (pointer:coarse) and (orientation:landscape) and (max-height:500px) {
+    #controls { padding:6px max(10px, env(safe-area-inset-left)) 6px max(10px, env(safe-area-inset-right)); }
+    .ctrl-group { gap:8px; }
+    .btn { width:54px; height:54px; border-radius:18px; font-size:22px; box-shadow:0 4px 0 var(--ink); opacity:.88; }
+    .btn.shoot img { width:32px; }
+  }
+
+  /* 휴대폰 세로 화면: 가로로 돌려 달라는 안내 */
+  #rotate-hint { display:none; position:fixed; inset:0; z-index:60; background:var(--cream);
+    flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; padding:24px; }
+  #rotate-hint .phone { width:64px; height:104px; border:5px solid var(--ink); border-radius:14px; position:relative; animation:turn 2.4s ease-in-out infinite; }
+  #rotate-hint .phone::after { content:''; position:absolute; left:50%; bottom:6px; width:14px; height:4px; margin-left:-7px; border-radius:2px; background:var(--ink); }
+  @keyframes turn { 0%,25% { transform:rotate(0); } 55%,100% { transform:rotate(-90deg); } }
+  #rotate-hint img { width:110px; }
+  #rotate-hint b { font-size:24px; font-weight:normal; color:var(--coral-d); }
+  #rotate-hint p { font-size:17px; color:var(--ink2); line-height:1.5; }
+  @media (pointer:coarse) and (orientation:portrait) and (max-width:600px) {
+    #rotate-hint { display:flex; }
+  }
   .touch-only { display:none; }
   @media (pointer:coarse) { .touch-only { display:block; } .kb-only { display:none; } }
 
@@ -142,13 +162,25 @@
   var cur=function(){return d.fullscreenElement||d.webkitFullscreenElement;};
   b.addEventListener('click',function(){
     if(cur()){(d.exitFullscreen||d.webkitExitFullscreen).call(d);}
-    else{(el.requestFullscreen||el.webkitRequestFullscreen).call(el);}
+    else{
+      var pr=(el.requestFullscreen||el.webkitRequestFullscreen).call(el);
+      // 안드로이드 휴대폰은 전체화면에서 가로로 고정
+      var lockLand=function(){try{if(screen.orientation&&screen.orientation.lock&&matchMedia('(pointer:coarse)').matches)screen.orientation.lock('landscape').catch(function(){});}catch(e){}};
+      if(pr&&pr.then)pr.then(lockLand).catch(function(){});else lockLand();
+    }
     b.blur();
   });
   var upd=function(){t.textContent=cur()?'나가기':'전체화면';};
   d.addEventListener('fullscreenchange',upd);d.addEventListener('webkitfullscreenchange',upd);
 })();
 </script>
+
+<div id="rotate-hint">
+  <div class="phone"></div>
+  <b>휴대폰을 가로로 돌려 주세요</b>
+  <p>이 게임은 가로 화면에서<br>더 크고 편하게 할 수 있어요.</p>
+  <img src="img/cat-stand.png" alt="">
+</div>
 
 <div id="game-container">
   <canvas id="canvas"></canvas>
@@ -1167,7 +1199,11 @@ const INK = '#5a3a26', CREAM = '#fff8ee', CORAL = '#f07a63', CORAL_D = '#c9533f'
 // ============================================================
 //  DRAWING
 // ============================================================
-function hudTop() { return (W < 760 || matchMedia('(pointer:coarse)').matches) ? 50 : 60; }
+function isShort() { return H < 500 && W > H; }   // 휴대폰 가로 화면처럼 낮은 화면
+function hudTop() {
+  if (isShort()) return 6;
+  return (W < 760 || matchMedia('(pointer:coarse)').matches) ? 50 : 60;
+}
 
 function drawBackground() {
   const groundY = H * GROUND_RATIO;
@@ -1347,9 +1383,10 @@ function panel(x, y, w, h) {
 }
 
 function drawHUD() {
-  const narrow = W < 560;
+  const short = isShort();
+  const narrow = W < 560 || short;
   const top = hudTop();
-  const pad = narrow ? 8 : 14;
+  const pad = short ? 54 : (narrow ? 8 : 14);   // 낮은 화면: 위쪽 버튼 옆에 나란히
   const fs1 = narrow ? 14 : Math.round(Math.max(15, Math.min(19, 16 * scale)));
   const hr = narrow ? 8 : Math.max(9, Math.min(12, 10 * scale));
 
@@ -1358,7 +1395,7 @@ function drawHUD() {
   const line2 = `다음 별까지 ${5 - game.correctSinceBullet}문제`;
   ctx.font = font(fs1);
   const lw = Math.max(ctx.measureText(line1).width, ctx.measureText(line2).width, 5 * hr * 2.6) + 28;
-  const lh = hr * 2.2 + fs1 * 2 + 30;
+  const lh = hr * 2.2 + fs1 * (short ? 1 : 2) + (short ? 24 : 30);
   const lx = pad;
   panel(lx, top, lw, lh);
   for (let i = 0; i < 5; i++) drawHeart(lx + 14 + hr * 1.1 + i * hr * 2.6, top + 10, hr, i < game.hearts);
@@ -1367,8 +1404,10 @@ function drawHUD() {
   ctx.fillStyle = INK;
   const ty = top + 14 + hr * 2.1;
   ctx.fillText(line1, lx + 14, ty);
-  ctx.fillStyle = '#8a6a55';
-  ctx.fillText(line2, lx + 14, ty + fs1 + 6);
+  if (!short) {   // 낮은 화면에서는 한 줄만
+    ctx.fillStyle = '#8a6a55';
+    ctx.fillText(line2, lx + 14, ty + fs1 + 6);
+  }
 
   // 오른쪽: 별 개수 + 시간
   const fs2 = narrow ? 18 : Math.round(Math.max(19, Math.min(26, 22 * scale)));
@@ -1398,7 +1437,7 @@ function drawHUD() {
   ctx.fillText(ttext, rx + rw - 14, top + 16 + fs2);
 
   // 안내 문구
-  if (game.totalAnswered < TOTAL_QUESTIONS) {
+  if (game.totalAnswered < TOTAL_QUESTIONS && !short) {
     const fs = narrow ? 15 : Math.round(Math.max(16, 19 * scale));
     ctx.font = font(fs);
     const msg = '맞는 맞춤법 쪽으로 점프해서 톡!';
