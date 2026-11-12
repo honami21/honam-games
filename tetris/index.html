@@ -1473,6 +1473,8 @@ document.getElementById('input-name').addEventListener('keydown',e=>{
 // ============================================================
 //  KEYBOARD
 // ============================================================
+let shiftHandled=false;
+function isShiftKey(e){return e.code==='ShiftLeft'||e.code==='ShiftRight'||e.key==='Shift'||e.keyCode===16;}
 function isTypingInInput(e){
   const t=e.target;
   return t && (t.tagName==='INPUT'||t.tagName==='TEXTAREA');
@@ -1481,6 +1483,8 @@ document.addEventListener('keydown',e=>{
   if(isTypingInInput(e))return;
   if(e.code==='KeyP'){e.preventDefault();togglePause();return;}
   if(!started||paused||countdownActive)return;
+  // 보관: 왼쪽·오른쪽 Shift 모두 (한글 입력기·키보드마다 code 값이 달라도 인식)
+  if(isShiftKey(e)){e.preventDefault();if(!e.repeat&&!shiftHandled){shiftHandled=true;holdPiece();}return;}
 
   switch(e.code){
     case'ArrowLeft':
@@ -1507,14 +1511,15 @@ document.addEventListener('keydown',e=>{
       e.preventDefault();
       if(!e.repeat)hardDrop();
       break;
-    case'ShiftLeft':case'ShiftRight':
-      e.preventDefault();
-      if(!e.repeat)holdPiece();
-      break;
   }
 });
 document.addEventListener('keyup',e=>{
   if(isTypingInInput(e))return;
+  if(isShiftKey(e)){
+    // 일부 키보드·입력기에서 오른쪽 Shift가 keydown 없이 keyup만 오는 경우 대비
+    if(!shiftHandled&&started&&!paused&&!countdownActive)holdPiece();
+    shiftHandled=false;return;
+  }
   switch(e.code){
     case'ArrowLeft':dasState.left=0;dasFired.left=false;break;
     case'ArrowRight':dasState.right=0;dasFired.right=false;break;
