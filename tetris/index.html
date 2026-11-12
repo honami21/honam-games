@@ -2,7 +2,8 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8"/>
-<title>냥냥 테트리스 - 호남샘</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>냥냥 테트리스 - 꼬비샘</title>
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet"/>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -185,6 +186,54 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
   .ctrl-row{font-size:13px}
   .cat-img{display:none}
 }
+/* ====== TOUCH PAD (모바일 전용) ====== */
+.pad{display:none}
+/* ====== MOBILE / TOUCH LAYOUT ====== */
+@media (max-width:760px), (pointer:coarse){
+  body{padding-top:4px;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+  .cat-img,.shoot,.paw-deco{display:none}
+  .logo{margin:30px 0 8px;padding:5px 30px 7px;gap:10px;border-radius:40px}
+  .logo::before,.logo::after{width:34px;height:34px;top:-14px}
+  .logo::before{left:16px}.logo::after{right:16px}
+  .logo .ear-in{display:none}
+  .logo .paw{width:22px;height:22px}
+  .game-title{font-size:28px}
+  .peek{width:62px;top:-33px}
+  #layout{display:grid;grid-template-columns:repeat(12,1fr);gap:8px;width:min(520px,calc(100vw - 16px));align-items:stretch}
+  .panel{display:contents}
+  .panel>.card.stat{grid-row:1;grid-column:span 3;flex-direction:column;align-items:center;justify-content:center;min-height:0;padding:6px 4px 8px;border-radius:14px}
+  .card-lbl{font-size:13px;gap:4px}.card-lbl svg{width:15px;height:15px}.card-lbl .emo{font-size:13px}
+  .card-val{font-size:20px;line-height:1.1}
+  .lv-bg{left:10px;right:10px;bottom:4px;height:3px}
+  #board-col{grid-row:2;grid-column:3 / span 8;align-self:start}
+  #board-wrap{padding:6px;border-radius:18px}
+  #board-wrap::before,#board-wrap::after{display:none}
+  #tetris{height:min(calc(100svh - 330px),calc((min(520px,100vw - 16px) * 0.62 - 12px) * 2));min-height:0;border-radius:12px}
+  #pause-overlay{inset:6px}
+  .side>.tab-card{grid-row:2;align-self:start;margin-top:0;padding:22px 2px 6px;border-radius:14px}
+  .side>.tab-card:nth-child(1){grid-column:11 / span 2}
+  .side>.tab-card:nth-child(2){grid-column:1 / span 2}
+  .side>.tab-card:nth-child(3){display:none}
+  .tab{left:50%;transform:translateX(-50%);top:-2px;font-size:12px;padding:2px 8px;border-radius:10px;white-space:nowrap;box-shadow:none}
+  .tab svg,.tab .lg{display:none}
+  .panel>#sound-btn{white-space:nowrap;font-size:13px !important}
+  .mini-wrap canvas{width:100%;max-width:64px;height:auto;aspect-ratio:1}
+  .pad{display:grid;grid-row:3;grid-column:1 / -1;grid-template-columns:repeat(6,1fr);gap:6px}
+  .pad button{touch-action:none;border:none;border-radius:16px;height:58px;font-family:'Jua',sans-serif;font-size:24px;color:var(--ink);
+    background:var(--cream);box-shadow:0 4px 0 var(--cream-edge);-webkit-tap-highlight-color:transparent}
+  .pad button small{display:block;font-size:11px;margin-top:-2px}
+  .pad button.on{transform:translateY(4px);box-shadow:0 0 0 var(--cream-edge)}
+  .pad .drop{background:linear-gradient(180deg,#ff8d90,#ec5168);color:#fff;box-shadow:0 4px 0 var(--coral-dark)}
+  .pad .rot{background:linear-gradient(180deg,#ffe27e,#ffc94a);box-shadow:0 4px 0 var(--sun-dark)}
+  .panel>.btn{grid-row:4;grid-column:span 3;margin:0;width:auto;font-size:15px !important;padding:9px 2px !important;box-shadow:0 3px 0 var(--cream-edge)}
+  .panel>.btn-s{box-shadow:0 3px 0 var(--coral-dark)}.panel>.btn-p{box-shadow:0 3px 0 var(--sun-dark)}
+  .pz{width:11px;height:12px;margin-right:5px}
+  .modal-box{padding:20px 18px;border-radius:24px}
+  .modal-title{font-size:28px}
+  #countdown{font-size:80px}
+  #stage-banner .banner-num{font-size:56px}
+  .puff{transform:scale(.6)}
+}
 </style>
 </head>
 <body>
@@ -266,11 +315,11 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
     </div>
     <div class="panel side">
       <div class="tab-card">
-        <div class="tab"><svg><use href="#i-paw"/></svg>다음 블록</div>
+        <div class="tab"><svg><use href="#i-paw"/></svg>다음<span class="lg"> 블록</span></div>
         <div class="mini-wrap"><canvas id="next" width="200" height="200"></canvas></div>
       </div>
       <div class="tab-card">
-        <div class="tab"><svg><use href="#i-box"/></svg>보관 블록</div>
+        <div class="tab"><svg><use href="#i-box"/></svg>보관<span class="lg"> 블록</span></div>
         <div class="mini-wrap"><canvas id="hold" width="200" height="200"></canvas></div>
       </div>
       <div class="tab-card">
@@ -283,6 +332,14 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
         <div class="ctrl-row"><span class="keys"><span class="key">Shift</span></span>블록 보관</div>
         <div class="ctrl-row"><span class="keys"><span class="key">P</span></span>쉬기</div>
       </div>
+    </div>
+    <div class="pad" id="touch-pad" aria-label="터치 조작">
+      <button data-act="left" aria-label="왼쪽">◀</button>
+      <button data-act="right" aria-label="오른쪽">▶</button>
+      <button data-act="rotate" class="rot" aria-label="회전">⟳</button>
+      <button data-act="down" aria-label="빠르게">▼</button>
+      <button data-act="drop" class="drop" aria-label="바로 떨어뜨리기">⤓</button>
+      <button data-act="hold" aria-label="보관"><small>보관</small>⇄</button>
     </div>
   </div>
 </div>
@@ -361,7 +418,6 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
   </div>
 </div>
 
-<footer class="page-footer">© 관촌초 교사 장호남</footer>
 
 <script type="module">
 // ============================================================
@@ -1440,6 +1496,33 @@ window.addEventListener('blur',()=>{
 // ============================================================
 resetState();
 draw();
+
+// ============================================================
+//  TOUCH CONTROLS (모바일)
+// ============================================================
+(function(){
+  const pad=document.getElementById('touch-pad');
+  const canPlay=()=>started&&!paused&&!countdownActive;
+  const ACT={left:()=>tryMoveHorizontal(-1),right:()=>tryMoveHorizontal(1),down:()=>softDrop(),
+    rotate:()=>tryRotate(1),drop:()=>hardDrop(),hold:()=>holdPiece()};
+  const REPEAT={left:1,right:1,down:1};
+  let timer=null;
+  const stop=()=>{clearTimeout(timer);clearInterval(timer);timer=null;pad.querySelectorAll('.on').forEach(b=>b.classList.remove('on'));};
+  pad.addEventListener('pointerdown',e=>{
+    const b=e.target.closest('button');if(!b)return;
+    e.preventDefault();stop();b.classList.add('on');
+    if(typeof audio!=='undefined'&&audio.resume)audio.resume();
+    const a=b.dataset.act;if(!canPlay())return;
+    ACT[a]();
+    if(REPEAT[a])timer=setTimeout(()=>{timer=setInterval(()=>{if(canPlay())ACT[a]();else stop();},a==='down'?45:60);},170);
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(t=>pad.addEventListener(t,stop));
+  pad.addEventListener('contextmenu',e=>e.preventDefault());
+  // 게임판을 톡 치면 회전
+  document.getElementById('board-wrap').addEventListener('pointerdown',e=>{
+    if(e.pointerType==='mouse'||!canPlay())return;e.preventDefault();tryRotate(1);
+  });
+})();
 </script>
 </body>
 </html>
