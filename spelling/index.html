@@ -51,6 +51,30 @@
     .btn.shoot img { width:32px; }
   }
 
+  /* 낮은 가로 화면(휴대폰 가로): 시작/결과/랭킹 카드를 촘촘하게 */
+  @media (max-height:500px) and (orientation:landscape) {
+    #overlay { padding:46px 12px 8px; }
+    #overlay .section { max-width:640px; gap:8px; }
+    .card { padding:10px 18px 14px; border-radius:22px; box-shadow:0 5px 0 var(--ink); }
+    .logo { width:210px; margin-top:-2px; }
+    .level-badge { font-size:14px; padding:1px 12px; }
+    .lead { font-size:16px; }
+    .lead[style] { margin:6px 0 8px !important; }
+    .hint { gap:8px; }
+    .hint-section { padding:6px 12px; border-radius:14px; }
+    .hint-title { font-size:15px; margin-bottom:2px; }
+    .hint-row { font-size:13px; line-height:1.7; }
+    .button-group[style] { margin-top:10px !important; }
+    .game-btn { padding:8px 22px; font-size:18px; min-width:130px; box-shadow:0 4px 0 var(--ink); }
+    .start-cat { width:90px; right:-30px; bottom:-14px; }
+    .result-row { font-size:15px; padding:2px; }
+    .result-total .value { font-size:22px; }
+    .form-row { margin:4px 0; }
+    .form-row input { padding:7px 14px; font-size:16px; }
+    .ranking-list { max-height:52vh; }
+    .ranking-row { padding:5px 8px; font-size:14px; }
+  }
+
   /* 휴대폰 세로 화면: 가로로 돌려 달라는 안내 */
   #rotate-hint { display:none; position:fixed; inset:0; z-index:60; background:var(--cream);
     flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; padding:24px; }
@@ -76,7 +100,7 @@
 
   /* ===== 오버레이 (시작/결과/랭킹) ===== */
   #overlay { position:fixed; inset:0; background:rgba(90,60,40,.12); display:flex; align-items:center; justify-content:center;
-    text-align:center; padding:56px 16px 16px; z-index:20; overflow:hidden; }
+    text-align:center; padding:56px 16px 16px; z-index:20; overflow-y:auto; }
   #overlay .section { display:flex; flex-direction:column; align-items:center; gap:14px; width:100%; max-width:600px; transform-origin:center center; }
   .hidden { display:none !important; }
   .card { background:var(--cream); border:3px solid var(--ink); border-radius:28px; box-shadow:0 8px 0 var(--ink), 0 16px 30px rgba(60,30,10,.25);
@@ -718,12 +742,13 @@ function fitOverlay() {
   if (ov.classList.contains('hidden')) return;
   const sec = ov.querySelector('.section:not(.hidden)');
   if (!sec) return;
-  sec.style.transform = 'none';
+  sec.style.zoom = 1;
   const cs = getComputedStyle(ov);
   const availH = ov.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
   const availW = ov.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
   const s = Math.min(1, availH / (sec.scrollHeight + 10), availW / sec.scrollWidth);
-  if (s < 1) sec.style.transform = `scale(${s})`;
+  // transform 대신 zoom 사용 (아이폰에서 줄어든 버튼이 터치가 안 되는 문제 방지)
+  if (s < 1) sec.style.zoom = s;
 }
 window.addEventListener('resize', fitOverlay);
 if (document.fonts) document.fonts.ready.then(fitOverlay);
