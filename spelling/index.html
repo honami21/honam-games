@@ -733,33 +733,48 @@ function update() {
   }
 
   // Physics
-  p.vy += GRAVITY;
-  p.x  += p.vx;
-  p.y  += p.vy;
-
   const wasInAir = !p.onGround;
+  const overlaps = (b) =>
+    p.x + PLAYER_W > b.x && p.x < b.x + BLOCK_SIZE &&
+    p.y + PLAYER_H > b.y && p.y < b.y + BLOCK_SIZE;
+
+  // 1) 옆으로 이동 → 블록 옆면은 벽처럼 막힘
+  p.x += p.vx;
+  if (p.x < 0) p.x = 0;
+  if (p.x + PLAYER_W > W) p.x = W - PLAYER_W;
+  for (const b of game.blocks) {
+    if (!overlaps(b)) continue;
+    if (p.x + PLAYER_W / 2 < b.x + BLOCK_SIZE / 2) p.x = b.x - PLAYER_W;
+    else p.x = b.x + BLOCK_SIZE;
+  }
+
+  // 2) 위아래 이동 → 아래에서 치면 정답 확인, 위에서 내려오면 블록 위에 섬
+  p.vy += GRAVITY;
+  p.y  += p.vy;
+  p.onGround = false;
   if (p.y + PLAYER_H >= groundY) {
     p.y = groundY - PLAYER_H;
     p.vy = 0;
     p.onGround = true;
-    if (wasInAir) SFX.land();
   }
-  if (p.x < 0) p.x = 0;
-  if (p.x + PLAYER_W > W) p.x = W - PLAYER_W;
-
-  // Block collision (from below)
   for (const b of game.blocks) {
-    if (b.hit) continue;
-    const overlapX = p.x + PLAYER_W > b.x && p.x < b.x + BLOCK_SIZE;
-    const headInBlock = p.y < b.y + BLOCK_SIZE && p.y + PLAYER_H > b.y + BLOCK_SIZE;
-    if (overlapX && headInBlock && p.vy < 0) {
-      b.hit = true;
-      b.bump = 10;
+    if (!overlaps(b)) continue;
+    if (p.vy < 0) {
+      p.y = b.y + BLOCK_SIZE;
       p.vy = 3;
-      SFX.blockHit();
-      onBlockHit(b);
+      if (!b.hit) {
+        b.hit = true;
+        b.bump = 10;
+        SFX.blockHit();
+        onBlockHit(b);
+      }
+    } else {
+      p.y = b.y - PLAYER_H;
+      p.vy = 0;
+      p.onGround = true;
     }
   }
+  if (p.onGround && wasInAir) SFX.land();
 
   if (p.invul > 0) p.invul--;
 
