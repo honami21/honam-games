@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>호남샘 게임방</title>
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--cream:#fff6ec;--edge:#ecc9b0;--ink:#2c2950;--coral:#ee5a6f}
+body{font-family:'Jua',sans-serif;color:var(--ink);min-height:100vh;padding:48px 16px 40px;
+  background:radial-gradient(ellipse 60% 45% at 50% 30%,#45428f 0%,transparent 70%),linear-gradient(180deg,#26245a,#33307a 60%,#4a3f86);}
+h1{text-align:center;font-size:44px;color:#fff;letter-spacing:2px;text-shadow:0 4px 0 rgba(0,0,0,.25)}
+h1 span{color:#ffd25e}
+.sub{text-align:center;color:#cfc9f2;margin:10px 0 36px;font-size:17px}
+.grid{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:24px}
+.game{display:block;text-decoration:none;color:inherit;background:var(--cream);border-radius:24px;overflow:hidden;
+  box-shadow:0 6px 0 var(--edge),0 12px 26px rgba(0,0,0,.25);transition:transform .15s}
+.game:hover{transform:translateY(-4px)}
+.game img{display:block;width:100%;aspect-ratio:10/9;object-fit:cover;background:#1d1c48}
+.info{padding:14px 18px 18px}
+.info b{display:block;font-size:24px;font-weight:normal;color:var(--coral)}
+.info p{font-size:15px;color:#6f6585;margin-top:4px}
+.soon{display:flex;align-items:center;justify-content:center;min-height:200px;border:3px dashed rgba(255,255,255,.25);border-radius:24px;color:#cfc9f2;font-size:18px}
+footer{text-align:center;color:rgba(255,255,255,.5);font-size:13px;margin-top:40px;letter-spacing:1px}
+</style>
+</head>
+<body>
+<h1>🎮 호남샘 <span>게임방</span></h1>
+<p class="sub">쉬는 시간에 친구들과 즐겨 보세요!</p>
+<div class="grid">
+  <a class="game" href="tetris/">
+    <img src="tetris/thumb.jpg" alt="냥냥 테트리스 게임 화면">
+    <div class="info"><b>냥냥 테트리스</b><p>10단계까지 완주하고 랭킹 TOP 50에 도전!</p></div>
+  </a>
+  <div class="soon">새 게임 준비 중 🐾</div>
+</div>
+<footer>© 관촌초 교사 장호남</footer>
+</body>
+</html>
