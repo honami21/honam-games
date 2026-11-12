@@ -1,0 +1,7 @@
+# 게임을 고치면 휴대폰·홈 화면 바로가기에서도 바로 새 버전이 보이도록 HTML은 매번 새로 확인
+/*.html
+  Cache-Control: no-cache
+/
+  Cache-Control: no-cache
+/*/
+  Cache-Control: no-cache
