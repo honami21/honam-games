@@ -118,6 +118,12 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
 .modal.show{display:flex;}
 .modal-box{background:var(--cream);border-radius:30px;padding:26px 30px;max-width:470px;width:100%;box-shadow:0 7px 0 var(--cream-edge),0 20px 50px rgba(0,0,0,.4);text-align:center;animation:modalIn .35s ease-out;max-height:92vh;overflow-y:auto;}
 .modal-cat{font-size:52px;margin-bottom:4px;}
+.modal-hero{position:relative;width:150px;margin:-6px auto 2px}
+.modal-hero img{display:block;width:100%;animation:bobCat 3s ease-in-out infinite}
+.modal-hero .hs{position:absolute;fill:#ffcf4d;filter:drop-shadow(0 0 4px rgba(255,200,80,.7));animation:twinkle 2.4s ease-in-out infinite}
+.modal-hero .a{width:26px;height:26px;right:-18px;top:4px}
+.modal-hero .b{width:16px;height:16px;left:-12px;top:30px;animation-delay:-1.2s}
+@media (max-height:700px){.modal-hero{width:110px}}
 .modal-title{font-size:34px;color:var(--coral);text-shadow:0 3px 0 #fff,0 4px 0 #f3b9b9;margin-bottom:6px;letter-spacing:2px;}
 .modal-sub{font-size:16px;color:#7b6f8c;margin-bottom:16px;}
 .result-card{background:#fff;border:2px solid var(--cream2);border-radius:18px;padding:12px 18px;margin-bottom:14px;}
@@ -384,7 +390,7 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
 <!-- ========= START MODAL ========= -->
 <div id="start-modal" class="modal show">
   <div class="modal-box">
-    <div class="modal-cat">🐱✨</div>
+    <div class="modal-hero"><img src="cats/cat-left.png" alt=""><svg class="hs a"><use href="#i-spark"/></svg><svg class="hs b"><use href="#i-spark"/></svg></div>
     <div class="modal-title">냥냥 테트리스</div>
     <div class="modal-sub">10단계까지 완주해 보세요!</div>
     <div class="result-card rules">
