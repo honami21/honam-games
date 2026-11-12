@@ -596,6 +596,7 @@ function setupBlocks() {
 
 function startGame() {
   resize();
+  jumpQueued = false;
   game = newGame();
   setupBlocks();
   hideOverlay();
@@ -632,10 +633,13 @@ window.addEventListener('keydown', (e) => {
   if (!keys[e.key]) {
     keys[e.key] = true;
     if (e.key === 'f' || e.key === 'F') shoot();
+    if ([' ', 'ArrowUp', 'w', 'W'].includes(e.key)) jumpQueued = true;
   }
 });
 window.addEventListener('keyup', (e) => { keys[e.key] = false; });
 
+// 점프는 '누른 순간'에만 한 번 (꾹 누르고 있어도 연속 점프 안 됨)
+let jumpQueued = false;
 function bindBtn(id, onPress, onRelease) {
   const el = document.getElementById(id);
   const start = (e) => { e.preventDefault(); initAudio(); if (onPress) onPress(); };
@@ -649,7 +653,7 @@ function bindBtn(id, onPress, onRelease) {
 }
 bindBtn('btn-left',  () => keys.btnLeft  = true, () => keys.btnLeft  = false);
 bindBtn('btn-right', () => keys.btnRight = true, () => keys.btnRight = false);
-bindBtn('btn-jump',  () => keys.btnJump  = true, () => keys.btnJump  = false);
+bindBtn('btn-jump',  () => { keys.btnJump = true; jumpQueued = true; }, () => keys.btnJump  = false);
 bindBtn('btn-shoot', () => shoot(), null);
 
 function shoot() {
@@ -717,7 +721,12 @@ function update() {
   else if (right) { p.vx =  MOVE_SPEED; p.facing =  1; }
   else            { p.vx = 0; }
 
-  if (jump && p.onGround) {
+  // 누르고 있어도 한 번만 점프 (손을 뗐다가 다시 눌러야 다음 점프)
+  // 착지 직전에 누른 것은 잠깐 기억했다가 땅에 닿으면 점프
+  if (jumpQueued) { p.jumpBuf = 8; jumpQueued = false; }
+  if (p.jumpBuf > 0) p.jumpBuf--;
+  if (p.jumpBuf > 0 && p.onGround) {
+    p.jumpBuf = 0;
     p.vy = JUMP_V;
     p.onGround = false;
     SFX.jump();
