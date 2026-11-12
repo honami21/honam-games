@@ -234,9 +234,46 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
   #stage-banner .banner-num{font-size:56px}
   .puff{transform:scale(.6)}
 }
+/* ====== TOP BAR (게임방 / 전체화면) ====== */
+.topbar{position:fixed;top:12px;left:12px;right:12px;z-index:50;display:flex;justify-content:space-between;pointer-events:none}
+.topbar a,.topbar button{pointer-events:auto;display:inline-flex;align-items:center;gap:6px;border:none;border-radius:20px;padding:7px 14px;
+  font-family:'Jua',sans-serif;font-size:16px;color:var(--ink);background:rgba(255,246,236,.92);box-shadow:0 3px 0 var(--cream-edge);text-decoration:none;cursor:pointer}
+.topbar a:hover,.topbar button:hover{filter:brightness(1.04)}
+.topbar svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:760px), (pointer:coarse){
+  .topbar{top:6px;left:6px;right:6px}
+  .topbar a,.topbar button{font-size:12px;padding:7px 8px;gap:0}
+  .topbar svg{width:18px;height:18px}
+  .topbar .t{display:none}
+}
 </style>
 </head>
 <body>
+<div class="topbar">
+  <a href="../" id="home-link" title="게임방으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">게임방</span></a>
+  <button id="fs-btn" type="button" title="전체화면"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="t" id="fs-txt">전체화면</span></button>
+</div>
+<script>
+(function(){
+  var b=document.getElementById('fs-btn'),t=document.getElementById('fs-txt'),d=document,el=d.documentElement;
+  var can=d.fullscreenEnabled||d.webkitFullscreenEnabled;
+  var framed=false;try{framed=window.top!==window;}catch(e){framed=true;}
+  if(!can){
+    if(framed){t.textContent='새 창으로';b.title='새 창으로 크게 열기';b.addEventListener('click',function(){window.open(location.href,'_blank');});}
+    else b.style.display='none';
+    return;
+  }
+  var cur=function(){return d.fullscreenElement||d.webkitFullscreenElement;};
+  b.addEventListener('click',function(){
+    if(cur()){(d.exitFullscreen||d.webkitExitFullscreen).call(d);}
+    else{(el.requestFullscreen||el.webkitRequestFullscreen).call(el);}
+    b.blur();
+  });
+  var upd=function(){t.textContent=cur()?'나가기':'전체화면';};
+  d.addEventListener('fullscreenchange',upd);d.addEventListener('webkitfullscreenchange',upd);
+})();
+</script>
+
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-paw" viewBox="0 0 24 24"><ellipse cx="12" cy="16.2" rx="5.6" ry="4.6"/><ellipse cx="5.4" cy="10.4" rx="2.3" ry="2.7"/><ellipse cx="9.6" cy="6.2" rx="2.3" ry="2.8"/><ellipse cx="14.4" cy="6.2" rx="2.3" ry="2.8"/><ellipse cx="18.6" cy="10.4" rx="2.3" ry="2.7"/></symbol>
   <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 0C13 8 16 11 24 12 16 13 13 16 12 24 11 16 8 13 0 12 8 11 11 8 12 0Z"/></symbol>
