@@ -1869,8 +1869,16 @@ function drawFeedback() {
   if (!game.feedback || game.feedbackTimer <= 0) return;
   const t = game.feedbackTimer;
   const alpha = Math.min(1, t / 30);
-  const R = Math.min(W, H) * 0.09;
-  const cx = W / 2, cy = H * 0.42;
+  let R = Math.min(W, H) * 0.09;
+  let cx = W / 2, cy = H * 0.42;
+  // 문장 띠와 겹치지 않게 두 블록 사이(블록 높이)에 표시
+  if (game.blocks.length === 2) {
+    const b0 = game.blocks[0], b1 = game.blocks[1];
+    cx = (b0.x + b1.x + BLOCK_SIZE) / 2;
+    cy = b0.y + BLOCK_SIZE / 2;
+    const gap = Math.abs(b1.x - b0.x) - BLOCK_SIZE;
+    R = Math.min(R, gap * 0.28, BLOCK_SIZE * 0.75);
+  }
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.lineCap = 'round';
