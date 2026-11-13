@@ -96,6 +96,24 @@
   .title-bottom { text-align:center; display:flex; flex-direction:column; align-items:center; gap:12px; }
   #title-music { font-size:15px; padding:6px 16px; }
   .title-tip { margin-top:0 !important; }
+  #dev-open { position:absolute; right:12px; bottom:calc(10px + env(safe-area-inset-bottom)); font-family:'Jua',sans-serif; font-size:13px; padding:5px 12px; border-radius:20px; border:2px solid rgba(255,255,255,.45); background:rgba(8,14,36,.45); color:rgba(255,255,255,.8); cursor:pointer; }
+  #devpw .panel { width:min(340px,100%); }
+  #devpw input { width:100%; font-family:'Fredoka',sans-serif; font-size:24px; text-align:center; letter-spacing:6px; padding:8px; border:3px solid var(--ink); border-radius:14px; margin-top:8px; }
+  #devpw-msg { min-height:20px; color:var(--coral-d); font-size:14px; margin-top:6px; }
+  #dev .panel { width:min(860px,100%); }
+  #dev h3 { font-weight:normal; font-size:17px; color:var(--ink); margin:10px 0 6px; text-align:left; }
+  .dev-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(128px,1fr)); gap:6px; }
+  .dev-it { border:2px solid var(--ink); border-radius:14px; background:#fff; padding:5px 4px; font-size:14px; color:var(--ink); word-break:keep-all; opacity:.6; }
+  .dev-it.on { opacity:1; background:#fff3d0; }
+  .dev-it.evo { background:#f3dcff; }
+  .dev-it img { width:38px; height:38px; object-fit:contain; display:block; margin:0 auto; }
+  .dev-it .em { font-size:28px; line-height:38px; display:block; }
+  .dev-step { display:flex; align-items:center; justify-content:center; gap:4px; margin-top:3px; }
+  .dev-step b { font-weight:normal; min-width:46px; font-size:14px; }
+  .dev-step button { width:30px; height:30px; border-radius:50%; border:2px solid var(--ink); background:var(--sun); color:var(--ink); font-size:18px; line-height:1; cursor:pointer; font-family:'Jua',sans-serif; }
+  .dev-opts { display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center; justify-content:center; margin-top:10px; font-size:15px; color:var(--ink); }
+  .dev-opts select { font-family:'Jua',sans-serif; font-size:15px; padding:4px 8px; border:2px solid var(--ink); border-radius:10px; background:#fff; }
+  #dev-msg { min-height:20px; color:var(--coral-d); font-size:14px; margin-top:6px; }
   .music-row { display:flex; align-items:center; justify-content:center; gap:10px; margin-top:12px; font-size:16px; color:var(--ink); }
   .music-row input { width:min(220px,50vw); accent-color:var(--coral); }
   #music-val { min-width:3.2em; text-align:left; color:var(--ink2); font-size:14px; }
@@ -278,6 +296,42 @@
     <button class="game-btn white" id="title-music" type="button">🎵 음악 켬</button>
     <p class="title-tip">무기를 고르고, 몰려오는 요괴를 피해 20분을 버텨요!</p>
   </div>
+  <button id="dev-open" type="button">🔧 개발자 모드</button>
+</div>
+<div class="ov hidden" id="devpw" style="z-index:60">
+  <div class="panel">
+    <h2>🔧 개발자 모드</h2>
+    <p class="sub" style="margin-bottom:0">비밀번호를 써 주세요</p>
+    <input id="devpw-input" type="password" inputmode="numeric" maxlength="12" autocomplete="off" aria-label="비밀번호">
+    <div id="devpw-msg"></div>
+    <div class="btns"><button class="game-btn small" id="devpw-ok" type="button">확인</button><button class="game-btn white small" id="devpw-close" type="button">닫기</button></div>
+  </div>
+</div>
+<div class="ov hidden" id="dev" style="z-index:60">
+  <div class="panel">
+    <h2>🔧 개발자 모드</h2>
+    <p class="sub" style="margin-bottom:0">무기와 강화를 골라 바로 시험해요. 이 모드의 기록은 랭킹에 저장되지 않아요.</p>
+    <h3>무기 <span id="dev-wn"></span></h3>
+    <div class="dev-grid" id="dev-w"></div>
+    <h3>강화 <span id="dev-pn"></span></h3>
+    <div class="dev-grid" id="dev-p"></div>
+    <div class="dev-opts">
+      <label id="dev-time-row">시작 시간 <select id="dev-time"><option value="0">0분 (처음)</option><option value="180">3분</option><option value="410">6분 50초 (구미호 직전)</option><option value="600">10분</option><option value="830">13분 50초 (어둑시니 직전)</option><option value="1020">17분</option><option value="1190">19분 50초 (이무기 직전)</option></select></label>
+      <label><input type="checkbox" id="dev-god"> 무적 (체력이 안 줄어요)</label>
+    </div>
+    <div class="btns hidden" id="dev-boss">
+      <button class="game-btn white small" type="button" data-b="gumiho">구미호 부르기</button>
+      <button class="game-btn white small" type="button" data-b="eodum">어둑시니 부르기</button>
+      <button class="game-btn white small" type="button" data-b="imugi">이무기 부르기</button>
+    </div>
+    <div id="dev-msg"></div>
+    <div class="btns">
+      <button class="game-btn" id="dev-go" type="button">▶ 시험 시작</button>
+      <button class="game-btn white small" id="dev-max" type="button">고른 것 모두 최고로</button>
+      <button class="game-btn white small" id="dev-clear" type="button">모두 지우기</button>
+      <button class="game-btn white small" id="dev-close" type="button">닫기</button>
+    </div>
+  </div>
 </div>
 <div class="ov hidden" id="start">
   <div class="panel">
@@ -333,6 +387,7 @@
     <div class="btns" id="pause-btns">
       <button class="game-btn" id="resume-btn" type="button">계속하기</button>
       <button class="game-btn white" id="sound-btn" type="button">🔊 효과음 켬</button>
+      <button class="game-btn sun hidden" id="dev-btn" type="button">🔧 무기 바꾸기</button>
       <button class="game-btn white" id="giveup-btn" type="button">그만하기</button>
     </div>
   </div>
@@ -916,7 +971,7 @@ function killEnemy(e, src) {
 }
 function damagePlayer(d) {
   const p = G.p;
-  if (G.t < p.inv || G.over) return;
+  if (G.t < p.inv || G.over || G.god) return;
   d = Math.max(1, d * dmgMul() - S.armor);
   p.hp -= d; p.inv = G.t + .6; p.hurtT = .25; G.hurtFlash = .35; G.shake = Math.min(1, G.shake + .35);
   sfx('hurt');
@@ -2023,6 +2078,7 @@ function openPause() {
   document.querySelector('#pause .tabs').classList.remove('hidden');
   $('tab-bag').innerHTML = bagHTML(); $('tab-combo').innerHTML = comboTable(); $('tab-stat').innerHTML = statHTML();
   $('resume-btn').textContent = '계속하기'; $('giveup-btn').classList.remove('hidden'); $('giveup-btn').textContent = '그만하기'; $('giveup-btn').dataset.sure = '';
+  $('dev-btn').classList.toggle('hidden', !G.dev);
   setTab('bag'); updateSoundBtn(); show('pause');
 }
 function openComboFromMenu() {
@@ -2030,7 +2086,7 @@ function openComboFromMenu() {
   $('pause-title').textContent = '📖 조합표';
   document.querySelector('#pause .tabs').classList.add('hidden');
   $('tab-combo').innerHTML = comboTable(); setTab('combo');
-  $('resume-btn').textContent = '닫기'; $('giveup-btn').classList.add('hidden'); updateSoundBtn(); show('pause');
+  $('resume-btn').textContent = '닫기'; $('giveup-btn').classList.add('hidden'); $('dev-btn').classList.add('hidden'); updateSoundBtn(); show('pause');
 }
 function closePause() { hide('pause'); modal = null; if (pauseFromMenu) { modal = null; } last = performance.now(); }
 $('resume-btn').addEventListener('click', closePause);
@@ -2054,17 +2110,18 @@ function endGame(cleared, gaveUp) {
   for (const id of ['levelup', 'chest', 'pause']) hide(id);
   const sec = Math.floor(G.t);
   const score = G.kills * 10 + sec * 5 + G.bossBonus;
-  lastResult = { score, kills: G.kills, time: sec, level: G.p.lv, cleared, boss: G.bossBonus };
+  lastResult = G.dev ? null : { score, kills: G.kills, time: sec, level: G.p.lv, cleared, boss: G.bossBonus };
   $('end-title').textContent = cleared ? '🎉 도깨비숲을 지켰어요!' : gaveUp ? '여기까지 했어요' : '쓰러졌어요...';
   $('end-sub').textContent = cleared ? '이무기까지 물리친 진짜 도깨비숲 지킴이!' : sec >= 600 ? '정말 오래 버텼어요! 조합 무기를 노려 봐요.' : '무기를 8레벨까지 키우고 짝꿍 강화를 모아 조합해 봐요!';
   const im = cleared ? 'ggobi-clear' : 'ggobi-gameover';
   const ei = $('end-img'); if (IMG[im]) { ei.src = 'img/' + im + '.png'; ei.classList.remove('hidden'); } else ei.classList.add('hidden');
   $('end-score').textContent = score.toLocaleString();
   $('r-time').textContent = fmtTime(sec); $('r-kills').textContent = G.kills.toLocaleString(); $('r-level').textContent = G.p.lv; $('r-boss').textContent = G.bossBonus.toLocaleString();
-  $('save-status').textContent = ''; $('save-status').classList.remove('error'); $('save-btn').disabled = false;
+  $('save-status').textContent = G.dev ? '개발자 모드라서 랭킹에 저장되지 않아요.' : ''; $('save-status').classList.remove('error'); $('save-btn').disabled = false;
+  document.querySelector('#end .save').classList.toggle('hidden', !!G.dev);
   try { $('school-input').value = localStorage.getItem('lastSchool') || ''; } catch (e) {}
   // 엽전은 이 기기에 모아 둬요 (나중에 성장 상점에서 쓸 예정)
-  try { localStorage.setItem('survivor-coins', String((+localStorage.getItem('survivor-coins') || 0) + G.coins)); } catch (e) {}
+  if (!G.dev) try { localStorage.setItem('survivor-coins', String((+localStorage.getItem('survivor-coins') || 0) + G.coins)); } catch (e) {}
   modal = 'end';
   if (cleared) sfx('win');
   show('end');
@@ -2119,6 +2176,72 @@ function startGame() {
   last = performance.now();
 }
 $('start-btn').addEventListener('click', startGame);
+
+/* ---------- 개발자 모드 ---------- */
+// 비밀번호는 글자 그대로 두지 않고 계산한 값으로만 비교해요. (학생들이 쉽게 못 들어오게 하는 정도예요.)
+const DEV = { ok: false, w: {}, p: {}, live: false };
+function devHash(t) { let h = 5381; for (const c of t) h = ((h * 33) ^ c.charCodeAt(0)) >>> 0; return h; }
+function devCount(o) { return Object.keys(o).filter(k => o[k] > 0).length; }
+function devLabel(v) { return v <= 0 ? '없음' : v >= 9 ? '★ 조합' : 'Lv ' + v; }
+function devBuild() {
+  $('dev-w').innerHTML = Object.keys(WEAPONS).map(id => { const v = DEV.w[id] || 0, W = WEAPONS[id];
+    return `<div class="dev-it ${v ? 'on' : ''} ${v >= 9 ? 'evo' : ''}">${iconHTML(v >= 9 ? 'e' : 'w', id)}${v >= 9 ? W.evoName : W.name}<div class="dev-step"><button type="button" data-k="w" data-id="${id}" data-d="-1" aria-label="내리기">−</button><b>${devLabel(v)}</b><button type="button" data-k="w" data-id="${id}" data-d="1" aria-label="올리기">+</button></div></div>`; }).join('');
+  $('dev-p').innerHTML = Object.keys(PASSIVES).map(id => { const v = DEV.p[id] || 0, P = PASSIVES[id];
+    return `<div class="dev-it ${v ? 'on' : ''}">${iconHTML('p', id)}${P.name}<div class="dev-step"><button type="button" data-k="p" data-id="${id}" data-d="-1" aria-label="내리기">−</button><b>${v ? 'Lv ' + v : '없음'}</b><button type="button" data-k="p" data-id="${id}" data-d="1" aria-label="올리기">+</button></div></div>`; }).join('');
+  $('dev-wn').textContent = `(${devCount(DEV.w)}/${MAX_SLOTS})`; $('dev-pn').textContent = `(${devCount(DEV.p)}/${MAX_SLOTS})`;
+}
+function devOpen(live) {
+  DEV.live = live;
+  if (live) { DEV.w = {}; DEV.p = {}; for (const w of G.weapons) DEV.w[w.id] = w.evo ? 9 : w.lv; for (const id of G.passiveOrder) DEV.p[id] = G.passives[id]; $('dev-god').checked = !!G.god; }
+  else if (!devCount(DEV.w)) DEV.w[pickedWeapon] = 1;
+  $('dev-time-row').classList.toggle('hidden', live); $('dev-boss').classList.toggle('hidden', !live);
+  $('dev-go').textContent = live ? '▶ 적용하고 계속' : '▶ 시험 시작'; $('dev-msg').textContent = '';
+  devBuild(); show('dev'); modal = 'dev';
+}
+function devApply() {
+  const old = G.weapons; G.weapons = [];
+  for (const id of Object.keys(WEAPONS)) { const v = DEV.w[id] || 0; if (!v) continue;
+    const w = old.find(x => x.id === id) || { id, lv: 1, evo: false, t: .4, ang: 0, active: 0, kites: [] };
+    const evo = v >= 9; if (evo !== w.evo) { w.t = .2; w.active = 0; }
+    w.lv = Math.min(8, v); w.evo = evo; G.weapons.push(w); }
+  G.passives = {}; G.passiveOrder = [];
+  for (const id of Object.keys(PASSIVES)) { const v = DEV.p[id] || 0; if (v) { G.passives[id] = v; G.passiveOrder.push(id); } }
+  G.projs = []; G.areas = [];
+  G.dev = true; G.god = $('dev-god').checked;
+  calcStats(); G.p.hp = S.maxHp; hudCache = {}; refreshSlots();
+}
+function devCloseTo() { hide('dev'); if (DEV.live) { modal = null; last = performance.now(); } else modal = 'title'; }
+function devClick(e) {
+  const b = e.target.closest('button[data-k]'); if (!b) return;
+  const o = DEV[b.dataset.k], id = b.dataset.id, isW = b.dataset.k === 'w', max = isW ? 9 : PASSIVES[id].max, cur = o[id] || 0;
+  let v = clamp(cur + (+b.dataset.d), 0, max);
+  if (!cur && v && devCount(o) >= MAX_SLOTS) { $('dev-msg').textContent = (isW ? '무기' : '강화') + '는 ' + MAX_SLOTS + '개까지 가질 수 있어요.'; return; }
+  $('dev-msg').textContent = ''; o[id] = v; devBuild();
+}
+$('dev-w').addEventListener('click', devClick); $('dev-p').addEventListener('click', devClick);
+$('dev-max').addEventListener('click', () => { for (const id in DEV.w) if (DEV.w[id]) DEV.w[id] = 9; for (const id in DEV.p) if (DEV.p[id]) DEV.p[id] = PASSIVES[id].max; devBuild(); });
+$('dev-clear').addEventListener('click', () => { DEV.w = {}; DEV.p = {}; devBuild(); });
+$('dev-close').addEventListener('click', devCloseTo);
+$('dev-boss').addEventListener('click', e => { const b = e.target.closest('button[data-b]'); if (!b || !G) return; if (!devCount(DEV.w)) { $('dev-msg').textContent = '무기를 하나 이상 골라 주세요.'; return; } devApply(); spawnBoss(b.dataset.b); devCloseTo(); });
+$('dev-go').addEventListener('click', () => {
+  if (!devCount(DEV.w)) { $('dev-msg').textContent = '무기를 하나 이상 골라 주세요.'; return; }
+  if (DEV.live) { devApply(); devCloseTo(); return; }
+  ensureAudio(); hide('dev'); hide('title'); hide('start'); modal = null; hudCache = {};
+  newGame(Object.keys(WEAPONS).find(id => DEV.w[id])); devApply();
+  const t0 = +$('dev-time').value || 0; G.t = t0; while (G.evIdx < EVENTS.length && EVENTS[G.evIdx].at < t0) G.evIdx++;
+  show('hud'); hide('bossbar'); document.body.classList.add('playing');
+  banner('개발자 모드', '멈춤 화면에서 무기를 바꿀 수 있어요');
+  last = performance.now();
+});
+$('dev-btn').addEventListener('click', () => { hide('pause'); devOpen(true); });
+function devPwClose() { hide('devpw'); modal = 'title'; }
+function devPwTry() {
+  if (devHash($('devpw-input').value.trim()) === 2085881732) { DEV.ok = true; hide('devpw'); devOpen(false); }
+  else { $('devpw-msg').textContent = '비밀번호가 달라요.'; $('devpw-input').value = ''; $('devpw-input').focus(); }
+}
+$('dev-open').addEventListener('click', () => { if (DEV.ok) { devOpen(false); return; } $('devpw-input').value = ''; $('devpw-msg').textContent = ''; show('devpw'); modal = 'devpw'; $('devpw-input').focus(); });
+$('devpw-ok').addEventListener('click', devPwTry); $('devpw-close').addEventListener('click', devPwClose);
+$('devpw-input').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') devPwTry(); else if (e.key === 'Escape') devPwClose(); });
 $('help-btn').addEventListener('click', openComboFromMenu);
 $('rank-btn').addEventListener('click', () => showRanking());
 $('end-rank-btn').addEventListener('click', () => showRanking());
