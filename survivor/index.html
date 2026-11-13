@@ -588,27 +588,57 @@ function tone(freq, dur, type = 'sine', vol = .08, slide = 0, delay = 0) {
   o.type = type; o.frequency.setValueAtTime(freq, t0);
   if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq + slide), t0 + dur);
   g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(.0005, t0 + dur);
-  o.connect(g); g.connect(AC.destination); o.start(t0); o.stop(t0 + dur + .02);
+  o.connect(g); g.connect(sfxOut()); o.start(t0); o.stop(t0 + dur + .02);
+}
+let SFX_OUT = null, NOISE = null;
+function sfxOut() {
+  if (!SFX_OUT) { const c = AC.createDynamicsCompressor(); c.threshold.value = -14; c.ratio.value = 6; c.connect(AC.destination); SFX_OUT = AC.createGain(); SFX_OUT.gain.value = 1.5; SFX_OUT.connect(c); }
+  return SFX_OUT;
+}
+// 바람·타격 같은 소리: 잡음을 걸러서 만들어요
+function noise(dur, vol = .08, type = 'bandpass', f0 = 800, f1 = 0, q = 1, delay = 0) {
+  if (!AC || !soundOn) return;
+  if (!NOISE) { NOISE = AC.createBuffer(1, AC.sampleRate, AC.sampleRate); const d = NOISE.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+  const t0 = AC.currentTime + delay, src = AC.createBufferSource(), fl = AC.createBiquadFilter(), g = AC.createGain();
+  src.buffer = NOISE; src.loop = true; fl.type = type; fl.Q.value = q; fl.frequency.setValueAtTime(f0, t0);
+  if (f1) fl.frequency.exponentialRampToValueAtTime(Math.max(30, f1), t0 + dur);
+  g.gain.setValueAtTime(.0005, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + Math.min(.02, dur * .2)); g.gain.exponentialRampToValueAtTime(.0005, t0 + dur);
+  src.connect(fl); fl.connect(g); g.connect(sfxOut()); src.start(t0, Math.random() * .5); src.stop(t0 + dur + .03);
 }
 function sfx(k) {
   if (!AC || !soundOn) return;
-  const now = performance.now(), gap = { hit: 70, gem: 45, kill: 60, swing: 120 }[k] || 0;
+  const now = performance.now(), gap = { hit: 60, gem: 45, kill: 55, swing: 120, club: 90, top: 70, shoe: 70, dart: 60, brush: 150, gourd: 200, boom: 60, tick: 60, fan: 150, yut: 120, mallet: 100, mask: 150, wisp: 300, magpie: 150 }[k] || 0;
   if (gap && now - (lastSfx[k] || 0) < gap) return;
   lastSfx[k] = now;
   switch (k) {
-    case 'hit': tone(220 + Math.random() * 60, .05, 'square', .025); break;
-    case 'kill': tone(520, .07, 'triangle', .04, -260); break;
+    case 'hit': noise(.045, .05, 'bandpass', 1500 + Math.random() * 900, 0, 1.2); tone(190 + Math.random() * 50, .04, 'square', .014); break;
+    case 'kill': tone(430 + Math.random() * 80, .09, 'triangle', .045, 380); noise(.07, .035, 'highpass', 2500); break;
+    case 'club': noise(.16, .09, 'bandpass', 500, 1900, .9); tone(140, .1, 'triangle', .05, -60, .05); break;
+    case 'eclub': noise(.2, .1, 'bandpass', 400, 2400, .9); tone(120, .14, 'triangle', .06, -50, .05); tone(1320, .12, 'sine', .03, 300, .06); break;
+    case 'wisp': tone(620, .25, 'sine', .04, 500); tone(930, .25, 'sine', .025, 600, .05); break;
+    case 'top': tone(1050 + Math.random() * 150, .04, 'triangle', .05, -300); noise(.03, .04, 'highpass', 3000); break;
+    case 'tick': tone(820 + Math.random() * 200, .03, 'triangle', .035, -200); break;
+    case 'shoe': noise(.2, .07, 'bandpass', 700, 2600, 1.6); break;
+    case 'fan': noise(.38, .1, 'lowpass', 500, 2600, .6); noise(.3, .05, 'bandpass', 1800, 600, 1, .08); break;
+    case 'brush': noise(.2, .08, 'lowpass', 1100, 180, .8); tone(230, .16, 'sine', .05, -150); break;
+    case 'dart': tone(1500, .06, 'triangle', .03, -800); noise(.05, .025, 'highpass', 4000); break;
+    case 'magpie': tone(1700, .05, 'square', .02, 300); tone(2100, .05, 'square', .02, -400, .07); break;
+    case 'yut': [0, .05, .1, .15].forEach(d => tone(700 + Math.random() * 500, .035, 'triangle', .04, -250, d)); break;
+    case 'boom': noise(.3, .13, 'lowpass', 1400, 90, .7); tone(120, .22, 'sine', .1, -80); break;
+    case 'gourd': tone(260, .4, 'sine', .05, 700); noise(.4, .05, 'bandpass', 400, 1800, 3); break;
+    case 'mallet': tone(95, .32, 'sine', .16, -55); noise(.14, .1, 'lowpass', 900, 120, .7); tone(210, .06, 'square', .03, -100); break;
+    case 'mask': tone(1500, .18, 'triangle', .04); tone(2250, .22, 'sine', .03, 0, .02); break;
     case 'gem': tone(880 + Math.random() * 200, .06, 'sine', .035, 300); break;
     case 'swing': tone(300, .1, 'sawtooth', .02, -150); break;
-    case 'hurt': tone(160, .2, 'square', .07, -80); break;
+    case 'hurt': tone(180, .22, 'square', .06, -100); noise(.12, .08, 'lowpass', 700, 150); break;
     case 'level': [523, 659, 784, 1047].forEach((f, i) => tone(f, .14, 'triangle', .07, 0, i * .07)); break;
     case 'chest': [392, 523, 659, 784, 988, 1175].forEach((f, i) => tone(f, .18, 'triangle', .07, 0, i * .09)); break;
     case 'evo': [523, 784, 1047, 1319, 1568].forEach((f, i) => tone(f, .3, 'sine', .08, 0, i * .1)); break;
     case 'boss': [110, 98, 82].forEach((f, i) => tone(f, .45, 'sawtooth', .07, 0, i * .35)); break;
     case 'heal': tone(660, .15, 'sine', .06, 400); break;
     case 'pick': tone(700, .08, 'triangle', .05, 200); break;
-    case 'drum': tone(90, .25, 'sine', .14, -40); break;
-    case 'thunder': tone(70, .4, 'sawtooth', .06, -30); break;
+    case 'drum': tone(130, .3, 'sine', .15, -75); tone(260, .08, 'triangle', .05, -120); noise(.05, .06, 'bandpass', 900, 0, .8); break;
+    case 'thunder': noise(.55, .13, 'lowpass', 3500, 90, .5); tone(65, .45, 'sawtooth', .05, -30); noise(.05, .08, 'highpass', 5000); break;
     case 'over': [392, 330, 262, 196].forEach((f, i) => tone(f, .3, 'triangle', .07, 0, i * .18)); break;
     case 'win': [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => tone(f, .22, 'triangle', .08, 0, i * .12)); break;
   }
@@ -931,7 +961,7 @@ function fireWeapon(w) {
         const a = base + i * TAU / st.n;
         G.later.push({ t: G.t + i * .09, f: () => {
           G.fx.push({ k: 'slash', a: w.evo ? a : a, full: w.evo, R, t: 0, life: .22 });
-          sfx('swing');
+          sfx(w.evo ? 'eclub' : 'club');
           const half = w.evo ? Math.PI : 1.05;
           query(G.p.x, G.p.y, R, (e, dx, dy) => {
             let da = Math.atan2(dy, dx) - a; da = Math.atan2(Math.sin(da), Math.cos(da));
@@ -943,7 +973,7 @@ function fireWeapon(w) {
     }
     case 'wisp': {
       if (w.evo) { w.active = 1e9; return 99; }
-      w.active = G.t + st.dur * S.dur; return st.dur * S.dur + st.cd;
+      sfx('wisp'); w.active = G.t + st.dur * S.dur; return st.dur * S.dur + st.cd;
     }
     case 'top': {
       for (let i = 0; i < st.n; i++) {
@@ -951,7 +981,7 @@ function fireWeapon(w) {
           const tg = nearest(G.p.x, G.p.y, 520);
           const a = tg ? Math.atan2(tg.y - G.p.y, tg.x - G.p.x) : Math.random() * TAU;
           const sp = 340 * S.pspd;
-          G.projs.push({ k: 'top', x: G.p.x, y: G.p.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, sp, r: 11 * st.size * S.area, dmg: st.dmg,
+          sfx('top'); G.projs.push({ k: 'top', x: G.p.x, y: G.p.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, sp, r: 11 * st.size * S.area, dmg: st.dmg,
             bounce: st.bounce, tgt: tg, hitset: new Set(), id: G.nextId++, t: 0, life: st.life * S.dur, evo: w.evo, rot: 0 });
         } });
       }
@@ -964,7 +994,7 @@ function fireWeapon(w) {
         const a = base + (i ? (Math.ceil(i / 2) * .45 * (i % 2 ? 1 : -1)) : 0);
         G.later.push({ t: G.t + i * .08, f: () => {
           const v0 = 540 * st.spd * S.pspd, dist = 250 * st.range * (1 + (S.area - 1) * .5);
-          G.projs.push({ k: 'shoe', x: G.p.x, y: G.p.y, dx: Math.cos(a), dy: Math.sin(a), v: v0, v0, acc: v0 * v0 / (2 * dist), ret: false,
+          sfx('shoe'); G.projs.push({ k: 'shoe', x: G.p.x, y: G.p.y, dx: Math.cos(a), dy: Math.sin(a), v: v0, v0, acc: v0 * v0 / (2 * dist), ret: false,
             r: 14 * st.size * S.area, dmg: st.dmg, t: 0, life: 5, rot: 0, evo: w.evo });
         } });
       }
@@ -982,7 +1012,7 @@ function fireWeapon(w) {
         if (w.evo) G.areas.push({ k: 'tornado', x: p.x + Math.cos(a) * 60, y: p.y + Math.sin(a) * 60, vx: Math.cos(a) * 85, vy: Math.sin(a) * 85,
           r: 42 * S.area, t: 0, life: 4 * S.dur, tick: 0, dmg: 9 });
       }
-      sfx('swing');
+      sfx('fan');
       return st.cd;
     }
     case 'drum': {
@@ -1002,12 +1032,12 @@ function fireWeapon(w) {
       for (let i = 0; i < st.n; i++) {
         const e = targets[i];
         const x = e ? e.x : p.x + rnd(-200, 200), y = e ? e.y : p.y + rnd(-200, 200);
-        G.areas.push({ k: 'ink', x, y, r: 0, R: 48 * st.area * S.area, t: 0, life: st.dur * S.dur, tick: 0, dmg: st.dmg });
+        sfx('brush'); G.areas.push({ k: 'ink', x, y, r: 0, R: 48 * st.area * S.area, t: 0, life: st.dur * S.dur, tick: 0, dmg: st.dmg });
       }
       for (let i = 0; i < st.strokes; i++) {
         const e = randomOnScreen(1)[0]; const cx = e ? e.x : p.x, cy = e ? e.y : p.y, a = Math.random() * Math.PI;
         const L = 360 * S.area;
-        G.areas.push({ k: 'stroke', x1: cx - Math.cos(a) * L, y1: cy - Math.sin(a) * L, x2: cx + Math.cos(a) * L, y2: cy + Math.sin(a) * L,
+        sfx('brush'); G.areas.push({ k: 'stroke', x1: cx - Math.cos(a) * L, y1: cy - Math.sin(a) * L, x2: cx + Math.cos(a) * L, y2: cy + Math.sin(a) * L,
           w: 26 * S.area, t: 0, life: 2.6 * S.dur, tick: 0, dmg: st.dmg * 1.6 });
       }
       return st.cd;
@@ -1020,11 +1050,11 @@ function fireWeapon(w) {
           const tg = nearest(k.x, k.y, 560, skip); if (tg) skip.add(tg.id);
           const a = tg ? Math.atan2(tg.y - k.y, tg.x - k.x) : faceAngle() + rnd(-.3, .3);
           const sp = 440 * S.pspd;
-          G.projs.push({ k: 'dart', x: k.x, y: k.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: 7 * S.area, dmg: st.dmg, pierce: st.pierce, hitset: new Set(), t: 0, life: 1.6 });
+          sfx('dart'); G.projs.push({ k: 'dart', x: k.x, y: k.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: 7 * S.area, dmg: st.dmg, pierce: st.pierce, hitset: new Set(), t: 0, life: 1.6 });
         }
         for (let i = 0; i < st.birds; i++) {
           const a = Math.random() * TAU, sp = 300 * S.pspd;
-          G.projs.push({ k: 'magpie', x: k.x, y: k.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, sp, r: 12 * S.area, dmg: 20, pierce: 3, hitset: new Set(), t: 0, life: 3 });
+          sfx('magpie'); G.projs.push({ k: 'magpie', x: k.x, y: k.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, sp, r: 12 * S.area, dmg: 20, pierce: 3, hitset: new Set(), t: 0, life: 3 });
         }
       }
       return st.cd;
@@ -1042,7 +1072,7 @@ function fireWeapon(w) {
           const tx = e ? e.x + rnd(-10, 10) : G.p.x + rnd(-220, 220), ty = e ? e.y + rnd(-10, 10) : G.p.y + rnd(-220, 220);
           G.projs.push({ k: 'yut', x: G.p.x, y: G.p.y, sx: G.p.x, sy: G.p.y, tx, ty, t: -i * .08, life: 5, dur: .5, r: 52 * st.area * S.area, dmg: st.dmg, evo: w.evo, rot: 0 });
         }
-        sfx('swing');
+        sfx('yut');
       } });
       return st.cd;
     }
@@ -1050,7 +1080,7 @@ function fireWeapon(w) {
       const targets = randomOnScreen(st.n);
       for (let i = 0; i < st.n; i++) {
         const e = targets[i]; const x = e ? e.x : p.x + rnd(-180, 180), y = e ? e.y : p.y + rnd(-180, 180);
-        G.areas.push({ k: 'vortex', x, y, r: 70 * st.area * S.area, t: 0, life: st.dur * S.dur, tick: 0, dmg: st.dmg, evo: w.evo });
+        sfx('gourd'); G.areas.push({ k: 'vortex', x, y, r: 70 * st.area * S.area, t: 0, life: st.dur * S.dur, tick: 0, dmg: st.dmg, evo: w.evo });
       }
       return st.cd;
     }
@@ -1065,14 +1095,14 @@ function fireWeapon(w) {
           let hit = 0;
           query(x, y, R, (en, dx, dy) => { hit++; en.slowT = G.t + 1; hitEnemy(en, dmg, dx, dy, 200, 'mallet'); });
           G.fx.push({ k: 'slam', x, y, R, t: 0, life: .35, evo: w.evo });
-          G.shake = Math.min(1, G.shake + .25); sfx('drum');
+          G.shake = Math.min(1, G.shake + .25); sfx('mallet');
           if (w.evo && hit) healP(Math.min(8, hit));
         } });
       }
       return st.cd;
     }
     case 'mask': {
-      if (w.evo) { G.p.inv = Math.max(G.p.inv, G.t + 2); G.p.shieldT = G.t + 2; }
+      if (w.evo) { G.p.inv = Math.max(G.p.inv, G.t + 2); G.p.shieldT = G.t + 2; sfx('mask'); }
       return st.cd;
     }
   }
@@ -1106,7 +1136,7 @@ function updateWeapons(dt) {
       const R = 92 * S.area, r = 17 * st.size * S.area;
       for (let i = 0; i < st.n; i++) {
         const a = w.ang + i * TAU / st.n, x = p.x + Math.cos(a) * R, y = p.y + Math.sin(a) * R;
-        query(x, y, r, (e, dx, dy) => { if (hitCD(e, 'mask', .6)) hitEnemy(e, st.dmg, e.x - p.x, e.y - p.y, 380, 'mask'); });
+        query(x, y, r, (e, dx, dy) => { if (hitCD(e, 'mask', .6)) { sfx('tick'); hitEnemy(e, st.dmg, e.x - p.x, e.y - p.y, 380, 'mask'); } });
         for (const b of G.eb) { if (!b.dead && (b.x - x) ** 2 + (b.y - y) ** 2 < (r + b.r) ** 2) { b.dead = true; G.fx.push({ k: 'dot', x: b.x, y: b.y, vx: 0, vy: -40, c: '#ffe08a', t: 0, life: .3, r: 5 }); } }
       }
       if (!w.evo) continue;
@@ -1128,6 +1158,7 @@ function updateProjs(dt) {
         if (b.dead || !hitCD(e, 'top' + b.id, .25)) return;
         hitEnemy(e, b.dmg, b.vx, b.vy, 60, 'top');
         b.hitset.add(e.id); if (b.hitset.size > 3) b.hitset = new Set([e.id]);
+        sfx('tick');
         if (b.bounce-- <= 0) { b.dead = true; return; }
         b.tgt = nearest(b.x, b.y, 340, b.hitset) || (b.evo ? nearest(b.x, b.y, 600) : null);
       });
@@ -1149,7 +1180,7 @@ function updateProjs(dt) {
       if (q >= 1) {
         b.dead = true;
         query(b.tx, b.ty, b.r, (e, dx, dy) => hitEnemy(e, b.dmg, dx, dy, 120, 'yut'));
-        G.fx.push({ k: 'boom', x: b.tx, y: b.ty, R: b.r, t: 0, life: .35, evo: b.evo });
+        sfx('boom'); G.fx.push({ k: 'boom', x: b.tx, y: b.ty, R: b.r, t: 0, life: .35, evo: b.evo });
       }
     } else if (b.k === 'dart' || b.k === 'magpie') {
       if (b.k === 'magpie') {
