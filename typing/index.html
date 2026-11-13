@@ -118,6 +118,7 @@
     box-shadow:0 3px 0 var(--edge); font-size:22px; cursor:pointer; z-index:30; display:flex; align-items:center; justify-content:center; padding:0; line-height:1; }
   .sound-toggle:active { transform:scale(.92); }
   .sound-toggle.muted { opacity:.7; }
+  .sound-toggle.kbgm-btn { left:66px; }
 
   /* ===== 오버레이 (시작/결과/랭킹) ===== */
   #overlay { position:fixed; inset:0; background:rgba(30,20,70,.34); display:flex; align-items:center; justify-content:center;
@@ -186,7 +187,7 @@
   /* ===== 휴대폰·태블릿 안내 (컴퓨터 전용) ===== */
   #pc-only { display:none; position:fixed; inset:0; z-index:60; background:rgba(30,20,70,.5); align-items:center; justify-content:center; padding:56px 18px 18px; overflow-y:auto; text-align:center; }
   body.no-keyboard #pc-only { display:flex; }
-  body.no-keyboard #overlay, body.no-keyboard .bottom, body.no-keyboard .hud, body.no-keyboard .sound-toggle { display:none; }
+  body.no-keyboard #overlay, body.no-keyboard .bottom, body.no-keyboard .hud, body.no-keyboard .sound-toggle, body.no-keyboard .kbgm-pop { display:none; }
   #pc-only .card { max-width:440px; margin:auto; }
   #pc-only .logo { width:min(330px,92%); height:auto; }
   #pc-only .who { width:128px; display:block; margin:8px auto 4px; }
@@ -344,6 +345,7 @@
   </div>
 </div>
 
+<script src="../audio/bgm.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 import {
@@ -563,6 +565,11 @@ function playBgmNote(freq, startTime, duration, type = 'triangle', vol = 1) {
   } catch (e) { /* ignore */ }
 }
 
+// 배경 음악: 음악 파일 사용 (🔊 버튼은 효과음, 🎵 버튼은 배경 음악)
+KBGM.init({ key:'typing', tracks:{ play:'audio/bgm-play.mp3' } });
+KBGM.allow = () => !document.body.classList.contains('no-keyboard');
+startBGM = function () { KBGM.full(); };
+stopBGM = function () { KBGM.calm(); };
 function toggleSound() {
   soundEnabled = !soundEnabled;
   const btn = document.getElementById('sound-toggle');
@@ -570,11 +577,9 @@ function toggleSound() {
     btn.textContent = '🔊';
     btn.classList.remove('muted');
     initAudio();
-    if (isGameActive) startBGM();
   } else {
     btn.textContent = '🔇';
     btn.classList.add('muted');
-    stopBGM();
   }
 }
 
@@ -910,6 +915,7 @@ function endGame() {
   isGameActive = false;
   cancelAnimationFrame(rafId);
   stopBGM();
+  KBGM.jingle();
   playGameOver();
   clearField();
   clearTimeout(ggobiTimer);
@@ -1004,6 +1010,7 @@ $('rank-back-btn').addEventListener('click', () => { playClick(); showSection(st
 $('skip-btn').addEventListener('click', () => { playClick(); showSection(startSection); });
 saveBtn.addEventListener('click', () => { playClick(); saveScore(); });
 nameInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) saveScore(); });
+KBGM.button({ after: $('sound-toggle') });
 $('sound-toggle').addEventListener('click', e => { toggleSound(); e.currentTarget.blur(); if (isGameActive) wordInput.focus(); });
 
 const HANGUL = /[ㄱ-ㆎ가-힣]/;

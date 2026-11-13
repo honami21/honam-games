@@ -329,6 +329,7 @@
   </div>
 </div>
 
+<script src="../audio/bgm.js"></script>
 <script type="module">
 // ============================================================
 //  FIREBASE SETUP
@@ -647,7 +648,7 @@ window.addEventListener('orientationchange', () => {
 // 아이폰 홈 화면 바로가기 등에서 '클릭'이 안 생기는 경우를 대비해,
 // 버튼은 손가락을 떼는 순간 바로 눌린 것으로 처리
 document.addEventListener('touchend', (e) => {
-  const btn = e.target.closest && e.target.closest('#overlay button, .topbar button, .topbar a, #music-toggle');
+  const btn = e.target.closest && e.target.closest('#overlay button, .topbar button, .topbar a, #music-toggle, #bgm-btn');
   if (!btn || btn.disabled || e.changedTouches.length !== 1) return;
   const t = e.changedTouches[0];
   const r = btn.getBoundingClientRect();
@@ -1177,6 +1178,7 @@ function endGame(won) {
   game.state = won ? 'win' : 'gameover';
   game.elapsedTime = (Date.now() - game.startTime) / 1000;
   stopBGM();
+  KBGM.jingle();
   const score = calculateScore();
   game.finalScore = score;
 
@@ -1381,6 +1383,11 @@ document.getElementById('music-toggle').addEventListener('click', () => {
   toggleMusic();
 });
 updateMusicToggleUI();
+// 배경 음악: 음악 파일 사용 (예전 버튼은 숨기고 크기 조절 버튼으로)
+KBGM.init({ key:'spelling', tracks:{ play:'audio/bgm-play.mp3' } });
+startBGM = function () { KBGM.full(); };
+stopBGM = function () { KBGM.calm(); };
+{ const old = document.getElementById('music-toggle'); KBGM.button({ after: old, id: 'bgm-btn' }); old.style.display = 'none'; }
 document.getElementById('view-ranking-btn').addEventListener('click', () => {
   initAudio();
   showRanking();

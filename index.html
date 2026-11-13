@@ -50,6 +50,7 @@ h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .topbar a,.topbar button{pointer-events:auto;display:inline-flex;align-items:center;gap:6px;border:3px solid var(--line);border-radius:999px;padding:6px 16px;
   font-family:'Jua',sans-serif;font-size:17px;color:var(--ink);background:var(--yellow);box-shadow:none;text-decoration:none;cursor:pointer}
 .topbar a:hover,.topbar button:hover{filter:brightness(1.05)}
+.topbar .kbgm-btn{margin-right:8px}
 .topbar svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
 /* 태블릿: 캐릭터 조금 작게 */
 @media (max-width:1300px){.page{grid-template-columns:180px minmax(0,1fr) 120px}}
@@ -163,5 +164,11 @@ h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
   <span>© 꼬비샘</span>
   <a href="https://www.instagram.com/ggobilog/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="ig" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#feda75"/><stop offset=".35" stop-color="#fa7e1e"/><stop offset=".6" stop-color="#d62976"/><stop offset="1" stop-color="#4f5bd5"/></linearGradient></defs><rect x="1" y="1" width="22" height="22" rx="6.5" fill="url(#ig)"/><rect x="5.5" y="5.5" width="13" height="13" rx="4" fill="none" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="#fff" stroke-width="2"/><circle cx="16.6" cy="7.4" r="1.1" fill="#fff"/></svg>ggobilog</a>
 </footer>
+<script src="audio/bgm.js"></script>
+<script>
+// 첫 화면 음악: 다른 사이트 안에 들어가 있으므로 처음에는 꺼 둠 (켜면 기억)
+KBGM.init({ key:'home', tracks:{ play:'audio/home-bgm.mp3' }, defaultOn:false, vol:.25, calm:1 });
+(function(){ var fs=document.getElementById('fs-btn'); var b=KBGM.button({ className:'', parent:fs.parentNode, long:true }); fs.parentNode.insertBefore(b, fs); })();
+</script>
 </body>
 </html>
