@@ -88,6 +88,15 @@
   #start .howto .kbd { text-shadow:none; }
   #start #title-text { color:#fff; text-shadow:0 3px 0 rgba(8,12,30,.9); }
   #start #title-logo { filter:drop-shadow(0 4px 8px rgba(8,12,30,.6)); }
+  #title { flex-direction:column; justify-content:space-between; padding:max(64px,7vh) 16px max(28px,7vh); background:linear-gradient(rgba(6,10,22,.05), rgba(6,10,22,0) 40%, rgba(6,10,22,.45)), url(img/start-bg.jpg) center/cover no-repeat #0b1228; }
+  #big-logo { width:min(1000px,94vw); max-height:34vh; object-fit:contain; filter:drop-shadow(0 6px 12px rgba(8,12,30,.65)); animation:logoFloat 3.2s ease-in-out infinite; }
+  #big-text { font-size:clamp(40px,9vw,96px); color:#fff; text-shadow:0 4px 0 rgba(8,12,30,.9); word-break:keep-all; text-align:center; }
+  #big-text b { color:#8fe07a; font-weight:normal; }
+  @keyframes logoFloat { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }
+  .title-bottom { text-align:center; }
+  #title-start { font-size:clamp(24px,4vw,36px); padding:16px 52px; animation:startPulse 1.4s ease-in-out infinite; }
+  @keyframes startPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.06); } }
+  .title-tip { margin-top:14px; color:#fff; font-size:clamp(15px,2.2vw,19px); text-shadow:0 2px 0 rgba(8,12,30,.9), 0 0 8px rgba(8,12,30,.9); word-break:keep-all; }
   #title-logo { width:auto; max-width:92%; height:auto; max-height:min(124px,17vh); display:block; margin:0 auto 4px; }
   #title-text { font-size:clamp(30px,6vw,50px); color:var(--ink); line-height:1.15; word-break:keep-all; }
   #title-text b { color:#3e9a52; font-weight:normal; }
@@ -256,7 +265,15 @@
 <div id="touch-hint" class="hidden">화면을 누른 채로 끌면 꼬비가 움직여요</div>
 
 <!-- 시작 화면 -->
-<div class="ov" id="start">
+<div class="ov" id="title">
+  <img id="big-logo" src="img/logo.png" alt="꼬비의 도깨비숲 생존기" onerror="this.style.display='none';document.getElementById('big-text').classList.remove('hidden')">
+  <div id="big-text" class="hidden">꼬비의 <b>도깨비숲</b> 생존기</div>
+  <div class="title-bottom">
+    <button class="game-btn" id="title-start" type="button">▶ 게임 시작</button>
+    <p class="title-tip">무기를 고르고, 몰려오는 요괴를 피해 20분을 버텨요!</p>
+  </div>
+</div>
+<div class="ov hidden" id="start">
   <div class="panel">
     <img id="title-logo" class="hidden" src="img/logo.png" alt="꼬비의 도깨비숲 생존기">
     <div id="title-text">꼬비의 <b>도깨비숲</b> 생존기</div>
@@ -1996,6 +2013,9 @@ $('weapon-pick').addEventListener('click', e => {
   pickedWeapon = b.dataset.id; try { localStorage.setItem('survivor-weapon', pickedWeapon); } catch (er) {}
   buildPick();
 });
+function showTitle() { show('title'); hide('start'); hide('hud'); document.body.classList.remove('playing'); modal = 'title'; }
+$('title-start').addEventListener('click', () => { hide('title'); showStart(); });
+addEventListener('keydown', e => { if (modal === 'title' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); $('title-start').click(); } });
 function showStart() { buildPick(); show('start'); hide('hud'); document.body.classList.remove('playing'); modal = 'start'; }
 function startGame() {
   ensureAudio();
@@ -2030,7 +2050,7 @@ function loop(now) {
   render();
   requestAnimationFrame(loop);
 }
-showStart();
+showTitle();
 requestAnimationFrame(loop);
 // 확인용
 window.lastResultForSave = () => lastResult;
