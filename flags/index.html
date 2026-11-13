@@ -1,0 +1,1867 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="apple-touch-icon" href="/icons/icon-180.png"/>
+<link rel="icon" type="image/png" href="/icons/icon-192.png"/>
+<link rel="manifest" href="/manifest.webmanifest"/>
+<meta name="apple-mobile-web-app-title" content="꼬비샘과 쉬는 시간"/>
+<meta name="theme-color" content="#2a2860"/>
+<title>꼬비의 국기 맞히기 - 꼬비샘과 쉬는 시간</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#fff6ec; --cream2:#f1e2d2; --edge:#ecc9b0; --ink:#2c2950; --ink2:#6f6585;
+    --coral:#ee5a6f; --coral-d:#c8455a; --sun:#ffd25e; --sun-d:#d9a92c; --mint:#7ccf74; --mint-d:#3f8f4a; --sky:#8fc7ff;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+  html, body { width:100%; height:100%; overflow:hidden; background:#2a2860 url(img/bg.jpg) center / cover no-repeat;
+    font-family:'Jua','Apple SD Gothic Neo','Malgun Gothic',sans-serif; color:var(--ink); }
+  body { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+  /* ===== 2D 무대 ===== */
+  #stage { position:fixed; inset:0; overflow:hidden; background:#2a2860 url(img/bg.jpg) center / cover no-repeat; touch-action:none; }
+  #world { position:absolute; left:0; top:0; width:640px; height:0; transform-origin:0 0; }
+  #world > * { position:absolute; }
+  .floor { width:760px; } .floor img { width:100%; display:block; }
+  .plat { width:210px; height:28px; }
+  .plat::before { content:''; position:absolute; inset:0; background:url(img/platform.png) center / 100% 100% no-repeat; transition:filter .2s; }
+  .plat .sign { position:absolute; left:50%; bottom:calc(100% + 6px); transform:translateX(-50%); display:none; }
+  .plat.show .sign { display:block; }
+  .plat .sign span { display:block; white-space:nowrap; background:var(--cream); border:3px solid var(--ink); border-radius:12px; box-shadow:0 3px 0 var(--ink);
+    padding:2px 12px 3px; font-size:22px; color:var(--ink); }
+  .plat.ok::before { filter:hue-rotate(-85deg) saturate(1.3) drop-shadow(0 0 6px rgba(160,255,150,.9)); }
+  .plat.bad { animation:crack .38s linear; } .plat.bad::before { filter:hue-rotate(140deg) saturate(1.4); }
+  .goal { width:480px; height:251px; z-index:2; animation:goalIn .6s cubic-bezier(.3,1.6,.5,1); }
+  .goal > img { width:100%; height:100%; display:block; }
+  @keyframes goalIn { 0%{ opacity:0; scale:.6; translate:0 40px } 100%{ opacity:1; scale:1; translate:0 0 } }
+  .goal > img.banner { position:absolute; left:50%; top:-12px; width:176px; height:auto; margin-left:-88px; filter:drop-shadow(0 3px 0 rgba(44,41,80,.35));
+    opacity:0; scale:.3; transition:opacity .25s, scale .45s cubic-bezier(.3,1.8,.5,1); }
+  .goal.arrived > img.banner { opacity:1; scale:1; }
+  @keyframes crack { 0%,100%{ translate:0 0 } 20%{ translate:-5px 2px } 40%{ translate:5px -1px } 60%{ translate:-4px 1px } 80%{ translate:4px 0 } }
+  .plat.gone { visibility:hidden; }
+  .flagboard { width:124px; height:88px; border:5px solid var(--ink); border-radius:12px; background:#fff; overflow:visible; box-shadow:0 6px 0 rgba(44,41,80,.45);
+    display:none; animation:bob 2.4s ease-in-out infinite; }
+  .flagboard.show { display:block; }
+  .flagboard img { width:100%; height:100%; object-fit:cover; display:block; border-radius:6px; }
+  .flagboard::before { content:''; position:absolute; left:50%; top:-36px; width:26px; height:34px; margin-left:-13px; background:url(img/wisp.png) center / contain no-repeat; }
+  .deco { animation:bob 3s ease-in-out infinite; } .deco img { width:44px; opacity:.9; }
+  @keyframes bob { 0%,100%{ translate:0 0 } 50%{ translate:0 -8px } }
+  #ggobi { left:0; top:0; width:140px; height:130px; transform-origin:50% 100%; object-fit:contain; object-position:center bottom; z-index:5; pointer-events:none;
+    filter:drop-shadow(0 4px 0 rgba(20,10,50,.25)); }
+  #ggobi.land { animation:land .2s ease-out; }
+  @keyframes land { 0%{ scale:1.08 .9 } 100%{ scale:1 1 } }
+  #ggobi.fall { transform-origin:50% 50%; animation:wobble .25s ease-in-out infinite alternate; }
+  @keyframes wobble { from{ rotate:-12deg } to{ rotate:12deg } }
+  #ggobi.poof { animation:poof .4s ease-out; }
+  @keyframes poof { 0%{ opacity:0; scale:.5 } 100%{ opacity:1; scale:1 } }
+  .fx-star { z-index:6; animation:fxStar .85s ease-out forwards; } .fx-star img { width:28px; }
+  @keyframes fxStar { 0%{ translate:0 0; opacity:1; scale:.6 } 100%{ translate:var(--dx) var(--dy); opacity:0; scale:1.1 } }
+  .fx-shard { width:16px; height:10px; background:rgba(190,228,255,.95); border:2px solid var(--ink); border-radius:3px; z-index:6; animation:fxShard 1.05s ease-in forwards; }
+  @keyframes fxShard { 0%{ translate:0 0; rotate:0deg; opacity:1 } 100%{ translate:var(--dx) var(--dy); rotate:var(--r); opacity:0 } }
+  .hidden { display:none !important; }
+
+  /* ===== 상단 바 (쉬는 시간 / 소리 / 전체화면) ===== */
+  .topbar{position:fixed;top:12px;left:12px;right:12px;z-index:50;display:flex;justify-content:space-between;pointer-events:none}
+  .topbar .right{display:flex;gap:8px}
+  .topbar a,.topbar button{pointer-events:auto;display:inline-flex;align-items:center;gap:6px;border:none;border-radius:20px;padding:7px 14px;
+    font-family:'Jua',sans-serif;font-size:16px;color:var(--ink);background:rgba(255,248,238,.94);box-shadow:0 3px 0 var(--edge);text-decoration:none;cursor:pointer;line-height:1.2}
+  .topbar a:hover,.topbar button:hover{filter:brightness(1.04)}
+  .topbar svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+  #bgmToggle{padding:7px 10px;font-size:16px}
+  #bgmToggle.muted{opacity:.7}
+
+  /* ===== 게임 중 점수판 ===== */
+  #hud { position:fixed; top:58px; left:12px; right:12px; display:flex; justify-content:space-between; align-items:flex-start; pointer-events:none; z-index:10; }
+  .panel { background:var(--cream); border:3px solid var(--ink); border-radius:20px; box-shadow:0 5px 0 var(--ink); padding:8px 14px 10px; text-align:center; color:var(--ink); }
+  .label { font-size:15px; color:var(--ink2); margin-bottom:4px; }
+  .flag-mini { width:132px; height:88px; margin:4px auto 0; background:#eee; border:3px solid var(--ink); border-radius:10px; overflow:hidden; }
+  .flag-mini img { width:100%; height:100%; object-fit:cover; display:block; }
+  .score-num { font-size:30px; color:var(--coral-d); line-height:1.1; }
+  .score-num small { font-size:20px; color:var(--ink2); }
+  .combo-display { margin-top:2px; font-size:16px; color:var(--ink); }
+  .combo-display span { color:var(--coral-d); }
+  .timer-display { margin-top:6px; padding-top:6px; border-top:2px dashed var(--cream2); font-size:19px; color:var(--ink); letter-spacing:.5px; }
+
+  #crosshair { display:none !important; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:6px; height:6px; border-radius:50%;
+    background:rgba(255,255,255,.8); box-shadow:0 0 4px rgba(0,0,0,.6); pointer-events:none; z-index:10; }
+
+  /* ===== 콤보 알림 ===== */
+  #comboPopup { position:fixed; top:30%; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:8px;
+    font-size:clamp(38px,7vw,60px); color:var(--sun); white-space:nowrap; pointer-events:none; z-index:12; opacity:0;
+    text-shadow:0 3px 0 var(--ink), 3px 0 0 var(--ink), -3px 0 0 var(--ink), 0 -3px 0 var(--ink), 0 7px 0 rgba(20,10,50,.35); }
+  #comboPopup img { height:1.9em; filter:drop-shadow(0 4px 0 rgba(20,10,50,.3)); }
+  #comboPopup.bad { color:#fff; }
+  @keyframes comboShow {
+    0%   { opacity:0; transform:translateX(-50%) scale(1.8); }
+    20%  { opacity:1; transform:translateX(-50%) scale(1); }
+    80%  { opacity:1; transform:translateX(-50%) scale(1); }
+    100% { opacity:0; transform:translateX(-50%) scale(.75); }
+  }
+  #comboPopup.show { animation:comboShow 1.2s ease-out; }
+
+  /* ===== 떨어졌을 때 카운트다운 ===== */
+  #countdown { position:fixed; inset:0; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:15; pointer-events:none; gap:8px; }
+  .countdown-label { display:flex; align-items:center; gap:8px; background:var(--cream); color:var(--coral-d); border:3px solid var(--ink); box-shadow:0 5px 0 var(--ink);
+    padding:6px 24px 6px 10px; border-radius:24px; font-size:clamp(20px,3.6vw,26px); }
+  .countdown-label img { height:64px; margin:-22px 0 -6px; }
+  .countdown-num { font-size:clamp(110px,22vw,190px); color:#fff; line-height:1;
+    text-shadow:0 6px 0 var(--ink), 6px 0 0 var(--ink), -6px 0 0 var(--ink), 0 -6px 0 var(--ink), 0 12px 0 rgba(20,10,50,.35); }
+  @keyframes cdpop { 0%{ transform:scale(1.8); opacity:0; } 25%{ transform:scale(1); opacity:1; } 100%{ transform:scale(1); opacity:1; } }
+  .countdown-num.pop { animation:cdpop .45s ease-out; }
+
+  /* ===== 휴대폰·태블릿 터치 버튼 ===== */
+  #touch { display:none; }
+  @media (pointer:coarse) { body.playing #touch { display:block; } }
+  body.touch-on.playing #touch { display:block; }
+  .tbtn { position:fixed; z-index:16; width:62px; height:62px; border-radius:20px; border:3px solid var(--ink); box-shadow:0 5px 0 var(--ink);
+    background:rgba(255,246,236,.92); color:var(--ink); display:flex; align-items:center; justify-content:center; touch-action:none; padding:0; cursor:pointer; }
+  .tbtn svg { width:30px; height:30px; fill:none; stroke:currentColor; stroke-width:3.2; stroke-linecap:round; stroke-linejoin:round; }
+  .tbtn.on { transform:translateY(4px); box-shadow:0 1px 0 var(--ink); background:var(--sun); }
+  #t-left  { left:18px;  bottom:28px; width:76px; height:76px; }
+  #t-right { left:110px; bottom:28px; width:76px; height:76px; }
+  #t-jump  { right:20px; bottom:30px; width:96px; height:96px; border-radius:50%; background:rgba(255,210,94,.95); font-size:24px; font-family:'Jua',sans-serif; }
+  #t-jump.on { background:var(--coral); color:#fff; }
+  .t-tip { position:fixed; left:50%; bottom:14px; transform:translateX(-50%); z-index:16; font-size:14px; color:#fff; white-space:nowrap; text-shadow:0 2px 0 rgba(20,10,50,.7); pointer-events:none; }
+
+  /* ===== 화면 덮개 (시작 / 결과 / 랭킹) ===== */
+  #overlay { position:fixed; inset:0; background:rgba(30,20,70,.34); display:flex; align-items:center; justify-content:center;
+    text-align:center; padding:58px 16px 16px; z-index:20; overflow-y:auto; }
+  .section { display:flex; flex-direction:column; align-items:center; gap:14px; width:100%; max-width:600px; margin:auto; }
+  .card { background:var(--cream); border:3px solid var(--ink); border-radius:28px; box-shadow:0 8px 0 var(--ink), 0 16px 30px rgba(20,10,50,.35);
+    padding:20px 24px 24px; width:100%; }
+  .logo { height:auto; width:min(420px, 92%); display:block; margin:-4px auto 0; }
+  .lead { font-size:clamp(16px,2.6vw,20px); line-height:1.5; color:var(--ink); margin:8px 0 12px; word-break:keep-all; }
+  .lead b { color:var(--coral-d); font-weight:normal; }
+  .start-wrap { position:relative; width:100%; }
+  .start-ggobi { position:absolute; width:150px; right:-104px; bottom:-20px; pointer-events:none; filter:drop-shadow(0 4px 0 rgba(20,10,50,.25)); }
+  @media (max-width:860px){ .start-ggobi{ display:none; } }
+  .result-ggobi { width:120px; display:block; margin:-64px auto 0; filter:drop-shadow(0 4px 0 rgba(44,41,80,.2)); }
+
+  .diff-section { background:#fff; border:2px solid var(--cream2); border-radius:18px; padding:12px 12px 14px; }
+  .diff-title { color:var(--coral-d); font-size:18px; margin-bottom:8px; }
+  .diff-buttons { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+  .diff-btn { padding:9px 16px; font-size:17px; border-radius:30px; border:3px solid var(--ink); box-shadow:0 4px 0 var(--ink);
+    background:var(--sun); color:var(--ink); cursor:pointer; font-family:'Jua',sans-serif; transition:transform .08s, box-shadow .08s; }
+  .diff-btn:hover { filter:brightness(1.05); }
+  .diff-btn:active { transform:translateY(3px); box-shadow:0 1px 0 var(--ink); }
+  .diff-btn small { font-size:14px; color:var(--ink2); }
+  .diff-btn.hard { background:var(--coral); color:#fff; }
+  .diff-btn.hard small { color:#ffe3e6; }
+  .diff-btn.cont-btn { background:var(--sky); }
+  .ranking-note { margin-top:10px; font-size:14px; color:var(--ink2); }
+
+  .hint { margin-top:12px; background:#fff; border:2px solid var(--cream2); border-radius:18px; padding:10px 14px; text-align:center; }
+  .hint-title { color:var(--coral-d); font-size:17px; margin-bottom:4px; }
+  .hint-row { font-size:15px; line-height:1.9; color:var(--ink); word-break:keep-all; }
+  .hint-touch { display:none; }
+  @media (pointer:coarse) { .hint-keys { display:none; } .hint-touch { display:block; } }
+  kbd { display:inline-block; background:#fff; border:2px solid var(--ink); border-radius:7px; padding:0 6px; margin:0 1px;
+    font-family:'Jua',sans-serif; font-size:13px; color:var(--ink); box-shadow:0 2px 0 var(--ink); min-width:22px; text-align:center; line-height:1.5; }
+
+  .button-group { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; width:100%; }
+  .game-btn { padding:11px 24px; font-size:clamp(17px,2.8vw,21px); border-radius:40px; border:3px solid var(--ink); color:#fff;
+    cursor:pointer; min-width:140px; font-family:'Jua',sans-serif; box-shadow:0 5px 0 var(--ink); transition:transform .08s, box-shadow .08s; }
+  .game-btn:active { transform:translateY(4px); box-shadow:0 1px 0 var(--ink); }
+  .game-btn:disabled { opacity:.55; cursor:not-allowed; }
+  .btn-primary { background:var(--coral); }
+  .btn-info { background:var(--sun); color:var(--ink); }
+  .btn-secondary { background:#fff; color:var(--ink); }
+
+  /* 결과 */
+  .end-title { font-size:clamp(30px,5vw,40px); font-weight:normal; color:var(--coral-d); }
+  .result-card { background:#fff; border:2px solid var(--cream2); border-radius:18px; padding:10px 18px; width:100%; max-width:380px; margin:10px auto 0; }
+  .result-row { display:flex; justify-content:space-between; padding:4px 2px; font-size:17px; }
+  .result-row .label { color:var(--ink2); font-size:17px; margin:0; }
+  .result-total { border-top:2px dashed var(--cream2); margin-top:6px; padding-top:8px; }
+  .result-total .label { font-size:19px; color:var(--ink); }
+  .result-total .value { font-size:28px; color:var(--coral-d); }
+
+  .save-form { width:100%; max-width:380px; margin:6px auto 0; }
+  .form-row { margin:8px 0; text-align:left; }
+  .form-row label { display:block; margin:0 0 4px 6px; font-size:15px; color:var(--ink2); }
+  .form-row input { width:100%; padding:10px 16px; border-radius:16px; border:2.5px solid var(--cream2); background:#fff; color:var(--ink);
+    font-size:17px; font-family:'Jua',sans-serif; -webkit-user-select:text; user-select:text; outline:none; }
+  .form-row input:focus { border-color:var(--coral); }
+  .form-row input::placeholder { color:#c9b5a3; }
+  .save-status { font-size:14px; color:var(--mint-d); min-height:18px; margin-top:2px; }
+  .save-status.error { color:var(--coral-d); }
+  .practice-note { background:#fff; border:2px dashed var(--cream2); padding:10px 14px; border-radius:16px; font-size:15px; color:var(--ink2); max-width:380px; margin:12px auto; line-height:1.6; }
+  .practice-note b { color:var(--coral-d); font-weight:normal; }
+
+  /* 랭킹 */
+  .rank-title { font-size:clamp(28px,4.5vw,36px); font-weight:normal; color:var(--coral-d); }
+  .rank-sub { font-size:14px; color:var(--ink2); }
+  .ranking-list { width:100%; max-height:min(46vh,420px); overflow-y:auto; background:#fff; border:2px solid var(--cream2); border-radius:18px; padding:6px; }
+  .ranking-row { display:grid; grid-template-columns:44px 1fr auto; gap:10px; padding:8px 10px; border-bottom:2px dashed #f3e6d6; align-items:center; font-size:16px; text-align:left; }
+  .ranking-row:last-child { border-bottom:none; }
+  .ranking-row.me { background:#fff1c9; border:2px solid var(--sun); border-radius:12px; }
+  .rank-num { color:var(--coral-d); text-align:center; font-size:18px; }
+  .rank-name .school { display:block; font-size:12px; color:var(--ink2); margin-top:1px; }
+  .rank-score { text-align:right; }
+  .rank-score .score-main { color:var(--coral-d); font-size:18px; }
+  .rank-score .score-sub { display:block; font-size:12px; color:var(--ink2); margin-top:1px; }
+  .my-rank-note { padding:8px 12px; background:#fff1c9; border:2px solid var(--sun); border-radius:14px; font-size:15px; color:var(--ink); }
+  .ranking-empty { padding:30px 20px; text-align:center; color:var(--ink2); line-height:1.6; }
+
+  /* ===== 작은 화면 ===== */
+  @media (max-width:760px), (pointer:coarse){
+    .topbar{top:6px;left:6px;right:6px}
+    .topbar a,.topbar button{font-size:13px;padding:6px 10px;gap:4px}
+    #hud { top:44px; left:6px; right:6px; }
+    .panel { padding:5px 9px 7px; border-radius:16px; border-width:2.5px; box-shadow:0 3px 0 var(--ink); }
+    .label { font-size:12px; margin-bottom:2px; }
+    .flag-mini { width:96px; height:64px; border-width:2.5px; }
+    .score-num { font-size:22px; } .score-num small { font-size:15px; }
+    .combo-display { font-size:13px; }
+    .timer-display { font-size:15px; margin-top:4px; padding-top:4px; }
+    .card { padding:16px 14px 18px; border-radius:24px; }
+    .diff-btn { font-size:15px; padding:8px 12px; }
+  }
+  @media (max-height:520px) and (pointer:coarse){
+    .tbtn { width:52px; height:52px; }
+    #t-left { left:14px; bottom:16px; width:62px; height:62px; } #t-right { left:88px; bottom:16px; width:62px; height:62px; }
+    #t-jump { width:80px; height:80px; bottom:20px; }
+    .t-tip { display:none; }
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a href="../" id="home-link" title="꼬비샘과 쉬는 시간으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">쉬는 시간</span></a>
+  <div class="right">
+    <button id="bgmToggle" type="button" title="소리 켜기/끄기" aria-label="소리 켜기/끄기">🔊</button>
+    <button id="fs-btn" type="button" title="전체화면"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="t" id="fs-txt">전체화면</span></button>
+  </div>
+</div>
+<script>
+(function(){
+  var b=document.getElementById('fs-btn'),t=document.getElementById('fs-txt'),d=document,el=d.documentElement;
+  var can=d.fullscreenEnabled||d.webkitFullscreenEnabled;
+  var framed=false;try{framed=window.top!==window;}catch(e){framed=true;}
+  if(!can){
+    if(framed){t.textContent='새 창으로';b.title='새 창으로 크게 열기';b.addEventListener('click',function(){window.open(location.href,'_blank');});}
+    else b.style.display='none';
+    return;
+  }
+  var cur=function(){return d.fullscreenElement||d.webkitFullscreenElement;};
+  b.addEventListener('click',function(){
+    if(cur()){(d.exitFullscreen||d.webkitExitFullscreen).call(d);}
+    else{var pr=(el.requestFullscreen||el.webkitRequestFullscreen).call(el);if(pr&&pr.catch)pr.catch(function(){});}
+    b.blur();
+  });
+  var upd=function(){t.textContent=cur()?'나가기':'전체화면';};
+  d.addEventListener('fullscreenchange',upd);d.addEventListener('webkitfullscreenchange',upd);
+})();
+</script>
+
+<!-- 2D 무대 -->
+<div id="stage"><div id="world"><img id="ggobi" src="img/ggobi-back.png" alt="꼬비"></div></div>
+
+<!-- 게임 중 점수판 -->
+<div id="hud" class="hidden">
+  <div class="panel">
+    <div class="label">이 국기는 어느 나라일까요?</div>
+    <div class="flag-mini" id="flagMini"></div>
+    <div class="timer-display hidden" id="timerWrap">⏱ <span id="timer">00:00</span></div>
+  </div>
+  <div class="panel">
+    <div class="label">문제</div>
+    <div class="score-num"><span id="correctNum">1</span><small> / <span id="totalQ">30</span></small></div>
+    <div class="combo-display"><span id="combo">0</span> 연속</div>
+  </div>
+</div>
+<div id="crosshair" class="hidden"></div>
+
+<div id="comboPopup"></div>
+
+<div id="countdown" class="hidden">
+  <div class="countdown-label"><img src="img/ggobi-hurt.png" alt="">앗, 떨어졌어요! 곧 다시 시작해요</div>
+  <div class="countdown-num" id="countdownNum">3</div>
+</div>
+
+<!-- 휴대폰·태블릿 터치 버튼 -->
+<div id="touch">
+  <button class="tbtn" id="t-left" data-key="ArrowLeft" aria-label="왼쪽"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <button class="tbtn" id="t-right" data-key="ArrowRight" aria-label="오른쪽"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+  <button class="tbtn" id="t-jump" data-key="Space" aria-label="점프">점프</button>
+</div>
+
+<div id="overlay">
+
+  <!-- 시작 화면 -->
+  <div id="start-section" class="section">
+    <div class="start-wrap">
+      <div class="card">
+        <img class="logo" src="img/logo.png" alt="꼬비의 국기 맞히기" width="1000" height="312">
+        <p class="lead">꼬비가 하늘 위로 폴짝폴짝 올라가요!<br>국기를 보고 <b>맞는 나라 발판</b>으로 점프해요.<br>틀린 발판을 밟으면 유리가 깨져 떨어져요.</p>
+        <div class="diff-section">
+          <div class="diff-title">난이도 고르기</div>
+          <div class="diff-buttons">
+            <button class="diff-btn" data-mode="tier" data-value="30">쉬움 <small>30개 나라</small></button>
+            <button class="diff-btn" data-mode="tier" data-value="100">보통 <small>100개 나라</small></button>
+            <button class="diff-btn hard" data-mode="tier" data-value="200">🏆 어려움 <small>전 세계</small></button>
+          </div>
+          <div class="diff-title" style="margin-top:14px">대륙별로 하기</div>
+          <div class="diff-buttons">
+            <button class="diff-btn cont-btn" data-mode="cont" data-value="asia">아시아</button>
+            <button class="diff-btn cont-btn" data-mode="cont" data-value="europe">유럽</button>
+            <button class="diff-btn cont-btn" data-mode="cont" data-value="america">아메리카</button>
+            <button class="diff-btn cont-btn" data-mode="cont" data-value="africa">아프리카</button>
+            <button class="diff-btn cont-btn" data-mode="cont" data-value="oceania">오세아니아</button>
+          </div>
+          <p class="ranking-note">🏆 <b>어려움(전 세계)</b>만 랭킹에 기록돼요.</p>
+        </div>
+        <div class="hint">
+          <div class="hint-title">조작법</div>
+          <div class="hint-keys">
+            <div class="hint-row">이동 <kbd>←</kbd><kbd>→</kbd> 또는 <kbd>A</kbd><kbd>D</kbd> · 점프 <kbd>Space</kbd> 또는 <kbd>↑</kbd></div>
+          </div>
+          <div class="hint-touch">
+            <div class="hint-row">왼쪽 화살표 버튼으로 이동, 오른쪽 <b>점프</b> 버튼으로 점프!</div>
+          </div>
+        </div>
+        <div class="button-group" style="margin-top:16px">
+          <button id="view-ranking-btn" class="game-btn btn-info">🏆 랭킹 보기</button>
+        </div>
+      </div>
+      <img class="start-ggobi" src="img/ggobi-globe.png" alt="">
+    </div>
+  </div>
+
+  <!-- 결과 화면 -->
+  <div id="gameover-section" class="section hidden">
+    <div class="card">
+      <img class="result-ggobi" src="img/ggobi-cheer.png" alt="">
+      <h1 class="end-title">완주했어요!</h1>
+      <div class="result-card">
+        <div class="result-row"><span class="label">🎯 난이도</span><span class="value" id="r-diff">-</span></div>
+        <div class="result-row hidden" id="r-time-row"><span class="label">⏱ 걸린 시간</span><span class="value" id="r-time">-</span></div>
+        <div class="result-row"><span class="label">🔥 최고 연속</span><span class="value" id="r-combo">0</span></div>
+        <div class="result-row hidden" id="r-fail-row"><span class="label">💥 떨어진 횟수</span><span class="value" id="r-fail">0</span></div>
+        <div class="result-row result-total"><span class="label">⭐ 최종 점수</span><span class="value" id="r-score">0</span></div>
+      </div>
+
+      <div id="save-form" class="save-form">
+        <div class="form-row">
+          <label for="input-school">🏫 학교명</label>
+          <input id="input-school" type="text" maxlength="20" placeholder="예: 행복초등학교" autocomplete="off">
+        </div>
+        <div class="form-row">
+          <label for="input-name">👤 이름</label>
+          <input id="input-name" type="text" maxlength="10" placeholder="이름 입력" autocomplete="off">
+        </div>
+        <div class="save-status" id="save-status"></div>
+        <div class="button-group" style="margin-top:6px;">
+          <button id="save-btn" class="game-btn btn-primary">💾 기록 저장</button>
+          <button id="skip-btn" class="game-btn btn-secondary">저장 안 함</button>
+        </div>
+      </div>
+
+      <div id="practice-note" class="practice-note hidden">
+        이번 판은 연습이에요.<br><b>어려움(전 세계)</b>만 랭킹에 기록돼요.
+      </div>
+
+      <div id="after-save" class="hidden" style="margin-top:14px">
+        <div class="button-group">
+          <button id="goto-ranking-btn" class="game-btn btn-info">🏆 랭킹 보기</button>
+          <button id="retry-btn" class="game-btn btn-primary">🔄 다시 도전</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 랭킹 화면 -->
+  <div id="ranking-section" class="section hidden">
+    <div class="card" style="display:flex;flex-direction:column;gap:10px;align-items:center">
+      <img class="result-ggobi" src="img/ggobi-trophy.png" alt="">
+      <h1 class="rank-title">🏆 랭킹 TOP 50</h1>
+      <p class="rank-sub">어려움(전 세계) 기록만 보여요.</p>
+      <div class="ranking-list" id="ranking-list">불러오는 중...</div>
+      <div id="my-rank-note" class="my-rank-note hidden"></div>
+      <div class="button-group">
+        <button id="rank-back-btn" class="game-btn btn-secondary">← 처음으로</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+// ============================================================
+//  FIREBASE SETUP
+// ============================================================
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, query, where, orderBy, limit, getDocs, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDw2EvTh7PVBrPnkii2F1kPGcqbzcIo41s",
+  authDomain: "honamsaem-class-games.firebaseapp.com",
+  projectId: "honamsaem-class-games",
+  storageBucket: "honamsaem-class-games.firebasestorage.app",
+  messagingSenderId: "251087835017",
+  appId: "1:251087835017:web:ef601265c56affe8ca1b58"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+
+const COLLECTION_NAME = 'flag-jump-scores';
+
+// ============================================================
+//  COUNTRY DATA (ISO 2-letter code, Korean name, continent, tier)
+//  tier: 30 = top 30 (also in 100, all)
+//        100 = top 100 (also in all)
+//        200 = in all only
+// ============================================================
+const COUNTRIES = [
+  // === TIER 30 (주요 30개국) ===
+  { code:'kr', ko:'대한민국', continent:'asia', tier:30 },
+  { code:'us', ko:'미국', continent:'america', tier:30 },
+  { code:'jp', ko:'일본', continent:'asia', tier:30 },
+  { code:'cn', ko:'중국', continent:'asia', tier:30 },
+  { code:'gb', ko:'영국', continent:'europe', tier:30 },
+  { code:'fr', ko:'프랑스', continent:'europe', tier:30 },
+  { code:'de', ko:'독일', continent:'europe', tier:30 },
+  { code:'it', ko:'이탈리아', continent:'europe', tier:30 },
+  { code:'es', ko:'스페인', continent:'europe', tier:30 },
+  { code:'ru', ko:'러시아', continent:'europe', tier:30 },
+  { code:'ca', ko:'캐나다', continent:'america', tier:30 },
+  { code:'mx', ko:'멕시코', continent:'america', tier:30 },
+  { code:'br', ko:'브라질', continent:'america', tier:30 },
+  { code:'ar', ko:'아르헨티나', continent:'america', tier:30 },
+  { code:'au', ko:'호주', continent:'oceania', tier:30 },
+  { code:'nz', ko:'뉴질랜드', continent:'oceania', tier:30 },
+  { code:'in', ko:'인도', continent:'asia', tier:30 },
+  { code:'th', ko:'태국', continent:'asia', tier:30 },
+  { code:'vn', ko:'베트남', continent:'asia', tier:30 },
+  { code:'ph', ko:'필리핀', continent:'asia', tier:30 },
+  { code:'id', ko:'인도네시아', continent:'asia', tier:30 },
+  { code:'sg', ko:'싱가포르', continent:'asia', tier:30 },
+  { code:'my', ko:'말레이시아', continent:'asia', tier:30 },
+  { code:'sa', ko:'사우디아라비아', continent:'asia', tier:30 },
+  { code:'tr', ko:'튀르키예', continent:'asia', tier:30 },
+  { code:'eg', ko:'이집트', continent:'africa', tier:30 },
+  { code:'za', ko:'남아프리카공화국', continent:'africa', tier:30 },
+  { code:'nl', ko:'네덜란드', continent:'europe', tier:30 },
+  { code:'ch', ko:'스위스', continent:'europe', tier:30 },
+  { code:'gr', ko:'그리스', continent:'europe', tier:30 },
+
+  // === TIER 100 (주요 100개국 추가분) ===
+  // 유럽
+  { code:'pt', ko:'포르투갈', continent:'europe', tier:100 },
+  { code:'pl', ko:'폴란드', continent:'europe', tier:100 },
+  { code:'se', ko:'스웨덴', continent:'europe', tier:100 },
+  { code:'no', ko:'노르웨이', continent:'europe', tier:100 },
+  { code:'fi', ko:'핀란드', continent:'europe', tier:100 },
+  { code:'dk', ko:'덴마크', continent:'europe', tier:100 },
+  { code:'ie', ko:'아일랜드', continent:'europe', tier:100 },
+  { code:'be', ko:'벨기에', continent:'europe', tier:100 },
+  { code:'at', ko:'오스트리아', continent:'europe', tier:100 },
+  { code:'cz', ko:'체코', continent:'europe', tier:100 },
+  { code:'hu', ko:'헝가리', continent:'europe', tier:100 },
+  { code:'ua', ko:'우크라이나', continent:'europe', tier:100 },
+  { code:'ro', ko:'루마니아', continent:'europe', tier:100 },
+  { code:'bg', ko:'불가리아', continent:'europe', tier:100 },
+  { code:'hr', ko:'크로아티아', continent:'europe', tier:100 },
+  { code:'rs', ko:'세르비아', continent:'europe', tier:100 },
+  { code:'sk', ko:'슬로바키아', continent:'europe', tier:100 },
+  { code:'is', ko:'아이슬란드', continent:'europe', tier:100 },
+  { code:'lu', ko:'룩셈부르크', continent:'europe', tier:100 },
+  { code:'mc', ko:'모나코', continent:'europe', tier:100 },
+  // 아시아
+  { code:'kp', ko:'북한', continent:'asia', tier:100 },
+  { code:'tw', ko:'대만', continent:'asia', tier:100 },
+  { code:'mn', ko:'몽골', continent:'asia', tier:100 },
+  { code:'kz', ko:'카자흐스탄', continent:'asia', tier:100 },
+  { code:'uz', ko:'우즈베키스탄', continent:'asia', tier:100 },
+  { code:'pk', ko:'파키스탄', continent:'asia', tier:100 },
+  { code:'bd', ko:'방글라데시', continent:'asia', tier:100 },
+  { code:'np', ko:'네팔', continent:'asia', tier:100 },
+  { code:'lk', ko:'스리랑카', continent:'asia', tier:100 },
+  { code:'mm', ko:'미얀마', continent:'asia', tier:100 },
+  { code:'kh', ko:'캄보디아', continent:'asia', tier:100 },
+  { code:'la', ko:'라오스', continent:'asia', tier:100 },
+  { code:'il', ko:'이스라엘', continent:'asia', tier:100 },
+  { code:'ir', ko:'이란', continent:'asia', tier:100 },
+  { code:'iq', ko:'이라크', continent:'asia', tier:100 },
+  { code:'ae', ko:'아랍에미리트', continent:'asia', tier:100 },
+  { code:'qa', ko:'카타르', continent:'asia', tier:100 },
+  { code:'kw', ko:'쿠웨이트', continent:'asia', tier:100 },
+  { code:'jo', ko:'요르단', continent:'asia', tier:100 },
+  { code:'lb', ko:'레바논', continent:'asia', tier:100 },
+  { code:'sy', ko:'시리아', continent:'asia', tier:100 },
+  { code:'af', ko:'아프가니스탄', continent:'asia', tier:100 },
+  // 아메리카
+  { code:'cl', ko:'칠레', continent:'america', tier:100 },
+  { code:'co', ko:'콜롬비아', continent:'america', tier:100 },
+  { code:'pe', ko:'페루', continent:'america', tier:100 },
+  { code:'ve', ko:'베네수엘라', continent:'america', tier:100 },
+  { code:'uy', ko:'우루과이', continent:'america', tier:100 },
+  { code:'ec', ko:'에콰도르', continent:'america', tier:100 },
+  { code:'bo', ko:'볼리비아', continent:'america', tier:100 },
+  { code:'py', ko:'파라과이', continent:'america', tier:100 },
+  { code:'cu', ko:'쿠바', continent:'america', tier:100 },
+  { code:'do', ko:'도미니카공화국', continent:'america', tier:100 },
+  { code:'cr', ko:'코스타리카', continent:'america', tier:100 },
+  { code:'pa', ko:'파나마', continent:'america', tier:100 },
+  { code:'jm', ko:'자메이카', continent:'america', tier:100 },
+  { code:'ht', ko:'아이티', continent:'america', tier:100 },
+  { code:'gt', ko:'과테말라', continent:'america', tier:100 },
+  // 아프리카
+  { code:'ng', ko:'나이지리아', continent:'africa', tier:100 },
+  { code:'ma', ko:'모로코', continent:'africa', tier:100 },
+  { code:'dz', ko:'알제리', continent:'africa', tier:100 },
+  { code:'tn', ko:'튀니지', continent:'africa', tier:100 },
+  { code:'ly', ko:'리비아', continent:'africa', tier:100 },
+  { code:'sd', ko:'수단', continent:'africa', tier:100 },
+  { code:'et', ko:'에티오피아', continent:'africa', tier:100 },
+  { code:'gh', ko:'가나', continent:'africa', tier:100 },
+  { code:'ke', ko:'케냐', continent:'africa', tier:100 },
+  { code:'ug', ko:'우간다', continent:'africa', tier:100 },
+  { code:'zw', ko:'짐바브웨', continent:'africa', tier:100 },
+  { code:'ao', ko:'앙골라', continent:'africa', tier:100 },
+  // 오세아니아
+  { code:'fj', ko:'피지', continent:'oceania', tier:100 },
+  { code:'pg', ko:'파푸아뉴기니', continent:'oceania', tier:100 },
+  { code:'ws', ko:'사모아', continent:'oceania', tier:100 },
+  { code:'to', ko:'통가', continent:'oceania', tier:100 },
+
+  // === TIER 200 (전 세계 추가분) ===
+  // 유럽
+  { code:'al', ko:'알바니아', continent:'europe', tier:200 },
+  { code:'mk', ko:'북마케도니아', continent:'europe', tier:200 },
+  { code:'ba', ko:'보스니아헤르체고비나', continent:'europe', tier:200 },
+  { code:'me', ko:'몬테네그로', continent:'europe', tier:200 },
+  { code:'md', ko:'몰도바', continent:'europe', tier:200 },
+  { code:'by', ko:'벨라루스', continent:'europe', tier:200 },
+  { code:'lv', ko:'라트비아', continent:'europe', tier:200 },
+  { code:'lt', ko:'리투아니아', continent:'europe', tier:200 },
+  { code:'ee', ko:'에스토니아', continent:'europe', tier:200 },
+  { code:'si', ko:'슬로베니아', continent:'europe', tier:200 },
+  { code:'ad', ko:'안도라', continent:'europe', tier:200 },
+  { code:'sm', ko:'산마리노', continent:'europe', tier:200 },
+  { code:'li', ko:'리히텐슈타인', continent:'europe', tier:200 },
+  { code:'mt', ko:'몰타', continent:'europe', tier:200 },
+  { code:'cy', ko:'키프로스', continent:'europe', tier:200 },
+  { code:'va', ko:'바티칸', continent:'europe', tier:200 },
+  // 아시아
+  { code:'bt', ko:'부탄', continent:'asia', tier:200 },
+  { code:'mv', ko:'몰디브', continent:'asia', tier:200 },
+  { code:'tl', ko:'동티모르', continent:'asia', tier:200 },
+  { code:'bn', ko:'브루나이', continent:'asia', tier:200 },
+  { code:'om', ko:'오만', continent:'asia', tier:200 },
+  { code:'ye', ko:'예멘', continent:'asia', tier:200 },
+  { code:'bh', ko:'바레인', continent:'asia', tier:200 },
+  { code:'kg', ko:'키르기스스탄', continent:'asia', tier:200 },
+  { code:'tj', ko:'타지키스탄', continent:'asia', tier:200 },
+  { code:'tm', ko:'투르크메니스탄', continent:'asia', tier:200 },
+  { code:'am', ko:'아르메니아', continent:'asia', tier:200 },
+  { code:'az', ko:'아제르바이잔', continent:'asia', tier:200 },
+  { code:'ge', ko:'조지아', continent:'asia', tier:200 },
+  // 아프리카
+  { code:'sn', ko:'세네갈', continent:'africa', tier:200 },
+  { code:'ci', ko:'코트디부아르', continent:'africa', tier:200 },
+  { code:'cm', ko:'카메룬', continent:'africa', tier:200 },
+  { code:'cg', ko:'콩고공화국', continent:'africa', tier:200 },
+  { code:'cd', ko:'콩고민주공화국', continent:'africa', tier:200 },
+  { code:'tz', ko:'탄자니아', continent:'africa', tier:200 },
+  { code:'rw', ko:'르완다', continent:'africa', tier:200 },
+  { code:'bi', ko:'부룬디', continent:'africa', tier:200 },
+  { code:'mg', ko:'마다가스카르', continent:'africa', tier:200 },
+  { code:'mu', ko:'모리셔스', continent:'africa', tier:200 },
+  { code:'mz', ko:'모잠비크', continent:'africa', tier:200 },
+  { code:'zm', ko:'잠비아', continent:'africa', tier:200 },
+  { code:'bw', ko:'보츠와나', continent:'africa', tier:200 },
+  { code:'na', ko:'나미비아', continent:'africa', tier:200 },
+  { code:'mw', ko:'말라위', continent:'africa', tier:200 },
+  { code:'ls', ko:'레소토', continent:'africa', tier:200 },
+  { code:'sz', ko:'에스와티니', continent:'africa', tier:200 },
+  { code:'so', ko:'소말리아', continent:'africa', tier:200 },
+  { code:'dj', ko:'지부티', continent:'africa', tier:200 },
+  { code:'er', ko:'에리트레아', continent:'africa', tier:200 },
+  { code:'td', ko:'차드', continent:'africa', tier:200 },
+  { code:'cf', ko:'중앙아프리카공화국', continent:'africa', tier:200 },
+  { code:'ga', ko:'가봉', continent:'africa', tier:200 },
+  { code:'gq', ko:'적도기니', continent:'africa', tier:200 },
+  { code:'bj', ko:'베냉', continent:'africa', tier:200 },
+  { code:'tg', ko:'토고', continent:'africa', tier:200 },
+  { code:'bf', ko:'부르키나파소', continent:'africa', tier:200 },
+  { code:'ml', ko:'말리', continent:'africa', tier:200 },
+  { code:'ne', ko:'니제르', continent:'africa', tier:200 },
+  { code:'mr', ko:'모리타니', continent:'africa', tier:200 },
+  { code:'gm', ko:'감비아', continent:'africa', tier:200 },
+  { code:'gn', ko:'기니', continent:'africa', tier:200 },
+  { code:'gw', ko:'기니비사우', continent:'africa', tier:200 },
+  { code:'sl', ko:'시에라리온', continent:'africa', tier:200 },
+  { code:'lr', ko:'라이베리아', continent:'africa', tier:200 },
+  { code:'cv', ko:'카보베르데', continent:'africa', tier:200 },
+  { code:'st', ko:'상투메프린시페', continent:'africa', tier:200 },
+  { code:'sc', ko:'세이셸', continent:'africa', tier:200 },
+  { code:'km', ko:'코모로', continent:'africa', tier:200 },
+  { code:'ss', ko:'남수단', continent:'africa', tier:200 },
+  // 아메리카
+  { code:'tt', ko:'트리니다드토바고', continent:'america', tier:200 },
+  { code:'bs', ko:'바하마', continent:'america', tier:200 },
+  { code:'bb', ko:'바베이도스', continent:'america', tier:200 },
+  { code:'gd', ko:'그레나다', continent:'america', tier:200 },
+  { code:'vc', ko:'세인트빈센트그레나딘', continent:'america', tier:200 },
+  { code:'lc', ko:'세인트루시아', continent:'america', tier:200 },
+  { code:'dm', ko:'도미니카', continent:'america', tier:200 },
+  { code:'ag', ko:'앤티가바부다', continent:'america', tier:200 },
+  { code:'kn', ko:'세인트키츠네비스', continent:'america', tier:200 },
+  { code:'bz', ko:'벨리즈', continent:'america', tier:200 },
+  { code:'hn', ko:'온두라스', continent:'america', tier:200 },
+  { code:'sv', ko:'엘살바도르', continent:'america', tier:200 },
+  { code:'ni', ko:'니카라과', continent:'america', tier:200 },
+  { code:'gy', ko:'가이아나', continent:'america', tier:200 },
+  { code:'sr', ko:'수리남', continent:'america', tier:200 },
+  // 오세아니아
+  { code:'sb', ko:'솔로몬제도', continent:'oceania', tier:200 },
+  { code:'vu', ko:'바누아투', continent:'oceania', tier:200 },
+  { code:'fm', ko:'미크로네시아', continent:'oceania', tier:200 },
+  { code:'mh', ko:'마셜제도', continent:'oceania', tier:200 },
+  { code:'pw', ko:'팔라우', continent:'oceania', tier:200 },
+  { code:'ki', ko:'키리바시', continent:'oceania', tier:200 },
+  { code:'tv', ko:'투발루', continent:'oceania', tier:200 },
+  { code:'nr', ko:'나우루', continent:'oceania', tier:200 },
+];
+
+// ============================================================
+//  GAME CONFIG
+// ============================================================
+const TOTAL_QUESTIONS_HARD = 50;     // 난이도 상: 50문제 풀이
+const TOTAL_QUESTIONS_NORMAL = 30;   // 그 외: 30문제 풀이
+const COMBO_TIER_2X = 5;
+const COMBO_TIER_3X = 10;
+
+let selectedDifficulty = null;
+let activeCountries = [];
+let isRankingMode = false;
+let totalQuestions = TOTAL_QUESTIONS_NORMAL;
+let showTimer = false;
+
+function setDifficulty(mode, value) {
+  selectedDifficulty = { mode, value };
+  if (mode === 'tier') {
+    activeCountries = COUNTRIES.filter(c => c.tier <= value);
+    isRankingMode = (value === 200);
+  } else if (mode === 'cont') {
+    activeCountries = COUNTRIES.filter(c => c.continent === value);
+    isRankingMode = false;
+  }
+  totalQuestions = isRankingMode ? TOTAL_QUESTIONS_HARD : TOTAL_QUESTIONS_NORMAL;
+  showTimer = isRankingMode;   // 타이머는 난이도 상에서만 작동
+}
+
+function difficultyLabel() {
+  if (!selectedDifficulty) return '-';
+  const { mode, value } = selectedDifficulty;
+  if (mode === 'tier') {
+    if (value === 30) return '쉬움 (30개 나라)';
+    if (value === 100) return '보통 (100개 나라)';
+    return '어려움 (전 세계)';
+  }
+  const contNames = { asia:'아시아', europe:'유럽', america:'아메리카', africa:'아프리카', oceania:'오세아니아' };
+  return `대륙별 · ${contNames[value]}`;
+}
+
+// ============================================================
+//  2D 무대 (꼬비가 유리 발판을 타고 위로 올라가요)
+//  좌표: x는 왼쪽→오른쪽, y는 땅에서 위로 올라간 높이 (단위: 화면 점)
+// ============================================================
+const W = 640;              // 무대 너비
+const ROW = 175;            // 발판 줄 사이 높이
+const PLAT_W = 210, PLAT_H = 30;
+const PLAT_XL = 150, PLAT_XR = 490;   // 왼쪽·오른쪽 발판 가운데
+const GGOBI_H = 130;        // 꼬비 키
+const FOOT = 18;            // 발 너비의 절반 (발판 판정용)
+const GRAVITY = 2400, JUMP_V = 1060, MOVE_SPD = 300;
+
+const stageEl = document.getElementById('stage');
+const worldEl = document.getElementById('world');
+const ggobiEl = document.getElementById('ggobi');
+let pointerLocked = false;   // 예전 코드와 맞추기 위한 값 (마우스 잠금 사용 안 함)
+
+let viewScale = 1;
+function fitStage() {
+  viewScale = Math.min(innerWidth / (W + 30), innerHeight / 600);
+}
+addEventListener('resize', fitStage);
+fitStage();
+
+function place(el, x, y) {  // x: 왼쪽 끝, y: 위쪽 끝의 높이
+  el.style.left = x + 'px';
+  el.style.top = (-y) + 'px';
+}
+
+// ---------- 꼬비 ----------
+const player = { x: W / 2, y: 0, vx: 0, vy: 0, onGround: true, face: 1 };
+const POSES = ['back', 'walk-1', 'walk-2', 'back-jump', 'fall', 'cheer'];
+POSES.forEach(n => { const im = new Image(); im.src = `img/ggobi-${n}.png`; });
+['goal', 'arrive-text'].forEach(n => { const im = new Image(); im.src = `img/${n}.png`; });   // 미리 불러오기
+let ggobiPose = '';
+function setPose(name) {
+  if (ggobiPose === name) return;
+  ggobiPose = name;
+  ggobiEl.src = `img/ggobi-${name}.png`;
+  ggobiEl.classList.toggle('fall', name === 'fall');
+}
+setPose('back');
+function endFlip() {}   // 예전 코드 호환
+
+// ---------- 게임 상태 ----------
+let score = 0;
+let correctCount = 0;
+let totalAttempts = 0;     // 정답+오답 합산 시도 횟수
+let failCount = 0;         // 떨어진 횟수
+let combo = 0;
+let maxCombo = 0;
+let currentRound = 0;
+let gameState = 'idle';   // idle | playing | failing | over
+let gameStartTime = null;
+let elapsedMs = 0;
+let finalElapsedMs = 0;
+
+const respawnPosition = { x: W / 2, y: 0 };
+let respawnTimerId = null;
+const countdownEl = document.getElementById('countdown');
+const countdownNumEl = document.getElementById('countdownNum');
+
+function showCountdownNum(n) {
+  countdownNumEl.textContent = n;
+  countdownNumEl.classList.remove('pop');
+  void countdownNumEl.offsetWidth;
+  countdownNumEl.classList.add('pop');
+}
+
+function triggerRespawn() {
+  if (gameState !== 'playing') return;
+  gameState = 'failing';
+  countdownEl.classList.remove('hidden');
+  let n = 3;
+  showCountdownNum(n);
+  respawnTimerId = setInterval(() => {
+    n--;
+    if (n > 0) {
+      showCountdownNum(n);
+    } else {
+      clearInterval(respawnTimerId);
+      respawnTimerId = null;
+      countdownEl.classList.add('hidden');
+      if (gameState !== 'over') {
+        player.x = respawnPosition.x;
+        player.y = respawnPosition.y;
+        player.vx = player.vy = 0;
+        player.onGround = true;
+        ggobiEl.classList.remove('poof'); void ggobiEl.offsetWidth; ggobiEl.classList.add('poof');
+        gameState = 'playing';
+      }
+    }
+  }, 1000);
+}
+
+// ---------- 키보드 ----------
+const keys = {};
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  keys[e.code] = true;
+  if ((e.code === 'Space' || e.code.startsWith('Arrow')) && gameState === 'playing') e.preventDefault();
+}, { passive: false });
+addEventListener('keyup', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  keys[e.code] = false;
+});
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
+
+// ---------- 발판 / 문제 ----------
+const rounds = [];
+let floorEl = null;
+const decoEls = [];
+let goalPlat = null;   // 마지막 문제를 맞히면 나타나는 결승 무대
+
+function makeEl(cls, html) {
+  const el = document.createElement('div');
+  el.className = cls;
+  if (html) el.innerHTML = html;
+  worldEl.appendChild(el);
+  return el;
+}
+
+function createFloor() {
+  floorEl = makeEl('floor', '<img src="img/ground.png" alt="">');
+  place(floorEl, (W - 760) / 2, 28);   // 풀밭 윗면이 꼬비 발 높이(0)에 오도록
+}
+
+function createPlatform(cx, y, country) {
+  const el = makeEl('plat', `<div class="sign"><span>${country.ko}</span></div>`);
+  place(el, cx - PLAT_W / 2, y);
+  return { el, x: cx, y, country, broken: false };
+}
+
+const GOAL_W = 480, GOAL_H = 251, GOAL_TOP = 177;   // GOAL_TOP: 그림 위쪽에서 풀밭 윗면까지
+function createGoal() {
+  const y = ROW * (totalQuestions + 1);
+  const el = makeEl('goal', '<img src="img/goal.png" alt=""><img class="banner" src="img/arrive-text.png" alt="도착!">');
+  place(el, W / 2 - GOAL_W / 2, y + GOAL_TOP);
+  goalPlat = { el, x: W / 2, y, halfW: GOAL_W / 2 - 30, goal: true };
+}
+
+function createFlagBoard(y, country) {
+  const el = makeEl('flagboard', `<img src="https://flagcdn.com/w320/${country.code}.png" alt="">`);
+  place(el, W / 2 - 62, y + 150);
+  return el;
+}
+
+let questionQueue = [];
+function shuffleInPlace(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+function refillQuestionQueue() {
+  questionQueue = shuffleInPlace([...activeCountries]);
+}
+function pickTwoCountries() {
+  if (activeCountries.length < 2) return [activeCountries[0], activeCountries[0]];
+  if (questionQueue.length === 0) refillQuestionQueue();
+  const correct = questionQueue.pop();
+  let wrong;
+  do {
+    wrong = activeCountries[Math.floor(Math.random() * activeCountries.length)];
+  } while (wrong === correct);
+  return [correct, wrong];
+}
+
+function createRound(idx) {
+  const [correctCountry, wrongCountry] = pickTwoCountries();
+  const correctOnLeft = Math.random() < 0.5;
+  const y = ROW * (idx + 1);
+  const leftPlatform = createPlatform(PLAT_XL, y, correctOnLeft ? correctCountry : wrongCountry);
+  const rightPlatform = createPlatform(PLAT_XR, y, correctOnLeft ? wrongCountry : correctCountry);
+  const board = createFlagBoard(y, correctCountry);
+  // 옆에 떠 있는 도깨비불 장식
+  if (idx % 2 === 0) {
+    const d = makeEl('deco', '<img src="img/wisp.png" alt="">');
+    place(d, Math.random() < 0.5 ? -70 - Math.random() * 60 : W + 20 + Math.random() * 60, y + 120 + Math.random() * 40);
+    d.style.animationDelay = (-Math.random() * 3) + 's';
+    decoEls.push(d);
+  }
+  return { idx, y, leftPlatform, rightPlatform, board, correctCountry, wrongCountry, answered: false };
+}
+
+function ensureRoundsAhead(currentIdx, lookahead = 2) {
+  while (rounds.length < Math.min(currentIdx + lookahead + 1, totalQuestions)) {
+    rounds.push(createRound(rounds.length));
+  }
+  updateActiveMonument();
+}
+
+function updateActiveMonument() {
+  rounds.forEach((r, idx) => {
+    const on = (idx === currentRound);
+    r.board.classList.toggle('show', on);
+    r.leftPlatform.el.classList.toggle('show', on);
+    r.rightPlatform.el.classList.toggle('show', on);
+  });
+}
+
+function clearWorld() {
+  worldEl.innerHTML = '';
+  worldEl.appendChild(ggobiEl);
+  rounds.length = 0;
+  decoEls.length = 0;
+  floorEl = null;
+  goalPlat = null;
+}
+
+// ---------- 국기 / 알림 ----------
+const flagMiniEl = document.getElementById('flagMini');
+function updateFlagMini(country) {
+  flagMiniEl.innerHTML = `<img src="https://flagcdn.com/w320/${country.code}.png" alt="">`;
+}
+
+const comboPopupEl = document.getElementById('comboPopup');
+function showComboPopup(text) {
+  const bad = text.includes('추락');
+  comboPopupEl.classList.toggle('bad', bad);
+  comboPopupEl.innerHTML = bad ? '앗, 틀렸어요!' : '<img src="img/ggobi-cheer.png" alt="">' + text.replace(/🔥/g, '').trim();
+  comboPopupEl.classList.remove('show');
+  void comboPopupEl.offsetWidth;
+  comboPopupEl.classList.add('show');
+}
+
+// ---------- 효과 ----------
+function burstStars(x, y) {
+  for (let i = 0; i < 7; i++) {
+    const s = makeEl('fx-star', '<img src="img/star.png" alt="">');
+    place(s, x - 14, y + 20);
+    const a = Math.PI * (0.1 + 0.8 * i / 6);
+    s.style.setProperty('--dx', Math.cos(a) * 110 + 'px');
+    s.style.setProperty('--dy', -Math.sin(a) * 90 - 30 + 'px');
+    setTimeout(() => s.remove(), 900);
+  }
+}
+function shatter(platform) {
+  for (let i = 0; i < 12; i++) {
+    const s = makeEl('fx-shard');
+    place(s, platform.x - PLAT_W / 2 + Math.random() * PLAT_W, platform.y - Math.random() * PLAT_H);
+    s.style.setProperty('--dx', (Math.random() - 0.5) * 160 + 'px');
+    s.style.setProperty('--dy', 220 + Math.random() * 200 + 'px');
+    s.style.setProperty('--r', (Math.random() - 0.5) * 720 + 'deg');
+    setTimeout(() => s.remove(), 1100);
+  }
+}
+
+// ---------- 착지 판정 ----------
+function handleLanding(platform) {
+  if (platform.goal) { onGoal(); return; }
+  const round = rounds.find(r => r.leftPlatform === platform || r.rightPlatform === platform);
+  if (!round || round.answered) return;
+  if (platform.country === round.correctCountry) {
+    round.answered = true;
+    onCorrect(round, platform);
+  } else {
+    onWrong(round, platform);
+  }
+}
+
+function onCorrect(round, platform) {
+  combo++;
+  if (combo > maxCombo) maxCombo = combo;
+  correctCount++;
+  totalAttempts++;
+  sfxCorrect();
+  platform.el.classList.add('ok');
+  burstStars(player.x, platform.y);
+  respawnPosition.x = player.x;
+  respawnPosition.y = platform.y;
+  currentRound = round.idx + 1;
+
+  if (correctCount >= totalQuestions) {
+    updateHUD();
+    round.board.classList.remove('show');
+    round.leftPlatform.el.classList.remove('show');
+    round.rightPlatform.el.classList.remove('show');
+    flagMiniEl.innerHTML = '<img src="img/star.png" alt="" style="object-fit:contain;padding:8px">';
+    createGoal();
+    return;
+  }
+  ensureRoundsAhead(currentRound);
+  updateActiveMonument();
+  updateHUD();
+
+  if (combo === COMBO_TIER_2X) {
+    showComboPopup('🔥 5연속!');
+    sfxCombo(5);
+  } else if (combo === COMBO_TIER_3X) {
+    showComboPopup('🔥🔥 10연속!');
+    sfxCombo(10);
+  } else if (combo > 0 && combo % 5 === 0) {
+    showComboPopup(`🔥 ${combo} 연속!`);
+    sfxCombo(combo);
+  }
+  if (correctCount > 0 && correctCount % 10 === 0 && correctCount < totalQuestions) sfxMilestone();
+  if (rounds[currentRound]) updateFlagMini(rounds[currentRound].correctCountry);
+}
+
+function onWrong(round, platform) {
+  combo = 0;
+  totalAttempts++;
+  failCount++;
+  sfxGlassBreak();
+  platform.el.classList.add('bad');
+  platform.broken = true;
+  showComboPopup('💥 추락!');
+  updateHUD();
+  setTimeout(() => {
+    platform.el.classList.add('gone');
+    shatter(platform);
+    player.onGround = false;
+    player.vy = 120;
+    gameState = 'playing';
+    triggerRespawn();
+  }, 380);
+  gameState = 'cracking';
+}
+
+// 결승 무대에 올라서면: 환호하는 꼬비, "도착!", 별 잔치, 기록 멈춤 → 결과 화면
+function onGoal() {
+  if (gameState !== 'playing') return;
+  gameState = 'goal';
+  player.vx = 0;
+  setPose('cheer');
+  goalPlat.el.classList.add('arrived');
+  sfxMilestone();
+  burstStars(player.x, player.y);
+  [[-130, 60], [130, 60], [0, 150]].forEach(([dx, dy], i) => setTimeout(() => burstStars(W / 2 + dx, goalPlat.y + dy), 250 + i * 250));
+  setTimeout(() => endGame(), 1900);
+}
+
+// ---------- 움직임 ----------
+function allPlatforms() {
+  const list = [];
+  for (const r of rounds) {
+    if (!r.leftPlatform.broken) list.push(r.leftPlatform);
+    if (!r.rightPlatform.broken) list.push(r.rightPlatform);
+  }
+  if (goalPlat) list.push(goalPlat);
+  return list;
+}
+
+let jumpLatch = false, lastLandAt = 0;
+function updatePlayer(dt) {
+  if (gameState !== 'playing' && gameState !== 'failing') return;
+
+  if (gameState === 'playing') {
+    let dir = 0;
+    if (keys['KeyA'] || keys['ArrowLeft']) dir -= 1;
+    if (keys['KeyD'] || keys['ArrowRight']) dir += 1;
+    player.vx = dir * MOVE_SPD;
+    if (dir) player.face = dir;
+    // 점프는 버튼을 한 번 누를 때 한 번만 (계속 누르고 있어도 다시 뛰지 않아요)
+    const jumpDown = keys['Space'] || keys['ArrowUp'] || keys['KeyW'];
+    if (!jumpDown) jumpLatch = false;
+    if (jumpDown && !jumpLatch && player.onGround && performance.now() - lastLandAt > 120) {
+      jumpLatch = true;
+      player.vy = JUMP_V;
+      player.onGround = false;
+      sfxJump();
+    }
+  } else {
+    player.vx *= 0.9;
+  }
+
+  const prevY = player.y;
+  player.vy -= GRAVITY * dt;
+  if (player.vy < -1600) player.vy = -1600;
+  player.x += player.vx * dt;
+  player.y += player.vy * dt;
+  player.x = Math.max(34, Math.min(W - 34, player.x));
+
+  if (gameState === 'playing') {
+    let landed = null;
+    if (player.vy <= 0) {
+      if (prevY >= 0 && player.y <= 0) { landed = { y: 0, floor: true }; }
+      for (const p of allPlatforms()) {
+        if (prevY >= p.y - 1 && player.y <= p.y && Math.abs(player.x - p.x) <= (p.halfW || PLAT_W / 2) + 4) {
+          if (!landed || p.y > landed.y) landed = p;
+        }
+      }
+    }
+    // 발판 끝에서 걸어 나가면 떨어지기
+    if (player.onGround && !landed) {
+      const under = player.y <= 0 || allPlatforms().some(p => Math.abs(player.y - p.y) < 1 && Math.abs(player.x - p.x) <= (p.halfW || PLAT_W / 2) + 4);
+      if (!under) player.onGround = false;
+      else { player.vy = 0; player.y = Math.round(player.y); }
+    }
+    if (landed) {
+      player.y = landed.y;
+      player.vy = 0;
+      const wasAir = !player.onGround;
+      player.onGround = true;
+      if (wasAir) { lastLandAt = performance.now(); ggobiEl.classList.remove('land'); void ggobiEl.offsetWidth; ggobiEl.classList.add('land'); }
+      if (!landed.floor) handleLanding(landed);
+    }
+  }
+
+  // 마지막으로 맞힌 발판보다 아래로 떨어지면 다시 시작 (발판 끝에서 걸어 나간 경우)
+  if (gameState === 'playing' && player.y < respawnPosition.y - 60) {
+    combo = 0;
+    failCount++;
+    sfxFall();
+    updateHUD();
+    triggerRespawn();
+  }
+
+  // 꼬비 모습: 떨어짐 / 점프 / 걷기(두 그림 번갈아) / 서 있기
+  if (gameState === 'goal') return;   // 결승 무대에서는 환호하는 모습 그대로
+  const moving = Math.abs(player.vx) > 20;
+  let pose = 'back';
+  if (gameState === 'failing') pose = 'fall';
+  else if (!player.onGround) pose = 'back-jump';
+  else if (moving) pose = (Math.floor(performance.now() / 160) % 2) ? 'walk-1' : 'walk-2';
+  setPose(pose);
+}
+
+// ---------- 화면 따라가기 ----------
+let camY = 0;
+function updateCamera(dt, snap) {
+  // 꼬비가 서 있던 줄을 화면 아래쪽에 두고, 떨어질 때는 따라 내려가지 않아요
+  const target = Math.max(0, respawnPosition.y);
+  camY = snap ? target : camY + (target - camY) * Math.min(1, dt * 4);
+  const ox = (innerWidth - W * viewScale) / 2;
+  const oy = innerHeight * 0.80 + camY * viewScale;
+  worldEl.style.transform = `translate(${ox}px, ${oy}px) scale(${viewScale})`;
+  stageEl.style.backgroundPosition = `center calc(50% + ${Math.min(camY * 0.04, 200)}px)`;
+
+  const bob = (ggobiPose === 'walk-1' || ggobiPose === 'walk-2') ? Math.abs(Math.sin(performance.now() / 160 * Math.PI)) * 4 : 0;
+  ggobiEl.style.translate = `${player.x - GGOBI_W / 2}px ${-player.y - GGOBI_H - bob + 4}px`;   // translate로 두어야 착지 찌그러짐(scale)이 위치까지 키우지 않아요
+}
+const GGOBI_W = 140;   // 꼬비 그림 칸 너비 (그림은 가운데 정렬)
+
+// ============================================================
+//  HUD
+// ============================================================
+function updateHUD() {
+  // 현재 진행 중인 라운드 번호 (1부터 시작, 마지막 라운드까지 캡)
+  const currentRoundNum = Math.min(correctCount + 1, totalQuestions);
+  document.getElementById('correctNum').textContent = currentRoundNum;
+  document.getElementById('totalQ').textContent = totalQuestions;
+  document.getElementById('combo').textContent = combo;
+}
+
+const timerEl = document.getElementById('timer');
+const timerWrapEl = document.getElementById('timerWrap');
+
+function formatElapsedTime(ms) {
+  const total = Math.max(0, ms) / 1000;
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${String(m).padStart(2, '0')}:${s.toFixed(1).padStart(4, '0')}`;
+}
+
+// ============================================================
+//  OVERLAY SECTION MANAGEMENT
+// ============================================================
+const overlayEl = document.getElementById('overlay');
+const hudEl = document.getElementById('hud');
+const crosshairEl = document.getElementById('crosshair');
+
+function showSection(id) {
+  overlayEl.classList.remove('hidden');
+  ['start-section', 'gameover-section', 'ranking-section'].forEach(sId => {
+    document.getElementById(sId).classList.toggle('hidden', sId !== id);
+  });
+  hudEl.classList.add('hidden');
+  crosshairEl.classList.add('hidden');
+  document.body.classList.remove('playing');
+  for (const k in keys) keys[k] = false;
+  document.querySelectorAll('.tbtn.on').forEach(b => b.classList.remove('on'));
+}
+function hideOverlay() {
+  overlayEl.classList.add('hidden');
+  hudEl.classList.remove('hidden');
+  crosshairEl.classList.remove('hidden');
+  document.body.classList.add('playing');
+}
+
+// ============================================================
+//  START / RESTART
+// ============================================================
+let submittedEntry = null;
+
+function startGame() {
+  if (!selectedDifficulty) return;
+  if (activeCountries.length < 2) return;
+
+  clearWorld();
+  refillQuestionQueue();   // 정답 나라 목록을 새로 섞기
+
+  score = 0;
+  correctCount = 0;
+  totalAttempts = 0;
+  failCount = 0;
+  combo = 0;
+  maxCombo = 0;
+  currentRound = 0;
+
+  player.x = W / 2; player.y = 0; player.vx = player.vy = 0; player.onGround = true;
+  respawnPosition.x = W / 2; respawnPosition.y = 0;
+  setPose('back');
+  if (respawnTimerId) { clearInterval(respawnTimerId); respawnTimerId = null; }
+  countdownEl.classList.add('hidden');
+
+  createFloor();
+  ensureRoundsAhead(0);
+  updateCamera(0, true);
+
+  gameState = 'playing';
+  gameStartTime = performance.now();
+  elapsedMs = 0;
+  finalElapsedMs = 0;
+  submittedEntry = null;
+
+  updateHUD();
+  updateFlagMini(rounds[0].correctCountry);
+
+  // 타이머: 어려움에서만 표시
+  if (showTimer) {
+    timerWrapEl.classList.remove('hidden');
+    timerEl.textContent = formatElapsedTime(0);
+  } else {
+    timerWrapEl.classList.add('hidden');
+  }
+
+  hideOverlay();
+}
+
+// ============================================================
+//  SCORE CALCULATION (난이도 상 전용 복합 공식)
+// ============================================================
+function calculateFinalScore() {
+  if (!isRankingMode) {
+    // 연습 모드 — 단순히 맞힌 개수 × 100
+    return correctCount * 100;
+  }
+  const totalSeconds = elapsedMs / 1000;
+  const baseScore = correctCount * 1000;
+  const completionBonus = (correctCount >= TOTAL_QUESTIONS_HARD) ? 100000 : 0;
+  const timeBonus = Math.max(0, Math.floor((1500 - totalSeconds) * 150));
+  const comboBonus = Math.floor((maxCombo * (maxCombo + 1)) / 2) * 80;
+  const accuracyBonus = (totalAttempts > 0)
+    ? Math.floor((correctCount / totalAttempts) * 30000)
+    : 0;
+  return baseScore + completionBonus + timeBonus + comboBonus + accuracyBonus;
+}
+
+// ============================================================
+//  GAME OVER
+// ============================================================
+function endGame() {
+  gameState = 'over';
+  if (respawnTimerId) { clearInterval(respawnTimerId); respawnTimerId = null; }
+  countdownEl.classList.add('hidden');
+  if (pointerLocked) document.exitPointerLock?.();
+  stopBgm();
+  sfxVictory();
+
+  finalElapsedMs = elapsedMs;
+  score = calculateFinalScore();
+
+  document.getElementById('r-combo').textContent = `${maxCombo} 연속`;
+  document.getElementById('r-diff').textContent = difficultyLabel();
+  document.getElementById('r-score').textContent = score.toLocaleString();
+
+  // 난이도 상에서는 걸린 시간과 추락 횟수도 표시
+  const timeRow = document.getElementById('r-time-row');
+  const failRow = document.getElementById('r-fail-row');
+  if (isRankingMode) {
+    document.getElementById('r-time').textContent = formatElapsedTime(finalElapsedMs);
+    document.getElementById('r-fail').textContent = `${failCount} 회`;
+    timeRow.classList.remove('hidden');
+    failRow.classList.remove('hidden');
+  } else {
+    timeRow.classList.add('hidden');
+    failRow.classList.add('hidden');
+  }
+
+  const saveForm = document.getElementById('save-form');
+  const practiceNote = document.getElementById('practice-note');
+  const afterSave = document.getElementById('after-save');
+
+  if (isRankingMode) {
+    saveForm.classList.remove('hidden');
+    practiceNote.classList.add('hidden');
+    afterSave.classList.add('hidden');
+
+    document.getElementById('input-school').value = localStorage.getItem('lastSchool') || '';
+    document.getElementById('input-name').value = localStorage.getItem('lastName') || '';
+
+    const saveBtn = document.getElementById('save-btn');
+    saveBtn.disabled = false;
+    saveBtn.textContent = '💾 기록 저장';
+    const statusEl = document.getElementById('save-status');
+    statusEl.textContent = '';
+    statusEl.classList.remove('error');
+  } else {
+    saveForm.classList.add('hidden');
+    practiceNote.classList.remove('hidden');
+    afterSave.classList.remove('hidden');
+  }
+
+  showSection('gameover-section');
+}
+
+// ============================================================
+//  SAVE TO FIRESTORE
+// ============================================================
+async function saveScore() {
+  if (!isRankingMode) return;
+
+  const schoolInput = document.getElementById('input-school');
+  const nameInput = document.getElementById('input-name');
+  const statusEl = document.getElementById('save-status');
+  const saveBtn = document.getElementById('save-btn');
+
+  const school = schoolInput.value.trim();
+  const name = nameInput.value.trim();
+
+  statusEl.classList.remove('error');
+  if (!school) {
+    statusEl.textContent = '학교명을 입력해주세요';
+    statusEl.classList.add('error');
+    schoolInput.focus();
+    return;
+  }
+  if (!name) {
+    statusEl.textContent = '이름을 입력해주세요';
+    statusEl.classList.add('error');
+    nameInput.focus();
+    return;
+  }
+  if (school.length > 20) {
+    statusEl.textContent = '학교명은 20자 이내로 입력해주세요';
+    statusEl.classList.add('error');
+    return;
+  }
+  if (name.length > 10) {
+    statusEl.textContent = '이름은 10자 이내로 입력해주세요';
+    statusEl.classList.add('error');
+    return;
+  }
+
+  saveBtn.disabled = true;
+  saveBtn.textContent = '저장 중...';
+  statusEl.textContent = '서버로 전송 중...';
+
+  const totalTimeSec = Math.round((finalElapsedMs / 1000) * 100) / 100;
+  const entry = {
+    school,
+    name,
+    score: score,                  // 복합 공식 최종 점수
+    correctCount: correctCount,    // 맞힌 개수 (목표는 50)
+    totalTime: totalTimeSec,       // 걸린 시간(초)
+    maxCombo: maxCombo,             // 최고 콤보
+    failCount: failCount,           // 추락 횟수
+    totalAttempts: totalAttempts,   // 총 시도
+    createdAt: serverTimestamp(),
+  };
+
+  try {
+    console.log('[SAVE] 전송 시작:', entry);
+    console.log('[SAVE] 컬렉션:', COLLECTION_NAME);
+    const docRef = await addDoc(collection(db, COLLECTION_NAME), entry);
+    console.log('[SAVE] 성공! 문서 ID:', docRef.id);
+
+    localStorage.setItem('lastSchool', school);
+    localStorage.setItem('lastName', name);
+    statusEl.textContent = '✓ 저장 완료!';
+    statusEl.classList.remove('error');
+
+    submittedEntry = { ...entry, _id: docRef.id, createdAt: Date.now() };
+
+    setTimeout(() => {
+      document.getElementById('save-form').classList.add('hidden');
+      document.getElementById('after-save').classList.remove('hidden');
+    }, 700);
+  } catch (e) {
+    console.error('[SAVE] 에러:', e);
+    statusEl.textContent = '저장 실패: ' + (e.code || '') + ' ' + (e.message || '네트워크 오류');
+    statusEl.classList.add('error');
+    saveBtn.disabled = false;
+    saveBtn.textContent = '💾 다시 시도';
+  }
+}
+
+// ============================================================
+//  RANKING
+// ============================================================
+function escapeHTML(s) {
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+async function showRanking() {
+  if (pointerLocked) document.exitPointerLock?.();
+  showSection('ranking-section');
+  const listEl = document.getElementById('ranking-list');
+  const myNoteEl = document.getElementById('my-rank-note');
+  myNoteEl.classList.add('hidden');
+  listEl.innerHTML = '<div class="ranking-empty">불러오는 중...</div>';
+
+  try {
+    // 점수 내림차순 정렬 (높을수록 1등)
+    const q = query(collection(db, COLLECTION_NAME), orderBy('score', 'desc'), limit(50));
+    const snap = await getDocs(q);
+    const entries = [];
+    snap.forEach(doc => entries.push({ _id: doc.id, ...doc.data() }));
+
+    if (entries.length === 0) {
+      listEl.innerHTML = '<div class="ranking-empty">아직 기록이 없어요.<br>첫 번째 도전자가 되어보세요! 🎯</div>';
+      return;
+    }
+
+    const me = submittedEntry;
+    let myRankInTop50 = -1;
+
+    // 동점 처리: 같은 점수 = 같은 순위
+    let prevScore = null;
+    let prevDisplayRank = 0;
+
+    let html = '';
+    entries.forEach((e, i) => {
+      let displayRank;
+      if (e.score === prevScore) {
+        displayRank = prevDisplayRank;
+      } else {
+        displayRank = i + 1;
+        prevDisplayRank = displayRank;
+        prevScore = e.score;
+      }
+
+      const isMe = me && e._id === me._id;
+      if (isMe) myRankInTop50 = displayRank;
+
+      const medal = displayRank === 1 ? '🥇' : displayRank === 2 ? '🥈' : displayRank === 3 ? '🥉' : displayRank;
+      const timeStr = e.totalTime ? formatElapsedTime(e.totalTime * 1000) : '-';
+      const comboStr = (typeof e.maxCombo === 'number') ? `${e.maxCombo}연속` : '';
+      const subInfo = comboStr ? `⏱ ${timeStr} · 🔥 ${comboStr}` : `⏱ ${timeStr}`;
+      html += `
+        <div class="ranking-row ${isMe ? 'me' : ''}">
+          <div class="rank-num">${medal}</div>
+          <div class="rank-name">
+            ${escapeHTML(e.name || '')}
+            <span class="school">${escapeHTML(e.school || '')}</span>
+          </div>
+          <div class="rank-score">
+            <span class="score-main">${(e.score || 0).toLocaleString()}</span>
+            <span class="score-sub">${subInfo}</span>
+          </div>
+        </div>
+      `;
+    });
+    listEl.innerHTML = html;
+
+    // 내 기록이 TOP 50 밖이면 전체 순위 계산
+    if (me && myRankInTop50 === -1) {
+      try {
+        const allQ = query(collection(db, COLLECTION_NAME), orderBy('score', 'desc'));
+        const allSnap = await getDocs(allQ);
+        let rank = 1;
+        allSnap.forEach(doc => {
+          const d = doc.data();
+          if ((d.score || 0) > me.score) rank++;
+        });
+        myNoteEl.innerHTML = `📍 내 등수: <b>${rank}위</b> · ${me.score}점 · ${escapeHTML(me.school)} / ${escapeHTML(me.name)}`;
+        myNoteEl.classList.remove('hidden');
+      } catch (e2) {
+        console.warn('Rank lookup failed', e2);
+      }
+    }
+  } catch (e) {
+    console.error(e);
+    listEl.innerHTML = `<div class="ranking-empty" style="color:#c8455a;">랭킹 불러오기 실패<br><small>${escapeHTML(e.message || '')}</small></div>`;
+  }
+}
+
+// ============================================================
+//  SOUND EFFECTS + PROCEDURAL BGM (Web Audio API — no audio files needed)
+// ============================================================
+let audioCtx = null;
+let sfxGainNode = null;
+let bgmGainNode = null;
+
+function ensureAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    sfxGainNode = audioCtx.createGain();
+    sfxGainNode.gain.value = 1.0;
+    sfxGainNode.connect(audioCtx.destination);
+    bgmGainNode = audioCtx.createGain();
+    bgmGainNode.gain.value = 0.0;   // start silent; ramp up when starting
+    bgmGainNode.connect(audioCtx.destination);
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function sfx(builder) {
+  if (bgmMuted) return;
+  if (!audioCtx) return;
+  try { builder(audioCtx, sfxGainNode); } catch (e) { console.warn('sfx error', e); }
+}
+
+// Jump — short rising chirp ("boing")
+function sfxJump() {
+  sfx((ctx, out) => {
+    const t0 = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(280, t0);
+    osc.frequency.exponentialRampToValueAtTime(880, t0 + 0.12);
+    gain.gain.setValueAtTime(0.08, t0);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.14);
+    osc.connect(gain).connect(out);
+    osc.start(t0); osc.stop(t0 + 0.15);
+  });
+}
+
+// Correct answer — two-note cheerful ding (E5 → B5)
+function sfxCorrect() {
+  sfx((ctx, out) => {
+    const t0 = ctx.currentTime;
+    [659.25, 987.77].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      const start = t0 + i * 0.08;
+      gain.gain.setValueAtTime(0.0, start);
+      gain.gain.linearRampToValueAtTime(0.15, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.3);
+      osc.connect(gain).connect(out);
+      osc.start(start); osc.stop(start + 0.32);
+    });
+  });
+}
+
+// Glass shatter — high-passed noise burst + crystal tinkles
+function sfxGlassBreak() {
+  sfx((ctx, out) => {
+    const t0 = ctx.currentTime;
+    const bufSize = Math.floor(ctx.sampleRate * 0.45);
+    const buffer = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) {
+      const decay = Math.pow(1 - i / bufSize, 1.5);
+      data[i] = (Math.random() * 2 - 1) * decay;
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    const hp = ctx.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.value = 2500;
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.value = 0.25;
+    src.connect(hp).connect(noiseGain).connect(out);
+    src.start(t0);
+
+    [2400, 3200, 4100, 5300].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const start = t0 + 0.02 + i * 0.04;
+      g.gain.setValueAtTime(0.07, start);
+      g.gain.exponentialRampToValueAtTime(0.001, start + 0.25);
+      osc.connect(g).connect(out);
+      osc.start(start); osc.stop(start + 0.26);
+    });
+  });
+}
+
+// Fall into gap — descending "whoaaa" tone
+function sfxFall() {
+  sfx((ctx, out) => {
+    const t0 = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(440, t0);
+    osc.frequency.exponentialRampToValueAtTime(80, t0 + 0.7);
+    gain.gain.setValueAtTime(0.12, t0);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.75);
+    osc.connect(gain).connect(out);
+    osc.start(t0); osc.stop(t0 + 0.8);
+  });
+}
+
+// Combo milestone — sparkly arpeggio
+function sfxCombo(level) {
+  sfx((ctx, out) => {
+    const t0 = ctx.currentTime;
+    // 3-note rising arpeggio, higher pitch for bigger combos
+    const base = level >= 10 ? 880 : level >= 5 ? 659.25 : 523.25;
+    const notes = [base, base * 1.25, base * 1.5, base * 2];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      const start = t0 + i * 0.07;
+      g.gain.setValueAtTime(0, start);
+      g.gain.linearRampToValueAtTime(0.16, start + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, start + 0.35);
+      osc.connect(g).connect(out);
+      osc.start(start); osc.stop(start + 0.37);
+    });
+  });
+}
+
+// Round milestone (every 10 rounds) — short cheerful pop
+function sfxMilestone() {
+  sfx((ctx, out) => {
+    const t0 = ctx.currentTime;
+    [523.25, 783.99, 1046.50].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.value = freq;
+      const start = t0 + i * 0.05;
+      g.gain.setValueAtTime(0.08, start);
+      g.gain.exponentialRampToValueAtTime(0.001, start + 0.2);
+      osc.connect(g).connect(out);
+      osc.start(start); osc.stop(start + 0.22);
+    });
+  });
+}
+
+// Game complete — victory fanfare (C-E-G-C ascending major chord)
+function sfxVictory() {
+  sfx((ctx, out) => {
+    const t0 = ctx.currentTime;
+    const notes = [
+      { f: 523.25, d: 0.0,  l: 0.5 },   // C5
+      { f: 659.25, d: 0.12, l: 0.5 },   // E5
+      { f: 783.99, d: 0.24, l: 0.5 },   // G5
+      { f: 1046.5, d: 0.36, l: 0.9 }    // C6 (sustained)
+    ];
+    notes.forEach(n => {
+      ['triangle', 'sine'].forEach((type, ti) => {
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.type = type;
+        osc.frequency.value = n.f;
+        const start = t0 + n.d;
+        g.gain.setValueAtTime(0, start);
+        g.gain.linearRampToValueAtTime(ti === 0 ? 0.18 : 0.08, start + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.001, start + n.l);
+        osc.connect(g).connect(out);
+        osc.start(start); osc.stop(start + n.l + 0.05);
+      });
+    });
+  });
+}
+
+// Game start — quick "ready" chime
+function sfxGameStart() {
+  sfx((ctx, out) => {
+    const t0 = ctx.currentTime;
+    [659.25, 880, 1318.5].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      const start = t0 + i * 0.06;
+      g.gain.setValueAtTime(0, start);
+      g.gain.linearRampToValueAtTime(0.13, start + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, start + 0.25);
+      osc.connect(g).connect(out);
+      osc.start(start); osc.stop(start + 0.27);
+    });
+  });
+}
+
+// ============================================================
+//  PROCEDURAL BGM (looped chord progression with bass + soft drum)
+// ============================================================
+let bgmTimer = null;
+let bgmBeat = 0;
+const BGM_BPM = 105;
+const BGM_BEAT_SEC = 60 / BGM_BPM;
+// I - V - vi - IV in C: C, G, Am, F (each chord lasts 4 beats)
+const bgmChords = [
+  { bass: 65.41,  notes: [261.63, 329.63, 392.00] },  // C major  (C2, C4 E4 G4)
+  { bass: 98.00,  notes: [293.66, 392.00, 493.88] },  // G major  (G2, D4 G4 B4)
+  { bass: 110.00, notes: [329.63, 440.00, 523.25] },  // A minor  (A2, E4 A4 C5)
+  { bass: 87.31,  notes: [349.23, 440.00, 523.25] }   // F major  (F2, F4 A4 C5)
+];
+
+function bgmPluck(ctx, out, freq, type, vol, dur) {
+  const t0 = ctx.currentTime + 0.01;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0, t0);
+  gain.gain.linearRampToValueAtTime(vol, t0 + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+  osc.connect(gain).connect(out);
+  osc.start(t0); osc.stop(t0 + dur + 0.05);
+}
+
+function bgmKick(ctx, out) {
+  const t0 = ctx.currentTime + 0.01;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(110, t0);
+  osc.frequency.exponentialRampToValueAtTime(40, t0 + 0.08);
+  gain.gain.setValueAtTime(0.25, t0);
+  gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.1);
+  osc.connect(gain).connect(out);
+  osc.start(t0); osc.stop(t0 + 0.12);
+}
+
+function bgmHat(ctx, out) {
+  const t0 = ctx.currentTime + 0.01;
+  const bufSize = Math.floor(ctx.sampleRate * 0.05);
+  const buffer = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1);
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  const hp = ctx.createBiquadFilter();
+  hp.type = 'highpass';
+  hp.frequency.value = 6000;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.05, t0);
+  g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.04);
+  src.connect(hp).connect(g).connect(out);
+  src.start(t0);
+}
+
+function bgmTick() {
+  if (bgmMuted || !audioCtx || !bgmGainNode) return;
+  const out = bgmGainNode;
+  const ctx = audioCtx;
+  const chord = bgmChords[Math.floor(bgmBeat / 4) % bgmChords.length];
+  const beatInBar = bgmBeat % 4;
+
+  // Bass on every beat
+  bgmPluck(ctx, out, chord.bass, 'triangle', 0.18, 0.45);
+  // Octave-up bass on offbeats for a bounce
+  if (beatInBar === 1 || beatInBar === 3) {
+    bgmPluck(ctx, out, chord.bass * 2, 'triangle', 0.08, 0.3);
+  }
+  // Chord stab on beat 1 of each bar
+  if (beatInBar === 0) {
+    chord.notes.forEach(freq => bgmPluck(ctx, out, freq, 'sine', 0.06, 0.6));
+  }
+  // Kick drum on beats 0 and 2
+  if (beatInBar % 2 === 0) bgmKick(ctx, out);
+  // Hi-hat on every offbeat (8th notes)
+  bgmHat(ctx, out);
+
+  bgmBeat++;
+}
+
+function startBgm() {
+  if (bgmTimer || !audioCtx) return;
+  bgmBeat = 0;
+  // Fade in
+  const t0 = audioCtx.currentTime;
+  bgmGainNode.gain.cancelScheduledValues(t0);
+  bgmGainNode.gain.setValueAtTime(0, t0);
+  bgmGainNode.gain.linearRampToValueAtTime(0.5, t0 + 1.2);
+  bgmTick();   // first beat immediately
+  bgmTimer = setInterval(bgmTick, BGM_BEAT_SEC * 1000);
+}
+
+function stopBgm() {
+  if (bgmTimer) {
+    clearInterval(bgmTimer);
+    bgmTimer = null;
+  }
+  if (audioCtx && bgmGainNode) {
+    const t0 = audioCtx.currentTime;
+    bgmGainNode.gain.cancelScheduledValues(t0);
+    bgmGainNode.gain.linearRampToValueAtTime(0, t0 + 0.2);
+  }
+}
+
+// ============================================================
+//  SOUND TOGGLE (controls procedurally generated SFX only)
+// ============================================================
+const bgmToggleEl = document.getElementById('bgmToggle');
+let bgmMuted = localStorage.getItem('bgmMuted') === '1';   // variable kept for compatibility — now means "all sound muted"
+
+function refreshBgmIcon() {
+  bgmToggleEl.textContent = bgmMuted ? '🔇' : '🔊';
+  bgmToggleEl.classList.toggle('muted', bgmMuted);
+}
+refreshBgmIcon();
+
+bgmToggleEl.addEventListener('click', () => {
+  ensureAudio();
+  bgmMuted = !bgmMuted;
+  localStorage.setItem('bgmMuted', bgmMuted ? '1' : '0');
+  refreshBgmIcon();
+  if (bgmMuted) {
+    stopBgm();
+  } else if (gameState === 'playing' || gameState === 'failing') {
+    startBgm();
+  }
+});
+
+// ============================================================
+//  BUTTON HANDLERS
+// ============================================================
+// Difficulty buttons
+document.querySelectorAll('.diff-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    ensureAudio();        // initialize Web Audio context on first user gesture
+    const mode = btn.dataset.mode;
+    const raw = btn.dataset.value;
+    const value = (mode === 'tier') ? parseInt(raw, 10) : raw;
+    setDifficulty(mode, value);
+    startGame();
+    sfxGameStart();
+    startBgm();
+  });
+});
+
+document.getElementById('view-ranking-btn').addEventListener('click', showRanking);
+
+document.getElementById('save-btn').addEventListener('click', saveScore);
+document.getElementById('skip-btn').addEventListener('click', () => {
+  document.getElementById('save-form').classList.add('hidden');
+  document.getElementById('after-save').classList.remove('hidden');
+});
+
+document.getElementById('goto-ranking-btn').addEventListener('click', showRanking);
+document.getElementById('retry-btn').addEventListener('click', () => {
+  showSection('start-section');
+});
+
+document.getElementById('rank-back-btn').addEventListener('click', () => showSection('start-section'));
+
+// Enter in school → focus name
+document.getElementById('input-school').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('input-name').focus(); }
+});
+// Enter in name → submit
+document.getElementById('input-name').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); saveScore(); }
+});
+
+// ============================================================
+//  INITIAL STATE
+// ============================================================
+// ============================================================
+//  휴대폰·태블릿 터치 버튼
+// ============================================================
+document.querySelectorAll('.tbtn').forEach(btn => {
+  const k = btn.dataset.key;
+  const down = e => {
+    e.preventDefault();
+    ensureAudio();
+    keys[k] = true;
+    btn.classList.add('on');
+    try { btn.setPointerCapture(e.pointerId); } catch (_) {}
+  };
+  const up = () => { keys[k] = false; btn.classList.remove('on'); };
+  btn.addEventListener('pointerdown', down);
+  btn.addEventListener('pointerup', up);
+  btn.addEventListener('pointercancel', up);
+  btn.addEventListener('lostpointercapture', up);
+  btn.addEventListener('contextmenu', e => e.preventDefault());
+});
+
+
+showSection('start-section');
+
+// ============================================================
+//  MAIN LOOP
+// ============================================================
+let lastT = performance.now();
+function animate(now) {
+  requestAnimationFrame(animate);
+  const dt = Math.min(((now || performance.now()) - lastT) / 1000, 0.05);
+  lastT = now || performance.now();
+  updatePlayer(dt);
+  updateCamera(dt);
+
+  if (gameState === 'playing' || gameState === 'failing' || gameState === 'cracking') {
+    elapsedMs = performance.now() - gameStartTime;
+    if (showTimer) timerEl.textContent = formatElapsedTime(elapsedMs);
+  }
+}
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>
