@@ -266,6 +266,20 @@
   </div>
 </div>
 
+<!-- 선 정하기 -->
+<div id="chooseModal" class="modal hidden">
+  <div class="card">
+    <img class="res-img" src="img/ggobi-think.png" alt="">
+    <h2 style="font-size:28px">누가 먼저 둘까요?</h2>
+    <p id="chText"></p>
+    <div class="btn-row" style="flex-direction:column;align-items:center">
+      <button class="game-btn btn-primary" id="chHost" style="min-width:220px"></button>
+      <button class="game-btn btn-primary" id="chGuest" style="min-width:220px"></button>
+      <button class="game-btn btn-info" id="chRandom" style="min-width:220px">🎲 아무나 (무작위)</button>
+    </div>
+  </div>
+</div>
+
 <!-- 확인 -->
 <div id="confirmModal" class="modal hidden">
   <div class="card">
@@ -552,7 +566,7 @@ async function joinRoom(c, name) {
     if (d.status === 'closed' || age > STALE_MS) throw new Error('closed');
     if (d.status === 'waiting' && !d.guestId) {
       if (age > 2.5 * 60 * 1000) throw new Error('closed');  // 방장이 떠난 지 오래된 방
-      tx.update(r, { guestId: myId, guestName: name || '친구', status: 'playing', tick: increment(1), lastEvent: 'start', updatedAt: serverTimestamp() });
+      tx.update(r, { guestId: myId, guestName: name || '친구', status: 'choosing', tick: increment(1), lastEvent: 'join', updatedAt: serverTimestamp() });
       return 'guest';
     }
     return 'watch';
@@ -618,12 +632,37 @@ function onRoom(snap) {
     else { show('game'); render(); }
     return;
   }
-  if (prev && prev.status === 'waiting' && room.status === 'playing') beep('join');
+  if (prev && prev.status === 'waiting' && room.status !== 'waiting') beep('join');
   if (!$('game').classList.contains('hidden') === false) show('game');
   render();
   if (room.status === 'done') showResult();
   else { $('resultModal').classList.add('hidden'); shownResultFor = ''; }
+  // 선 정하기: 방장(한 화면 모드는 이 기기)이 고름
+  if (room.status === 'choosing' && (role === 'host' || role === 'local')) showChoose();
+  else $('chooseModal').classList.add('hidden');
 }
+function showChoose() {
+  const hn = room.hostName || '방장', gn = room.guestName || '친구';
+  const local = role === 'local';
+  $('chText').textContent = (room.round || 1) > 1 ? `${room.round}번째 판이에요. 먼저 두는 사람이 흑이에요.` : '먼저 두는 사람이 흑이에요.';
+  $('chHost').textContent = local ? hn : `나 (${hn})`;
+  $('chGuest').textContent = local ? gn : gn;
+  $('chooseModal').classList.remove('hidden');
+}
+async function chooseFirst(who) {
+  $('chooseModal').classList.add('hidden');
+  if (who === 'random') who = Math.random() < .5 ? 'host' : 'guest';
+  try {
+    await txRun(async tx => {
+      const s = await tx.get(ref); const d = s.data();
+      if (!d || d.status !== 'choosing') return;
+      tx.update(ref, { status: 'playing', hostColor: who === 'host' ? 'b' : 'w', turn: 'b', tick: (d.tick || 0) + 1, lastEvent: 'start', updatedAt: serverTimestamp() });
+    });
+  } catch (e) { console.error(e); toast('시작하지 못했어요. ' + errText(e), 2500); if (room && room.status === 'choosing') showChoose(); }
+}
+$('chHost').onclick = () => chooseFirst('host');
+$('chGuest').onclick = () => chooseFirst('guest');
+$('chRandom').onclick = () => chooseFirst('random');
 
 function ruleTags(d) {
   return `<span class="tag">${d.rule === 'renju' ? '공식 규칙 (렌주)' : '쉬운 규칙'}</span><span class="tag">${d.timer ? '한 수 1분' : '시간 제한 없음'}</span>`;
@@ -670,6 +709,9 @@ function esc(s) { return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;
 function renderStatus() {
   const st = $('status'), mine = myColor();
   if (room.status === 'waiting') { st.innerHTML = '친구가 들어오기를 기다리고 있어요'; return; }
+  if (room.status === 'choosing') {
+    st.innerHTML = role === 'host' || role === 'local' ? '먼저 둘 사람(흑)을 골라요' : `방장 <b>${esc(room.hostName)}</b>님이 먼저 둘 사람을 정하고 있어요<span class="dots"></span>`; return;
+  }
   if (room.status === 'done') {
     st.innerHTML = room.winner === 'draw' ? '비겼어요!' : `<b>${esc(nameOf(room.winner))}</b> 승리!`; return;
   }
@@ -957,7 +999,7 @@ function showResult() {
   let img = 'ggobi-trophy', title, text;
   const reason = room.endReason === 'leave' ? '친구가 나가서 끝났어요.' : room.endReason === 'full' ? '판이 꽉 찼어요.' : '다섯 개를 한 줄로 이었어요!';
   if (w === 'draw') { title = '비겼어요!'; text = '판이 꽉 찼어요. 둘 다 정말 잘했어요!'; img = 'ggobi-cheer'; }
-  else if (role === 'local') { title = `${nameOf(w)} 승리!`; text = reason + ' 한 판 더 하면 흑과 백이 바뀌어요.'; img = 'ggobi-cheer'; if (first) beep('win'); }
+  else if (role === 'local') { title = `${nameOf(w)} 승리!`; text = reason + ' 한 판 더 하면 먼저 둘 사람을 다시 골라요.'; img = 'ggobi-cheer'; if (first) beep('win'); }
   else if (!mine) { title = `${nameOf(w)} 승리!`; text = reason; }
   else if (w === mine) { title = '이겼어요!'; text = reason; img = 'ggobi-cheer'; if (first) beep('win'); }
   else { title = '아쉽게 졌어요'; text = room.endReason === 'leave' ? '내가 나가서 끝났어요.' : `${nameOf(w)}님이 다섯 개를 이었어요. 다음엔 꼭 이겨요!`; img = 'ggobi-cry'; if (first) beep('lose'); }
@@ -989,8 +1031,8 @@ async function rematch() {
       if (role === 'local') ag.host = ag.guest = true;
       if (ag.host && ag.guest) {
         tx.update(ref, {
-          status: 'playing', board: EMPTY_BOARD, turn: 'b', tick: 0, round: (d.round || 1) + 1, moveNo: 0, last: -1,
-          winner: '', winLine: [], endReason: '', lastEvent: 'start', hostColor: other(d.hostColor || 'b'),
+          status: 'choosing', board: EMPTY_BOARD, turn: 'b', tick: (d.tick || 0) + 1, round: (d.round || 1) + 1, moveNo: 0, last: -1,
+          winner: '', winLine: [], endReason: '', lastEvent: 'again',
           again: { host: false, guest: false }, updatedAt: serverTimestamp()
         });
       } else tx.update(ref, { again: ag, updatedAt: serverTimestamp() });
@@ -1019,7 +1061,7 @@ $('cfYes').onclick = async () => {
   try {
     await runTransaction(db, async tx => {
       const s = await tx.get(rf); const d = s.data(); if (!d) return;
-      if (d.status === 'playing') tx.update(rf, { status: 'done', winner: other(myC), winLine: [], endReason: 'leave', left: r, updatedAt: serverTimestamp() });
+      if (d.status === 'playing' || d.status === 'choosing') tx.update(rf, { status: 'done', winner: other(myC), winLine: [], endReason: 'leave', left: r, updatedAt: serverTimestamp() });
       else if (d.status === 'waiting') tx.update(rf, { status: 'closed', updatedAt: serverTimestamp() });
       else tx.update(rf, { left: r, updatedAt: serverTimestamp() });
     });
