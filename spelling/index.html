@@ -8,20 +8,20 @@
 <link rel="manifest" href="/manifest.webmanifest"/>
 <meta name="apple-mobile-web-app-title" content="꼬비샘과 쉬는 시간"/>
 <meta name="theme-color" content="#2a2860"/>
-<title>맞춤법 게임(초급)</title>
+<title>꼬비의 한글 맞춤법 대소동 - 꼬비샘과 쉬는 시간</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
 <style>
   :root{
-    --cream:#fff8ee; --cream2:#f6e7d3; --edge:#e8c9a8; --ink:#5a3a26; --ink2:#8a6a55;
-    --coral:#f07a63; --coral-d:#c9533f; --sky:#6cbfef; --sky-d:#3f8fc4; --mint:#7ccf74; --mint-d:#4f9e48;
-    --sun:#ffcf4a;
+    --cream:#fff6ec; --cream2:#f1e2d2; --edge:#ecc9b0; --ink:#2c2950; --ink2:#6f6585;
+    --coral:#ee5a6f; --coral-d:#c8455a; --sky:#ffd25e; --sky-d:#d9a92c; --mint:#7ccf74; --mint-d:#3f8f4a;
+    --sun:#ffd25e;
   }
   * { box-sizing:border-box; margin:0; padding:0; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; }
   html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
-  html, body { width:100%; height:100%; overflow:hidden; background:#a4e1fd; font-family:'Jua','Apple SD Gothic Neo','Malgun Gothic',sans-serif; color:var(--ink); }
+  html, body { width:100%; height:100%; overflow:hidden; background:#8a64b2; font-family:'Jua','Apple SD Gothic Neo','Malgun Gothic',sans-serif; color:var(--ink); }
   #game-container { position:fixed; inset:0; }
-  canvas { display:block; width:100%; height:100%; touch-action:none; background:#a4e1fd; }
+  canvas { display:block; width:100%; height:100%; touch-action:none; background:#8a64b2; }
 
   /* ===== 상단 바 (게임방 / 전체화면) ===== */
   .topbar{position:fixed;top:12px;left:12px;right:12px;z-index:50;display:flex;justify-content:space-between;pointer-events:none}
@@ -63,7 +63,7 @@
     #overlay .section { max-width:640px; gap:8px; }
     .card { padding:10px 18px 14px; border-radius:22px; box-shadow:0 5px 0 var(--ink); }
     .logo { width:210px; margin-top:-2px; }
-    .level-badge { font-size:14px; padding:1px 12px; }
+    .result-ggobi { width:70px; margin-top:-40px; }
     .lead { font-size:16px; }
     .lead[style] { margin:6px 0 8px !important; }
     .hint { gap:8px; }
@@ -103,18 +103,22 @@
   .music-toggle:active { transform:scale(.92); }
   @media (pointer:coarse) { .music-toggle { bottom:auto; top:6px; left:50%; transform:translateX(-50%); width:36px; height:36px; font-size:18px; }
     .music-toggle:active { transform:translateX(-50%) scale(.92); } }
+  /* 휴대폰 가로: 위쪽 가운데는 빈칸 문장 자리라서 소리 버튼을 아래 가운데로 */
+  @media (pointer:coarse) and (max-height:500px) and (orientation:landscape) { body:not(.menu) .music-toggle { top:auto; bottom:6px; } }
 
   /* ===== 오버레이 (시작/결과/랭킹) ===== */
-  #overlay { position:fixed; inset:0; background:rgba(90,60,40,.12); display:flex; align-items:center; justify-content:center;
+  #overlay { position:fixed; inset:0; background:rgba(30,20,70,.30); display:flex; align-items:center; justify-content:center;
     text-align:center; padding:56px 16px 16px; z-index:20; overflow-y:auto; }
   #overlay .section { display:flex; flex-direction:column; align-items:center; gap:14px; width:100%; max-width:600px; transform-origin:center center; }
   .hidden { display:none !important; }
-  .card { background:var(--cream); border:3px solid var(--ink); border-radius:28px; box-shadow:0 8px 0 var(--ink), 0 16px 30px rgba(60,30,10,.25);
+  .card { background:var(--cream); border:3px solid var(--ink); border-radius:28px; box-shadow:0 8px 0 var(--ink), 0 16px 30px rgba(20,10,50,.35);
     padding:22px 26px 24px; width:100%; }
-  .logo { width:min(440px, 86%); display:block; margin:-6px auto 0; filter:drop-shadow(0 4px 0 rgba(90,58,38,.18)); }
+  .logo { width:min(440px, 86%); display:block; margin:-6px auto 0; filter:drop-shadow(0 4px 0 rgba(44,41,80,.18)); }
   .level-badge { display:inline-block; background:var(--coral); color:#fff; border-radius:14px; padding:3px 14px; font-size:17px; margin-top:-4px; box-shadow:0 3px 0 var(--coral-d); }
   .lead { font-size:clamp(17px,2.6vw,21px); line-height:1.5; color:var(--ink); }
   .lead b { color:var(--coral-d); font-weight:normal; }
+  .lead-sub { font-size:.82em; color:var(--ink2); }
+  .result-ggobi { width:110px; display:block; margin:-60px auto 0; filter:drop-shadow(0 4px 0 rgba(44,41,80,.2)); }
   .mini-block { display:inline-block; width:28px; height:28px; vertical-align:-7px; margin:0 3px; }
 
   .hint { display:grid; grid-template-columns:1fr 1fr; gap:12px; width:100%; text-align:left; }
@@ -127,7 +131,7 @@
   @media (max-width:520px){ .hint{ grid-template-columns:1fr; } }
 
   .start-wrap { position:relative; width:100%; }
-  .start-cat { position:absolute; width:120px; right:-46px; bottom:-28px; transform:rotate(6deg); pointer-events:none; }
+  .start-cat { position:absolute; width:130px; right:-56px; bottom:-30px; transform:rotate(4deg); pointer-events:none; }
   @media (max-width:700px){ .start-cat{ display:none; } }
 
   .button-group { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; width:100%; }
@@ -136,7 +140,7 @@
   .game-btn:active { transform:translateY(4px); box-shadow:0 1px 0 var(--ink); }
   .game-btn:disabled { opacity:.55; cursor:not-allowed; }
   .btn-primary { background:var(--coral); }
-  .btn-info { background:var(--sky); }
+  .btn-info { background:var(--sun); color:var(--ink); }
   .btn-secondary { background:#fff; color:var(--ink); }
 
   /* 결과 */
@@ -176,7 +180,7 @@
 </head>
 <body class="menu">
 <div class="topbar">
-  <a href="../" id="home-link" title="게임방으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">게임방</span></a>
+  <a href="../" id="home-link" title="꼬비샘과 쉬는 시간으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">쉬는 시간</span></a>
   <button id="fs-btn" type="button" title="전체화면"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="t" id="fs-txt">전체화면</span></button>
 </div>
 <script>
@@ -209,7 +213,7 @@
   <div class="phone"></div>
   <b>휴대폰을 가로로 돌려 주세요</b>
   <p>이 게임은 가로 화면에서<br>더 크고 편하게 할 수 있어요.</p>
-  <img src="img/cat-stand.png" alt="">
+  <img src="img/ggobi-stand.png" alt="">
 </div>
 
 <div id="game-container">
@@ -235,9 +239,8 @@
     <div id="start-section" class="section">
       <div class="start-wrap">
         <div class="card">
-          <img class="logo" src="img/logo.png" alt="맞춤법 게임">
-          <div class="level-badge">초급</div>
-          <p class="lead" style="margin:12px 0 14px"><img class="mini-block" src="img/block.png" alt=""> 블록 중 <b>맞춤법이 옳은 쪽</b>으로 점프해서 톡!</p>
+          <img class="logo" src="img/logo.png" alt="꼬비의 한글 맞춤법 대소동">
+          <p class="lead" style="margin:10px 0 14px"><img class="mini-block" src="img/block.png" alt=""> 두 블록 중 <b>맞춤법이 옳은 쪽</b>을 머리로 톡!<br><span class="lead-sub">빈칸 문장이 나오면 빈칸에 알맞은 말을 골라요.</span></p>
           <div class="hint">
             <div class="hint-section">
               <div class="hint-title">조작법</div>
@@ -254,9 +257,9 @@
             <div class="hint-section">
               <div class="hint-title">게임 규칙</div>
               <div class="hint-row">❤️ 하트 5개로 시작</div>
-              <div class="hint-row"><img src="img/monster.png" alt=""> 몬스터에 닿으면 하트 -1</div>
-              <div class="hint-row"><img src="img/star.png" alt=""> 정답 5개마다 별 +1</div>
-              <div class="hint-row">🏁 모두 50문제!</div>
+              <div class="hint-row"><img src="img/wisp-bad.png" alt=""> 심술 도깨비불에 닿으면 하트 -1</div>
+              <div class="hint-row"><img src="img/star.png" alt=""> 정답 5개마다 방망이 별 +1</div>
+              <div class="hint-row">🏁 낱말 + 빈칸 문장, 모두 50문제!</div>
             </div>
           </div>
           <div class="button-group" style="margin-top:18px">
@@ -264,13 +267,14 @@
             <button id="view-ranking-btn" class="game-btn btn-info">🏆 랭킹 보기</button>
           </div>
         </div>
-        <img class="start-cat" src="img/cat-jump.png" alt="">
+        <img class="start-cat" src="img/ggobi-jump.png" alt="">
       </div>
     </div>
 
     <!-- 결과 화면 -->
     <div id="gameover-section" class="section hidden">
       <div class="card">
+        <img id="end-ggobi" class="result-ggobi" src="img/ggobi-trophy.png" alt="">
         <h1 id="end-title">결과</h1>
         <div class="result-card" style="margin-top:10px">
           <div class="result-row"><span class="label">📝 정답</span><span class="value" id="r-correct">0 / 50</span></div>
@@ -349,24 +353,239 @@ const COLLECTION_NAME = 'spelling-scores';
 // ============================================================
 //  QUESTION BANK
 // ============================================================
-const QUESTIONS_RAW = [
-  ["며칠", "몇일"], ["설거지", "설겆이"], ["떡볶이", "떡볶기"], ["김치찌개", "김치찌게"],
-  ["깍두기", "깎두기"], ["뚝배기", "뚝빼기"], ["곱빼기", "곱배기"], ["짬뽕", "짬봉"],
-  ["김칫국", "김치국"], ["닭볶음탕", "닭도리탕"], ["역할", "역활"], ["어이없다", "어의없다"],
-  ["희한하다", "희안하다"], ["짭짤하다", "짭잘하다"], ["쩨쩨하다", "째째하다"], ["깡충깡충", "깡총깡총"],
-  ["통째로", "통채로"], ["굳이", "구지"], ["금세", "금새"], ["오랜만", "오랫만"],
-  ["어쨌든", "어쨋든"], ["아무튼", "아뭏든"], ["으레", "으례"], ["안절부절못하다", "안절부절하다"],
-  ["베개", "베게"], ["부엌", "부억"], ["강낭콩", "강남콩"], ["무", "무우"],
-  ["우레", "우뢰"], ["가르마", "가리마"], ["빈털터리", "빈털털이"], ["셋째", "세째"],
-  ["휴게실", "휴계실"], ["등굣길", "등교길"], ["인사말", "인삿말"], ["머리말", "머릿말"],
-  ["윗니", "웃니"], ["핥다", "핧다"], ["멋쟁이", "멋장이"], ["개구쟁이", "개구장이"],
-  ["사귀었다", "사겼다"], ["잠갔다", "잠궜다"], ["담갔다", "담궜다"], ["부서지다", "부숴지다"],
-  ["알맞은", "알맞는"], ["돼요", "되요"], ["안 돼", "안 되"], ["됐다", "됬다"],
-  ["봬요", "뵈요"], ["깨끗이", "깨끗히"], ["일일이", "일일히"], ["가까이", "가까히"],
-  ["솔직히", "솔직이"], ["일찍이", "일찌기"], ["왠지", "웬지"], ["웬일이니", "왠일이니"],
+// 낱말 문제: [옳은 말, 틀린 말]
+const WORDS = [["며칠", "몇일"],
+  ["설거지", "설겆이"],
+  ["떡볶이", "떡볶기"],
+  ["김치찌개", "김치찌게"],
+  ["깍두기", "깎두기"],
+  ["뚝배기", "뚝빼기"],
+  ["곱빼기", "곱배기"],
+  ["짬뽕", "짬봉"],
+  ["김칫국", "김치국"],
+  ["닭볶음탕", "닭도리탕"],
+  ["역할", "역활"],
+  ["어이없다", "어의없다"],
+  ["희한하다", "희안하다"],
+  ["짭짤하다", "짭잘하다"],
+  ["쩨쩨하다", "째째하다"],
+  ["깡충깡충", "깡총깡총"],
+  ["통째로", "통채로"],
+  ["굳이", "구지"],
+  ["금세", "금새"],
+  ["오랜만", "오랫만"],
+  ["어쨌든", "어쨋든"],
+  ["아무튼", "아뭏든"],
+  ["으레", "으례"],
+  ["안절부절못하다", "안절부절하다"],
+  ["베개", "베게"],
+  ["부엌", "부억"],
+  ["강낭콩", "강남콩"],
+  ["무", "무우"],
+  ["우레", "우뢰"],
+  ["가르마", "가리마"],
+  ["빈털터리", "빈털털이"],
+  ["셋째", "세째"],
+  ["휴게실", "휴계실"],
+  ["등굣길", "등교길"],
+  ["인사말", "인삿말"],
+  ["머리말", "머릿말"],
+  ["윗니", "웃니"],
+  ["핥다", "핧다"],
+  ["멋쟁이", "멋장이"],
+  ["개구쟁이", "개구장이"],
+  ["사귀었다", "사겼다"],
+  ["잠갔다", "잠궜다"],
+  ["담갔다", "담궜다"],
+  ["부서지다", "부숴지다"],
+  ["알맞은", "알맞는"],
+  ["돼요", "되요"],
+  ["안 돼", "안 되"],
+  ["됐다", "됬다"],
+  ["봬요", "뵈요"],
+  ["깨끗이", "깨끗히"],
+  ["일일이", "일일히"],
+  ["가까이", "가까히"],
+  ["솔직히", "솔직이"],
+  ["일찍이", "일찌기"],
+  ["왠지", "웬지"],
+  ["웬일이니", "왠일이니"],
   ["웬만하면", "왠만하면"],
-];
+  ["설렘", "설레임"],
+  ["바람", "바램"],
+  ["어떡해", "어떻해"],
+  ["일부러", "일부로"],
+  ["곰곰이", "곰곰히"],
+  ["꼼꼼히", "꼼꼼이"],
+  ["틈틈이", "틈틈히"],
+  ["번번이", "번번히"],
+  ["대가", "댓가"],
+  ["개수", "갯수"],
+  ["횟수", "회수"],
+  ["찻잔", "차잔"],
+  ["나뭇잎", "나무잎"],
+  ["바닷가", "바다가"],
+  ["햇빛", "해빛"],
+  ["햇볕", "해볕"],
+  ["콧물", "코물"],
+  ["빗자루", "비자루"],
+  ["냇물", "내물"],
+  ["숫자", "수자"],
+  ["뒤꿈치", "뒷꿈치"],
+  ["위층", "윗층"],
+  ["윗집", "위집"],
+  ["아랫니", "아래니"],
+  ["덮밥", "덥밥"],
+  ["넓적다리", "넙적다리"],
+  ["짜깁기", "짜집기"],
+  ["육개장", "육계장"],
+  ["순댓국", "순대국"],
+  ["만둣국", "만두국"],
+  ["해님", "햇님"],
+  ["오뚝이", "오뚜기"],
+  ["귀띔", "귀뜸"],
+  ["눈곱", "눈꼽"],
+  ["손톱깎이", "손톱깍이"],
+  ["연필깎이", "연필깍이"],
+  ["구레나룻", "구렛나루"],
+  ["되뇌다", "되뇌이다"],
+  ["할게", "할께"],
+  ["할걸", "할껄"],
+  ["얼마큼", "얼만큼"],
+  ["치르다", "치루다"],
+  ["가르치다", "가르키다"],
+  ["낭떠러지", "낭떨어지"],
+  ["메밀", "모밀"],
+  ["상추", "상치"],
+  ["가랑이", "가랭이"],
+  ["아지랑이", "아지랭이"],
+  ["냄비", "남비"],
+  ["멋쩍다", "멋적다"],
+  ["따뜻이", "따뜻히"],
+  ["가만히", "가만이"],
+  ["급히", "급이"],
+  ["분명히", "분명이"],
+  ["정확히", "정확이"],
+  ["조용히", "조용이"],
+  ["익숙지", "익숙치"],
+  ["생각건대", "생각컨대"],
+  ["섭섭지", "섭섭치"],
+  ["안팎", "안밖"],
+  ["살코기", "살고기"],
+  ["수캐", "수개"],
+  ["수탉", "수닭"],
+  ["암탉", "암닭"],
+  ["수컷", "숫컷"],
+  ["숫양", "수양"],
+  ["돌멩이", "돌맹이"],
+  ["지렁이", "지렝이"],
+  ["트림", "트름"],
+  ["쌍둥이", "쌍동이"],
+  ["막둥이", "막동이"],
+  ["웃어른", "윗어른"],
+  ["윗사람", "웃사람"],
+  ["윗도리", "웃도리"],
+  ["웃돈", "윗돈"],
+  ["무릅쓰다", "무릎쓰다"],
+  ["무릎", "무릅"],
+  ["닦달하다", "닥달하다"],
+  ["움큼", "웅큼"],
+  ["구태여", "구태어"],
+  ["애당초", "애시당초"],
+  ["꼭두각시", "꼭둑각시"],
+  ["켤레", "켤래"],
+  ["알쏭달쏭", "알송달송"],
+  ["싫증", "실증"],
+  ["더욱이", "더우기"],
+  ["대장장이", "대장쟁이"],
+  ["깎다", "깍다"]];
+
+// 빈칸 문장 문제: [문장(___ 자리가 빈칸), 옳은 말, 틀린 말]
+const SENTENCES = [["숙제를 다 하면 놀아도 ___.", "돼", "되"],
+  ["이제 집에 가도 ___?", "돼요", "되요"],
+  ["나는 훌륭한 사람이 ___ 싶어요.", "되고", "돼고"],
+  ["드디어 숙제가 다 ___.", "됐다", "됬다"],
+  ["수업 시간에 떠들면 안 ___.", "돼", "되"],
+  ["나는 어제 학원에 ___ 갔다.", "안", "않"],
+  ["동생이 밥을 먹지 ___.", "않았다", "안았다"],
+  ["오늘은 별로 춥지 ___.", "않아", "안아"],
+  ["밖에 나가지 ___ 집에서 놀았다.", "않고", "안고"],
+  ["화살로 과녁 한가운데를 ___.", "맞혔다", "맞췄다"],
+  ["퀴즈 정답을 모두 ___.", "맞혔다", "맞췄다"],
+  ["친구와 퍼즐 조각을 ___.", "맞췄다", "맞혔다"],
+  ["약속 시간에는 ___ 와야 해.", "반드시", "반듯이"],
+  ["의자에 ___ 앉으세요.", "반듯이", "반드시"],
+  ["나와 동생은 생김새가 ___.", "다르다", "틀리다"],
+  ["선생님께서 수학을 ___ 주셨다.", "가르쳐", "가리켜"],
+  ["손가락으로 북쪽을 ___.", "가리켰다", "가르쳤다"],
+  ["편지 봉투에 우표를 ___.", "붙였다", "부쳤다"],
+  ["할머니께 소포를 ___.", "부쳤다", "붙였다"],
+  ["길에서 지갑을 ___.", "잃어버렸다", "잊어버렸다"],
+  ["숙제가 있다는 것을 깜빡 ___.", "잊어버렸다", "잃어버렸다"],
+  ["감기가 다 ___.", "나았다", "낳았다"],
+  ["우리 집 개가 새끼를 ___.", "낳았다", "나았다"],
+  ["고무줄을 길게 ___.", "늘였다", "늘렸다"],
+  ["쉬는 시간을 10분 더 ___.", "늘렸다", "늘였다"],
+  ["오래 꿇어앉았더니 다리가 ___.", "저리다", "절이다"],
+  ["배추를 소금에 ___.", "절였다", "저렸다"],
+  ["이 옷은 나한테 너무 ___.", "작다", "적다"],
+  ["오늘은 숙제가 ___.", "적다", "작다"],
+  ["___ 일로 여기까지 왔니?", "웬", "왠"],
+  ["오늘은 ___ 기분이 좋아.", "왠지", "웬지"],
+  ["산 ___ 마을에 할머니가 사신다.", "너머", "넘어"],
+  ["고양이가 담을 ___ 도망쳤다.", "넘어", "너머"],
+  ["신발 끈을 꽉 ___.", "맸다", "멨다"],
+  ["가방을 어깨에 ___.", "멨다", "맸다"],
+  ["햇빛이 밝아서 눈이 ___.", "부시다", "부수다"],
+  ["장난감 성을 발로 ___.", "부쉈다", "부셨다"],
+  ["조금 ___ 다시 전화할게.", "이따가", "있다가"],
+  ["집에 ___ 심심해서 나왔어.", "있다가", "이따가"],
+  ["무엇을 ___ 괜찮아.", "먹든지", "먹던지"],
+  ["어제는 얼마나 ___ 몰라.", "춥던지", "춥든지"],
+  ["민지가 내일 전학을 ___.", "간대", "간데"],
+  ["어제 가 보니 운동장이 정말 ___.", "넓더라", "넓드라"],
+  ["나도 ___!", "할 수 있어", "할수있어"],
+  ["밥을 ___ 한 시간이 지났다.", "먹은 지", "먹은지"],
+  ["저 사람이 ___ 모르겠다.", "누구인지", "누구인 지"],
+  ["나도 ___ 키가 커.", "형만큼", "형 만큼"],
+  ["시험이 ___ 쉬웠다.", "생각보다", "생각 보다"],
+  ["우리 ___ 놀자.", "같이", "가치"],
+  ["일요일에 공원으로 ___ 가자.", "놀러", "놀로"],
+  ["언니가 ___ 말했다.", "조용히", "조용이"],
+  ["방을 ___ 치웠다.", "깨끗이", "깨끗히"],
+  ["___ 생각해 보니 내가 잘못했다.", "곰곰이", "곰곰히"],
+  ["숙제를 ___ 확인했다.", "꼼꼼히", "꼼꼼이"],
+  ["쉬는 시간마다 ___ 책을 읽는다.", "틈틈이", "틈틈히"],
+  ["잠깐 ___ 앉아 있어.", "가만히", "가만이"],
+  ["웃어른께는 ___ 인사해요.", "공손히", "공손이"],
+  ["___ 말하면 용서해 줄게.", "솔직히", "솔직이"],
+  ["내일 다시 ___.", "올게", "올께"],
+  ["이럴 줄 알았으면 일찍 ___.", "올걸", "올껄"],
+  ["준비물을 안 가져왔어. ___?", "어떡해", "어떻해"],
+  ["내 ___은 가수가 되는 거야.", "바람", "바램"],
+  ["소풍 전날이라 마음이 ___.", "설렌다", "설레인다"],
+  ["오늘이 몇 월 ___이야?", "며칠", "몇 일"],
+  ["___ 그런 게 아니야.", "일부러", "일부로"],
+  ["할머니 댁에 ___ 집에 왔어.", "들렀다가", "들렸다가"],
+  ["어제 받아쓰기 시험을 ___.", "치렀다", "치뤘다"],
+  ["엄마가 김치를 ___.", "담갔다", "담궜다"],
+  ["나갈 때 문을 꼭 ___.", "잠가", "잠궈"],
+  ["친구를 ___ 만나서 반가웠다.", "오랜만에", "오랫만에"],
+  ["얼음이 ___ 녹아 버렸다.", "금세", "금새"],
+  ["버스가 ___ 떠났다.", "벌써", "벌서"],
+  ["형은 나보다 키가 ___ 크다.", "훨씬", "휠씬"],
+  ["공을 ___ 찼다.", "힘껏", "힘것"],
+  ["기다리던 방학이 ___ 왔다!", "드디어", "드디여"],
+  ["연필을 칼로 ___ 썼다.", "깎아서", "깍아서"],
+  ["넘어져서 ___이 까졌다.", "무릎", "무릅"],
+  ["아침에 일어나니 ___이 꼈다.", "눈곱", "눈꼽"],
+  ["___에서 쿵쿵 소리가 난다.", "윗집", "위집"],
+  ["겨울에는 따뜻한 ___이 최고야.", "만둣국", "만두국"],
+  ["그 이야기는 정말 ___.", "어이없다", "어의없다"],
+  ["배가 고파서 ___ 먹었다.", "먹을 만큼", "먹을만큼"],
+  ["동생이 ___ 웃었다.", "방긋방긋", "방끗방끗"]];
 const TOTAL_QUESTIONS = 50;
+const SENTENCE_COUNT = 20;   // 한 판 50문제 중 빈칸 문장 문제 수
 
 const MONSTER_COLORS = [
   { main: '#7030a0', dark: '#401860' }, { main: '#c03030', dark: '#601818' },
@@ -618,14 +837,11 @@ function shuffle(arr) {
 }
 
 function buildQuestionList() {
-  const pool = shuffle(QUESTIONS_RAW.slice());
-  const out = [];
-  let idx = 0;
-  while (out.length < TOTAL_QUESTIONS) {
-    if (idx >= pool.length) { shuffle(pool); idx = 0; }
-    out.push(pool[idx++]);
-  }
-  return out;
+  const sents = shuffle(SENTENCES.slice()).slice(0, SENTENCE_COUNT)
+    .map(([s, a, b]) => ({ s, a, b }));
+  const words = shuffle(WORDS.slice()).slice(0, TOTAL_QUESTIONS - sents.length)
+    .map(([a, b]) => ({ s: null, a, b }));
+  return shuffle(sents.concat(words));
 }
 
 function newGame() {
@@ -662,12 +878,14 @@ function setupBlocks() {
   const blockY  = groundY - Math.min(Math.max(180 * scale, 160), H * 0.45);
   const q = game.questions[game.totalAnswered];
   if (!q) return;
+  game.curQ = q;
+  game.revealed = false;
   const leftIsCorrect = Math.random() < 0.5;
   const leftX  = W * 0.3 - BLOCK_SIZE / 2;
   const rightX = W * 0.7 - BLOCK_SIZE / 2;
   game.blocks = [
-    { x: leftX,  y: blockY, text: leftIsCorrect ? q[0] : q[1], isCorrect:  leftIsCorrect, hit: false, bump: 0 },
-    { x: rightX, y: blockY, text: leftIsCorrect ? q[1] : q[0], isCorrect: !leftIsCorrect, hit: false, bump: 0 },
+    { x: leftX,  y: blockY, text: leftIsCorrect ? q.a : q.b, isCorrect:  leftIsCorrect, hit: false, bump: 0 },
+    { x: rightX, y: blockY, text: leftIsCorrect ? q.b : q.a, isCorrect: !leftIsCorrect, hit: false, bump: 0 },
   ];
 }
 
@@ -738,6 +956,7 @@ function shoot() {
   if (game.bullets <= 0) return;
   game.bullets--;
   const p = game.player;
+  p.swing = 14;   // 방망이 휘두르는 그림
   game.projectiles.push({
     x: p.x + PLAYER_W / 2,
     y: p.y + PLAYER_H / 2,
@@ -855,6 +1074,7 @@ function update() {
   if (p.onGround && wasInAir) SFX.land();
 
   if (p.invul > 0) p.invul--;
+  if (p.swing > 0) p.swing--;
 
   // Monsters
   for (const m of game.monsters) {
@@ -936,12 +1156,14 @@ function onBlockHit(block) {
     setTimeout(() => SFX.monsterSpawn(), 200);
   }
   game.totalAnswered++;
+  game.revealed = true;   // 빈칸 문장에 정답을 채워서 보여 줌
 
   if (game.totalAnswered >= TOTAL_QUESTIONS) {
     setTimeout(() => endGame(true), 800);
     return;
   }
-  game.nextQuestionDelay = 35;
+  // 빈칸 문장은 완성된 문장을 읽을 수 있게 조금 더 기다림
+  game.nextQuestionDelay = (game.curQ && game.curQ.s) ? 75 : 35;
 }
 
 // ============================================================
@@ -957,6 +1179,7 @@ function endGame(won) {
   // Populate result card
   document.getElementById('end-title').textContent = won ? '🎉 클리어!' : '😿 게임 오버';
   document.getElementById('end-title').classList.toggle('lose', !won);
+  document.getElementById('end-ggobi').src = won ? 'img/ggobi-trophy.png' : 'img/ggobi-cry.png';
   document.getElementById('r-correct').textContent = `${game.totalCorrect} / ${TOTAL_QUESTIONS}`;
   document.getElementById('r-hearts').textContent  = `${game.hearts} / 5`;
   document.getElementById('r-bullets').textContent = `${game.bullets} 개`;
@@ -1188,14 +1411,14 @@ document.getElementById('input-name').addEventListener('keydown', (e) => {
 //  IMAGES (그림 파일)
 // ============================================================
 const IMG = {};
-['cat-stand', 'cat-walk', 'cat-jump', 'monster', 'block', 'block-ok', 'block-bad', 'star'].forEach(n => {
+['ggobi-stand', 'ggobi-walk', 'ggobi-jump', 'ggobi-swing', 'ggobi-hurt', 'wisp-bad', 'block', 'block-ok', 'block-bad', 'star'].forEach(n => {
   const im = new Image();
   im.src = `img/${n}.png`;
   IMG[n] = im;
 });
 IMG.bg = new Image();
 IMG.bg.src = 'img/bg.jpg';
-const BG_GROUND = 0.83;   // 배경 그림에서 캐릭터가 서는 풀밭 높이(비율)
+const BG_GROUND = 0.91;   // 배경 그림에서 캐릭터가 서는 풀밭 높이(비율)
 
 // 몬스터 색깔 바꾸기 (그림 한 장으로 여러 색)
 const MONSTER_HUES = [0, 70, 140, 200, 280, 320];
@@ -1227,8 +1450,9 @@ function hueRotateCanvas(img, deg) {
 }
 function getMonsterSprite(m) {
   if (!monsterVariants) {
-    if (!IMG.monster.complete || !IMG.monster.naturalWidth) return null;
-    monsterVariants = MONSTER_HUES.map(h => hueRotateCanvas(IMG.monster, h));
+    const src = IMG['wisp-bad'];
+    if (!src.complete || !src.naturalWidth) return null;
+    monsterVariants = MONSTER_HUES.map(h => hueRotateCanvas(src, h));
   }
   const idx = Math.max(0, MONSTER_COLORS.indexOf(m.color));
   return monsterVariants[idx % monsterVariants.length];
@@ -1240,7 +1464,7 @@ let frame = 0;
 function font(px) {
   return `${px}px "Jua", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif`;
 }
-const INK = '#5a3a26', CREAM = '#fff8ee', CORAL = '#f07a63', CORAL_D = '#c9533f';
+const INK = '#2c2950', CREAM = '#fff6ec', CORAL = '#ee5a6f', CORAL_D = '#c8455a', GOOD = '#3f8f4a';
 
 // ============================================================
 //  DRAWING
@@ -1255,19 +1479,19 @@ function drawBackground() {
   const groundY = H * GROUND_RATIO;
   // 하늘
   const sky = ctx.createLinearGradient(0, 0, 0, groundY);
-  sky.addColorStop(0, '#9edcfb');
-  sky.addColorStop(1, '#c9ecfb');
+  sky.addColorStop(0, '#8c67a5');
+  sky.addColorStop(1, '#936aa3');
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, W, H);
   if (ready(IMG.bg)) {
     const iw = IMG.bg.naturalWidth, ih = IMG.bg.naturalHeight;
-    let dh = Math.max((H - groundY) / (1 - BG_GROUND) + 2, W * ih / iw);
+    let dh = Math.max(groundY / BG_GROUND, W * ih / iw);
     const dw = dh * iw / ih;
     const top = groundY - BG_GROUND * dh;
     ctx.drawImage(IMG.bg, (W - dw) / 2, top, dw, dh);
-    if (top + dh < H) { ctx.fillStyle = '#f7b064'; ctx.fillRect(0, top + dh, W, H - top - dh); }
+    if (top + dh < H) { ctx.fillStyle = '#5d6b2b'; ctx.fillRect(0, top + dh, W, H - top - dh); }
   } else {
-    ctx.fillStyle = '#a8dc6a';
+    ctx.fillStyle = '#5d6b2b';
     ctx.fillRect(0, groundY, W, H - groundY);
   }
 }
@@ -1309,7 +1533,7 @@ function drawBlock(b) {
   const pillH = fontSize + padY * 2;
   const pillX = cx - pillW / 2;
   const pillY = by - pillH - 16;
-  ctx.fillStyle = 'rgba(90,58,38,0.25)';
+  ctx.fillStyle = 'rgba(30,20,70,0.30)';
   roundRect(ctx, pillX, pillY + 4, pillW, pillH, pillH / 2); ctx.fill();
   ctx.fillStyle = CREAM;
   ctx.strokeStyle = INK;
@@ -1331,8 +1555,8 @@ function drawBlock(b) {
   const size = BLOCK_SIZE * 1.08;
   let im = IMG.block, body = [0, 0, 1, 1];
   if (b.hit) {
-    if (b.isCorrect) { im = IMG['block-ok'];  body = [0.211, 0.248, 0.619, 0.737]; }
-    else             { im = IMG['block-bad']; body = [0.009, 0.046, 0.734, 0.949]; }
+    if (b.isCorrect) { im = IMG['block-ok'];  body = [0.086, 0.069, 0.848, 0.858]; }
+    else             { im = IMG['block-bad']; body = [0.063, 0.061, 0.892, 0.891]; }
   }
   if (ready(im)) {
     const iw = im.naturalWidth, ih = im.naturalHeight;
@@ -1363,13 +1587,15 @@ function drawPlayer(p) {
   const blink = p.invul > 0 && (Math.floor(p.invul / 5) % 2 === 0);
   if (blink) ctx.globalAlpha = 0.45;
 
-  let im = IMG['cat-stand'];
-  if (!p.onGround) im = IMG['cat-jump'];
-  else if (p.vx !== 0 && Math.floor(frame / 8) % 2 === 0) im = IMG['cat-walk'];
+  let im = IMG['ggobi-stand'];
+  if (p.invul > 50) im = IMG['ggobi-hurt'];
+  else if (p.swing > 0) im = IMG['ggobi-swing'];
+  else if (!p.onGround) im = IMG['ggobi-jump'];
+  else if (p.vx !== 0 && Math.floor(frame / 8) % 2 === 0) im = IMG['ggobi-walk'];
   const cx = p.x + PLAYER_W / 2;
   const bottom = p.y + PLAYER_H + 3 * scale;
   if (ready(im)) {
-    drawSprite(im, cx, bottom, PLAYER_H * 1.45, p.facing === -1);
+    drawSprite(im, cx, bottom, PLAYER_H * 1.6, p.facing === -1);
   } else {
     ctx.fillStyle = '#fbe9d2';
     roundRect(ctx, p.x, p.y, PLAYER_W, PLAYER_H, 12); ctx.fill();
@@ -1419,9 +1645,9 @@ function drawBullet(b) {
 }
 
 function panel(x, y, w, h) {
-  ctx.fillStyle = 'rgba(90,58,38,0.22)';
+  ctx.fillStyle = 'rgba(30,20,70,0.30)';
   roundRect(ctx, x, y + 4, w, h, 16); ctx.fill();
-  ctx.fillStyle = 'rgba(255,248,238,0.94)';
+  ctx.fillStyle = 'rgba(255,246,236,0.95)';
   ctx.strokeStyle = INK;
   ctx.lineWidth = 2.5;
   roundRect(ctx, x, y, w, h, 16);
@@ -1451,7 +1677,7 @@ function drawHUD() {
   const ty = top + 14 + hr * 2.1;
   ctx.fillText(line1, lx + 14, ty);
   if (!short) {   // 낮은 화면에서는 한 줄만
-    ctx.fillStyle = '#8a6a55';
+    ctx.fillStyle = '#6f6585';
     ctx.fillText(line2, lx + 14, ty + fs1 + 6);
   }
 
@@ -1476,27 +1702,118 @@ function drawHUD() {
   }
   ctx.textAlign = 'right';
   ctx.font = font(fs2);
-  ctx.fillStyle = game.bullets > 0 ? CORAL_D : '#b9a594';
+  ctx.fillStyle = game.bullets > 0 ? CORAL_D : '#aaa2b8';
   ctx.fillText(btext, rx + rw - 14, top + 11);
   ctx.font = font(fs3);
   ctx.fillStyle = INK;
   ctx.fillText(ttext, rx + rw - 14, top + 16 + fs2);
 
-  // 안내 문구
-  if (game.totalAnswered < TOTAL_QUESTIONS && !short) {
+  // 빈칸 문장 또는 안내 문구
+  const q = game.curQ;
+  const leftEdge = pad + lw + 10, rightEdge = W - pad - rw - 10;
+  if (q && q.s && game.blocks.length) {
+    drawSentence(q, short, leftEdge, rightEdge, top, Math.max(lh, rh));
+  } else if (game.totalAnswered < TOTAL_QUESTIONS && !short) {
     const fs = narrow ? 15 : Math.round(Math.max(16, 19 * scale));
     ctx.font = font(fs);
     const msg = '맞는 맞춤법 쪽으로 점프해서 톡!';
     const mw = ctx.measureText(msg).width + 30;
-    const fitsBetween = (W / 2 - mw / 2) > (pad + lw + 10) && (W / 2 + mw / 2) < (W - pad - rw - 10);
+    const fitsBetween = (W / 2 - mw / 2) > leftEdge && (W / 2 + mw / 2) < rightEdge;
     const my = fitsBetween ? top : top + Math.max(lh, rh) + 10;
-    ctx.fillStyle = 'rgba(255,248,238,0.75)';
+    ctx.fillStyle = 'rgba(255,246,236,0.8)';
     roundRect(ctx, W / 2 - mw / 2, my, mw, fs + 14, (fs + 14) / 2); ctx.fill();
     ctx.fillStyle = INK;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(msg, W / 2, my + (fs + 14) / 2 + 1);
   }
+}
+
+// 빈칸 문장 띠: "오늘이 몇 월 [ ? ]이야?" → 맞히면 빈칸에 정답이 들어감
+function drawSentence(q, short, leftEdge, rightEdge, top, panelH) {
+  // 낱말 단위 조각: 빈칸은 한 덩어리
+  const [before, after] = [q.s.split('___')[0] || '', q.s.split('___')[1] || ''];
+  const toks = [];
+  const pushWords = (str, firstSp) => {
+    str.split(' ').forEach((w, k) => { if (w) toks.push({ t: w, sp: k > 0 || firstSp }); });
+  };
+  pushWords(before.replace(/\s+$/, ''), false);
+  toks.push({ blank: true, sp: /\s$/.test(before) && toks.length > 0 });
+  pushWords(after, /^\s/.test(after));
+  const blankText = game.revealed ? q.a : '?';
+  const tokW = (tk, fs) => tk.blank
+    ? Math.max((game.revealed ? ctx.measureText(blankText).width : fs) + fs * 0.7, fs * 2.2)
+    : ctx.measureText(tk.t).width;
+  // maxW 안에 들어가게 줄 나누기 (최대 maxLines줄)
+  const layout = (fs, maxW, maxLines) => {
+    ctx.font = font(fs);
+    const spW = ctx.measureText(' ').width;
+    const lines = [[]]; const widths = [0];
+    for (const tk of toks) {
+      const w = tokW(tk, fs);
+      const L = lines.length - 1;
+      const add = (lines[L].length && tk.sp ? spW : 0) + w;
+      if (lines[L].length && widths[L] + add > maxW && tk.sp) {
+        lines.push([tk]); widths.push(w);
+      } else { lines[L].push(tk); widths[L] += add; }
+    }
+    if (lines.length > maxLines || Math.max(...widths) > maxW) return null;
+    return { fs, lines, widths, spW };
+  };
+  const padX = short ? 16 : 22;
+  const maxFs = short ? 20 : Math.round(Math.max(20, Math.min(30, 26 * scale)));
+  const between = rightEdge - leftEdge - padX * 2;
+  let lay = null, y, mid = W / 2;
+  // 1) 위쪽 패널 사이에 한 줄 → 2) 패널 사이에 두 줄 → 3) 패널 아래
+  for (let fs = maxFs; fs >= (short ? 15 : 17) && !lay; fs--) lay = layout(fs, between, 1);
+  for (let fs = short ? 18 : maxFs; fs >= 13 && !lay; fs--) {
+    lay = layout(fs, between, 2);
+    if (lay && (fs * 1.45 * 2 + 14) > panelH + 6) lay = null;   // 패널보다 너무 높으면 X
+  }
+  if (lay) {
+    y = top;
+    const bw0 = Math.max(...lay.widths) + padX * 2;
+    mid = Math.min(Math.max(W / 2, leftEdge + bw0 / 2), rightEdge - bw0 / 2);
+  } else {
+    for (let fs = maxFs; fs >= 13 && !lay; fs--) lay = layout(fs, W - 16 - padX * 2, fs === 13 ? 3 : 1);
+    y = top + panelH + (short ? 6 : 10);
+  }
+  if (!lay) return;
+  const fs = lay.fs, lineH = fs * 1.45;
+  const bw = Math.max(...lay.widths) + padX * 2;
+  const bh = lineH * lay.lines.length + (short ? 12 : 16);
+  const x = mid - bw / 2;
+  panel(x, y, bw, bh);
+  ctx.font = font(fs);
+  ctx.textBaseline = 'middle';
+  lay.lines.forEach((line, li) => {
+    const cy = y + (short ? 6 : 8) + lineH * (li + 0.5) + 1;
+    let tx = mid - lay.widths[li] / 2;
+    line.forEach((tk, k) => {
+      if (k > 0 && tk.sp) tx += lay.spW;
+      const w = tokW(tk, fs);
+      if (!tk.blank) {
+        ctx.textAlign = 'left'; ctx.fillStyle = INK;
+        ctx.fillText(tk.t, tx, cy);
+      } else {
+        const boxH = fs * 1.3;
+        if (game.revealed) {
+          ctx.fillStyle = '#e3f4dc';
+          roundRect(ctx, tx, cy - boxH / 2, w, boxH, 8); ctx.fill();
+          ctx.fillStyle = GOOD;
+        } else {
+          ctx.fillStyle = '#fff1c4'; ctx.strokeStyle = '#e0a93a'; ctx.lineWidth = 2;
+          ctx.setLineDash([5, 4]);
+          roundRect(ctx, tx, cy - boxH / 2, w, boxH, 8); ctx.fill(); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = '#c98a14';
+        }
+        ctx.textAlign = 'center';
+        ctx.fillText(blankText, tx + w / 2, cy);
+      }
+      tx += w;
+    });
+  });
 }
 
 function drawHeart(cx, cy, r, filled) {
@@ -1507,7 +1824,7 @@ function drawHeart(cx, cy, r, filled) {
   ctx.bezierCurveTo(cx, cy + r * 1.4, cx + r * 1.1, cy + r * 1.1, cx + r * 1.1, cy + r * 0.55);
   ctx.bezierCurveTo(cx + r * 1.1, cy, cx, cy, cx, cy + r * 0.35);
   ctx.closePath();
-  ctx.fillStyle = filled ? CORAL : '#eadccd';
+  ctx.fillStyle = filled ? CORAL : '#e6dfee';
   ctx.strokeStyle = INK;
   ctx.lineWidth = 2;
   ctx.fill();

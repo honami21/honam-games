@@ -5,7 +5,7 @@
 | 폴더 | 게임 | 랭킹 (Firebase Firestore 컬렉션) |
 |---|---|---|
 | `tetris/` | 냥냥 테트리스 | `tetris-scores` |
-| `spelling/` | 맞춤법 게임(초급) | `spelling-scores` |
+| `spelling/` | 꼬비의 한글 맞춤법 대소동 | `spelling-scores` |
 
 ## 구조
 - `index.html` : 게임 목록 첫 화면
