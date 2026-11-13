@@ -40,15 +40,15 @@
   #lvl { color:#cfe6ff; }
   #timer { position:absolute; top:14px; left:50%; transform:translateX(-50%); font-family:'Fredoka','Jua',sans-serif; font-size:32px; color:#fff; letter-spacing:1px;
     text-shadow:0 3px 0 #0b1224, 0 0 12px rgba(0,0,0,.4); }
-  #slots { position:absolute; top:58px; left:12px; display:flex; flex-direction:column; gap:4px; }
-  #slots .row { display:flex; gap:4px; }
-  .slot { width:34px; height:34px; border-radius:9px; background:rgba(10,14,30,.6); border:2px solid rgba(255,255,255,.18); position:relative; display:flex; align-items:center; justify-content:center; font-size:19px; }
-  .slot img { width:28px; height:28px; object-fit:contain; }
+  #slots { position:absolute; top:58px; left:12px; display:flex; flex-direction:column; gap:8px; }
+  #slots .row { display:flex; gap:6px; }
+  .slot { width:clamp(42px,3.4vw,60px); height:clamp(42px,3.4vw,60px); border-radius:11px; background:rgba(10,14,30,.6); border:2px solid rgba(255,255,255,.18); position:relative; display:flex; align-items:center; justify-content:center; font-size:clamp(23px,1.9vw,34px); }
+  .slot img { width:82%; height:82%; object-fit:contain; }
   .slot.w { border-color:rgba(226,70,63,.85); } .slot.p { border-color:rgba(122,79,224,.9); } .slot.e { border-color:var(--evo); box-shadow:0 0 8px var(--evo); }
-  .slot i { position:absolute; right:-3px; bottom:-5px; font-style:normal; font-family:'Fredoka',sans-serif; font-size:11px; color:#fff; background:#0b1224; border-radius:6px; padding:0 3px; line-height:1.3; }
+  .slot i { position:absolute; right:-4px; bottom:-6px; font-style:normal; font-family:'Fredoka',sans-serif; font-size:clamp(12px,1vw,16px); color:#fff; background:#0b1224; border-radius:6px; padding:0 3px; line-height:1.3; }
   .slot.ready::after { content:''; position:absolute; inset:-4px; border-radius:11px; border:2px dashed var(--sun); animation:spin 4s linear infinite; }
   #stats { position:absolute; top:58px; right:12px; display:flex; flex-direction:column; align-items:flex-end; gap:5px; }
-  .chip { background:rgba(10,14,30,.6); color:#fff; border-radius:14px; padding:3px 11px; font-size:16px; }
+  .chip { background:rgba(10,14,30,.6); color:#fff; border-radius:14px; padding:3px 12px; font-size:clamp(16px,1.3vw,21px); }
   #pause-btn { pointer-events:auto; cursor:pointer; border:2px solid rgba(255,255,255,.35); font-family:'Jua',sans-serif; }
   #bossbar { position:absolute; left:50%; top:78px; transform:translateX(-50%); width:min(520px,70vw); text-align:center; color:#fff; font-size:16px; text-shadow:0 2px 0 #000; }
   #bossbar .bar { height:14px; margin-top:3px; border-radius:8px; background:rgba(0,0,0,.6); border:2px solid #fff; overflow:hidden; }
@@ -179,8 +179,8 @@
     .topbar a,.topbar button{font-size:13px;padding:6px 10px}
     #timer { top:8px; font-size:24px; }
     #slots { top:44px; left:6px; }
-    .slot { width:27px; height:27px; font-size:15px; border-radius:7px; }
-    .slot img { width:22px; height:22px; }
+    .slot { width:34px; height:34px; font-size:19px; border-radius:8px; }
+    #slots .row { gap:4px; } #slots { gap:6px; }
     #stats { top:44px; right:6px; }
     .chip { font-size:13px; padding:2px 9px; }
     #bossbar { top:58px; font-size:13px; }
