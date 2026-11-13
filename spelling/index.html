@@ -1733,17 +1733,26 @@ function drawHUD() {
 function drawSentence(q, short, leftEdge, rightEdge, top, panelH) {
   // 낱말 단위 조각: 빈칸은 한 덩어리
   const [before, after] = [q.s.split('___')[0] || '', q.s.split('___')[1] || ''];
-  const toks = [];
+  const badge = short ? '빈칸' : '빈칸 채우기';
+  const toks = [{ badge: true, t: badge, sp: false }];
   const pushWords = (str, firstSp) => {
-    str.split(' ').forEach((w, k) => { if (w) toks.push({ t: w, sp: k > 0 || firstSp }); });
+    str.split(' ').forEach((w, k) => { if (w) toks.push({ t: w, sp: k > 0 || firstSp || toks.length === 1 }); });
   };
   pushWords(before.replace(/\s+$/, ''), false);
-  toks.push({ blank: true, sp: /\s$/.test(before) && toks.length > 0 });
+  toks.push({ blank: true, sp: /\s$/.test(before) || toks.length === 1 });
   pushWords(after, /^\s/.test(after));
   const blankText = game.revealed ? q.a : '?';
-  const tokW = (tk, fs) => tk.blank
-    ? Math.max((game.revealed ? ctx.measureText(blankText).width : fs) + fs * 0.7, fs * 2.2)
-    : ctx.measureText(tk.t).width;
+  const tokW = (tk, fs) => {
+    if (tk.badge) {
+      ctx.font = font(Math.round(fs * 0.62));
+      const w = ctx.measureText(tk.t).width + fs * 0.7;
+      ctx.font = font(fs);
+      return w;
+    }
+    return tk.blank
+      ? Math.max((game.revealed ? ctx.measureText(blankText).width : fs) + fs * 0.7, fs * 2.2)
+      : ctx.measureText(tk.t).width;
+  };
   // maxW 안에 들어가게 줄 나누기 (최대 maxLines줄)
   const layout = (fs, maxW, maxLines) => {
     ctx.font = font(fs);
@@ -1763,14 +1772,29 @@ function drawSentence(q, short, leftEdge, rightEdge, top, panelH) {
   const padX = short ? 16 : 22;
   const maxFs = short ? 20 : Math.round(Math.max(20, Math.min(30, 26 * scale)));
   const between = rightEdge - leftEdge - padX * 2;
+  const bannerH = (l) => l.fs * 1.45 * l.lines.length + (short ? 12 : 16);
   let lay = null, y, mid = W / 2;
+  // 0) 블록 바로 위 빈 공간에 크게 (공간이 있을 때)
+  const pillFs = Math.round(Math.max(17, Math.min(28, W / 26)));
+  const pillTop = (game.blocks[0] ? game.blocks[0].y : H * 0.5) - (pillFs + 18) - 16;
+  const freeTop = top + panelH + 12, freeBot = pillTop - 14;
+  const bigFs = Math.round(Math.max(22, Math.min(36, 32 * scale)));
+  for (let fs = bigFs; fs >= 18 && !lay; fs--) {
+    lay = layout(fs, Math.min(W - 24, 960) - padX * 2, 2);
+    if (lay && bannerH(lay) > freeBot - freeTop) lay = null;
+  }
+  if (lay) {
+    y = Math.max(freeTop, freeBot - bannerH(lay) - 40);   // 블록 가까이
+  }
   // 1) 위쪽 패널 사이에 한 줄 → 2) 패널 사이에 두 줄 → 3) 패널 아래
   for (let fs = maxFs; fs >= (short ? 15 : 17) && !lay; fs--) lay = layout(fs, between, 1);
   for (let fs = short ? 18 : maxFs; fs >= 13 && !lay; fs--) {
     lay = layout(fs, between, 2);
     if (lay && (fs * 1.45 * 2 + 14) > panelH + 6) lay = null;   // 패널보다 너무 높으면 X
   }
-  if (lay) {
+  if (y !== undefined) {
+    // 0)에서 자리 잡음
+  } else if (lay) {
     y = top;
     const bw0 = Math.max(...lay.widths) + padX * 2;
     mid = Math.min(Math.max(W / 2, leftEdge + bw0 / 2), rightEdge - bw0 / 2);
@@ -1792,7 +1816,15 @@ function drawSentence(q, short, leftEdge, rightEdge, top, panelH) {
     line.forEach((tk, k) => {
       if (k > 0 && tk.sp) tx += lay.spW;
       const w = tokW(tk, fs);
-      if (!tk.blank) {
+      if (tk.badge) {
+        const bh2 = fs * 1.15;
+        ctx.fillStyle = CORAL;
+        roundRect(ctx, tx, cy - bh2 / 2, w, bh2, bh2 / 2); ctx.fill();
+        ctx.font = font(Math.round(fs * 0.62));
+        ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+        ctx.fillText(tk.t, tx + w / 2, cy + 1);
+        ctx.font = font(fs);
+      } else if (!tk.blank) {
         ctx.textAlign = 'left'; ctx.fillStyle = INK;
         ctx.fillText(tk.t, tx, cy);
       } else {
@@ -1802,7 +1834,9 @@ function drawSentence(q, short, leftEdge, rightEdge, top, panelH) {
           roundRect(ctx, tx, cy - boxH / 2, w, boxH, 8); ctx.fill();
           ctx.fillStyle = GOOD;
         } else {
-          ctx.fillStyle = '#fff1c4'; ctx.strokeStyle = '#e0a93a'; ctx.lineWidth = 2;
+          const pulse = 0.5 + 0.5 * Math.sin(frame / 9);
+          ctx.fillStyle = `rgba(255, ${226 + Math.round(pulse * 15)}, ${150 + Math.round(pulse * 60)}, 1)`;
+          ctx.strokeStyle = '#e0a93a'; ctx.lineWidth = 2 + pulse;
           ctx.setLineDash([5, 4]);
           roundRect(ctx, tx, cy - boxH / 2, w, boxH, 8); ctx.fill(); ctx.stroke();
           ctx.setLineDash([]);
