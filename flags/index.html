@@ -37,9 +37,9 @@
   .goal { width:480px; height:251px; z-index:2; animation:goalIn .6s cubic-bezier(.3,1.6,.5,1); }
   .goal > img { width:100%; height:100%; display:block; }
   @keyframes goalIn { 0%{ opacity:0; scale:.6; translate:0 40px } 100%{ opacity:1; scale:1; translate:0 0 } }
-  .goal .banner { position:absolute; left:35%; width:30%; top:2.5%; height:9.5%; display:flex; align-items:center; justify-content:center;
-    font-size:30px; color:#d9452f; letter-spacing:2px; opacity:0; scale:.3; transition:opacity .25s, scale .45s cubic-bezier(.3,1.8,.5,1); }
-  .goal.arrived .banner { opacity:1; scale:1; }
+  .goal > img.banner { position:absolute; left:50%; top:-12px; width:176px; height:auto; margin-left:-88px; filter:drop-shadow(0 3px 0 rgba(44,41,80,.35));
+    opacity:0; scale:.3; transition:opacity .25s, scale .45s cubic-bezier(.3,1.8,.5,1); }
+  .goal.arrived > img.banner { opacity:1; scale:1; }
   @keyframes crack { 0%,100%{ translate:0 0 } 20%{ translate:-5px 2px } 40%{ translate:5px -1px } 60%{ translate:-4px 1px } 80%{ translate:4px 0 } }
   .plat.gone { visibility:hidden; }
   .flagboard { width:124px; height:88px; border:5px solid var(--ink); border-radius:12px; background:#fff; overflow:visible; box-shadow:0 6px 0 rgba(44,41,80,.45);
@@ -700,7 +700,8 @@ function place(el, x, y) {  // x: 왼쪽 끝, y: 위쪽 끝의 높이
 // ---------- 꼬비 ----------
 const player = { x: W / 2, y: 0, vx: 0, vy: 0, onGround: true, face: 1 };
 const POSES = ['back', 'walk-1', 'walk-2', 'back-jump', 'fall', 'cheer'];
-POSES.forEach(n => { const im = new Image(); im.src = `img/ggobi-${n}.png`; });   // 미리 불러오기
+POSES.forEach(n => { const im = new Image(); im.src = `img/ggobi-${n}.png`; });
+['goal', 'arrive-text'].forEach(n => { const im = new Image(); im.src = `img/${n}.png`; });   // 미리 불러오기
 let ggobiPose = '';
 function setPose(name) {
   if (ggobiPose === name) return;
@@ -803,7 +804,7 @@ function createPlatform(cx, y, country) {
 const GOAL_W = 480, GOAL_H = 251, GOAL_TOP = 177;   // GOAL_TOP: 그림 위쪽에서 풀밭 윗면까지
 function createGoal() {
   const y = ROW * (totalQuestions + 1);
-  const el = makeEl('goal', '<img src="img/goal.png" alt=""><div class="banner">도착!</div>');
+  const el = makeEl('goal', '<img src="img/goal.png" alt=""><img class="banner" src="img/arrive-text.png" alt="도착!">');
   place(el, W / 2 - GOAL_W / 2, y + GOAL_TOP);
   goalPlat = { el, x: W / 2, y, halfW: GOAL_W / 2 - 30, goal: true };
 }
