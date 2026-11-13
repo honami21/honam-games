@@ -33,6 +33,7 @@
   .topbar svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
   #sndToggle{padding:7px 10px}
   #sndToggle.muted{opacity:.7}
+  .kbgm-btn{padding:7px 10px}
 
   /* ===== 덮개 화면 (시작 / 대기) ===== */
   .screen { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:58px 16px 16px; z-index:20; overflow-y:auto; background:rgba(30,20,70,.3); }
@@ -335,6 +336,7 @@
 <canvas id="aimLayer" style="position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:6"></canvas>
 <div id="toast"></div>
 
+<script src="../audio/bgm.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 import {
@@ -605,8 +607,13 @@ function canControl() {
   if (role === 'cpu' && room.turn === cpuColor()) return false;
   return true;
 }
+// 배경 음악: 게임 중에는 원래 크기, 대기실과 결과 화면에서는 작게
+KBGM.init({ key:'alkkagi', tracks:{ play:'audio/bgm-play.mp3' } });
+KBGM.button({ after: $('sndToggle') });
+let bgmJingled = false;
 function show(id) {
   ['startScreen', 'waitScreen', 'game'].forEach(s => $(s).classList.toggle('hidden', s !== id));
+  if (id !== 'game') KBGM.calm();
   const g = id === 'game';
   $('sideGgobi').classList.toggle('hidden', !g); $('sideRoom').classList.toggle('hidden', !g);
   if (g) layout();
@@ -817,6 +824,7 @@ function render() {
     const el = $(c === 'b' ? 'lfB' : 'lfW'); if (el.innerHTML !== h) el.innerHTML = h; el.classList.toggle('many', NS > 8);
   }
   const playing = room.status === 'playing';
+  if (playing) { KBGM.full(); bgmJingled = false; } else KBGM.calm();
   $('pB').classList.toggle('turn', playing && room.turn === 'b');
   $('pW').classList.toggle('turn', playing && room.turn === 'w');
   $('sideCode').textContent = code || ''; $('sideRoom').classList.toggle('hidden', role === 'local' || role === 'cpu' || $('game').classList.contains('hidden'));
@@ -1577,6 +1585,7 @@ function showResult() {
   const first = !shownResultFor.startsWith(room.round + '-done');
   shownResultFor = key;
   const mine = myColor(), w = room.winner;
+  if (!bgmJingled && w && w !== 'draw' && (role === 'local' || w === mine)) { bgmJingled = true; KBGM.jingle(); }
   let img = 'ggobi-trophy', title, text;
   const reason = room.endReason === 'leave' ? '친구가 나가서 끝났어요.' : '상대 알을 모두 떨어뜨렸어요!';
   const left = w === 'b' || w === 'w' ? countAlive(room.pos, w) : 0;

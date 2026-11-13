@@ -228,6 +228,7 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
   .tab{left:50%;transform:translateX(-50%);top:-2px;font-size:12px;padding:2px 8px;border-radius:10px;white-space:nowrap;box-shadow:none}
   .tab svg,.tab .lg{display:none}
   .panel>#sound-btn{white-space:nowrap;font-size:13px !important}
+  .panel>.btn.btn-gr,.panel>.btn#sound-btn,.panel>.btn.kbgm-btn{grid-column:span 2;white-space:nowrap;font-size:12px !important;letter-spacing:-.5px}
   .mini-wrap canvas{width:100%;max-width:64px;height:auto;aspect-ratio:1}
   .pad{display:grid;grid-row:3;grid-column:1 / -1;grid-template-columns:repeat(6,1fr);gap:6px}
   .pad button{touch-action:none;border:none;border-radius:16px;height:58px;font-family:'Jua',sans-serif;font-size:24px;color:var(--ink);
@@ -537,6 +538,7 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
 </div>
 
 
+<script src="../audio/bgm.js"></script>
 <script type="module">
 // ============================================================
 //  FIREBASE SETUP
@@ -868,6 +870,12 @@ const audio = {
 
 // 스테이지 → BGM 템포 변환 (1단계 120 BPM → 10단계 210 BPM)
 function getStageTempo(s){ return 120 + (s - 1) * 10; }
+// 배경 음악: 직접 만든 음악 파일 사용 (6단계부터 빠른 곡)
+KBGM.init({ key:'tetris', tracks:{ play:'audio/bgm-play.mp3', fast:'audio/bgm-fast.mp3' } });
+const bgmName=()=>stage>=6?'fast':'play';
+audio.startBGM=function(){ KBGM.track(bgmName()); KBGM.full(); };
+audio.stopBGM=function(){ KBGM.calm(); };
+audio.setBGMTempo=function(){ KBGM.track(bgmName()); };
 
 // ============================================================
 //  CANVAS
@@ -1205,6 +1213,7 @@ function finishGame(cleared){
   started=false;paused=false;
   cancelAnimationFrame(animId);
   audio.stopBGM();
+  if(cleared) KBGM.jingle();
   if(cleared) audio.gameClear();
   else audio.gameOver();
   showGameOverModal();
@@ -1511,6 +1520,7 @@ function updateSoundBtn(){
     btn.classList.remove('btn-g');btn.classList.add('btn-gr');
   }
 }
+KBGM.button({ after: document.getElementById('sound-btn'), long: true });
 document.getElementById('sound-btn').addEventListener('click',()=>{
   audio.init();
   audio.setEnabled(!audio.enabled);
