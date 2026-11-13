@@ -38,7 +38,7 @@ h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .soon{justify-content:center;align-items:center;min-height:300px;overflow:hidden}
 .soon::before{content:"";position:absolute;inset:12px;border:3px dashed #b9a99a;border-radius:20px}
 .soon span{font-size:26px;color:#7a6a63;margin-bottom:40px}
-.soon img{position:absolute;right:6px;bottom:12px;width:58%;max-width:200px;height:auto;animation:peek 4s ease-in-out infinite}
+.soon img{position:absolute;left:0;right:0;margin:0 auto;bottom:15px;width:29%;max-width:100px;height:auto;animation:peek 4s ease-in-out infinite}
 @keyframes peek{0%,70%,100%{transform:translateY(0)}80%{transform:translateY(8px)}}
 .wisp{position:absolute;width:44px;height:auto;pointer-events:none;opacity:.95;filter:drop-shadow(0 0 14px rgba(255,220,110,.85));animation:float 5s ease-in-out infinite}
 .w1{left:6%;top:18%}.w2{right:8%;top:6%;width:36px;animation-delay:-1.6s}.w3{right:2%;top:62%;width:30px;animation-delay:-3s}.w4{left:16%;top:70%;width:26px;animation-delay:-2.2s}
@@ -63,8 +63,7 @@ h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
   .grid{grid-template-columns:1fr;gap:18px}
   .game img{aspect-ratio:4/3;object-position:center top}
   .soon{min-height:190px}
-  .soon img{width:140px}
-  .soon{align-items:flex-start;padding-left:34px}
+  .soon img{width:70px}
   .soon span{margin:0 0 20px;font-size:22px}
   .wisp{width:28px}.w3,.w4{display:none}
 }
