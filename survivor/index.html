@@ -23,6 +23,7 @@
   body { -webkit-user-select:none; user-select:none; touch-action:none; }
   .hidden { display:none !important; }
   #cv { position:fixed; inset:0; width:100%; height:100%; display:block; }
+  #vig { position:fixed; inset:0; pointer-events:none; background:radial-gradient(ellipse at center, rgba(8,10,30,0) 45%, rgba(8,10,30,.55) 100%); }
 
   /* ===== 상단 바 (쉬는 시간 / 전체화면) ===== */
   .topbar{position:fixed;top:12px;left:12px;right:12px;z-index:60;display:flex;justify-content:space-between;pointer-events:none}
@@ -232,6 +233,7 @@
 </script>
 
 <canvas id="cv"></canvas>
+<div id="vig"></div>
 
 <div id="hud" class="hidden">
   <div id="xpbar"><div id="xpfill"></div></div>
@@ -517,7 +519,7 @@ const isTouch = matchMedia('(pointer:coarse)').matches || ('ontouchstart' in win
 const IMG = {};
 function loadImg(name, src) {
   const im = new Image();
-  im.onload = () => { IMG[name] = im; if (name === 'logo') { $('title-logo').classList.remove('hidden'); $('title-text').classList.add('hidden'); } if (name === 'ground') groundPattern = null; clearTimeout(loadImg.t); loadImg.t = setTimeout(() => { if (typeof modal !== 'undefined' && modal === 'start') buildPick(); }, 120); };
+  im.onload = () => { IMG[name] = im; if (im.decode) im.decode().catch(() => {}); if (name === 'logo') { $('title-logo').classList.remove('hidden'); $('title-text').classList.add('hidden'); } if (name === 'ground') groundPattern = null; clearTimeout(loadImg.t); loadImg.t = setTimeout(() => { if (typeof modal !== 'undefined' && modal === 'start') buildPick(); }, 120); };
   im.src = src;
 }
 IMG_NAMES.forEach(n => loadImg(n, 'img/' + n + (n === 'ground' ? '.jpg' : '.png')));
@@ -534,8 +536,10 @@ function iconHTML(kind, id, small) {
 /* ---------- 화면 크기 ---------- */
 let W = 0, H = 0, DPR = 1, SCALE = 1, VW = 0, VH = 0;
 function resize() {
-  DPR = Math.min(2, window.devicePixelRatio || 1);
   W = window.innerWidth; H = window.innerHeight;
+  // 큰 화면에서는 그리는 점 개수를 줄여서 느려지지 않게 해요
+  DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1, Math.sqrt(2600000 / Math.max(1, W * H))));
+  try { groundPattern = null; SPRC.clear(); TXC.clear(); } catch (e) {}
   cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
   // 짧은 쪽 기준으로 보이는 넓이를 맞춰요 (휴대폰은 조금 더 멀리 보이게)
   SCALE = Math.min(W, H) / (isTouch ? 600 : 720);
@@ -1379,7 +1383,7 @@ function update(dt) {
 /* =====================================================================
    그리기
    ===================================================================== */
-let groundPattern = null, fallbackTile = null;
+let groundPattern = null, fallbackTile = null, GROUND_PX = 0;
 function makeFallbackTile() {
   const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d');
   g.fillStyle = '#2b4a35'; g.fillRect(0, 0, 256, 256);
@@ -1393,9 +1397,9 @@ function makeFallbackTile() {
 function getGround() {
   if (groundPattern) return groundPattern;
   if (IMG.ground) {
-    groundPattern = ctx.createPattern(IMG.ground, 'repeat');
-    const s = 480 / IMG.ground.width; try { groundPattern.setTransform(new DOMMatrix([s, 0, 0, s, 0, 0])); } catch (e) {}
-  } else { if (!fallbackTile) fallbackTile = makeFallbackTile(); groundPattern = ctx.createPattern(fallbackTile, 'repeat'); }
+    const gs = Math.max(64, Math.min(IMG.ground.width, Math.round(480 * DPR * SCALE))); const gc = document.createElement('canvas'); gc.width = gc.height = gs; const gg = gc.getContext('2d'); gg.imageSmoothingQuality = 'high'; gg.drawImage(IMG.ground, 0, 0, gs, gs);
+    groundPattern = ctx.createPattern(gc, 'repeat'); GROUND_PX = gs;
+  } else { GROUND_PX = 0; if (!fallbackTile) fallbackTile = makeFallbackTile(); groundPattern = ctx.createPattern(fallbackTile, 'repeat'); }
   return groundPattern;
 }
 function hash(x, y) { let h = (x * 374761393 + y * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177 | 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
@@ -1407,9 +1411,17 @@ function decoAt(cx, cy, i) {
   return { x: (cx + r1) * 420, y: (cy + r2) * 420, t };
 }
 
+const SPRC = new Map(); let KPX = 1;
+function glowSprite(key, c0, c1) { let c = SPRC.get(key); if (!c) { c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, c0); gr.addColorStop(1, c1); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); SPRC.set(key, c); } return c; }
 function spr(name, x, y, h, flip, alpha) {
-  const im = IMG[name]; if (!im) return false;
+  let im = IMG[name]; if (!im) return false;
   const w = h * im.width / im.height;
+  const ph = Math.min(im.height, Math.ceil(h * KPX / 8) * 8);
+  if (ph < im.height * .8) {
+    const key = name + '|' + ph; let c = SPRC.get(key);
+    if (!c) { if (SPRC.size > 500) SPRC.clear(); c = document.createElement('canvas'); c.height = ph; c.width = Math.max(1, Math.round(ph * im.width / im.height)); const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(im, 0, 0, c.width, c.height); SPRC.set(key, c); }
+    im = c;
+  }
   if (alpha !== undefined) ctx.globalAlpha = alpha;
   if (flip) { ctx.save(); ctx.translate(x, y); ctx.scale(-1, 1); ctx.drawImage(im, -w / 2, -h / 2, w, h); ctx.restore(); }
   else ctx.drawImage(im, x - w / 2, y - h / 2, w, h);
@@ -1442,6 +1454,7 @@ function drawDecoFallback(name, x, y, sz) {
 }
 
 function drawMonster(e) {
+  if (Math.abs(e.x - CAM.x) > VW / 2 + e.r * 4 + 60 || Math.abs(e.y - CAM.y) > VH / 2 + e.r * 4 + 60) return;
   const p = G.p, M = MONSTERS[e.type];
   const bob = Math.sin(G.t * 8 + e.ph) * 1.5;
   const flip = e.type === 'seg' ? false : e.face < 0;
@@ -1520,23 +1533,25 @@ function drawPlayer() {
 
 function drawWisp(x, y, r, evo) {
   ctx.globalCompositeOperation = 'lighter';
-  const gr = ctx.createRadialGradient(x, y, 1, x, y, r * 2.4);
-  gr.addColorStop(0, evo ? 'rgba(255,170,240,.9)' : 'rgba(120,210,255,.9)'); gr.addColorStop(1, 'rgba(60,120,255,0)');
-  ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, r * 2.4, 0, TAU); ctx.fill();
+  const gl = glowSprite(evo ? '_ge' : '_gw', evo ? 'rgba(255,170,240,.9)' : 'rgba(120,210,255,.9)', 'rgba(60,120,255,0)');
+  ctx.drawImage(gl, x - r * 2.4, y - r * 2.4, r * 4.8, r * 4.8);
   ctx.globalCompositeOperation = 'source-over';
   if (!spr(evo ? 'fx-ewisp' : 'fx-wisp', x, y, r * 3)) { circle(x, y, r, evo ? '#ffd0f4' : '#bfe8ff'); circle(x, y, r * .5, '#fff'); }
 }
 
 function render() {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.fillStyle = '#16233a'; ctx.fillRect(0, 0, cv.width, cv.height);
+  if (!GROUND_PX) { ctx.fillStyle = '#16233a'; ctx.fillRect(0, 0, cv.width, cv.height); }
   const p = G ? G.p : { x: performance.now() / 30, y: performance.now() / 50 };
   const sh = G ? G.shake * 8 : 0;
   const camX = p.x + rnd(-sh, sh), camY = p.y + rnd(-sh, sh);
-  const k = DPR * SCALE; CAM.x = camX; CAM.y = camY;
-  ctx.setTransform(k, 0, 0, k, cv.width / 2 - camX * k, cv.height / 2 - camY * k);
+  const k = DPR * SCALE; CAM.x = camX; CAM.y = camY; KPX = k;
+  const tx = Math.round(cv.width / 2 - camX * k), ty = Math.round(cv.height / 2 - camY * k);
+  const gp = getGround();
+  if (GROUND_PX) { try { gp.setTransform(new DOMMatrix([1, 0, 0, 1, ((tx % GROUND_PX) + GROUND_PX) % GROUND_PX, ((ty % GROUND_PX) + GROUND_PX) % GROUND_PX])); } catch (e) {} ctx.fillStyle = gp; ctx.fillRect(0, 0, cv.width, cv.height); }
+  ctx.setTransform(k, 0, 0, k, tx, ty);
   const x0 = camX - VW / 2 - 10, y0 = camY - VH / 2 - 10;
-  ctx.fillStyle = getGround(); ctx.fillRect(x0, y0, VW + 20, VH + 20);
+  if (!GROUND_PX) { ctx.fillStyle = gp; ctx.fillRect(x0, y0, VW + 20, VH + 20); }
   // 소품
   const c0x = Math.floor((x0 - 140) / 420), c1x = Math.floor((x0 + VW + 160) / 420), c0y = Math.floor((y0 - 140) / 420), c1y = Math.floor((y0 + VH + 160) / 420);
   const tall = [];
@@ -1557,7 +1572,8 @@ function render() {
     if (a.k === 'stroke') { ctx.globalAlpha = .8 * fade; ctx.strokeStyle = '#120e1c'; ctx.lineCap = 'round'; ctx.lineWidth = a.w * 2 * Math.min(1, a.t * 6); ctx.beginPath(); ctx.moveTo(a.x1, a.y1); ctx.lineTo(a.x2, a.y2); ctx.stroke(); ctx.globalAlpha = 1; }
   }
   // 구슬과 물건
-  for (const g of G.gems) { const c = gemColor(g.v); if (!spr('gem-' + c, g.x, g.y, c === 'red' ? 26 : 18)) { ctx.fillStyle = c === 'blue' ? '#5ad1ff' : c === 'green' ? '#6fe08a' : '#ff5a6a'; ctx.beginPath(); ctx.moveTo(g.x, g.y - 7); ctx.lineTo(g.x + 5, g.y); ctx.lineTo(g.x, g.y + 7); ctx.lineTo(g.x - 5, g.y); ctx.fill(); } }
+  const vx = VW / 2 + 30, vy = VH / 2 + 30;
+  for (const g of G.gems) { if (Math.abs(g.x - camX) > vx || Math.abs(g.y - camY) > vy) continue; const c = gemColor(g.v); if (!spr('gem-' + c, g.x, g.y, c === 'red' ? 26 : 18)) { ctx.fillStyle = c === 'blue' ? '#5ad1ff' : c === 'green' ? '#6fe08a' : '#ff5a6a'; ctx.beginPath(); ctx.moveTo(g.x, g.y - 7); ctx.lineTo(g.x + 5, g.y); ctx.lineTo(g.x, g.y + 7); ctx.lineTo(g.x - 5, g.y); ctx.fill(); } }
   for (const k of G.picks) {
     const b = Math.sin(k.t * 4) * 3;
     if (k.type === 'chest') { const gr = ctx.createRadialGradient(k.x, k.y, 2, k.x, k.y, 50); gr.addColorStop(0, 'rgba(255,220,120,.6)'); gr.addColorStop(1, 'rgba(255,220,120,0)'); ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(k.x, k.y, 50, 0, TAU); ctx.fill(); }
@@ -1641,11 +1657,22 @@ function render() {
   for (const d of tall) { const near = Math.abs(d.x - p.x) < 60 && d.y > p.y && d.y - p.y < 120; if (!spr(d.t[0], d.x, d.y - d.t[2] * .4, d.t[2], false, near ? .45 : 1)) { if (near) ctx.globalAlpha = .45; drawDecoFallback(d.t[0], d.x, d.y, d.t[2]); ctx.globalAlpha = 1; } }
   // 숫자
   ctx.font = '600 15px Fredoka, Jua, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(20,16,40,.85)';
-  for (const t of G.texts) { ctx.globalAlpha = 1 - t.t / .7; const y = t.y - t.t * 40; ctx.strokeText(t.s, t.x, y); ctx.fillStyle = t.c; ctx.fillText(t.s, t.x, y); }
+  for (const t of G.texts) { ctx.globalAlpha = 1 - t.t / .7; const y = t.y - t.t * 40; const c = textSprite(t.s, t.c); ctx.drawImage(c, t.x - c.width / TXS / 2, y - c.height / TXS / 2, c.width / TXS, c.height / TXS); }
   ctx.globalAlpha = 1;
   drawOverlay();
 }
 const CAM = { x: 0, y: 0 };
+const TXC = new Map(); let TXS = 2;
+function textSprite(s, col) {
+  const key = s + '|' + col; let c = TXC.get(key); if (c) return c;
+  if (TXC.size > 600) TXC.clear();
+  TXS = Math.min(3, Math.max(1, Math.ceil(KPX)));
+  c = document.createElement('canvas'); const g = c.getContext('2d'); g.font = '600 15px Fredoka, Jua, sans-serif';
+  c.width = Math.ceil((g.measureText(s).width + 8) * TXS); c.height = 24 * TXS;
+  g.scale(TXS, TXS); g.font = '600 15px Fredoka, Jua, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineWidth = 3; g.lineJoin = 'round'; g.strokeStyle = 'rgba(20,16,40,.85)';
+  g.strokeText(s, c.width / TXS / 2, 12); g.fillStyle = col; g.fillText(s, c.width / TXS / 2, 12);
+  TXC.set(key, c); return c;
+}
 function edgeArrow(wx, wy, label, color) {
   const sx = (wx - CAM.x) * SCALE + W / 2, sy = (wy - CAM.y) * SCALE + H / 2, m = 40;
   if (sx > 0 && sx < W && sy > 0 && sy < H) return;
@@ -1663,15 +1690,11 @@ const FIREFLIES = Array.from({ length: 26 }, (_, i) => ({ x: Math.random(), y: M
 function drawOverlay() {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   const now = performance.now() / 1000;
-  ctx.globalCompositeOperation = 'lighter';
   for (const f of FIREFLIES) {
     const x = ((f.x + now * .01 * f.s) % 1) * W, y = ((f.y + Math.sin(now * .3 + f.ph) * .02) % 1) * H, a = .25 + .25 * Math.sin(now * 2 + f.ph);
-    const gr = ctx.createRadialGradient(x, y, 0, x, y, 9); gr.addColorStop(0, `rgba(230,255,160,${a})`); gr.addColorStop(1, 'rgba(230,255,160,0)'); ctx.fillStyle = gr; ctx.fillRect(x - 9, y - 9, 18, 18);
+    ctx.globalAlpha = a; ctx.drawImage(glowSprite('_gf', 'rgba(230,255,160,1)', 'rgba(230,255,160,0)'), x - 9, y - 9, 18, 18);
   }
-  ctx.globalCompositeOperation = 'source-over';
-  const gr = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .35, W / 2, H / 2, Math.hypot(W, H) * .6);
-  gr.addColorStop(0, 'rgba(8,10,30,0)'); gr.addColorStop(1, 'rgba(8,10,30,.55)');
-  ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
+  ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
   if (G) {
     for (const k of G.picks) if (k.type === 'chest') edgeArrow(k.x, k.y, '🎁', '#ffd25e');
     if (G.boss) edgeArrow(G.boss.x, G.boss.y, '👹', '#ff5a6a');
