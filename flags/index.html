@@ -26,15 +26,23 @@
   #world { position:absolute; left:0; top:0; width:640px; height:0; transform-origin:0 0; }
   #world > * { position:absolute; }
   .floor { width:760px; } .floor img { width:100%; display:block; }
-  .plat { width:210px; height:30px; border:4px solid var(--ink); border-radius:12px; box-shadow:0 6px 0 rgba(44,41,80,.45);
-    background:linear-gradient(115deg, rgba(255,255,255,0) 0 22%, rgba(255,255,255,.9) 22% 27%, rgba(255,255,255,0) 27% 58%, rgba(255,255,255,.75) 58% 61%, rgba(255,255,255,0) 61%), rgba(160,212,250,.82);
-    transition:background-color .2s; }
+  .plat { width:210px; height:28px; }
+  .plat::before { content:''; position:absolute; inset:0; background:url(img/platform.png) center / 100% 100% no-repeat; transition:filter .2s; }
   .plat .sign { position:absolute; left:50%; bottom:calc(100% + 6px); transform:translateX(-50%); display:none; }
   .plat.show .sign { display:block; }
   .plat .sign span { display:block; white-space:nowrap; background:var(--cream); border:3px solid var(--ink); border-radius:12px; box-shadow:0 3px 0 var(--ink);
     padding:2px 12px 3px; font-size:22px; color:var(--ink); }
-  .plat.ok { background-color:rgba(143,224,138,.9); }
-  .plat.bad { animation:crack .38s linear; background-color:rgba(255,170,180,.85); }
+  .plat.ok::before { filter:hue-rotate(-85deg) saturate(1.3) drop-shadow(0 0 6px rgba(160,255,150,.9)); }
+  .plat.bad { animation:crack .38s linear; } .plat.bad::before { filter:hue-rotate(140deg) saturate(1.4); }
+  .goal { width:480px; height:251px; z-index:2; animation:goalIn .6s cubic-bezier(.3,1.6,.5,1); }
+  .goal > img { width:100%; height:100%; display:block; }
+  @keyframes goalIn { 0%{ opacity:0; scale:.6; translate:0 40px } 100%{ opacity:1; scale:1; translate:0 0 } }
+  .goal .banner { position:absolute; left:35%; width:30%; top:2.5%; height:9.5%; display:flex; align-items:center; justify-content:center;
+    font-size:30px; color:#d9452f; letter-spacing:2px; opacity:0; scale:.3; transition:opacity .25s, scale .45s cubic-bezier(.3,1.8,.5,1); }
+  .goal.arrived .banner { opacity:1; scale:1; }
+  .goal .hint { position:absolute; left:50%; top:30%; translate:-50% 0; white-space:nowrap; font-size:22px; color:#fff;
+    text-shadow:0 2px 0 var(--ink), 0 0 8px rgba(44,41,80,.8); animation:bob 1.6s ease-in-out infinite; }
+  .goal.arrived .hint { display:none; }
   @keyframes crack { 0%,100%{ translate:0 0 } 20%{ translate:-5px 2px } 40%{ translate:5px -1px } 60%{ translate:-4px 1px } 80%{ translate:4px 0 } }
   .plat.gone { visibility:hidden; }
   .flagboard { width:124px; height:88px; border:5px solid var(--ink); border-radius:12px; background:#fff; overflow:visible; box-shadow:0 6px 0 rgba(44,41,80,.45);
@@ -694,7 +702,7 @@ function place(el, x, y) {  // x: 왼쪽 끝, y: 위쪽 끝의 높이
 
 // ---------- 꼬비 ----------
 const player = { x: W / 2, y: 0, vx: 0, vy: 0, onGround: true, face: 1 };
-const POSES = ['back', 'walk-1', 'walk-2', 'back-jump', 'fall'];
+const POSES = ['back', 'walk-1', 'walk-2', 'back-jump', 'fall', 'cheer'];
 POSES.forEach(n => { const im = new Image(); im.src = `img/ggobi-${n}.png`; });   // 미리 불러오기
 let ggobiPose = '';
 function setPose(name) {
@@ -774,6 +782,7 @@ addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
 const rounds = [];
 let floorEl = null;
 const decoEls = [];
+let goalPlat = null;   // 마지막 문제를 맞히면 나타나는 결승 무대
 
 function makeEl(cls, html) {
   const el = document.createElement('div');
@@ -792,6 +801,14 @@ function createPlatform(cx, y, country) {
   const el = makeEl('plat', `<div class="sign"><span>${country.ko}</span></div>`);
   place(el, cx - PLAT_W / 2, y);
   return { el, x: cx, y, country, broken: false };
+}
+
+const GOAL_W = 480, GOAL_H = 251, GOAL_TOP = 177;   // GOAL_TOP: 그림 위쪽에서 풀밭 윗면까지
+function createGoal() {
+  const y = ROW * (totalQuestions + 1);
+  const el = makeEl('goal', '<img src="img/goal.png" alt=""><div class="banner">도착!</div><div class="hint">마지막 점프!</div>');
+  place(el, W / 2 - GOAL_W / 2, y + GOAL_TOP);
+  goalPlat = { el, x: W / 2, y, halfW: GOAL_W / 2 - 30, goal: true };
 }
 
 function createFlagBoard(y, country) {
@@ -861,6 +878,7 @@ function clearWorld() {
   rounds.length = 0;
   decoEls.length = 0;
   floorEl = null;
+  goalPlat = null;
 }
 
 // ---------- 국기 / 알림 ----------
@@ -903,6 +921,7 @@ function shatter(platform) {
 
 // ---------- 착지 판정 ----------
 function handleLanding(platform) {
+  if (platform.goal) { onGoal(); return; }
   const round = rounds.find(r => r.leftPlatform === platform || r.rightPlatform === platform);
   if (!round || round.answered) return;
   if (platform.country === round.correctCountry) {
@@ -928,7 +947,10 @@ function onCorrect(round, platform) {
   if (correctCount >= totalQuestions) {
     updateHUD();
     round.board.classList.remove('show');
-    setTimeout(() => endGame(), 700);
+    round.leftPlatform.el.classList.remove('show');
+    round.rightPlatform.el.classList.remove('show');
+    flagMiniEl.innerHTML = '<img src="img/star.png" alt="" style="object-fit:contain;padding:8px">';
+    createGoal();
     return;
   }
   ensureRoundsAhead(currentRound);
@@ -969,6 +991,19 @@ function onWrong(round, platform) {
   gameState = 'cracking';
 }
 
+// 결승 무대에 올라서면: 환호하는 꼬비, "도착!", 별 잔치, 기록 멈춤 → 결과 화면
+function onGoal() {
+  if (gameState !== 'playing') return;
+  gameState = 'goal';
+  player.vx = 0;
+  setPose('cheer');
+  goalPlat.el.classList.add('arrived');
+  sfxMilestone();
+  burstStars(player.x, player.y);
+  [[-130, 60], [130, 60], [0, 150]].forEach(([dx, dy], i) => setTimeout(() => burstStars(W / 2 + dx, goalPlat.y + dy), 250 + i * 250));
+  setTimeout(() => endGame(), 1900);
+}
+
 // ---------- 움직임 ----------
 function allPlatforms() {
   const list = [];
@@ -976,6 +1011,7 @@ function allPlatforms() {
     if (!r.leftPlatform.broken) list.push(r.leftPlatform);
     if (!r.rightPlatform.broken) list.push(r.rightPlatform);
   }
+  if (goalPlat) list.push(goalPlat);
   return list;
 }
 
@@ -1014,14 +1050,14 @@ function updatePlayer(dt) {
     if (player.vy <= 0) {
       if (prevY >= 0 && player.y <= 0) { landed = { y: 0, floor: true }; }
       for (const p of allPlatforms()) {
-        if (prevY >= p.y - 1 && player.y <= p.y && Math.abs(player.x - p.x) <= PLAT_W / 2 + 4) {
+        if (prevY >= p.y - 1 && player.y <= p.y && Math.abs(player.x - p.x) <= (p.halfW || PLAT_W / 2) + 4) {
           if (!landed || p.y > landed.y) landed = p;
         }
       }
     }
     // 발판 끝에서 걸어 나가면 떨어지기
     if (player.onGround && !landed) {
-      const under = player.y <= 0 || allPlatforms().some(p => Math.abs(player.y - p.y) < 1 && Math.abs(player.x - p.x) <= PLAT_W / 2 + 4);
+      const under = player.y <= 0 || allPlatforms().some(p => Math.abs(player.y - p.y) < 1 && Math.abs(player.x - p.x) <= (p.halfW || PLAT_W / 2) + 4);
       if (!under) player.onGround = false;
       else { player.vy = 0; player.y = Math.round(player.y); }
     }
@@ -1045,6 +1081,7 @@ function updatePlayer(dt) {
   }
 
   // 꼬비 모습: 떨어짐 / 점프 / 걷기(두 그림 번갈아) / 서 있기
+  if (gameState === 'goal') return;   // 결승 무대에서는 환호하는 모습 그대로
   const moving = Math.abs(player.vx) > 20;
   let pose = 'back';
   if (gameState === 'failing') pose = 'fall';
