@@ -40,9 +40,6 @@
   .goal .banner { position:absolute; left:35%; width:30%; top:2.5%; height:9.5%; display:flex; align-items:center; justify-content:center;
     font-size:30px; color:#d9452f; letter-spacing:2px; opacity:0; scale:.3; transition:opacity .25s, scale .45s cubic-bezier(.3,1.8,.5,1); }
   .goal.arrived .banner { opacity:1; scale:1; }
-  .goal .hint { position:absolute; left:50%; top:30%; translate:-50% 0; white-space:nowrap; font-size:22px; color:#fff;
-    text-shadow:0 2px 0 var(--ink), 0 0 8px rgba(44,41,80,.8); animation:bob 1.6s ease-in-out infinite; }
-  .goal.arrived .hint { display:none; }
   @keyframes crack { 0%,100%{ translate:0 0 } 20%{ translate:-5px 2px } 40%{ translate:5px -1px } 60%{ translate:-4px 1px } 80%{ translate:4px 0 } }
   .plat.gone { visibility:hidden; }
   .flagboard { width:124px; height:88px; border:5px solid var(--ink); border-radius:12px; background:#fff; overflow:visible; box-shadow:0 6px 0 rgba(44,41,80,.45);
@@ -806,7 +803,7 @@ function createPlatform(cx, y, country) {
 const GOAL_W = 480, GOAL_H = 251, GOAL_TOP = 177;   // GOAL_TOP: 그림 위쪽에서 풀밭 윗면까지
 function createGoal() {
   const y = ROW * (totalQuestions + 1);
-  const el = makeEl('goal', '<img src="img/goal.png" alt=""><div class="banner">도착!</div><div class="hint">마지막 점프!</div>');
+  const el = makeEl('goal', '<img src="img/goal.png" alt=""><div class="banner">도착!</div>');
   place(el, W / 2 - GOAL_W / 2, y + GOAL_TOP);
   goalPlat = { el, x: W / 2, y, halfW: GOAL_W / 2 - 30, goal: true };
 }
