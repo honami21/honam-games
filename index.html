@@ -15,9 +15,10 @@
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--cream:#fff6e4;--line:#3a2b33;--ink:#2c2950;--coral:#f2685f;--yellow:#ffd75e;--night:#2a2860}
 html{background:var(--night)}
-body{font-family:'Jua',sans-serif;color:var(--ink);min-height:100vh;padding:28px 20px 48px;position:relative;overflow-x:hidden;
-  background:#2a2860 url(img/bg.jpg) center top/cover no-repeat fixed}
-body::before{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(30,26,80,.15),rgba(30,26,80,0) 40%,rgba(30,26,80,.25))}
+body{font-family:'Jua',sans-serif;color:var(--ink);min-height:100vh;padding:28px 20px 48px;position:relative;overflow-x:hidden;background:transparent}
+/* 배경은 화면에 고정된 층으로 (아이패드·아이폰은 background-attachment:fixed를 지원하지 않아 배경이 크게 확대·잘림) */
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(180deg,rgba(30,26,80,.15),rgba(30,26,80,0) 40%,rgba(30,26,80,.25)),url(img/bg.jpg) center top/cover no-repeat}
 .page{max-width:1500px;margin:0 auto;display:grid;grid-template-columns:230px minmax(0,1fr) 230px;grid-template-areas:"head head head" "char cards .";column-gap:12px;align-items:end;position:relative}
 header{grid-area:head;text-align:center;position:relative;padding:40px 0 30px}
 .logo{display:block;width:min(720px,92%);height:auto;margin:0 auto;filter:drop-shadow(0 6px 0 rgba(20,16,60,.35))}
@@ -55,7 +56,8 @@ h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media (max-width:1000px){.page{grid-template-columns:160px minmax(0,1fr) 0}}
 /* 휴대폰: 캐릭터는 제목 옆, 카드는 한 줄씩 */
 @media (max-width:760px){
-  body{padding:16px 16px 36px;background-attachment:scroll;background-size:auto 100vh;background-position:30% top}
+  body{padding:16px 16px 36px}
+  body::before{background-position:center,30% top}
   .page{grid-template-columns:96px 1fr;grid-template-areas:"char head" "cards cards";column-gap:6px;align-items:center}
   header{padding:30px 0 18px}
   .logo{width:100%}
