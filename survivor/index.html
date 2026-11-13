@@ -115,6 +115,8 @@
   .card .d { font-size:14.5px; color:var(--ink2); margin-top:2px; word-break:keep-all; }
   .card .pair { font-size:12.5px; color:#a0569a; margin-top:3px; }
   .card .key { position:absolute; right:10px; top:8px; font-family:'Fredoka',sans-serif; font-size:13px; color:#b8a99a; }
+  .card.linked { border-color:var(--evo); background:linear-gradient(135deg,#fff,#fff0fb); }
+  .card .link { display:inline-block; font-size:13.5px; color:#fff; background:var(--evo); border-radius:9px; padding:2px 9px; margin-top:4px; word-break:keep-all; }
   .card.evo { border-color:var(--evo); background:linear-gradient(135deg,#fff,#ffe9fb); }
 
   /* 상자 */
@@ -1714,6 +1716,7 @@ function updateHUD() {
 
 /* ---------- 레벨업 ---------- */
 let currentChoices = [];
+const wa = w => { const c = w.charCodeAt(w.length - 1) - 0xAC00; return w + (c >= 0 && c < 11172 && c % 28 ? '과' : '와'); };
 function makeChoices() {
   const opts = [];
   for (const w of G.weapons) if (!w.evo && w.lv < 8) opts.push({ k: 'w', id: w.id, wt: 1.3 });
@@ -1734,26 +1737,29 @@ function makeChoices() {
   return out;
 }
 function cardHTML(o, i, forChest) {
-  let icon, title, tag, desc, pair = '';
+  let icon, title, tag, desc, pair = '', link = '';
   if (o.k === 'w') {
     const W = WEAPONS[o.id], w = weaponById(o.id), next = w ? w.lv + 1 : 1;
     icon = iconHTML('w', o.id); title = W.name;
     tag = w ? `<em>Lv ${next}</em>` : '<em class="new-w">새 무기</em>';
     desc = W.desc[next] + (next === 8 ? ' · 최고 레벨!' : '');
     pair = `짝꿍: ${PASSIVES[W.pair].emoji} ${PASSIVES[W.pair].name} → ${W.evoName}`;
+    if (!forChest && G.passives[W.pair]) link = next >= 8 ? `🔗 조합 준비 완료! 다음 보물상자에서 ${W.evoName} 등장` : `🔗 가지고 있는 ${wa(PASSIVES[W.pair].name)} 조합돼요! 8레벨이 되면 ${W.evoName}`;
   } else if (o.k === 'p') {
     const P = PASSIVES[o.id], lv = (G.passives[o.id] || 0) + 1;
     icon = iconHTML('p', o.id); title = P.name;
     tag = G.passives[o.id] ? `<em class="p">Lv ${lv}</em>` : '<em class="new-p">새 강화</em>';
     desc = P.each;
-    const pw = PAIR_OF[o.id]; if (pw) pair = `짝꿍 무기: ${WEAPONS[pw].emoji} ${WEAPONS[pw].name}`;
+    const pw = PAIR_OF[o.id]; if (pw) pair = `짝꿍 무기: ${WEAPONS[pw].emoji} ${WEAPONS[pw].name} → ${WEAPONS[pw].evoName}`;
+    const ow = pw && weaponById(pw);
+    if (!forChest && ow && !ow.evo && !G.passives[o.id]) link = `🔗 가지고 있는 ${wa(WEAPONS[pw].name)} 조합돼요! → ${WEAPONS[pw].evoName}` + (ow.lv >= 8 ? ' (다음 보물상자에서 바로!)' : ` (무기 8레벨 필요, 지금 Lv ${ow.lv})`);
   } else if (o.k === 'evo') {
     const W = WEAPONS[o.id];
     icon = iconHTML('e', o.id); title = W.evoName; tag = '<em class="e">조합!</em>'; desc = W.evoDesc;
     pair = `${W.name} + ${PASSIVES[W.pair].name}`;
   } else if (o.k === 'heal') { icon = '<div class="ic p">🍡</div>'; title = '쑥떡'; tag = ''; desc = '체력을 50 채워요.'; }
   else { icon = '<div class="ic p">🪙</div>'; title = '엽전 꾸러미'; tag = ''; desc = '엽전 30개를 얻어요.'; }
-  return `<button class="card ${o.k === 'evo' ? 'evo' : ''}" type="button" data-i="${i}">${icon}<div><div class="t">${title}${tag}</div><div class="d">${desc}</div>${pair ? `<div class="pair">${pair}</div>` : ''}</div>${forChest ? '' : `<span class="key">${i + 1}</span>`}</button>`;
+  return `<button class="card ${o.k === 'evo' ? 'evo' : ''} ${link ? 'linked' : ''}" type="button" data-i="${i}">${icon}<div><div class="t">${title}${tag}</div><div class="d">${desc}</div>${link ? `<div class="link">${link}</div>` : pair ? `<div class="pair">${pair}</div>` : ''}</div>${forChest ? '' : `<span class="key">${i + 1}</span>`}</button>`;
 }
 function openLevelUp() {
   modal = 'levelup';
