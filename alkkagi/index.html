@@ -362,7 +362,7 @@ const $ = id => document.getElementById(id);
 //  알까기 물리 (모든 기기에서 똑같이 계산되도록 + - * / 와 sqrt만 써요)
 // ============================================================
 // 판과 알 정보는 바둑알/장기알에 따라 바뀌어요 (setVariant)
-let VAR = 'baduk', W = 1000, H = 1000, NS = 7, RAD = [], MASS = [], KIND = [], START = [], BUMPS = [];
+let VAR = 'baduk', W = 1000, H = 1000, NS = 7, RAD = [], MASS = [], FRIC = [], SPD = [], KIND = [], START = [], BUMPS = [];
 const BUMP_E = 1.15;       // 경첩에 맞으면 더 세게 튕겨요
 const DT = 1 / 120;        // 계산 간격
 const DEC = 700;           // 마찰로 줄어드는 속도 (초당)
@@ -375,8 +375,9 @@ const PERFECT = 0.16;      // 이 안에서 멈추면 '딱!' (빗나감 없음)
 const GOOD = 0.45;
 const P_PERIOD = 1.7, A_PERIOD = 1.3;   // 힘 게이지, 정확도 바늘 왕복 시간(초)
 // 장기알: 궁이 가장 크고 무거워요
-const JG = { K: { r: 52, ch: ['楚', '漢'] }, C: { r: 44, ch: ['車', '車'] }, P: { r: 44, ch: ['包', '包'] }, M: { r: 44, ch: ['馬', '馬'] },
-  E: { r: 44, ch: ['象', '象'] }, S: { r: 36, ch: ['士', '士'] }, J: { r: 36, ch: ['卒', '兵'] } };
+// m: 무게 (졸 = 1), f: 판에 끌리는 정도 (무거울수록 금방 멈춰요), v: 튕길 때 나가는 빠르기
+const JG = { K: { r: 52, m: 4, f: 1.5, v: .76, ch: ['楚', '漢'] }, C: { r: 44, m: 2, f: 1.3, v: .87, ch: ['車', '車'] }, P: { r: 44, m: 2, f: 1.3, v: .87, ch: ['包', '包'] }, M: { r: 44, m: 2, f: 1.3, v: .87, ch: ['馬', '馬'] },
+  E: { r: 44, m: 2, f: 1.3, v: .87, ch: ['象', '象'] }, S: { r: 36, m: 1, f: 1, v: 1, ch: ['士', '士'] }, J: { r: 36, m: 1, f: 1, v: 1, ch: ['卒', '兵'] } };
 const VARIANTS = {
   baduk: () => {
     const b = [[200, 850], [400, 850], [600, 850], [800, 850], [300, 705], [500, 705], [700, 705]];
@@ -389,7 +390,7 @@ const VARIANTS = {
     L.push([gx(4), gy(8), 'K']);
     L.push([gx(1), gy(7), 'P'], [gx(7), gy(7), 'P']);
     [0, 2, 4, 6, 8].forEach(i => L.push([gx(i), gy(6), 'J']));
-    return { W: 1000, H: 1100, list: L.map(([x, y, t]) => [x, y, t, JG[t].r]), bumps: [{ x: 225, y: 550, r: 20 }, { x: 775, y: 550, r: 20 }] };
+    return { W: 1000, H: 1100, list: L.map(([x, y, t]) => [x, y, t, JG[t].r]), bumps: [{ x: 225, y: 550, hl: 62, r: 8 }, { x: 775, y: 550, hl: 62, r: 8 }] };  // 가운데 접히는 곳의 얇고 긴 경첩
   }
 };
 function setVariant(v) {
@@ -397,10 +398,10 @@ function setVariant(v) {
   if (v === VAR && START.length) return;
   const d = VARIANTS[v]();
   VAR = v; W = d.W; H = d.H; NS = d.list.length; BUMPS = d.bumps;
-  START = []; RAD = []; MASS = []; KIND = [];
+  START = []; RAD = []; MASS = []; FRIC = []; SPD = []; KIND = [];
   d.list.forEach(([x, y]) => START.push(x, y));
   d.list.forEach(([x, y]) => START.push(W - x, H - y));
-  for (const half of [0, 1]) d.list.forEach(([, , t, r]) => { RAD.push(r); MASS.push(r * r / (36 * 36)); KIND.push(t); });
+  for (const half of [0, 1]) d.list.forEach(([, , t, r]) => { RAD.push(r); MASS.push(JG[t] ? JG[t].m : 1); FRIC.push(JG[t] ? JG[t].f : 1); SPD.push(JG[t] ? JG[t].v : 1); KIND.push(t); });
   grain = null;
 }
 const colorOf = k => k < NS ? 'b' : 'w';
@@ -422,7 +423,7 @@ function simulate(pos0, si, svx, svy, record) {
       if (!al[k]) continue;
       const s2 = vx[k] * vx[k] + vy[k] * vy[k];
       if (s2 === 0) continue;
-      const s = Math.sqrt(s2), ns = s - dv;
+      const s = Math.sqrt(s2), ns = s - dv * FRIC[k];
       if (ns <= 0) { vx[k] = 0; vy[k] = 0; continue; }
       const f = ns / s; vx[k] *= f; vy[k] *= f;
       x[k] += vx[k] * DT; y[k] += vy[k] * DT;
@@ -444,15 +445,16 @@ function simulate(pos0, si, svx, svy, record) {
         }
       }
     }
-    // 경첩 (움직이지 않는 동그란 쇠): 맞으면 통 튕겨요
+    // 경첩 (움직이지 않는 가로로 긴 쇠): 맞으면 통 튕겨요
     for (const bp of BUMPS) for (let k = 0; k < n; k++) {
       if (!al[k]) continue;
-      const dx = x[k] - bp.x, dy = y[k] - bp.y, d2 = dx * dx + dy * dy, D = RAD[k] + bp.r;
+      const qx = Math.min(bp.x + bp.hl, Math.max(bp.x - bp.hl, x[k]));
+      const dx = x[k] - qx, dy = y[k] - bp.y, d2 = dx * dx + dy * dy, D = RAD[k] + bp.r;
       if (d2 >= D * D || d2 === 0) continue;
       const d = Math.sqrt(d2), nx = dx / d, ny = dy / d;
-      x[k] = bp.x + nx * D; y[k] = bp.y + ny * D;
+      x[k] = qx + nx * D; y[k] = bp.y + ny * D;
       const vn = vx[k] * nx + vy[k] * ny;
-      if (vn < 0) { vx[k] -= (1 + BUMP_E) * vn * nx; vy[k] -= (1 + BUMP_E) * vn * ny; events.push({ t: step, type: 'bump', x: bp.x, y: bp.y, p: -vn }); }
+      if (vn < 0) { vx[k] -= (1 + BUMP_E) * vn * nx; vy[k] -= (1 + BUMP_E) * vn * ny; events.push({ t: step, type: 'bump', x: qx, y: bp.y, p: -vn }); }
     }
     let moving = false;
     for (let k = 0; k < n; k++) {
@@ -473,7 +475,7 @@ function simulate(pos0, si, svx, svy, record) {
 }
 function shotVel(ang, power, k) {
   // 무거운 알은 덜 나가지만 부딪히면 세게 밀어요
-  const sp = VMAX * (VMIN_P + (1 - VMIN_P) * power) / Math.sqrt(MASS[k] || 1);
+  const sp = VMAX * (VMIN_P + (1 - VMIN_P) * power) * (SPD[k] || 1);
   return [Math.cos(ang) * sp, Math.sin(ang) * sp];
 }
 function accError(a) {
@@ -994,13 +996,14 @@ function drawBoard() {
     cx.beginPath(); cx.moveTo(fx0, fy); cx.lineTo(fx1, fy); cx.stroke();
     // 경첩
     for (const bp of BUMPS) {
-      const [hx, hy] = toS(bp.x, bp.y), hr = bp.r * K, hw = hr * 2.6;
-      cx.fillStyle = 'rgba(60,30,10,.3)'; roundRect(hx - hw / 2 + 2, hy - hr + 3, hw, hr * 2, hr * .5); cx.fill();
+      const [hx, hy] = toS(bp.x, bp.y), hr = bp.r * K, hw = (bp.hl + bp.r) * 2 * K;
+      cx.fillStyle = 'rgba(60,30,10,.3)'; roundRect(hx - hw / 2 + 2, hy - hr + 3, hw, hr * 2, hr); cx.fill();
       const mg = cx.createLinearGradient(hx, hy - hr, hx, hy + hr); mg.addColorStop(0, '#f2f4f8'); mg.addColorStop(.5, '#a9b0bd'); mg.addColorStop(1, '#6d7380');
       cx.fillStyle = mg; cx.strokeStyle = '#2c2950'; cx.lineWidth = 2;
-      roundRect(hx - hw / 2, hy - hr, hw, hr * 2, hr * .5); cx.fill(); cx.stroke();
-      cx.fillStyle = '#555b66';
-      for (const dx of [-hw * .3, hw * .3]) { cx.beginPath(); cx.arc(hx + dx, hy, hr * .2, 0, 7); cx.fill(); }
+      roundRect(hx - hw / 2, hy - hr, hw, hr * 2, hr); cx.fill(); cx.stroke();
+      // 경첩 마디
+      cx.strokeStyle = 'rgba(44,41,80,.55)'; cx.lineWidth = 1.5;
+      for (const f of [-.25, 0, .25]) { cx.beginPath(); cx.moveTo(hx + hw * f, hy - hr); cx.lineTo(hx + hw * f, hy + hr); cx.stroke(); }
     }
   } else {
     // 바둑판 (15줄)
