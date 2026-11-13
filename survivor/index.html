@@ -42,10 +42,10 @@
     text-shadow:0 3px 0 #0b1224, 0 0 12px rgba(0,0,0,.4); }
   #slots { position:absolute; top:58px; left:12px; display:flex; flex-direction:column; gap:8px; }
   #slots .row { display:flex; gap:6px; }
-  .slot { width:clamp(42px,3.4vw,60px); height:clamp(42px,3.4vw,60px); border-radius:11px; background:rgba(10,14,30,.6); border:2px solid rgba(255,255,255,.18); position:relative; display:flex; align-items:center; justify-content:center; font-size:clamp(23px,1.9vw,34px); }
+  .slot { width:clamp(56px,4.6vw,86px); height:clamp(56px,4.6vw,86px); border-radius:14px; background:rgba(10,14,30,.6); border:2px solid rgba(255,255,255,.18); position:relative; display:flex; align-items:center; justify-content:center; font-size:clamp(31px,2.6vw,48px); }
   .slot img { width:82%; height:82%; object-fit:contain; }
   .slot.w { border-color:rgba(226,70,63,.85); } .slot.p { border-color:rgba(122,79,224,.9); } .slot.e { border-color:var(--evo); box-shadow:0 0 8px var(--evo); }
-  .slot i { position:absolute; right:-4px; bottom:-6px; font-style:normal; font-family:'Fredoka',sans-serif; font-size:clamp(12px,1vw,16px); color:#fff; background:#0b1224; border-radius:6px; padding:0 3px; line-height:1.3; }
+  .slot i { position:absolute; right:-4px; bottom:-6px; font-style:normal; font-family:'Fredoka',sans-serif; font-size:clamp(14px,1.2vw,20px); color:#fff; background:#0b1224; border-radius:6px; padding:0 3px; line-height:1.3; }
   .slot.ready::after { content:''; position:absolute; inset:-4px; border-radius:11px; border:2px dashed var(--sun); animation:spin 4s linear infinite; }
   #stats { position:absolute; top:58px; right:12px; display:flex; flex-direction:column; align-items:flex-end; gap:5px; }
   .chip { background:rgba(10,14,30,.6); color:#fff; border-radius:14px; padding:3px 12px; font-size:clamp(16px,1.3vw,21px); }
@@ -179,7 +179,8 @@
     .topbar a,.topbar button{font-size:13px;padding:6px 10px}
     #timer { top:8px; font-size:24px; }
     #slots { top:44px; left:6px; }
-    .slot { width:34px; height:34px; font-size:19px; border-radius:8px; }
+    .slot { width:40px; height:40px; font-size:23px; border-radius:9px; }
+    .slot i { font-size:13px; }
     #slots .row { gap:4px; } #slots { gap:6px; }
     #stats { top:44px; right:6px; }
     .chip { font-size:13px; padding:2px 9px; }
