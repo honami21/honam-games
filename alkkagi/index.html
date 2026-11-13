@@ -1230,18 +1230,28 @@ cv.addEventListener('pointerdown', e => {
   try { cv.setPointerCapture(e.pointerId); } catch (_) {}
   render();
 });
-cv.addEventListener('pointermove', e => {
+// 판 밖으로 마우스·손가락이 나가도 계속 따라가도록 화면 전체에서 움직임을 받아요
+window.addEventListener('pointermove', e => {
   if (!aim || aim.stage !== 'aim' || !canControl()) return;
-  if (!aim.dragging && e.pointerType !== 'mouse') return;
+  if (!aim.dragging && e.pointerType !== 'mouse') return;   // 마우스는 눌렀다 떼고 움직여도 돼요
   const [wx, wy] = evW(e);
-  if (!aim.dragging) { aimTo(wx, wy); return; }   // 마우스는 눌렀다 떼고 움직여도 돼요
   aimTo(wx, wy);
 });
-cv.addEventListener('pointerup', e => {
+const endDrag = () => {
   if (!aim || aim.stage !== 'aim' || !aim.dragging) return;
   aim.dragging = false;
   if (aim.moved) lockAim();   // 끌었다 떼면 바로 힘 게이지
   else render();
+};
+window.addEventListener('pointerup', endDrag);
+window.addEventListener('pointercancel', () => { if (aim) aim.dragging = false; });
+// 조준 중에는 판 밖(이름 칸, 빈 곳)을 눌러 당겨도 돼요. 버튼·창은 빼고요
+window.addEventListener('pointerdown', e => {
+  if (e.target === cv || !aim || aim.stage !== 'aim' || !canControl()) return;
+  if (e.target.closest('button, a, input, .modal, #stkTray')) return;
+  e.preventDefault();
+  const [wx, wy] = evW(e);
+  aim.dragging = true; aim.moved = false; aimTo(wx, wy);
 });
 function lockAim() {
   if (!aim || aim.stage !== 'aim' || !canControl()) return;
