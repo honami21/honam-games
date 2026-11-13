@@ -1003,8 +1003,8 @@ function showResult() {
   if (shownResultFor === key) return;
   const first = !shownResultFor.startsWith(room.round + '-done');
   shownResultFor = key;
-  if (!bgmJingled) { bgmJingled = true; KBGM.jingle(); }
   const mine = myColor(), w = room.winner;
+  if (!bgmJingled && w && w !== 'draw' && (role === 'local' || w === mine)) { bgmJingled = true; KBGM.jingle(); }
   let img = 'ggobi-trophy', title, text;
   const reason = room.endReason === 'leave' ? '친구가 나가서 끝났어요.' : room.endReason === 'full' ? '판이 꽉 찼어요.' : '다섯 개를 한 줄로 이었어요!';
   if (w === 'draw') { title = '비겼어요!'; text = '판이 꽉 찼어요. 둘 다 정말 잘했어요!'; img = 'ggobi-cheer'; }

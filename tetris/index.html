@@ -1213,7 +1213,7 @@ function finishGame(cleared){
   started=false;paused=false;
   cancelAnimationFrame(animId);
   audio.stopBGM();
-  KBGM.jingle();
+  if(cleared) KBGM.jingle();
   if(cleared) audio.gameClear();
   else audio.gameOver();
   showGameOverModal();

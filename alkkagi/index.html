@@ -1584,8 +1584,8 @@ function showResult() {
   if (shownResultFor === key) return;
   const first = !shownResultFor.startsWith(room.round + '-done');
   shownResultFor = key;
-  if (!bgmJingled) { bgmJingled = true; KBGM.jingle(); }
   const mine = myColor(), w = room.winner;
+  if (!bgmJingled && w && w !== 'draw' && (role === 'local' || w === mine)) { bgmJingled = true; KBGM.jingle(); }
   let img = 'ggobi-trophy', title, text;
   const reason = room.endReason === 'leave' ? '친구가 나가서 끝났어요.' : '상대 알을 모두 떨어뜨렸어요!';
   const left = w === 'b' || w === 'w' ? countAlive(room.pos, w) : 0;

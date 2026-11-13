@@ -1178,7 +1178,7 @@ function endGame(won) {
   game.state = won ? 'win' : 'gameover';
   game.elapsedTime = (Date.now() - game.startTime) / 1000;
   stopBGM();
-  KBGM.jingle();
+  if (won) KBGM.jingle();
   const score = calculateScore();
   game.finalScore = score;
 
