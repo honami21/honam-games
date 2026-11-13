@@ -313,6 +313,14 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
   #sky-bg{background-position:30% top}
 }
 @media (prefers-reduced-motion:reduce){.ggobi,.wisp,.logo .wisp-i{animation:none}}
+
+/* 받은 그림 (로고, 상황별 꼬비) */
+.logo-img{display:block;width:min(470px,36vw);height:auto;filter:drop-shadow(0 6px 0 rgba(20,16,60,.35))}
+.ggobi.block{right:1.2vw;bottom:-4px;width:clamp(110px,11vw,180px);animation:wave 3.6s ease-in-out infinite;animation-delay:-1.4s}
+#pause-overlay .pause-cat{display:block;width:150px;height:auto;margin:0 auto 6px}
+.modal-pic{display:block;width:130px;height:auto;margin:-4px auto 4px;max-height:18vh;object-fit:contain}
+@media (max-height:820px){.logo-img{width:min(400px,32vw)}}
+@media (max-width:760px), (pointer:coarse){.logo-img{width:min(330px,78vw)}#pause-overlay .pause-cat{width:110px}.modal-pic{width:110px}}
 </style>
 </head>
 <body>
@@ -378,7 +386,7 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
 </div>
 <!-- 꼬비 캐릭터 -->
 <img class="ggobi wave" src="img/ggobi-wave.png" alt="">
-<img class="ggobi peek2" src="img/ggobi-peek.png" alt="">
+<img class="ggobi block" src="img/ggobi-block.png" alt="">
 <img class="wisp" src="img/wisp.png" alt="" style="left:12%;top:20%">
 <img class="wisp" src="img/wisp.png" alt="" style="right:10%;top:12%;width:32px;animation-delay:-1.6s">
 <img class="wisp" src="img/wisp.png" alt="" style="right:20%;top:58%;width:26px;animation-delay:-3s">
@@ -386,7 +394,7 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
   <div class="logo">
     <img class="peek" src="img/ggobi-peek.png" alt="">
     <img class="wisp-i" src="img/wisp.png" alt="">
-    <h1 class="game-title"><span class="a">꼬비꼬비</span> <span class="b">테트리스</span></h1>
+    <h1 class="game-title"><img class="logo-img" src="img/logo.png" alt="꼬비꼬비 테트리스"></h1>
     <img class="wisp-i r" src="img/wisp.png" alt="">
   </div>
   <div id="layout">
@@ -412,7 +420,7 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
         </div>
         <div id="pause-overlay">
           <div>
-            <div class="pause-cat">😴</div>
+            <img class="pause-cat" src="img/ggobi-sleep.png" alt="">
             <h2>잠깐 쉬는 중</h2>
             <p>쉬기 버튼이나 P 키를 누르면 계속!</p>
           </div>
@@ -475,7 +483,7 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
 <!-- ========= GAME OVER MODAL ========= -->
 <div id="gameover-modal" class="modal">
   <div class="modal-box">
-    <div class="modal-cat" id="go-cat">😿</div>
+    <img class="modal-pic" id="go-cat" src="img/ggobi-cry.png" alt="">
     <div class="modal-title" id="go-title">게임 끝!</div>
     <div class="modal-sub" id="go-sub">다시 도전해 봐요!</div>
     <div class="newrec-badge" id="newrec-badge">✨ 신기록 ✨</div>
@@ -513,7 +521,7 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
 <!-- ========= RANKING MODAL ========= -->
 <div id="ranking-modal" class="modal">
   <div class="modal-box">
-    <div class="modal-cat">🏆</div>
+    <img class="modal-pic" src="img/ggobi-trophy.png" alt="">
     <div class="modal-title">랭킹 TOP 50</div>
     <div class="my-rank-note hidden" id="my-rank-note"></div>
     <div class="ranking-list" id="ranking-list">불러오는 중...</div>
@@ -1328,7 +1336,7 @@ function openRanking(){closeAllModals();rankingModal.classList.add('show');showR
 
 function showGameOverModal(){
   const cleared=finalSnapshot.cleared;
-  document.getElementById('go-cat').textContent=cleared?'🏆':'😿';
+  document.getElementById('go-cat').src=cleared?'img/ggobi-trophy.png':'img/ggobi-cry.png';
   document.getElementById('go-title').textContent=cleared?'완주 성공!':'게임 끝!';
   document.getElementById('go-sub').textContent=cleared?'10단계 완주! 최고!':'다시 도전해 봐요!';
   document.getElementById('r-stage').textContent=(cleared?TOTAL_STAGES:finalSnapshot.stage)+(cleared?' / '+TOTAL_STAGES+' ✨':'');
