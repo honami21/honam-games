@@ -224,7 +224,7 @@
         <img class="logo" src="img/logo.png" alt="꼬비의 알까기" width="900" height="291">
         <p class="lead">내 알을 <b>톡!</b> 튕겨서 친구 알을 판 밖으로 떨어뜨려요.<br>상대 알을 <b>모두</b> 떨어뜨리면 이겨요!</p>
         <div class="how">
-          <div><i>👆</i><b>1. 조준</b>내 알을 누르고 원하는 쪽으로 끌어요</div>
+          <div><i>👆</i><b>1. 조준</b>새총처럼 쏠 방향의 반대쪽으로 당겨요</div>
           <div><i>💪</i><b>2. 힘</b>알 둘레 게이지가 차오르면 원하는 힘에서 톡!</div>
           <div><i>🎯</i><b>3. 딱!</b>흔들리는 바늘을 가운데에서 멈추면 정확하게 쏙</div>
         </div>
@@ -315,6 +315,7 @@
 
 <div id="stkTray" class="hidden"></div>
 <div id="stkShow" class="hidden"><img id="stkImg" src="" alt=""><span id="stkWho"></span></div>
+<canvas id="aimLayer" style="position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:6"></canvas>
 <div id="toast"></div>
 
 <script type="module">
@@ -672,6 +673,7 @@ function leaveRoomLocal() {
   clearInterval(hbTimer);
   sstore('alkkagi-room', null);
   code = ref = role = null; resetLocalState();
+  alCx.setTransform(1, 0, 0, 1, 0, 0); alCx.clearRect(0, 0, al.width, al.height);
   $('resultModal').classList.add('hidden'); $('stkTray').classList.add('hidden');
   show('startScreen');
 }
@@ -771,8 +773,8 @@ function renderStatus() {
   if (animBusy() || room.phase === 'moving') return setStatus('데구루루<span class="dots"></span>');
   const who = role === 'local' ? `<b>${esc(nameOf(room.turn))}</b>(${room.turn === 'b' ? '흑' : '백'}) ` : '';
   if (canControl()) {
-    if (!aim) return setStatus(who + (role === 'local' ? '차례! ' : '<b>내 차례!</b> ') + (isTouch() ? '내 알을 누르고 원하는 쪽으로 끌어요' : '내 알을 누르고 원하는 쪽으로 끌어요'));
-    if (aim.stage === 'aim') return setStatus(isTouch() ? '끌어서 방향을 맞추고 손을 떼요 · ↺ ↻로 살짝 돌려요' : '방향을 맞추고 손을 떼요 · ← → 키로 살짝 돌려요');
+    if (!aim) return setStatus(who + (role === 'local' ? '차례! ' : '<b>내 차례!</b> ') + '내 알을 누르고 쏠 방향의 반대쪽으로 당겨요');
+    if (aim.stage === 'aim') return setStatus(isTouch() ? '반대쪽으로 당겨 방향을 맞추고 손을 떼요 · ↺ ↻로 살짝 돌려요' : '반대쪽으로 당겨 방향을 맞추고 손을 떼요 · ← → 키로 살짝 돌려요');
     if (aim.stage === 'power') return setStatus('💪 <b>힘 게이지!</b> 원하는 힘에서 ' + (isTouch() ? '톡!' : '클릭 또는 스페이스!'));
     return setStatus('🎯 바늘이 <b>가운데 초록</b>에 올 때 ' + (isTouch() ? '딱!' : '클릭 또는 스페이스!'));
   }
@@ -860,7 +862,11 @@ function showSticker(st) {
 // ============================================================
 //  알까기 판 그리기
 // ============================================================
-const cv = $('board'), cx = cv.getContext('2d');
+const cv = $('board'), boardCx = cv.getContext('2d');
+let cx = boardCx;
+// 조준 표시는 판 밖으로 나가도 잘리지 않게 화면 전체 겹친 캔버스에 그려요
+const al = $('aimLayer'), alCx = al.getContext('2d');
+let alDirty = false;
 let S = 300, M = 16, K = 0.3, dpr = 1;
 function layout() {
   if ($('game').classList.contains('hidden')) return;
@@ -969,32 +975,19 @@ function drawAim(pos, a, live) {
   // 선택 표시
   cx.strokeStyle = '#ee5a6f'; cx.lineWidth = Math.max(3, r * .16);
   cx.beginPath(); cx.arc(sx, sy, r * 1.14, 0, 7); cx.stroke();
-  // 조준 점선 + 처음 부딪히는 곳
-  const rc = rayCast(pos, i, a.ang);
-  const [ex, ey] = toS(rc.x, rc.y);
-  cx.save();
-  cx.setLineDash([Math.max(4, r * .35), Math.max(5, r * .4)]); cx.lineCap = 'round';
-  cx.strokeStyle = 'rgba(255,255,255,.85)'; cx.lineWidth = Math.max(2.5, r * .14);
-  cx.beginPath(); cx.moveTo(sx + Math.cos(ang) * ringR, sy + Math.sin(ang) * ringR); cx.lineTo(ex, ey); cx.stroke();
-  cx.restore();
-  if (rc.hit >= 0) {
-    cx.strokeStyle = 'rgba(255,255,255,.9)'; cx.lineWidth = Math.max(2, r * .1);
-    cx.beginPath(); cx.arc(ex, ey, r, 0, 7); cx.stroke();
-    // 맞은 알이 갈 방향
-    const [hx, hy] = toS(pos[2 * rc.hit], pos[2 * rc.hit + 1]);
-    const nx = hx - ex, ny = hy - ey, nl = Math.hypot(nx, ny) || 1;
-    cx.strokeStyle = 'rgba(255,210,94,.95)'; cx.lineWidth = Math.max(2.5, r * .14);
-    cx.beginPath(); cx.moveTo(hx, hy); cx.lineTo(hx + nx / nl * r * 2.4, hy + ny / nl * r * 2.4); cx.stroke();
-  }
-  // 화살표 (힘에 따라 길어져요)
-  const len = ringR + 16 + (a.stage === 'aim' ? 22 : power * 70);
-  cx.fillStyle = a.stage === 'aim' ? '#fff' : powerColor(power);
-  cx.strokeStyle = '#2c2950'; cx.lineWidth = 2.5;
-  cx.save(); cx.translate(sx, sy); cx.rotate(ang);
-  cx.beginPath();
-  cx.moveTo(ringR - 2, -5); cx.lineTo(len - 14, -5); cx.lineTo(len - 14, -12); cx.lineTo(len + 6, 0); cx.lineTo(len - 14, 12); cx.lineTo(len - 14, 5); cx.lineTo(ringR - 2, 5); cx.closePath();
-  cx.fill(); cx.stroke();
-  cx.restore();
+  // 새총처럼: 나갈 방향의 반대쪽으로 당긴 줄만 보여 줘요 (앞쪽 조준선은 없어요)
+  const back = ang + Math.PI;
+  const len = ringR + 10 + (a.stage === 'aim' ? 26 : power * 70);
+  const bx = sx + Math.cos(back) * len, by = sy + Math.sin(back) * len;
+  cx.lineCap = 'round';
+  cx.strokeStyle = '#2c2950'; cx.lineWidth = Math.max(9, r * .36);
+  cx.beginPath(); cx.moveTo(sx + Math.cos(back) * r * 1.15, sy + Math.sin(back) * r * 1.15); cx.lineTo(bx, by); cx.stroke();
+  cx.strokeStyle = a.stage === 'aim' ? '#fff' : powerColor(power); cx.lineWidth = Math.max(5, r * .22);
+  cx.beginPath(); cx.moveTo(sx + Math.cos(back) * r * 1.15, sy + Math.sin(back) * r * 1.15); cx.lineTo(bx, by); cx.stroke();
+  // 당기는 손잡이
+  cx.fillStyle = '#ffd25e'; cx.strokeStyle = '#2c2950'; cx.lineWidth = 3;
+  cx.beginPath(); cx.arc(bx, by, Math.max(8, r * .38), 0, 7); cx.fill(); cx.stroke();
+  cx.lineCap = 'butt';
   if (a.stage === 'aim') return;
   // 힘 게이지: 알 둘레의 큰 고리
   const lw = Math.max(10, r * .55);
@@ -1015,14 +1008,16 @@ function drawAim(pos, a, live) {
   // 힘 숫자
   const fs = Math.max(13, r * .7);
   cx.font = `${fs}px Jua, sans-serif`; cx.textAlign = 'center'; cx.textBaseline = 'middle';
-  // 숫자는 화살표 반대쪽에
-  const tx = sx - Math.cos(ang) * (ringR + lw / 2 + fs * .9), ty = sy - Math.sin(ang) * (ringR + lw / 2 + fs * .9);
+  // 숫자는 당긴 줄 옆에
+  const ta = back + Math.PI / 2;
+  const tx = sx + Math.cos(ta) * (ringR + lw / 2 + fs * .9), ty = sy + Math.sin(ta) * (ringR + lw / 2 + fs * .9);
   cx.lineWidth = 4; cx.strokeStyle = '#2c2950'; cx.fillStyle = '#fff';
   const label = `힘 ${Math.round(power * 100)}`;
   cx.strokeText(label, tx, ty); cx.fillText(label, tx, ty);
   if (a.stage !== 'acc') return;
-  // 정확도: 화살표 끝 너머에 부채꼴 눈금, 가운데 초록에서 멈추면 '딱!'
-  const VIS = 26 * Math.PI / 180, AR = len + 30;
+  // 정확도: 당긴 줄 끝 너머에 부채꼴 눈금, 가운데 초록에서 멈추면 '딱!'
+  const VIS = 30 * Math.PI / 180, AR = ringR + lw / 2 + 22;
+  { const ang = back;
   const val = live ? stageVal() : (a.showA || 0);
   cx.lineWidth = Math.max(12, r * .6);
   cx.strokeStyle = 'rgba(44,41,80,.85)'; cx.lineWidth += 6;
@@ -1036,6 +1031,7 @@ function drawAim(pos, a, live) {
   cx.fillStyle = '#fff'; cx.strokeStyle = '#2c2950'; cx.lineWidth = 2.5;
   cx.beginPath(); cx.moveTo(AR - 14, 0); cx.lineTo(AR + 18, -7); cx.lineTo(AR + 18, 7); cx.closePath(); cx.fill(); cx.stroke();
   cx.restore();
+  }
 }
 function addText(t, wpos, color = '#fff', size = 1) {
   fx.texts.push({ t, w: wpos, color, size, t0: performance.now() });
@@ -1069,8 +1065,21 @@ function draw() {
   }
   for (let k = 0; k < 2 * NS; k++) if (isAlive(pos, k)) drawStone(k, pos[2 * k], pos[2 * k + 1]);
   // 조준
-  if (aim && room.status === 'playing' && !animBusy()) drawAim(pos, aim, !aim.cpu && aim.stage !== 'aim');
-  if (cpuShow) drawAim(pos, cpuShow, false);
+  const showAim = aim && room.status === 'playing' && !animBusy();
+  if (showAim || cpuShow || alDirty) {
+    const w = Math.round(innerWidth * dpr), h = Math.round(innerHeight * dpr);
+    if (al.width !== w || al.height !== h) { al.width = w; al.height = h; }
+    alCx.setTransform(1, 0, 0, 1, 0, 0); alCx.clearRect(0, 0, w, h);
+    alDirty = false;
+    if (showAim || cpuShow) {
+      const br = cv.getBoundingClientRect();
+      alCx.setTransform(dpr, 0, 0, dpr, br.left * dpr, br.top * dpr);
+      cx = alCx;
+      if (showAim) drawAim(pos, aim, !aim.cpu && aim.stage !== 'aim');
+      if (cpuShow) drawAim(pos, cpuShow, false);
+      cx = boardCx; alDirty = true;
+    }
+  }
   // 반짝이
   fx.parts = fx.parts.filter(p => now - p.t0 < p.life);
   for (const p of fx.parts) {
@@ -1187,7 +1196,7 @@ function stoneAt(wx, wy, c) {
   return best;
 }
 function aimTo(wx, wy) {
-  const i = aim.i, dx = wx - room.pos[2 * i], dy = wy - room.pos[2 * i + 1];
+  const i = aim.i, dx = room.pos[2 * i] - wx, dy = room.pos[2 * i + 1] - wy;   // 당긴 쪽의 반대로 나가요
   if (dx * dx + dy * dy < (R * 1.1) ** 2) return false;
   aim.ang = Math.atan2(dy, dx); aim.moved = true; return true;
 }
@@ -1198,7 +1207,7 @@ function defaultAng(i) {
     const d = (pos[2 * k] - pos[2 * i]) ** 2 + (pos[2 * k + 1] - pos[2 * i + 1]) ** 2;
     if (d < bd) { bd = d; best = k; }
   }
-  return best === null ? (c === 'b' ? -Math.PI / 2 : Math.PI / 2) : Math.atan2(pos[2 * best + 1] - pos[2 * i + 1], pos[2 * best] - pos[2 * i]);
+  return c === 'b' ? -Math.PI / 2 : Math.PI / 2;   // 처음엔 똑바로 앞 (조준 힌트 없음)
 }
 cv.addEventListener('pointerdown', e => {
   if (actx && actx.state === 'suspended') actx.resume();
