@@ -980,6 +980,7 @@ function allPlatforms() {
   return list;
 }
 
+let jumpLatch = false, lastLandAt = 0;
 function updatePlayer(dt) {
   if (gameState !== 'playing' && gameState !== 'failing') return;
 
@@ -989,7 +990,11 @@ function updatePlayer(dt) {
     if (keys['KeyD'] || keys['ArrowRight']) dir += 1;
     player.vx = dir * MOVE_SPD;
     if (dir) player.face = dir;
-    if ((keys['Space'] || keys['ArrowUp'] || keys['KeyW']) && player.onGround) {
+    // 점프는 버튼을 한 번 누를 때 한 번만 (계속 누르고 있어도 다시 뛰지 않아요)
+    const jumpDown = keys['Space'] || keys['ArrowUp'] || keys['KeyW'];
+    if (!jumpDown) jumpLatch = false;
+    if (jumpDown && !jumpLatch && player.onGround && performance.now() - lastLandAt > 120) {
+      jumpLatch = true;
       player.vy = JUMP_V;
       player.onGround = false;
       sfxJump();
@@ -1026,7 +1031,7 @@ function updatePlayer(dt) {
       player.vy = 0;
       const wasAir = !player.onGround;
       player.onGround = true;
-      if (wasAir) { ggobiEl.classList.remove('land'); void ggobiEl.offsetWidth; ggobiEl.classList.add('land'); }
+      if (wasAir) { lastLandAt = performance.now(); ggobiEl.classList.remove('land'); void ggobiEl.offsetWidth; ggobiEl.classList.add('land'); }
       if (!landed.floor) handleLanding(landed);
     }
   }
