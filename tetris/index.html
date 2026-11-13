@@ -6,9 +6,9 @@
 <link rel="apple-touch-icon" href="/icons/icon-180.png"/>
 <link rel="icon" type="image/png" href="/icons/icon-192.png"/>
 <link rel="manifest" href="/manifest.webmanifest"/>
-<meta name="apple-mobile-web-app-title" content="꼬비샘 게임방"/>
+<meta name="apple-mobile-web-app-title" content="꼬비샘과 쉬는 시간"/>
 <meta name="theme-color" content="#2a2860"/>
-<title>냥냥 테트리스 - 꼬비샘</title>
+<title>꼬비꼬비 테트리스 - 꼬비샘과 쉬는 시간</title>
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet"/>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -257,11 +257,75 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
   .topbar svg{width:18px;height:18px}
   .topbar .t{display:none}
 }
+/* ====== 꼬비 테마 (꼬비샘과 쉬는 시간 홈 화면과 같은 분위기) ====== */
+:root{--line:#3a2b33;--cream:#fff6e4;--cream2:#f3e2c8;--cream-edge:rgba(58,43,51,.55);--coral:#f2685f;--coral2:#ff8f7f;--coral-dark:#b9453d;--sun:#ffd75e;--sun-dark:#c99a1e}
+#sky-bg{background:#2a2860 url(img/bg.jpg) center top/cover no-repeat}
+#sky-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(26,22,70,.30),rgba(26,22,70,.12) 40%,rgba(26,22,70,.50))}
+.puff,.paw-deco,.shoot{display:none}
+.card,.tab-card,.modal-box{border:3px solid var(--line);box-shadow:0 5px 0 var(--cream-edge),0 10px 22px rgba(10,8,40,.35)}
+.btn{border:3px solid var(--line);box-shadow:0 5px 0 var(--cream-edge),0 8px 16px rgba(10,8,40,.3)}
+.btn:active{box-shadow:0 0 0 var(--cream-edge)}
+.btn-s,.btn-r{background:linear-gradient(180deg,#ff8f7f,#f2685f);text-shadow:0 2px 0 rgba(120,30,30,.35);box-shadow:0 5px 0 var(--cream-edge),0 8px 16px rgba(10,8,40,.3)}
+.btn-p{background:linear-gradient(180deg,#ffe48a,#ffd75e);color:var(--ink);box-shadow:0 5px 0 var(--cream-edge),0 8px 16px rgba(10,8,40,.3)}
+.btn-s:active,.btn-r:active,.btn-p:active{box-shadow:0 0 0 var(--cream-edge)}
+.card-lbl svg,.tab svg{fill:var(--coral)}
+.tab{background:var(--coral);border:3px solid var(--line);box-shadow:none;top:-18px}
+.tab svg{fill:#fff}
+.lv-bg{background:#efdcc4}
+#board-wrap{border:3px solid var(--line)}
+.result-card,.ranking-list{border:2px solid var(--cream2)}
+.key{border-color:var(--line);box-shadow:0 2px 0 var(--line)}
+/* 제목: 홈 화면 로고처럼 굵은 테두리 글씨 */
+.logo{background:none;box-shadow:none;padding:6px 10px 0;margin:84px 0 14px;gap:14px}
+.logo::before,.logo::after,.logo .ear-in{display:none}
+.game-title{font-size:60px;letter-spacing:1px}
+.game-title span{-webkit-text-stroke:9px var(--line);paint-order:stroke fill;text-shadow:0 6px 0 rgba(20,16,60,.45)}
+.game-title .a{color:var(--sun)}
+.game-title .b{color:var(--coral)}
+.logo .wisp-i{width:34px;height:auto;filter:drop-shadow(0 0 12px rgba(255,220,110,.85));animation:float 4s ease-in-out infinite}
+.logo .wisp-i.r{animation-delay:-2s}
+.peek{width:130px;top:-96px;z-index:-1}
+/* 꼬비 캐릭터 */
+.ggobi{position:fixed;z-index:2;pointer-events:none;filter:drop-shadow(0 8px 10px rgba(10,8,40,.45))}
+.ggobi.wave{left:1.5vw;bottom:-6px;width:clamp(120px,13vw,210px);transform-origin:50% 100%;animation:wave 3.2s ease-in-out infinite}
+.ggobi.peek2{right:1vw;bottom:-4px;width:clamp(130px,14vw,220px);animation:peek 4s ease-in-out infinite}
+.wisp{position:fixed;z-index:1;width:40px;pointer-events:none;filter:drop-shadow(0 0 14px rgba(255,220,110,.85));animation:float 5s ease-in-out infinite}
+@keyframes wave{0%,100%{transform:rotate(0)}50%{transform:rotate(-2.5deg) translateY(-4px)}}
+@keyframes peek{0%,70%,100%{transform:translateY(0)}80%{transform:translateY(8px)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.modal-hero{width:170px}
+.topbar a,.topbar button{border:3px solid var(--line);background:var(--sun);box-shadow:0 3px 0 var(--cream-edge);font-size:17px}
+@media (max-height:820px){.logo{margin:70px 0 10px}.game-title{font-size:48px}.peek{width:104px;top:-76px}}
+@media (max-width:1000px){.ggobi,.wisp{display:none}}
+@media (max-width:760px), (pointer:coarse){
+  .ggobi,.wisp{display:none}
+  .logo{margin:50px 0 8px;padding:0;gap:8px}
+  .game-title{font-size:32px}
+  .game-title span{-webkit-text-stroke:5px var(--line);text-shadow:0 3px 0 rgba(20,16,60,.45)}
+  .logo .wisp-i{width:20px}
+  .peek{width:70px;top:-50px}
+  .card.stat{border-width:2.5px}
+  .pad button{border:3px solid var(--line);box-shadow:0 4px 0 var(--cream-edge)}
+  .pad .drop{background:linear-gradient(180deg,#ff8f7f,#f2685f)}
+  .pad .rot{background:linear-gradient(180deg,#ffe48a,#ffd75e)}
+  .panel>.btn{border-width:2.5px}
+  .topbar a,.topbar button{font-size:12px;border-width:2.5px}
+  #sky-bg{background-position:30% top}
+}
+@media (prefers-reduced-motion:reduce){.ggobi,.wisp,.logo .wisp-i{animation:none}}
+
+/* 받은 그림 (로고, 상황별 꼬비) */
+.logo-img{display:block;width:min(470px,36vw);height:auto;filter:drop-shadow(0 6px 0 rgba(20,16,60,.35))}
+.ggobi.block{right:1.2vw;bottom:-4px;width:clamp(110px,11vw,180px);animation:wave 3.6s ease-in-out infinite;animation-delay:-1.4s}
+#pause-overlay .pause-cat{display:block;width:150px;height:auto;margin:0 auto 6px}
+.modal-pic{display:block;width:130px;height:auto;margin:-4px auto 4px;max-height:18vh;object-fit:contain}
+@media (max-height:820px){.logo-img{width:min(400px,32vw)}}
+@media (max-width:760px), (pointer:coarse){.logo-img{width:min(330px,78vw)}#pause-overlay .pause-cat{width:110px}.modal-pic{width:110px}}
 </style>
 </head>
 <body>
 <div class="topbar">
-  <a href="../" id="home-link" title="게임방으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">게임방</span></a>
+  <a href="../" id="home-link" title="꼬비샘과 쉬는 시간으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">쉬는 시간</span></a>
   <button id="fs-btn" type="button" title="전체화면"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="t" id="fs-txt">전체화면</span></button>
 </div>
 <script>
@@ -286,7 +350,7 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
 </script>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <symbol id="i-paw" viewBox="0 0 24 24"><ellipse cx="12" cy="16.2" rx="5.6" ry="4.6"/><ellipse cx="5.4" cy="10.4" rx="2.3" ry="2.7"/><ellipse cx="9.6" cy="6.2" rx="2.3" ry="2.8"/><ellipse cx="14.4" cy="6.2" rx="2.3" ry="2.8"/><ellipse cx="18.6" cy="10.4" rx="2.3" ry="2.7"/></symbol>
+  <symbol id="i-paw" viewBox="0 0 24 24"><path d="M12.6 1.8c.6 3.4 5.6 5.6 5.6 11.6a6.2 6.2 0 0 1-12.4 0c0-2.9 1.5-4.9 3-6.1-.1 2 .8 3.4 2.1 3.6-.9-3.6.2-6.9 1.7-9.1z"/></symbol>
   <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 0C13 8 16 11 24 12 16 13 13 16 12 24 11 16 8 13 0 12 8 11 11 8 12 0Z"/></symbol>
   <symbol id="i-bars" viewBox="0 0 24 24"><rect x="2" y="13" width="5" height="9" rx="1.5"/><rect x="9.5" y="8" width="5" height="14" rx="1.5"/><rect x="17" y="3" width="5" height="19" rx="1.5"/></symbol>
   <symbol id="i-lines" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="4.5" rx="2.2"/><rect x="2" y="9.75" width="20" height="4.5" rx="2.2"/><rect x="2" y="16.5" width="20" height="4.5" rx="2.2"/></symbol>
@@ -320,16 +384,18 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
   <svg class="paw-deco" style="right:16%;bottom:3%;fill:#f3b9b9;opacity:.8;width:26px;height:26px"><use href="#i-paw"/></svg>
   <div class="shoot"></div>
 </div>
-<!-- 고양이 그림: cats 폴더에 PNG를 넣으면 나타나요 (없으면 자동으로 숨김) -->
-<img class="cat-img left" src="cats/cat-left.png" alt="" onerror="this.remove()">
-<img class="cat-img right" src="cats/cat-right.png" alt="" onerror="this.remove()">
+<!-- 꼬비 캐릭터 -->
+<img class="ggobi wave" src="img/ggobi-wave.png" alt="">
+<img class="ggobi block" src="img/ggobi-block.png" alt="">
+<img class="wisp" src="img/wisp.png" alt="" style="left:12%;top:20%">
+<img class="wisp" src="img/wisp.png" alt="" style="right:10%;top:12%;width:32px;animation-delay:-1.6s">
+<img class="wisp" src="img/wisp.png" alt="" style="right:20%;top:58%;width:26px;animation-delay:-3s">
 <div class="wrap">
   <div class="logo">
-    <span class="ear-in l"></span><span class="ear-in r"></span>
-    <img class="peek" src="cats/cat-peek.png" alt="" onerror="this.remove()">
-    <svg class="paw"><use href="#i-paw"/></svg>
-    <h1 class="game-title"><span class="a">냥냥</span> <span class="b">테트리스</span></h1>
-    <svg class="paw"><use href="#i-paw"/></svg>
+    <img class="peek" src="img/ggobi-peek.png" alt="">
+    <img class="wisp-i" src="img/wisp.png" alt="">
+    <h1 class="game-title"><img class="logo-img" src="img/logo.png" alt="꼬비꼬비 테트리스"></h1>
+    <img class="wisp-i r" src="img/wisp.png" alt="">
   </div>
   <div id="layout">
     <div class="panel">
@@ -354,7 +420,7 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
         </div>
         <div id="pause-overlay">
           <div>
-            <div class="pause-cat">😴</div>
+            <img class="pause-cat" src="img/ggobi-sleep.png" alt="">
             <h2>잠깐 쉬는 중</h2>
             <p>쉬기 버튼이나 P 키를 누르면 계속!</p>
           </div>
@@ -395,8 +461,8 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
 <!-- ========= START MODAL ========= -->
 <div id="start-modal" class="modal show">
   <div class="modal-box">
-    <div class="modal-hero"><img src="cats/cat-left.png" alt=""><svg class="hs a"><use href="#i-spark"/></svg><svg class="hs b"><use href="#i-spark"/></svg></div>
-    <div class="modal-title">냥냥 테트리스</div>
+    <div class="modal-hero"><img src="img/ggobi-wave.png" alt="" style="width:46%;margin:0 auto"><svg class="hs a"><use href="#i-spark"/></svg><svg class="hs b"><use href="#i-spark"/></svg></div>
+    <div class="modal-title">꼬비꼬비 테트리스</div>
     <div class="modal-sub">10단계까지 완주해 보세요!</div>
     <div class="result-card rules">
       <div class="rt">🎯 게임 규칙</div>
@@ -417,7 +483,7 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
 <!-- ========= GAME OVER MODAL ========= -->
 <div id="gameover-modal" class="modal">
   <div class="modal-box">
-    <div class="modal-cat" id="go-cat">😿</div>
+    <img class="modal-pic" id="go-cat" src="img/ggobi-cry.png" alt="">
     <div class="modal-title" id="go-title">게임 끝!</div>
     <div class="modal-sub" id="go-sub">다시 도전해 봐요!</div>
     <div class="newrec-badge" id="newrec-badge">✨ 신기록 ✨</div>
@@ -455,7 +521,7 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
 <!-- ========= RANKING MODAL ========= -->
 <div id="ranking-modal" class="modal">
   <div class="modal-box">
-    <div class="modal-cat">🏆</div>
+    <img class="modal-pic" src="img/ggobi-trophy.png" alt="">
     <div class="modal-title">랭킹 TOP 50</div>
     <div class="my-rank-note hidden" id="my-rank-note"></div>
     <div class="ranking-list" id="ranking-list">불러오는 중...</div>
@@ -1270,7 +1336,7 @@ function openRanking(){closeAllModals();rankingModal.classList.add('show');showR
 
 function showGameOverModal(){
   const cleared=finalSnapshot.cleared;
-  document.getElementById('go-cat').textContent=cleared?'🏆':'😿';
+  document.getElementById('go-cat').src=cleared?'img/ggobi-trophy.png':'img/ggobi-cry.png';
   document.getElementById('go-title').textContent=cleared?'완주 성공!':'게임 끝!';
   document.getElementById('go-sub').textContent=cleared?'10단계 완주! 최고!':'다시 도전해 봐요!';
   document.getElementById('r-stage').textContent=(cleared?TOTAL_STAGES:finalSnapshot.stage)+(cleared?' / '+TOTAL_STAGES+' ✨':'');
