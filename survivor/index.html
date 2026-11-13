@@ -1712,7 +1712,7 @@ function render() {
   for (const a of G.areas) {
     if (a.k === 'ring' && spr('fx-ring', a.x, a.y, a.r * 2.1, false, Math.min(1, (1 - a.t / a.life) * 1.6))) continue;
     if (a.k === 'ring') { const f = 1 - a.t / a.life; ctx.strokeStyle = `rgba(255,214,120,${.85 * f})`; ctx.lineWidth = 10 * f + 2; ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, TAU); ctx.stroke(); ctx.strokeStyle = `rgba(255,255,255,${.5 * f})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(a.x, a.y, a.r * .85, 0, TAU); ctx.stroke(); }
-    if (a.k === 'tornado') { const fade = Math.min(1, (a.life - a.t) * 2); ctx.save(); ctx.translate(a.x, a.y); if (!spr('fx-tornado', 0, -a.r * .4, a.r * 3, Math.floor(G.t * 10) % 2 === 0, .85 * fade)) { ctx.globalAlpha = .6 * fade; ctx.strokeStyle = '#d9f2ff'; ctx.lineWidth = 3; for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.ellipse(0, -i * a.r * .45, a.r * (.5 + i * .25), a.r * .2, 0, G.t * 8 + i, G.t * 8 + i + 4.5); ctx.stroke(); } ctx.globalAlpha = 1; } ctx.restore(); }
+    if (a.k === 'tornado') { const fade = Math.min(1, (a.life - a.t) * 2); ctx.save(); ctx.translate(a.x, a.y); const tdist = Math.hypot(a.x - p.x, a.y - a.r * .4 - (p.y - 20)), talpha = .2 + .35 * clamp((tdist - a.r * 1.1) / (a.r * 1.6), 0, 1); if (!spr('fx-tornado', 0, -a.r * .4, a.r * 3, Math.floor(G.t * 10) % 2 === 0, talpha * fade)) { ctx.globalAlpha = .6 * fade; ctx.strokeStyle = '#d9f2ff'; ctx.lineWidth = 3; for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.ellipse(0, -i * a.r * .45, a.r * (.5 + i * .25), a.r * .2, 0, G.t * 8 + i, G.t * 8 + i + 4.5); ctx.stroke(); } ctx.globalAlpha = 1; } ctx.restore(); }
   }
   for (const f of G.fx) {
     const q = f.t / f.life;
@@ -1720,7 +1720,7 @@ function render() {
       ctx.save(); ctx.translate(p.x, p.y);
       const half = f.full ? Math.PI : 1.05, a0 = f.a - half, a1 = f.a - half + 2 * half * Math.min(1, q * 2.2);
       ctx.globalAlpha = 1 - q; ctx.fillStyle = f.full ? 'rgba(255,215,90,.55)' : 'rgba(255,240,220,.55)';
-      if (IMG['fx-slash']) { const n = f.full ? 3 : 1; for (let i = 0; i < n; i++) { ctx.save(); ctx.rotate(f.full ? f.a + i * TAU / 3 + q * 2.4 : f.a - .5 + Math.min(1, q * 2.2)); if (!f.full && Math.cos(f.a) < 0) ctx.scale(1, -1); spr('fx-slash', f.R * (f.full ? .72 : .62), 0, f.R * (f.full ? .5 : .75 + q * .25), false, (1 - q) * (f.full ? .85 : 1)); ctx.restore(); } ctx.globalAlpha = 1 - q; }
+      if (IMG['fx-slash']) { const n = f.full ? 3 : 1; for (let i = 0; i < n; i++) { ctx.save(); ctx.rotate(f.full ? f.a + i * TAU / 3 + q * 2.4 : f.a - .5 + Math.min(1, q * 2.2)); if (!f.full && Math.cos(f.a) < 0) ctx.scale(1, -1); spr('fx-slash', f.R * (f.full ? .72 : .62), 0, f.R * (f.full ? .5 : .75 + q * .25), false, (1 - q) * (f.full ? .6 : 1)); ctx.restore(); } ctx.globalAlpha = 1 - q; }
       else { ctx.beginPath(); ctx.arc(0, 0, f.R, a0, a1); ctx.arc(0, 0, f.R * .45, a1, a0, true); ctx.fill();
       ctx.strokeStyle = f.full ? '#ffd25e' : '#fff'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0, 0, f.R, a0, a1); ctx.stroke(); }
       const ax = Math.cos(a1) * f.R * .75, ay = Math.sin(a1) * f.R * .75;
@@ -1729,7 +1729,7 @@ function render() {
     } else if (f.k === 'gust') {
       ctx.save(); ctx.translate(p.x, p.y); ctx.globalAlpha = (1 - q) * .8;
       ctx.strokeStyle = '#e6f7ff'; ctx.lineWidth = 4; ctx.lineCap = 'round';
-      if (IMG['fx-gust']) { const al = (1 - q) * .9; ctx.rotate(f.a); if (Math.cos(f.a) < 0) ctx.scale(1, -1); spr('fx-gust', f.R * (.3 + q * .45), 0, f.R * .6, false, al); }
+      if (IMG['fx-gust']) { const al = (1 - q) * .55; ctx.rotate(f.a); if (Math.cos(f.a) < 0) ctx.scale(1, -1); spr('fx-gust', f.R * (.5 + q * .4), 0, f.R * .6, false, al); }
       else for (let i = 0; i < 4; i++) { const rr = f.R * (.35 + q * .65) - i * 14; if (rr > 10) { ctx.beginPath(); ctx.arc(0, 0, rr, f.a - .5, f.a + .5); ctx.stroke(); } }
       ctx.restore(); ctx.globalAlpha = 1;
     } else if (f.k === 'bolt') {
