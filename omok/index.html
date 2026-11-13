@@ -108,6 +108,21 @@
   .side-room b { display:block; font-size:24px; color:var(--coral-d); font-weight:normal; letter-spacing:3px; }
   @media (max-width:1000px), (max-height:560px){ .side-ggobi, .side-room { display:none; } }
 
+  /* 응원 스티커 */
+  #stkBtn { background:var(--sky); color:var(--ink); }
+  #stkTray { position:fixed; left:50%; bottom:76px; transform:translateX(-50%); z-index:46; background:var(--cream); border:3px solid var(--ink); border-radius:22px;
+    box-shadow:0 6px 0 var(--ink), 0 14px 26px rgba(20,10,50,.35); padding:10px 12px 12px; display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; width:min(420px, calc(100vw - 20px)); }
+  #stkTray .tt { grid-column:1 / -1; font-size:15px; color:var(--ink2); text-align:center; }
+  #stkTray button { border:none; background:none; padding:2px; cursor:pointer; border-radius:14px; transition:transform .1s; }
+  #stkTray button:hover { background:#fff1c9; } #stkTray button:active { transform:scale(.9); }
+  #stkTray img { width:100%; display:block; }
+  #stkTray.cool button { opacity:.4; pointer-events:none; }
+  #stkShow { position:fixed; z-index:45; pointer-events:none; display:flex; flex-direction:column; align-items:center; }
+  #stkShow img { width:100%; display:block; filter:drop-shadow(0 6px 0 rgba(20,10,50,.3)); }
+  #stkShow span { margin-top:-8px; background:var(--cream); border:3px solid var(--ink); border-radius:16px; box-shadow:0 3px 0 var(--ink); padding:2px 12px; font-size:17px; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
+  #stkShow.on { animation:stkPop 2.6s ease-out forwards; }
+  @keyframes stkPop { 0%{ opacity:0; transform:scale(.3) rotate(-12deg) } 12%{ opacity:1; transform:scale(1.08) rotate(3deg) } 20%{ transform:scale(1) rotate(0) } 82%{ opacity:1; transform:scale(1) } 100%{ opacity:0; transform:scale(.9) translateY(-20px) } }
+
   /* 알림 (차례 넘어감 등) */
   #toast { position:fixed; left:50%; top:40%; transform:translate(-50%,-50%); z-index:30; background:var(--cream); border:3px solid var(--ink); border-radius:20px;
     box-shadow:0 5px 0 var(--ink); padding:10px 20px; font-size:20px; white-space:nowrap; pointer-events:none; opacity:0; transition:opacity .25s; }
@@ -241,6 +256,8 @@
   </div>
 </div>
 
+<div id="stkTray" class="hidden"></div>
+<div id="stkShow" class="hidden"><img id="stkImg" src="" alt=""><span id="stkWho"></span></div>
 <div id="toast"></div>
 
 <script type="module">
@@ -526,7 +543,7 @@ function enterRoom(c, r) {
   code = c; role = r; ref = doc(db, ROOMS, c);
   sstore('omok-room', c);
   room = null; tickKey = ''; passSent = ''; selected = -1; shownResultFor = ''; lastMoveSeen = '';
-  otherHb = null; otherSeenAt = Date.now();
+  otherHb = null; otherSeenAt = Date.now(); lastStk = null;
   if (unsub) unsub();
   unsub = onSnapshot(ref, snap => onRoom(snap), e => { console.error(e); toast('연결이 끊겼어요. ' + errText(e), 3000); });
   clearInterval(hbTimer);
@@ -543,7 +560,7 @@ function leaveRoomLocal() {
   clearInterval(hbTimer);
   sstore('omok-room', null);
   code = ref = room = role = null;
-  $('resultModal').classList.add('hidden');
+  $('resultModal').classList.add('hidden'); $('stkTray').classList.add('hidden');
   show('startScreen');
 }
 
@@ -564,6 +581,10 @@ function onRoom(snap) {
     const ohb = room.hb ? room.hb[role === 'host' ? 'guest' : 'host'] : 0;
     if (ohb !== otherHb) { otherHb = ohb; otherSeenAt = Date.now(); }
   }
+  // 새 응원 스티커
+  const st = room.stk;
+  if (st && st.id !== (lastStk && lastStk.id)) { if (prev && lastStk !== null) showSticker(st); }
+  lastStk = st || { id: '' };
   // 새로 둔 돌 소리
   const mk = `${room.round}-${room.moveNo}`;
   if (mk !== lastMoveSeen) { if (lastMoveSeen && room.moveNo > 0) beep('stone'); lastMoveSeen = mk; }
@@ -646,6 +667,8 @@ function renderActions() {
     h += '<button class="game-btn" id="placeBtn">여기에 두기</button><button class="game-btn btn-secondary" id="unselBtn">취소</button>';
   else if (room.status === 'done' && role !== 'watch')
     h += '<button class="game-btn btn-info" id="resBtn">결과 보기</button>';
+  if (room.status !== 'waiting' && !(room.status === 'playing' && selected >= 0 && room.turn === mine))
+    h += '<button class="game-btn" id="stkBtn">😊 응원</button>';
   if (!(room.status === 'playing' && selected >= 0 && room.turn === mine))
     h += `<button class="game-btn btn-secondary" id="leaveBtn">${role === 'watch' ? '구경 그만하기' : '나가기'}</button>`;
   if (a.dataset.h !== h) {
@@ -654,7 +677,50 @@ function renderActions() {
     if ($('unselBtn')) $('unselBtn').onclick = () => { selected = -1; render(); };
     if ($('resBtn')) $('resBtn').onclick = () => { shownResultFor = ''; showResult(); };
     if ($('leaveBtn')) $('leaveBtn').onclick = askLeave;
+    if ($('stkBtn')) $('stkBtn').onclick = toggleTray;
   }
+}
+
+// ---------- 응원 스티커 ----------
+const STICKERS = ['best', 'cheer', 'wow', 'clap', 'nervous', 'laugh', 'again', 'heart'];
+STICKERS.forEach(n => { const i = new Image(); i.src = `img/sticker-${n}.png`; });
+let lastStk = null, stkCoolUntil = 0, stkHideT = 0;
+$('stkTray').innerHTML = '<div class="tt">응원 스티커를 골라요</div>' + STICKERS.map(n => `<button data-s="${n}"><img src="img/sticker-${n}.png" alt=""></button>`).join('');
+$('stkTray').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  $('stkTray').classList.add('hidden');
+  sendSticker(b.dataset.s);
+});
+document.addEventListener('pointerdown', e => {
+  if (!$('stkTray').classList.contains('hidden') && !e.target.closest('#stkTray') && !e.target.closest('#stkBtn') && !e.target.closest('#resStkBtn')) $('stkTray').classList.add('hidden');
+});
+function toggleTray() {
+  const t = $('stkTray');
+  t.classList.toggle('hidden');
+  t.classList.toggle('cool', Date.now() < stkCoolUntil);
+  if (Date.now() < stkCoolUntil) setTimeout(() => t.classList.remove('cool'), stkCoolUntil - Date.now());
+}
+async function sendSticker(n) {
+  if (!ref || Date.now() < stkCoolUntil) return;
+  stkCoolUntil = Date.now() + 4000;
+  const myName = role === 'watch' ? (store('omok-name') || '구경꾼') : nameOf(myColor());
+  try {
+    await updateDoc(ref, { stk: { id: Math.random().toString(36).slice(2, 9), s: n, by: myName, w: role === 'watch' ? 1 : 0 } });
+  } catch (e) { console.error(e); toast('스티커를 보내지 못했어요', 2000); }
+}
+function showSticker(st) {
+  if (!STICKERS.includes(st.s)) return;
+  const el = $('stkShow'), r = $('boardWrap').getBoundingClientRect();
+  const size = Math.min(200, Math.max(120, r.width * .38));
+  el.style.width = size + 'px';
+  const spaceRight = window.innerWidth - r.right;
+  if (spaceRight > size + 30) { el.style.left = (r.right + 18) + 'px'; el.style.top = (r.top + 10) + 'px'; }
+  else { el.style.left = (r.right - size - 8) + 'px'; el.style.top = (r.top + 8) + 'px'; }
+  $('stkImg').src = `img/sticker-${st.s}.png`;
+  $('stkWho').textContent = (st.w ? '👀 ' : '') + (st.by || '');
+  el.classList.remove('hidden', 'on'); void el.offsetWidth; el.classList.add('on');
+  clearTimeout(stkHideT); stkHideT = setTimeout(() => el.classList.add('hidden'), 2700);
+  beep('join');
 }
 
 // ---------- 오목판 ----------
@@ -847,7 +913,9 @@ function showResult() {
     if (room.left && room.left !== role) $('resText').textContent = text + ' 친구가 방을 나갔어요.';
     else if (ag[otK] && !ag[meK]) $('resText').textContent = text + ' 친구가 한 판 더 하자고 해요!';
   } else h += '<button class="game-btn btn-primary" id="watchLeaveBtn">구경 그만하기</button>';
+  h += '<button class="game-btn" id="resStkBtn" style="background:var(--sky);color:var(--ink)">😊 응원</button>';
   $('resBtns').innerHTML = h;
+  $('resStkBtn').onclick = toggleTray;
   $('resultModal').classList.remove('hidden');
   $('seeBoardBtn').onclick = () => $('resultModal').classList.add('hidden');
   if ($('againBtn')) $('againBtn').onclick = rematch;
