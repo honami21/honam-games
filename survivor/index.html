@@ -581,6 +581,7 @@ window.addEventListener('resize', resize); resize();
 let AC = null, soundOn = true;
 try { soundOn = localStorage.getItem('survivor-sound') !== 'off'; } catch (e) {}
 const lastSfx = {};
+const GROUNDED = { dust: 1, broom: 1, fox: 1, scare: 1, toad: 1, jang: 1 };
 function ensureAudio() { if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } if (AC && AC.state === 'suspended') AC.resume(); }
 function tone(freq, dur, type = 'sine', vol = .08, slide = 0, delay = 0) {
   if (!AC || !soundOn) return;
@@ -1312,6 +1313,7 @@ function updateEnemies(dt) {
     }
     if (e.straight) { vx = e.vx; vy = e.vy; e.life -= dt; if (e.life <= 0) { e.dead = true; continue; } }
     e.x += (vx + e.kbx) * dt; e.y += (vy + e.kby) * dt;
+    if (GROUNDED[e.type] && !e.straight) pushOut(e, e.r * .5, e.r * .5);
     const k = Math.min(1, dt * 9); e.kbx -= e.kbx * k; e.kby -= e.kby * k;
     if (Math.abs(vx) > 2) e.face = vx < 0 ? -1 : 1;
     // 꼬비와 부딪히기
@@ -1420,6 +1422,7 @@ function update(dt) {
   if (p.moving) { p.fx = ix; p.fy = iy; if (Math.abs(ix) > .1) p.face = ix < 0 ? -1 : 1; }
   const sp = 165 * S.speed;
   p.x += ix * sp * dt; p.y += iy * sp * dt;
+  pushOut(p, 14, 10);
   if (S.regen) healP(S.regen * dt, true);
   if (p.hurtT > 0) p.hurtT -= dt;
   // 나중에 할 일 (연속 공격)
@@ -1466,6 +1469,25 @@ function getGround() {
 function hash(x, y) { let h = (x * 374761393 + y * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177 | 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
 const DECO = [['d-grass', 30, 22], ['d-flower', 18, 20], ['d-rock', 12, 34], ['d-tree', 10, 120], ['d-pine', 10, 130], ['d-mush', 8, 22], ['d-jar', 6, 46], ['d-tower', 6, 56]];
 const DECO_SUM = DECO.reduce((a, d) => a + d[1], 0);
+// 지나갈 수 없는 소품: [가로 어긋남, 세로 어긋남, 반지름]
+const SOLID = { 'd-rock': [0, 6, 15], 'd-jar': [0, 12, 13], 'd-tower': [0, 16, 14], 'd-tree': [0, 4, 11], 'd-pine': [0, 5, 11] };
+const SOLID_CACHE = new Map();
+function chunkSolids(cx, cy) {
+  const key = cx + ',' + cy; let a = SOLID_CACHE.get(key); if (a) return a;
+  a = [];
+  if (cx || cy) { const n = 2 + Math.floor(hash(cx, cy) * 3); for (let i = 0; i < n; i++) { const d = decoAt(cx, cy, i), s = SOLID[d.t[0]]; if (s) a.push({ x: d.x + s[0], y: d.y + s[1], r: s[2] }); } }
+  if (SOLID_CACHE.size > 4000) SOLID_CACHE.clear();
+  SOLID_CACHE.set(key, a); return a;
+}
+// (x, y)에 있는 둥근 물체를 장애물 밖으로 밀어내요. o = { x, y } 를 직접 고쳐요.
+function pushOut(o, oy, rad) {
+  const fx = o.x, fy = o.y + oy, cx0 = Math.floor(fx / 420), cy0 = Math.floor(fy / 420);
+  for (let cx = cx0 - 1; cx <= cx0 + 1; cx++) for (let cy = cy0 - 1; cy <= cy0 + 1; cy++) {
+    const a = chunkSolids(cx, cy);
+    for (let i = 0; i < a.length; i++) { const s = a[i], dx = o.x - s.x, dy = o.y + oy - s.y, rr = s.r + rad, d2 = dx * dx + dy * dy;
+      if (d2 < rr * rr) { const d = Math.sqrt(d2) || .01, k = (rr - d) / d; o.x += dx * k; o.y += dy * k; } }
+  }
+}
 function decoAt(cx, cy, i) {
   const r1 = hash(cx * 7 + i, cy * 13 - i), r2 = hash(cx - i * 31, cy + 99), r3 = hash(cx + 555, cy * 3 + i * 17);
   let r = r3 * DECO_SUM, t = DECO[0]; for (const d of DECO) { r -= d[1]; if (r <= 0) { t = d; break; } }
@@ -1624,11 +1646,11 @@ function render() {
   if (!GROUND_PX) { ctx.fillStyle = gp; ctx.fillRect(x0, y0, VW + 20, VH + 20); }
   // 소품
   const c0x = Math.floor((x0 - 140) / 420), c1x = Math.floor((x0 + VW + 160) / 420), c0y = Math.floor((y0 - 140) / 420), c1y = Math.floor((y0 + VH + 160) / 420);
-  const tall = [];
+  const tall = [], front = [];
   for (let cx = c0x; cx <= c1x; cx++) for (let cy = c0y; cy <= c1y; cy++) {
     if (Math.abs(cx) <= 0 && Math.abs(cy) <= 0) continue;
     const n = 2 + Math.floor(hash(cx, cy) * 3);
-    for (let i = 0; i < n; i++) { const d = decoAt(cx, cy, i); if (d.t[2] > 80) tall.push(d); else if (!spr(d.t[0], d.x, d.y, d.t[2])) drawDecoFallback(d.t[0], d.x, d.y, d.t[2]); }
+    for (let i = 0; i < n; i++) { const d = decoAt(cx, cy, i); if (d.t[2] > 80) tall.push(d); else if (G && SOLID[d.t[0]] && d.y + SOLID[d.t[0]][1] > G.p.y + 14) front.push(d); else if (!spr(d.t[0], d.x, d.y, d.t[2])) drawDecoFallback(d.t[0], d.x, d.y, d.t[2]); }
   }
   if (!G) { for (const d of tall) if (!spr(d.t[0], d.x, d.y - d.t[2] * .4, d.t[2])) drawDecoFallback(d.t[0], d.x, d.y, d.t[2]); drawOverlay(); return; }
 
@@ -1659,6 +1681,7 @@ function render() {
   for (const e of list) if (e.type === 'seg') drawMonster(e);
   for (const e of list) if (e.type !== 'seg') drawMonster(e);
   drawPlayer();
+  for (const d of front) if (!spr(d.t[0], d.x, d.y, d.t[2])) drawDecoFallback(d.t[0], d.x, d.y, d.t[2]);
   // 무기
   for (const w of G.weapons) {
     if (w.id === 'wisp' && G.t < w.active) {
