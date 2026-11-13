@@ -213,7 +213,7 @@
   <div id="boardWrap"><canvas id="board"></canvas></div>
   <div id="actions"></div>
 </div>
-<img class="side-ggobi hidden" id="sideGgobi" src="img/ggobi-think.png" alt="">
+<img class="side-ggobi hidden" id="sideGgobi" src="img/ggobi-flick.png" alt="">
 <div class="side-room hidden" id="sideRoom">방 코드<b id="sideCode"></b><span id="sideRule"></span></div>
 
 <!-- 시작 화면 -->
@@ -221,8 +221,7 @@
   <div class="section">
     <div class="start-wrap">
       <div class="card">
-        <div class="title-text" id="titleText"><small>꼬비의</small>알까기</div>
-        <img class="logo hidden" id="logoImg" src="img/logo.png" alt="꼬비의 알까기" onload="this.classList.remove('hidden');document.getElementById('titleText').classList.add('hidden')">
+        <img class="logo" src="img/logo.png" alt="꼬비의 알까기" width="900" height="291">
         <p class="lead">내 알을 <b>톡!</b> 튕겨서 친구 알을 판 밖으로 떨어뜨려요.<br>상대 알을 <b>모두</b> 떨어뜨리면 이겨요!</p>
         <div class="how">
           <div><i>👆</i><b>1. 조준</b>내 알을 누르고 원하는 쪽으로 끌어요</div>
@@ -238,10 +237,10 @@
           <label class="opt"><input type="checkbox" id="optTimer" checked><span>한 번에 30초 제한<small>30초 안에 튕기지 않으면 차례가 친구에게 넘어가요.</small></span></label>
           <div class="mode-row">
             <button class="game-btn btn-primary" id="createBtn">방 만들기</button>
-            <button class="game-btn btn-info" id="localBtn">한 화면에서 둘이 하기</button>
+            <button class="game-btn btn-info" id="localBtn">한 화면에서<br>둘이 하기</button>
             <button class="game-btn btn-mint" id="cpuBtn">꼬비와 연습하기</button>
           </div>
-          <p style="font-size:14px;color:var(--ink2);margin-top:8px;text-align:center;word-break:keep-all">방 만들기는 방 코드로 친구와 따로따로, 한 화면은 기기 하나로 번갈아, 연습은 컴퓨터 꼬비와 해요.</p>
+          <p style="font-size:14px;color:var(--ink2);margin-top:8px;text-align:center;word-break:keep-all">방 만들기는 첫 판은 방장이, 다음 판부터는 진 사람이 먼저 해요. 한 화면과 연습은 판마다 누가 먼저 할지 골라요.</p>
         </div>
         <div class="box">
           <div class="box-title">방 코드로 들어가기</div>
@@ -253,7 +252,7 @@
         </div>
         <div class="msg" id="startMsg"></div>
       </div>
-      <img class="start-ggobi" id="startGgobi" src="img/ggobi-think.png" alt="">
+      <img class="start-ggobi" id="startGgobi" src="img/ggobi-flick.png" alt="">
     </div>
   </div>
 </div>
@@ -288,11 +287,20 @@
     <h2 style="font-size:26px;margin-top:0">한 화면에서 둘이 하기</h2>
     <p>두 사람 이름을 적어 주세요.</p>
     <div class="box" style="margin-top:10px">
-      <div class="field" style="margin-bottom:8px"><img src="img/stone-black.png" alt="흑" style="width:30px"><input id="lnB" maxlength="8" placeholder="흑 (먼저 하는 사람)" autocomplete="off"></div>
-      <div class="field"><img src="img/stone-white.png" alt="백" style="width:30px"><input id="lnW" maxlength="8" placeholder="백" autocomplete="off"></div>
+      <div class="field" style="margin-bottom:8px"><input id="lnB" maxlength="8" placeholder="첫 번째 친구 이름" autocomplete="off"></div>
+      <div class="field"><input id="lnW" maxlength="8" placeholder="두 번째 친구 이름" autocomplete="off"></div>
     </div>
     <div class="tags" id="localTags"></div>
     <div class="btn-row"><button class="game-btn btn-secondary" id="lnCancel">취소</button><button class="game-btn btn-primary" id="lnStart">시작!</button></div>
+  </div>
+</div>
+
+<!-- 누가 먼저 -->
+<div id="firstModal" class="modal hidden">
+  <div class="card">
+    <h2 style="font-size:28px;margin-top:0">누가 먼저 할까요?</h2>
+    <p>먼저 하는 사람이 검은 알을 잡아요.</p>
+    <div class="btn-row" id="firstBtns"></div>
   </div>
 </div>
 
@@ -495,8 +503,9 @@ function beep(kind, vol = 1) {
 const imgB = new Image(); imgB.src = 'img/stone-black.png';
 const imgW = new Image(); imgW.src = 'img/stone-white.png';
 // 새 그림이 있으면 바꿔 써요
-const tryImg = (src, ids) => { const i = new Image(); i.onload = () => ids.forEach(id => { if ($(id)) $(id).src = src; }); i.src = src; };
-tryImg('img/ggobi-flick.png', ['startGgobi', 'sideGgobi']);
+const imgOops = new Image(); imgOops.src = 'img/ggobi-oops.png';
+let oopsT = 0;
+function ggobiOops() { $('sideGgobi').src = 'img/ggobi-oops.png'; clearTimeout(oopsT); oopsT = setTimeout(() => { $('sideGgobi').src = 'img/ggobi-flick.png'; }, 1800); }
 
 // ============================================================
 //  방 상태
@@ -1108,7 +1117,7 @@ function loop() {
         }
       } else if (ev.type === 'out') {
         fx.falls.push({ k: ev.k, x: ev.x, y: ev.y, vx: ev.vx, vy: ev.vy, t0: performance.now() });
-        beep('fall');
+        beep('fall'); ggobiOops();
         const mineOut = colorOf(ev.k) === anim.shooter;
         const cx0 = Math.max(R * 2, Math.min(W - R * 2, ev.x)), cy0 = Math.max(R * 3, Math.min(W - R * 2, ev.y));
         addText(mineOut ? '앗! 내 알이…' : '퐁! 아웃!', [cx0, cy0], mineOut ? '#ff9db0' : '#ffd25e', .8);
@@ -1310,15 +1319,30 @@ async function txRun(fn) {
   }
   return res;
 }
-function startOffline(r, nb, nw) {
+// 한 화면 / 연습은 판마다 누가 먼저 할지 골라요
+function pickFirst(n1, n2, cb) {
+  const m = $('firstModal'), b = $('firstBtns');
+  b.innerHTML = `<button class="game-btn btn-primary" data-f="1">${esc(n1)}</button><button class="game-btn btn-info" data-f="2">${esc(n2)}</button><button class="game-btn btn-secondary" data-f="r">🎲 아무나</button>`;
+  b.onclick = e => {
+    const t = e.target.closest('button'); if (!t) return;
+    m.classList.add('hidden');
+    const f = t.dataset.f === 'r' ? (Math.random() < .5 ? '1' : '2') : t.dataset.f;
+    if (t.dataset.f === 'r') toast(`🎲 ${f === '1' ? n1 : n2} 먼저!`);
+    cb(f === '1');
+  };
+  m.classList.remove('hidden');
+}
+function startOffline(r, n1, n2) {
   $('localModal').classList.add('hidden');
-  code = ''; ref = null; role = r;
-  resetLocalState();
-  show('game');
-  onRoom({ exists: () => true, data: () => Object.assign(newGameFields(), {
-    code: '', status: 'playing', bonus: $('optBonus').checked, timer: $('optTimer').checked, round: 1, tick: 1,
-    hostId: 'L1', hostName: nb, guestId: 'L2', guestName: nw, hostColor: 'b', left: '', again: { host: false, guest: false }
-  }) });
+  pickFirst(n1, n2, hostFirst => {
+    code = ''; ref = null; role = r;
+    resetLocalState();
+    show('game');
+    onRoom({ exists: () => true, data: () => Object.assign(newGameFields(), {
+      code: '', status: 'playing', bonus: $('optBonus').checked, timer: $('optTimer').checked, round: 1, tick: 1,
+      hostId: 'L1', hostName: n1, guestId: 'L2', guestName: n2, hostColor: hostFirst ? 'b' : 'w', left: '', again: { host: false, guest: false }
+    }) });
+  });
 }
 $('localBtn').onclick = () => {
   $('startMsg').textContent = '';
@@ -1328,7 +1352,7 @@ $('localBtn').onclick = () => {
   $('localModal').classList.remove('hidden');
 };
 $('lnCancel').onclick = () => $('localModal').classList.add('hidden');
-$('lnStart').onclick = () => startOffline('local', $('lnB').value.trim().slice(0, 8) || '흑', $('lnW').value.trim().slice(0, 8) || '백');
+$('lnStart').onclick = () => startOffline('local', $('lnB').value.trim().slice(0, 8) || '첫 번째', $('lnW').value.trim().slice(0, 8) || '두 번째');
 $('cpuBtn').onclick = () => {
   $('startMsg').textContent = '';
   const n = $('nameInput').value.trim().replace(/\s+/g, ' ').slice(0, 8);
@@ -1381,14 +1405,14 @@ function showResult() {
   const left = w === 'b' || w === 'w' ? countAlive(room.pos, w) : 0;
   const leftTxt = left ? ` 알이 ${left}개 남았어요.` : '';
   if (w === 'draw') { title = '비겼어요!'; text = '마지막 알이 함께 떨어졌어요. 둘 다 정말 잘했어요!'; img = 'ggobi-cheer'; }
-  else if (role === 'local') { title = `${nameOf(w)} 승리!`; text = reason + leftTxt + ' 한 판 더 하면 흑과 백이 바뀌어요.'; img = 'ggobi-cheer'; if (first) beep('win'); }
+  else if (role === 'local') { title = `${nameOf(w)} 승리!`; text = reason + leftTxt + ' 한 판 더 하면 누가 먼저 할지 다시 골라요.'; img = 'ggobi-cheer'; if (first) beep('win'); }
   else if (role === 'cpu') {
     if (w === mine) { title = '꼬비를 이겼어요!'; text = reason + leftTxt + ' 이제 친구와 방을 만들어 겨뤄 봐요!'; img = 'ggobi-trophy'; if (first) beep('win'); }
     else { title = '꼬비가 이겼어요'; text = '알 둘레 게이지와 "딱!" 타이밍을 연습해서 다시 도전해요!'; img = 'ggobi-cry'; if (first) beep('lose'); }
   }
   else if (!mine) { title = `${nameOf(w)} 승리!`; text = reason; }
-  else if (w === mine) { title = '이겼어요!'; text = reason + leftTxt; img = 'ggobi-cheer'; if (first) beep('win'); }
-  else { title = '아쉽게 졌어요'; text = room.endReason === 'leave' ? '내가 나가서 끝났어요.' : `${nameOf(w)}님이 내 알을 모두 떨어뜨렸어요. 다음엔 꼭 이겨요!`; img = 'ggobi-cry'; if (first) beep('lose'); }
+  else if (w === mine) { title = '이겼어요!'; text = reason + leftTxt + ' 다음 판은 친구가 먼저 해요.'; img = 'ggobi-cheer'; if (first) beep('win'); }
+  else { title = '아쉽게 졌어요'; text = room.endReason === 'leave' ? '내가 나가서 끝났어요.' : `${nameOf(w)}님이 내 알을 모두 떨어뜨렸어요. 다음 판은 내가 먼저 해요!`; img = 'ggobi-cry'; if (first) beep('lose'); }
   $('resImg').src = `img/${img}.png`; $('resTitle').textContent = title; $('resText').textContent = text;
   let h = '<button class="game-btn btn-secondary" id="seeBoardBtn">판 보기</button>';
   if (role === 'local' || role === 'cpu') h += '<button class="game-btn btn-primary" id="againBtn">한 판 더</button><button class="game-btn btn-info" id="watchLeaveBtn">그만하기</button>';
@@ -1409,6 +1433,18 @@ function showResult() {
   if ($('watchLeaveBtn')) $('watchLeaveBtn').onclick = () => leaveRoomLocal();
 }
 async function rematch() {
+  if (role === 'local' || role === 'cpu') {
+    const d = room;
+    pickFirst(d.hostName, d.guestName, hostFirst => {
+      if (!room || room !== d) return;
+      resetLocalState();
+      $('resultModal').classList.add('hidden');
+      onRoom({ exists: () => true, data: () => Object.assign({}, d, newGameFields(), {
+        status: 'playing', round: (d.round || 1) + 1, tick: 1, hostColor: hostFirst ? 'b' : 'w', again: { host: false, guest: false }
+      }) });
+    });
+    return;
+  }
   try {
     await txRun(async tx => {
       const s = await tx.get(ref); const d = s.data();
@@ -1417,7 +1453,9 @@ async function rematch() {
       if (role === 'local' || role === 'cpu') ag.host = ag.guest = true;
       if (ag.host && ag.guest) {
         tx.update(ref, Object.assign(newGameFields(), {
-          status: 'playing', round: (d.round || 1) + 1, tick: 0, hostColor: other(d.hostColor || 'b'),
+          status: 'playing', round: (d.round || 1) + 1, tick: 0,
+          // 진 사람이 먼저(검은 알), 비기면 바꿔요
+          hostColor: d.winner === 'b' || d.winner === 'w' ? (d.winner === (d.hostColor || 'b') ? 'w' : 'b') : other(d.hostColor || 'b'),
           again: { host: false, guest: false }, updatedAt: serverTimestamp()
         }));
       } else tx.update(ref, { again: ag, updatedAt: serverTimestamp() });
