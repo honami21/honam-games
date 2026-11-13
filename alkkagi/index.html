@@ -1355,6 +1355,15 @@ function defaultAng(i) {
   }
   return c === 'b' ? -Math.PI / 2 : Math.PI / 2;   // 처음엔 똑바로 앞 (조준 힌트 없음)
 }
+// 마우스 오른쪽 버튼: 조준 취소 (알 고르기부터 다시)
+function rightCancel(e) {
+  if (e.pointerType !== 'mouse' || e.button !== 2 || !room || $('game').classList.contains('hidden')) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  if (aim && !aim.cpu && canControl()) { aim = null; beep('lock'); render(); }
+}
+window.addEventListener('pointerdown', rightCancel, true);
+window.addEventListener('pointermove', rightCancel, true);   // 왼쪽을 누른 채 오른쪽을 눌러도 돼요
+window.addEventListener('contextmenu', e => { if (room && !$('game').classList.contains('hidden')) e.preventDefault(); });
 cv.addEventListener('pointerdown', e => {
   if (actx && actx.state === 'suspended') actx.resume();
   if (!canControl()) {
