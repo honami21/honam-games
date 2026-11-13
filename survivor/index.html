@@ -1089,7 +1089,8 @@ function fireWeapon(w) {
       const skip = new Set();
       for (let i = 0; i < st.n; i++) {
         const e = nearest(p.x, p.y, 380, skip); if (e) skip.add(e.id);
-        const x = e ? e.x : p.x + p.fx * 80, y = e ? e.y : p.y + p.fy * 80, R = 62 * st.area * S.area;
+        const R = 62 * st.area * S.area, ra = Math.random() * TAU, rd = R + 70 + Math.random() * 150;
+        const x = e ? e.x : p.x + Math.cos(ra) * rd, y = e ? e.y : p.y + Math.sin(ra) * rd;
         const dmg = st.dmg + S.maxHp * .12;
         G.fx.push({ k: 'aim', x, y, R, t: 0, life: .3 });
         G.later.push({ t: G.t + .3 + i * .15, f: () => {
