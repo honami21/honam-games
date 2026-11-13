@@ -93,7 +93,12 @@
   #big-text { font-size:clamp(40px,9vw,96px); color:#fff; text-shadow:0 4px 0 rgba(8,12,30,.9); word-break:keep-all; text-align:center; }
   #big-text b { color:#8fe07a; font-weight:normal; }
   @keyframes logoFloat { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }
-  .title-bottom { text-align:center; }
+  .title-bottom { text-align:center; display:flex; flex-direction:column; align-items:center; gap:12px; }
+  #title-music { font-size:15px; padding:6px 16px; }
+  .title-tip { margin-top:0 !important; }
+  .music-row { display:flex; align-items:center; justify-content:center; gap:10px; margin-top:12px; font-size:16px; color:var(--ink); }
+  .music-row input { width:min(220px,50vw); accent-color:var(--coral); }
+  #music-val { min-width:3.2em; text-align:left; color:var(--ink2); font-size:14px; }
   #title-start { font-size:clamp(24px,4vw,36px); padding:16px 52px; animation:startPulse 1.4s ease-in-out infinite; }
   @keyframes startPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.06); } }
   .title-tip { margin-top:14px; color:#fff; font-size:clamp(15px,2.2vw,19px); text-shadow:0 2px 0 rgba(8,12,30,.9), 0 0 8px rgba(8,12,30,.9); word-break:keep-all; }
@@ -270,6 +275,7 @@
   <div id="big-text" class="hidden">꼬비의 <b>도깨비숲</b> 생존기</div>
   <div class="title-bottom">
     <button class="game-btn" id="title-start" type="button">▶ 게임 시작</button>
+    <button class="game-btn white" id="title-music" type="button">🎵 음악 켬</button>
     <p class="title-tip">무기를 고르고, 몰려오는 요괴를 피해 20분을 버텨요!</p>
   </div>
 </div>
@@ -323,9 +329,10 @@
     <div id="tab-bag"></div>
     <div id="tab-combo" class="hidden"></div>
     <div id="tab-stat" class="hidden"></div>
+    <label class="music-row">🎵 음악 <input type="range" id="music-vol" min="0" max="100" step="5" aria-label="음악 크기"> <span id="music-val"></span></label>
     <div class="btns" id="pause-btns">
       <button class="game-btn" id="resume-btn" type="button">계속하기</button>
-      <button class="game-btn white" id="sound-btn" type="button">🔊 소리 켬</button>
+      <button class="game-btn white" id="sound-btn" type="button">🔊 효과음 켬</button>
       <button class="game-btn white" id="giveup-btn" type="button">그만하기</button>
     </div>
   </div>
@@ -1976,7 +1983,7 @@ $('giveup-btn').addEventListener('click', () => {
   if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = '정말 그만할까요?'; return; }
   hide('pause'); modal = null; G.over = true; endGame(false, true);
 });
-function updateSoundBtn() { $('sound-btn').textContent = soundOn ? '🔊 소리 켬' : '🔇 소리 끔'; }
+function updateSoundBtn() { $('sound-btn').textContent = soundOn ? '🔊 효과음 켬' : '🔇 효과음 끔'; }
 $('sound-btn').addEventListener('click', () => { soundOn = !soundOn; try { localStorage.setItem('survivor-sound', soundOn ? 'on' : 'off'); } catch (e) {} updateSoundBtn(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !modal) openPause(); });
 
@@ -2019,6 +2026,28 @@ $('weapon-pick').addEventListener('click', e => {
   pickedWeapon = b.dataset.id; try { localStorage.setItem('survivor-weapon', pickedWeapon); } catch (er) {}
   buildPick();
 });
+/* ---------- 배경 음악 ---------- */
+const BGM = { els: {}, cur: null, vol: .35, on: true, duck: 1 };
+try { const v = localStorage.getItem('survivor-music'); if (v !== null && !isNaN(+v)) BGM.vol = clamp(+v, 0, 1); BGM.on = localStorage.getItem('survivor-music-on') !== 'off'; } catch (e) {}
+function bgmEl(name) { let a = BGM.els[name]; if (!a) { a = BGM.els[name] = new Audio('audio/bgm-' + name + '.mp3'); a.loop = true; a.preload = 'auto'; a.volume = 0; a._g = 0; } return a; }
+function bgmWant() {
+  if (!BGM.on || BGM.vol <= 0 || document.hidden) return null;
+  if (!G) return 'title';
+  if (G.ended || G.over) return null;
+  return G.enemies.some(e => e.boss && !e.dead) ? 'boss' : 'play';
+}
+function bgmTick(dt) {
+  if (BGM.wait > performance.now()) return;
+  const want = bgmWant();
+  if (want !== BGM.cur) { BGM.cur = want; if (want) { const a = bgmEl(want); if (a.paused) { if (want !== 'title') { try { a.currentTime = 0; } catch (e) {} } const p = a.play(); if (p && p.catch) p.catch(() => { BGM.cur = undefined; BGM.wait = performance.now() + 600; }); } } }
+  const duck = modal === 'pause' || modal === 'levelup' || modal === 'chest' ? .45 : 1;
+  for (const k in BGM.els) { const a = BGM.els[k], tg = k === BGM.cur ? 1 : 0; a._g = clamp(a._g + (tg > a._g ? 1 : -1) * dt * 1.6, 0, 1); a.volume = clamp(a._g * BGM.vol * duck, 0, 1); if (a._g === 0 && !a.paused && tg === 0) a.pause(); }
+}
+function bgmUI() { $('title-music').textContent = BGM.on ? '🎵 음악 켬' : '🔇 음악 끔'; $('music-vol').value = Math.round(BGM.vol * 100); $('music-val').textContent = BGM.vol <= 0 ? '끔' : Math.round(BGM.vol * 100) + '%'; }
+$('title-music').addEventListener('click', () => { BGM.on = !BGM.on; if (BGM.on && BGM.vol <= 0) BGM.vol = .35; try { localStorage.setItem('survivor-music-on', BGM.on ? 'on' : 'off'); localStorage.setItem('survivor-music', BGM.vol); } catch (e) {} bgmUI(); });
+$('music-vol').addEventListener('input', e => { BGM.vol = +e.target.value / 100; BGM.on = BGM.vol > 0; try { localStorage.setItem('survivor-music', BGM.vol); localStorage.setItem('survivor-music-on', BGM.on ? 'on' : 'off'); } catch (e2) {} bgmUI(); });
+bgmUI();
+document.addEventListener('visibilitychange', () => { if (document.hidden) { for (const k in BGM.els) BGM.els[k].pause(); BGM.cur = undefined; } });
 function showTitle() { show('title'); hide('start'); hide('hud'); document.body.classList.remove('playing'); modal = 'title'; }
 $('title-start').addEventListener('click', () => { hide('title'); showStart(); });
 addEventListener('keydown', e => { if (modal === 'title' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); $('title-start').click(); } });
@@ -2053,6 +2082,7 @@ function loop(now) {
     updateHUD();
     if (!modal && G.weapons.some(canEvolve) !== hudCache.ready) { hudCache.ready = G.weapons.some(canEvolve); refreshSlots(); }
   }
+  bgmTick(dt);
   render();
   requestAnimationFrame(loop);
 }
