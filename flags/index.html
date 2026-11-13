@@ -1,0 +1,2476 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="apple-touch-icon" href="/icons/icon-180.png"/>
+<link rel="icon" type="image/png" href="/icons/icon-192.png"/>
+<link rel="manifest" href="/manifest.webmanifest"/>
+<meta name="apple-mobile-web-app-title" content="꼬비샘과 쉬는 시간"/>
+<meta name="theme-color" content="#2a2860"/>
+<title>꼬비의 국기 맞히기 - 꼬비샘과 쉬는 시간</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#fff6ec; --cream2:#f1e2d2; --edge:#ecc9b0; --ink:#2c2950; --ink2:#6f6585;
+    --coral:#ee5a6f; --coral-d:#c8455a; --sun:#ffd25e; --sun-d:#d9a92c; --mint:#7ccf74; --mint-d:#3f8f4a; --sky:#8fc7ff;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+  html, body { width:100%; height:100%; overflow:hidden; background:#2a2860 url(img/bg.jpg) center / cover no-repeat;
+    font-family:'Jua','Apple SD Gothic Neo','Malgun Gothic',sans-serif; color:var(--ink); }
+  body { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+  canvas { display:block; touch-action:none; }
+  .hidden { display:none !important; }
+
+  /* ===== 상단 바 (쉬는 시간 / 소리 / 전체화면) ===== */
+  .topbar{position:fixed;top:12px;left:12px;right:12px;z-index:50;display:flex;justify-content:space-between;pointer-events:none}
+  .topbar .right{display:flex;gap:8px}
+  .topbar a,.topbar button{pointer-events:auto;display:inline-flex;align-items:center;gap:6px;border:none;border-radius:20px;padding:7px 14px;
+    font-family:'Jua',sans-serif;font-size:16px;color:var(--ink);background:rgba(255,248,238,.94);box-shadow:0 3px 0 var(--edge);text-decoration:none;cursor:pointer;line-height:1.2}
+  .topbar a:hover,.topbar button:hover{filter:brightness(1.04)}
+  .topbar svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+  #bgmToggle{padding:7px 10px;font-size:16px}
+  #bgmToggle.muted{opacity:.7}
+
+  /* ===== 게임 중 점수판 ===== */
+  #hud { position:fixed; top:58px; left:12px; right:12px; display:flex; justify-content:space-between; align-items:flex-start; pointer-events:none; z-index:10; }
+  .panel { background:var(--cream); border:3px solid var(--ink); border-radius:20px; box-shadow:0 5px 0 var(--ink); padding:8px 14px 10px; text-align:center; color:var(--ink); }
+  .label { font-size:15px; color:var(--ink2); margin-bottom:4px; }
+  .flag-mini { width:132px; height:88px; margin:4px auto 0; background:#eee; border:3px solid var(--ink); border-radius:10px; overflow:hidden; }
+  .flag-mini img { width:100%; height:100%; object-fit:cover; display:block; }
+  .score-num { font-size:30px; color:var(--coral-d); line-height:1.1; }
+  .score-num small { font-size:20px; color:var(--ink2); }
+  .combo-display { margin-top:2px; font-size:16px; color:var(--ink); }
+  .combo-display span { color:var(--coral-d); }
+  .timer-display { margin-top:6px; padding-top:6px; border-top:2px dashed var(--cream2); font-size:19px; color:var(--ink); letter-spacing:.5px; }
+
+  #crosshair { display:none !important; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:6px; height:6px; border-radius:50%;
+    background:rgba(255,255,255,.8); box-shadow:0 0 4px rgba(0,0,0,.6); pointer-events:none; z-index:10; }
+
+  /* ===== 콤보 알림 ===== */
+  #comboPopup { position:fixed; top:30%; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:8px;
+    font-size:clamp(38px,7vw,60px); color:var(--sun); white-space:nowrap; pointer-events:none; z-index:12; opacity:0;
+    text-shadow:0 3px 0 var(--ink), 3px 0 0 var(--ink), -3px 0 0 var(--ink), 0 -3px 0 var(--ink), 0 7px 0 rgba(20,10,50,.35); }
+  #comboPopup img { height:1.9em; filter:drop-shadow(0 4px 0 rgba(20,10,50,.3)); }
+  #comboPopup.bad { color:#fff; }
+  @keyframes comboShow {
+    0%   { opacity:0; transform:translateX(-50%) scale(1.8); }
+    20%  { opacity:1; transform:translateX(-50%) scale(1); }
+    80%  { opacity:1; transform:translateX(-50%) scale(1); }
+    100% { opacity:0; transform:translateX(-50%) scale(.75); }
+  }
+  #comboPopup.show { animation:comboShow 1.2s ease-out; }
+
+  /* ===== 떨어졌을 때 카운트다운 ===== */
+  #countdown { position:fixed; inset:0; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:15; pointer-events:none; gap:8px; }
+  .countdown-label { display:flex; align-items:center; gap:8px; background:var(--cream); color:var(--coral-d); border:3px solid var(--ink); box-shadow:0 5px 0 var(--ink);
+    padding:6px 24px 6px 10px; border-radius:24px; font-size:clamp(20px,3.6vw,26px); }
+  .countdown-label img { height:64px; margin:-22px 0 -6px; }
+  .countdown-num { font-size:clamp(110px,22vw,190px); color:#fff; line-height:1;
+    text-shadow:0 6px 0 var(--ink), 6px 0 0 var(--ink), -6px 0 0 var(--ink), 0 -6px 0 var(--ink), 0 12px 0 rgba(20,10,50,.35); }
+  @keyframes cdpop { 0%{ transform:scale(1.8); opacity:0; } 25%{ transform:scale(1); opacity:1; } 100%{ transform:scale(1); opacity:1; } }
+  .countdown-num.pop { animation:cdpop .45s ease-out; }
+
+  /* ===== 휴대폰·태블릿 터치 버튼 ===== */
+  #touch { display:none; }
+  @media (pointer:coarse) { body.playing #touch { display:block; } }
+  body.touch-on.playing #touch { display:block; }
+  .tbtn { position:fixed; z-index:16; width:62px; height:62px; border-radius:20px; border:3px solid var(--ink); box-shadow:0 5px 0 var(--ink);
+    background:rgba(255,246,236,.92); color:var(--ink); display:flex; align-items:center; justify-content:center; touch-action:none; padding:0; cursor:pointer; }
+  .tbtn svg { width:30px; height:30px; fill:none; stroke:currentColor; stroke-width:3.2; stroke-linecap:round; stroke-linejoin:round; }
+  .tbtn.on { transform:translateY(4px); box-shadow:0 1px 0 var(--ink); background:var(--sun); }
+  #t-up    { left:86px;  bottom:96px; }
+  #t-down  { left:86px;  bottom:18px; }
+  #t-left  { left:18px;  bottom:57px; }
+  #t-right { left:154px; bottom:57px; }
+  #t-jump  { right:20px; bottom:30px; width:96px; height:96px; border-radius:50%; background:rgba(255,210,94,.95); font-size:24px; font-family:'Jua',sans-serif; }
+  #t-jump.on { background:var(--coral); color:#fff; }
+  .t-tip { position:fixed; left:50%; bottom:14px; transform:translateX(-50%); z-index:16; font-size:14px; color:#fff; white-space:nowrap; text-shadow:0 2px 0 rgba(20,10,50,.7); pointer-events:none; }
+
+  /* ===== 화면 덮개 (시작 / 결과 / 랭킹) ===== */
+  #overlay { position:fixed; inset:0; background:rgba(30,20,70,.34); display:flex; align-items:center; justify-content:center;
+    text-align:center; padding:58px 16px 16px; z-index:20; overflow-y:auto; }
+  .section { display:flex; flex-direction:column; align-items:center; gap:14px; width:100%; max-width:600px; margin:auto; }
+  .card { background:var(--cream); border:3px solid var(--ink); border-radius:28px; box-shadow:0 8px 0 var(--ink), 0 16px 30px rgba(20,10,50,.35);
+    padding:20px 24px 24px; width:100%; }
+  .logo { height:auto; width:min(420px, 92%); display:block; margin:-4px auto 0; }
+  .lead { font-size:clamp(16px,2.6vw,20px); line-height:1.5; color:var(--ink); margin:8px 0 12px; word-break:keep-all; }
+  .lead b { color:var(--coral-d); font-weight:normal; }
+  .start-wrap { position:relative; width:100%; }
+  .start-ggobi { position:absolute; width:150px; right:-104px; bottom:-20px; pointer-events:none; filter:drop-shadow(0 4px 0 rgba(20,10,50,.25)); }
+  @media (max-width:860px){ .start-ggobi{ display:none; } }
+  .result-ggobi { width:120px; display:block; margin:-64px auto 0; filter:drop-shadow(0 4px 0 rgba(44,41,80,.2)); }
+
+  .diff-section { background:#fff; border:2px solid var(--cream2); border-radius:18px; padding:12px 12px 14px; }
+  .diff-title { color:var(--coral-d); font-size:18px; margin-bottom:8px; }
+  .diff-buttons { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+  .diff-btn { padding:9px 16px; font-size:17px; border-radius:30px; border:3px solid var(--ink); box-shadow:0 4px 0 var(--ink);
+    background:var(--sun); color:var(--ink); cursor:pointer; font-family:'Jua',sans-serif; transition:transform .08s, box-shadow .08s; }
+  .diff-btn:hover { filter:brightness(1.05); }
+  .diff-btn:active { transform:translateY(3px); box-shadow:0 1px 0 var(--ink); }
+  .diff-btn small { font-size:14px; color:var(--ink2); }
+  .diff-btn.hard { background:var(--coral); color:#fff; }
+  .diff-btn.hard small { color:#ffe3e6; }
+  .diff-btn.cont-btn { background:var(--sky); }
+  .ranking-note { margin-top:10px; font-size:14px; color:var(--ink2); }
+
+  .hint { margin-top:12px; background:#fff; border:2px solid var(--cream2); border-radius:18px; padding:10px 14px; text-align:center; }
+  .hint-title { color:var(--coral-d); font-size:17px; margin-bottom:4px; }
+  .hint-row { font-size:15px; line-height:1.9; color:var(--ink); word-break:keep-all; }
+  .hint-touch { display:none; }
+  @media (pointer:coarse) { .hint-keys { display:none; } .hint-touch { display:block; } }
+  kbd { display:inline-block; background:#fff; border:2px solid var(--ink); border-radius:7px; padding:0 6px; margin:0 1px;
+    font-family:'Jua',sans-serif; font-size:13px; color:var(--ink); box-shadow:0 2px 0 var(--ink); min-width:22px; text-align:center; line-height:1.5; }
+
+  .button-group { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; width:100%; }
+  .game-btn { padding:11px 24px; font-size:clamp(17px,2.8vw,21px); border-radius:40px; border:3px solid var(--ink); color:#fff;
+    cursor:pointer; min-width:140px; font-family:'Jua',sans-serif; box-shadow:0 5px 0 var(--ink); transition:transform .08s, box-shadow .08s; }
+  .game-btn:active { transform:translateY(4px); box-shadow:0 1px 0 var(--ink); }
+  .game-btn:disabled { opacity:.55; cursor:not-allowed; }
+  .btn-primary { background:var(--coral); }
+  .btn-info { background:var(--sun); color:var(--ink); }
+  .btn-secondary { background:#fff; color:var(--ink); }
+
+  /* 결과 */
+  .end-title { font-size:clamp(30px,5vw,40px); font-weight:normal; color:var(--coral-d); }
+  .result-card { background:#fff; border:2px solid var(--cream2); border-radius:18px; padding:10px 18px; width:100%; max-width:380px; margin:10px auto 0; }
+  .result-row { display:flex; justify-content:space-between; padding:4px 2px; font-size:17px; }
+  .result-row .label { color:var(--ink2); font-size:17px; margin:0; }
+  .result-total { border-top:2px dashed var(--cream2); margin-top:6px; padding-top:8px; }
+  .result-total .label { font-size:19px; color:var(--ink); }
+  .result-total .value { font-size:28px; color:var(--coral-d); }
+
+  .save-form { width:100%; max-width:380px; margin:6px auto 0; }
+  .form-row { margin:8px 0; text-align:left; }
+  .form-row label { display:block; margin:0 0 4px 6px; font-size:15px; color:var(--ink2); }
+  .form-row input { width:100%; padding:10px 16px; border-radius:16px; border:2.5px solid var(--cream2); background:#fff; color:var(--ink);
+    font-size:17px; font-family:'Jua',sans-serif; -webkit-user-select:text; user-select:text; outline:none; }
+  .form-row input:focus { border-color:var(--coral); }
+  .form-row input::placeholder { color:#c9b5a3; }
+  .save-status { font-size:14px; color:var(--mint-d); min-height:18px; margin-top:2px; }
+  .save-status.error { color:var(--coral-d); }
+  .practice-note { background:#fff; border:2px dashed var(--cream2); padding:10px 14px; border-radius:16px; font-size:15px; color:var(--ink2); max-width:380px; margin:12px auto; line-height:1.6; }
+  .practice-note b { color:var(--coral-d); font-weight:normal; }
+
+  /* 랭킹 */
+  .rank-title { font-size:clamp(28px,4.5vw,36px); font-weight:normal; color:var(--coral-d); }
+  .rank-sub { font-size:14px; color:var(--ink2); }
+  .ranking-list { width:100%; max-height:min(46vh,420px); overflow-y:auto; background:#fff; border:2px solid var(--cream2); border-radius:18px; padding:6px; }
+  .ranking-row { display:grid; grid-template-columns:44px 1fr auto; gap:10px; padding:8px 10px; border-bottom:2px dashed #f3e6d6; align-items:center; font-size:16px; text-align:left; }
+  .ranking-row:last-child { border-bottom:none; }
+  .ranking-row.me { background:#fff1c9; border:2px solid var(--sun); border-radius:12px; }
+  .rank-num { color:var(--coral-d); text-align:center; font-size:18px; }
+  .rank-name .school { display:block; font-size:12px; color:var(--ink2); margin-top:1px; }
+  .rank-score { text-align:right; }
+  .rank-score .score-main { color:var(--coral-d); font-size:18px; }
+  .rank-score .score-sub { display:block; font-size:12px; color:var(--ink2); margin-top:1px; }
+  .my-rank-note { padding:8px 12px; background:#fff1c9; border:2px solid var(--sun); border-radius:14px; font-size:15px; color:var(--ink); }
+  .ranking-empty { padding:30px 20px; text-align:center; color:var(--ink2); line-height:1.6; }
+
+  /* ===== 작은 화면 ===== */
+  @media (max-width:760px), (pointer:coarse){
+    .topbar{top:6px;left:6px;right:6px}
+    .topbar a,.topbar button{font-size:13px;padding:6px 10px;gap:4px}
+    #hud { top:44px; left:6px; right:6px; }
+    .panel { padding:5px 9px 7px; border-radius:16px; border-width:2.5px; box-shadow:0 3px 0 var(--ink); }
+    .label { font-size:12px; margin-bottom:2px; }
+    .flag-mini { width:96px; height:64px; border-width:2.5px; }
+    .score-num { font-size:22px; } .score-num small { font-size:15px; }
+    .combo-display { font-size:13px; }
+    .timer-display { font-size:15px; margin-top:4px; padding-top:4px; }
+    .card { padding:16px 14px 18px; border-radius:24px; }
+    .diff-btn { font-size:15px; padding:8px 12px; }
+  }
+  @media (max-height:520px) and (pointer:coarse){
+    .tbtn { width:52px; height:52px; }
+    #t-up { left:72px; bottom:78px; } #t-down { left:72px; bottom:12px; }
+    #t-left { left:14px; bottom:45px; } #t-right { left:130px; bottom:45px; }
+    #t-jump { width:80px; height:80px; bottom:20px; }
+    .t-tip { display:none; }
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a href="../" id="home-link" title="꼬비샘과 쉬는 시간으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">쉬는 시간</span></a>
+  <div class="right">
+    <button id="bgmToggle" type="button" title="소리 켜기/끄기" aria-label="소리 켜기/끄기">🔊</button>
+    <button id="fs-btn" type="button" title="전체화면"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="t" id="fs-txt">전체화면</span></button>
+  </div>
+</div>
+<script>
+(function(){
+  var b=document.getElementById('fs-btn'),t=document.getElementById('fs-txt'),d=document,el=d.documentElement;
+  var can=d.fullscreenEnabled||d.webkitFullscreenEnabled;
+  var framed=false;try{framed=window.top!==window;}catch(e){framed=true;}
+  if(!can){
+    if(framed){t.textContent='새 창으로';b.title='새 창으로 크게 열기';b.addEventListener('click',function(){window.open(location.href,'_blank');});}
+    else b.style.display='none';
+    return;
+  }
+  var cur=function(){return d.fullscreenElement||d.webkitFullscreenElement;};
+  b.addEventListener('click',function(){
+    if(cur()){(d.exitFullscreen||d.webkitExitFullscreen).call(d);}
+    else{var pr=(el.requestFullscreen||el.webkitRequestFullscreen).call(el);if(pr&&pr.catch)pr.catch(function(){});}
+    b.blur();
+  });
+  var upd=function(){t.textContent=cur()?'나가기':'전체화면';};
+  d.addEventListener('fullscreenchange',upd);d.addEventListener('webkitfullscreenchange',upd);
+})();
+</script>
+
+<!-- 게임 중 점수판 -->
+<div id="hud" class="hidden">
+  <div class="panel">
+    <div class="label">이 국기는 어느 나라일까요?</div>
+    <div class="flag-mini" id="flagMini"></div>
+    <div class="timer-display hidden" id="timerWrap">⏱ <span id="timer">00:00</span></div>
+  </div>
+  <div class="panel">
+    <div class="label">문제</div>
+    <div class="score-num"><span id="correctNum">1</span><small> / <span id="totalQ">30</span></small></div>
+    <div class="combo-display"><span id="combo">0</span> 연속</div>
+  </div>
+</div>
+<div id="crosshair" class="hidden"></div>
+
+<div id="comboPopup"></div>
+
+<div id="countdown" class="hidden">
+  <div class="countdown-label"><img src="img/ggobi-hurt.png" alt="">앗, 떨어졌어요! 곧 다시 시작해요</div>
+  <div class="countdown-num" id="countdownNum">3</div>
+</div>
+
+<!-- 휴대폰·태블릿 터치 버튼 -->
+<div id="touch">
+  <button class="tbtn" id="t-up" data-key="ArrowUp" aria-label="앞으로"><svg viewBox="0 0 24 24"><path d="M5 15l7-7 7 7"/></svg></button>
+  <button class="tbtn" id="t-down" data-key="ArrowDown" aria-label="뒤로"><svg viewBox="0 0 24 24"><path d="M5 9l7 7 7-7"/></svg></button>
+  <button class="tbtn" id="t-left" data-key="ArrowLeft" aria-label="왼쪽"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <button class="tbtn" id="t-right" data-key="ArrowRight" aria-label="오른쪽"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+  <button class="tbtn" id="t-jump" data-key="Space" aria-label="점프">점프</button>
+</div>
+
+<div id="overlay">
+
+  <!-- 시작 화면 -->
+  <div id="start-section" class="section">
+    <div class="start-wrap">
+      <div class="card">
+        <img class="logo" src="img/logo.png" alt="꼬비의 국기 맞히기" width="1000" height="312">
+        <p class="lead">하늘에 뜬 유리 다리 두 개 중에서<br><b>국기에 맞는 나라</b>로 점프해요!<br>틀린 다리를 밟으면 유리가 깨져 떨어져요.</p>
+        <div class="diff-section">
+          <div class="diff-title">난이도 고르기</div>
+          <div class="diff-buttons">
+            <button class="diff-btn" data-mode="tier" data-value="30">쉬움 <small>30개 나라</small></button>
+            <button class="diff-btn" data-mode="tier" data-value="100">보통 <small>100개 나라</small></button>
+            <button class="diff-btn hard" data-mode="tier" data-value="200">🏆 어려움 <small>전 세계</small></button>
+          </div>
+          <div class="diff-title" style="margin-top:14px">대륙별로 하기</div>
+          <div class="diff-buttons">
+            <button class="diff-btn cont-btn" data-mode="cont" data-value="asia">아시아</button>
+            <button class="diff-btn cont-btn" data-mode="cont" data-value="europe">유럽</button>
+            <button class="diff-btn cont-btn" data-mode="cont" data-value="america">아메리카</button>
+            <button class="diff-btn cont-btn" data-mode="cont" data-value="africa">아프리카</button>
+            <button class="diff-btn cont-btn" data-mode="cont" data-value="oceania">오세아니아</button>
+          </div>
+          <p class="ranking-note">🏆 <b>어려움(전 세계)</b>만 랭킹에 기록돼요.</p>
+        </div>
+        <div class="hint">
+          <div class="hint-title">조작법</div>
+          <div class="hint-keys">
+            <div class="hint-row">이동 <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 또는 <kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> · 점프 <kbd>Space</kbd></div>
+            <div class="hint-row">마우스를 움직이면 둘러볼 수 있어요 · 마우스를 다시 쓰려면 <kbd>Esc</kbd></div>
+          </div>
+          <div class="hint-touch">
+            <div class="hint-row">왼쪽 화살표 버튼으로 이동, 오른쪽 <b>점프</b> 버튼으로 점프!</div>
+            <div class="hint-row">화면을 손가락으로 밀면 둘러볼 수 있어요</div>
+          </div>
+        </div>
+        <div class="button-group" style="margin-top:16px">
+          <button id="view-ranking-btn" class="game-btn btn-info">🏆 랭킹 보기</button>
+        </div>
+      </div>
+      <img class="start-ggobi" src="img/ggobi-globe.png" alt="">
+    </div>
+  </div>
+
+  <!-- 결과 화면 -->
+  <div id="gameover-section" class="section hidden">
+    <div class="card">
+      <img class="result-ggobi" src="img/ggobi-cheer.png" alt="">
+      <h1 class="end-title">완주했어요!</h1>
+      <div class="result-card">
+        <div class="result-row"><span class="label">🎯 난이도</span><span class="value" id="r-diff">-</span></div>
+        <div class="result-row hidden" id="r-time-row"><span class="label">⏱ 걸린 시간</span><span class="value" id="r-time">-</span></div>
+        <div class="result-row"><span class="label">🔥 최고 연속</span><span class="value" id="r-combo">0</span></div>
+        <div class="result-row hidden" id="r-fail-row"><span class="label">💥 떨어진 횟수</span><span class="value" id="r-fail">0</span></div>
+        <div class="result-row result-total"><span class="label">⭐ 최종 점수</span><span class="value" id="r-score">0</span></div>
+      </div>
+
+      <div id="save-form" class="save-form">
+        <div class="form-row">
+          <label for="input-school">🏫 학교명</label>
+          <input id="input-school" type="text" maxlength="20" placeholder="예: 행복초등학교" autocomplete="off">
+        </div>
+        <div class="form-row">
+          <label for="input-name">👤 이름</label>
+          <input id="input-name" type="text" maxlength="10" placeholder="이름 입력" autocomplete="off">
+        </div>
+        <div class="save-status" id="save-status"></div>
+        <div class="button-group" style="margin-top:6px;">
+          <button id="save-btn" class="game-btn btn-primary">💾 기록 저장</button>
+          <button id="skip-btn" class="game-btn btn-secondary">저장 안 함</button>
+        </div>
+      </div>
+
+      <div id="practice-note" class="practice-note hidden">
+        이번 판은 연습이에요.<br><b>어려움(전 세계)</b>만 랭킹에 기록돼요.
+      </div>
+
+      <div id="after-save" class="hidden" style="margin-top:14px">
+        <div class="button-group">
+          <button id="goto-ranking-btn" class="game-btn btn-info">🏆 랭킹 보기</button>
+          <button id="retry-btn" class="game-btn btn-primary">🔄 다시 도전</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 랭킹 화면 -->
+  <div id="ranking-section" class="section hidden">
+    <div class="card" style="display:flex;flex-direction:column;gap:10px;align-items:center">
+      <img class="result-ggobi" src="img/ggobi-trophy.png" alt="">
+      <h1 class="rank-title">🏆 랭킹 TOP 50</h1>
+      <p class="rank-sub">어려움(전 세계) 기록만 보여요.</p>
+      <div class="ranking-list" id="ranking-list">불러오는 중...</div>
+      <div id="my-rank-note" class="my-rank-note hidden"></div>
+      <div class="button-group">
+        <button id="rank-back-btn" class="game-btn btn-secondary">← 처음으로</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+  }
+}
+</script>
+
+<script type="module">
+// ============================================================
+//  FIREBASE SETUP
+// ============================================================
+import * as THREE from 'three';
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, query, where, orderBy, limit, getDocs, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDw2EvTh7PVBrPnkii2F1kPGcqbzcIo41s",
+  authDomain: "honamsaem-class-games.firebaseapp.com",
+  projectId: "honamsaem-class-games",
+  storageBucket: "honamsaem-class-games.firebasestorage.app",
+  messagingSenderId: "251087835017",
+  appId: "1:251087835017:web:ef601265c56affe8ca1b58"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+
+const COLLECTION_NAME = 'flag-jump-scores';
+
+// ============================================================
+//  COUNTRY DATA (ISO 2-letter code, Korean name, continent, tier)
+//  tier: 30 = top 30 (also in 100, all)
+//        100 = top 100 (also in all)
+//        200 = in all only
+// ============================================================
+const COUNTRIES = [
+  // === TIER 30 (주요 30개국) ===
+  { code:'kr', ko:'대한민국', continent:'asia', tier:30 },
+  { code:'us', ko:'미국', continent:'america', tier:30 },
+  { code:'jp', ko:'일본', continent:'asia', tier:30 },
+  { code:'cn', ko:'중국', continent:'asia', tier:30 },
+  { code:'gb', ko:'영국', continent:'europe', tier:30 },
+  { code:'fr', ko:'프랑스', continent:'europe', tier:30 },
+  { code:'de', ko:'독일', continent:'europe', tier:30 },
+  { code:'it', ko:'이탈리아', continent:'europe', tier:30 },
+  { code:'es', ko:'스페인', continent:'europe', tier:30 },
+  { code:'ru', ko:'러시아', continent:'europe', tier:30 },
+  { code:'ca', ko:'캐나다', continent:'america', tier:30 },
+  { code:'mx', ko:'멕시코', continent:'america', tier:30 },
+  { code:'br', ko:'브라질', continent:'america', tier:30 },
+  { code:'ar', ko:'아르헨티나', continent:'america', tier:30 },
+  { code:'au', ko:'호주', continent:'oceania', tier:30 },
+  { code:'nz', ko:'뉴질랜드', continent:'oceania', tier:30 },
+  { code:'in', ko:'인도', continent:'asia', tier:30 },
+  { code:'th', ko:'태국', continent:'asia', tier:30 },
+  { code:'vn', ko:'베트남', continent:'asia', tier:30 },
+  { code:'ph', ko:'필리핀', continent:'asia', tier:30 },
+  { code:'id', ko:'인도네시아', continent:'asia', tier:30 },
+  { code:'sg', ko:'싱가포르', continent:'asia', tier:30 },
+  { code:'my', ko:'말레이시아', continent:'asia', tier:30 },
+  { code:'sa', ko:'사우디아라비아', continent:'asia', tier:30 },
+  { code:'tr', ko:'튀르키예', continent:'asia', tier:30 },
+  { code:'eg', ko:'이집트', continent:'africa', tier:30 },
+  { code:'za', ko:'남아프리카공화국', continent:'africa', tier:30 },
+  { code:'nl', ko:'네덜란드', continent:'europe', tier:30 },
+  { code:'ch', ko:'스위스', continent:'europe', tier:30 },
+  { code:'gr', ko:'그리스', continent:'europe', tier:30 },
+
+  // === TIER 100 (주요 100개국 추가분) ===
+  // 유럽
+  { code:'pt', ko:'포르투갈', continent:'europe', tier:100 },
+  { code:'pl', ko:'폴란드', continent:'europe', tier:100 },
+  { code:'se', ko:'스웨덴', continent:'europe', tier:100 },
+  { code:'no', ko:'노르웨이', continent:'europe', tier:100 },
+  { code:'fi', ko:'핀란드', continent:'europe', tier:100 },
+  { code:'dk', ko:'덴마크', continent:'europe', tier:100 },
+  { code:'ie', ko:'아일랜드', continent:'europe', tier:100 },
+  { code:'be', ko:'벨기에', continent:'europe', tier:100 },
+  { code:'at', ko:'오스트리아', continent:'europe', tier:100 },
+  { code:'cz', ko:'체코', continent:'europe', tier:100 },
+  { code:'hu', ko:'헝가리', continent:'europe', tier:100 },
+  { code:'ua', ko:'우크라이나', continent:'europe', tier:100 },
+  { code:'ro', ko:'루마니아', continent:'europe', tier:100 },
+  { code:'bg', ko:'불가리아', continent:'europe', tier:100 },
+  { code:'hr', ko:'크로아티아', continent:'europe', tier:100 },
+  { code:'rs', ko:'세르비아', continent:'europe', tier:100 },
+  { code:'sk', ko:'슬로바키아', continent:'europe', tier:100 },
+  { code:'is', ko:'아이슬란드', continent:'europe', tier:100 },
+  { code:'lu', ko:'룩셈부르크', continent:'europe', tier:100 },
+  { code:'mc', ko:'모나코', continent:'europe', tier:100 },
+  // 아시아
+  { code:'kp', ko:'북한', continent:'asia', tier:100 },
+  { code:'tw', ko:'대만', continent:'asia', tier:100 },
+  { code:'mn', ko:'몽골', continent:'asia', tier:100 },
+  { code:'kz', ko:'카자흐스탄', continent:'asia', tier:100 },
+  { code:'uz', ko:'우즈베키스탄', continent:'asia', tier:100 },
+  { code:'pk', ko:'파키스탄', continent:'asia', tier:100 },
+  { code:'bd', ko:'방글라데시', continent:'asia', tier:100 },
+  { code:'np', ko:'네팔', continent:'asia', tier:100 },
+  { code:'lk', ko:'스리랑카', continent:'asia', tier:100 },
+  { code:'mm', ko:'미얀마', continent:'asia', tier:100 },
+  { code:'kh', ko:'캄보디아', continent:'asia', tier:100 },
+  { code:'la', ko:'라오스', continent:'asia', tier:100 },
+  { code:'il', ko:'이스라엘', continent:'asia', tier:100 },
+  { code:'ir', ko:'이란', continent:'asia', tier:100 },
+  { code:'iq', ko:'이라크', continent:'asia', tier:100 },
+  { code:'ae', ko:'아랍에미리트', continent:'asia', tier:100 },
+  { code:'qa', ko:'카타르', continent:'asia', tier:100 },
+  { code:'kw', ko:'쿠웨이트', continent:'asia', tier:100 },
+  { code:'jo', ko:'요르단', continent:'asia', tier:100 },
+  { code:'lb', ko:'레바논', continent:'asia', tier:100 },
+  { code:'sy', ko:'시리아', continent:'asia', tier:100 },
+  { code:'af', ko:'아프가니스탄', continent:'asia', tier:100 },
+  // 아메리카
+  { code:'cl', ko:'칠레', continent:'america', tier:100 },
+  { code:'co', ko:'콜롬비아', continent:'america', tier:100 },
+  { code:'pe', ko:'페루', continent:'america', tier:100 },
+  { code:'ve', ko:'베네수엘라', continent:'america', tier:100 },
+  { code:'uy', ko:'우루과이', continent:'america', tier:100 },
+  { code:'ec', ko:'에콰도르', continent:'america', tier:100 },
+  { code:'bo', ko:'볼리비아', continent:'america', tier:100 },
+  { code:'py', ko:'파라과이', continent:'america', tier:100 },
+  { code:'cu', ko:'쿠바', continent:'america', tier:100 },
+  { code:'do', ko:'도미니카공화국', continent:'america', tier:100 },
+  { code:'cr', ko:'코스타리카', continent:'america', tier:100 },
+  { code:'pa', ko:'파나마', continent:'america', tier:100 },
+  { code:'jm', ko:'자메이카', continent:'america', tier:100 },
+  { code:'ht', ko:'아이티', continent:'america', tier:100 },
+  { code:'gt', ko:'과테말라', continent:'america', tier:100 },
+  // 아프리카
+  { code:'ng', ko:'나이지리아', continent:'africa', tier:100 },
+  { code:'ma', ko:'모로코', continent:'africa', tier:100 },
+  { code:'dz', ko:'알제리', continent:'africa', tier:100 },
+  { code:'tn', ko:'튀니지', continent:'africa', tier:100 },
+  { code:'ly', ko:'리비아', continent:'africa', tier:100 },
+  { code:'sd', ko:'수단', continent:'africa', tier:100 },
+  { code:'et', ko:'에티오피아', continent:'africa', tier:100 },
+  { code:'gh', ko:'가나', continent:'africa', tier:100 },
+  { code:'ke', ko:'케냐', continent:'africa', tier:100 },
+  { code:'ug', ko:'우간다', continent:'africa', tier:100 },
+  { code:'zw', ko:'짐바브웨', continent:'africa', tier:100 },
+  { code:'ao', ko:'앙골라', continent:'africa', tier:100 },
+  // 오세아니아
+  { code:'fj', ko:'피지', continent:'oceania', tier:100 },
+  { code:'pg', ko:'파푸아뉴기니', continent:'oceania', tier:100 },
+  { code:'ws', ko:'사모아', continent:'oceania', tier:100 },
+  { code:'to', ko:'통가', continent:'oceania', tier:100 },
+
+  // === TIER 200 (전 세계 추가분) ===
+  // 유럽
+  { code:'al', ko:'알바니아', continent:'europe', tier:200 },
+  { code:'mk', ko:'북마케도니아', continent:'europe', tier:200 },
+  { code:'ba', ko:'보스니아헤르체고비나', continent:'europe', tier:200 },
+  { code:'me', ko:'몬테네그로', continent:'europe', tier:200 },
+  { code:'md', ko:'몰도바', continent:'europe', tier:200 },
+  { code:'by', ko:'벨라루스', continent:'europe', tier:200 },
+  { code:'lv', ko:'라트비아', continent:'europe', tier:200 },
+  { code:'lt', ko:'리투아니아', continent:'europe', tier:200 },
+  { code:'ee', ko:'에스토니아', continent:'europe', tier:200 },
+  { code:'si', ko:'슬로베니아', continent:'europe', tier:200 },
+  { code:'ad', ko:'안도라', continent:'europe', tier:200 },
+  { code:'sm', ko:'산마리노', continent:'europe', tier:200 },
+  { code:'li', ko:'리히텐슈타인', continent:'europe', tier:200 },
+  { code:'mt', ko:'몰타', continent:'europe', tier:200 },
+  { code:'cy', ko:'키프로스', continent:'europe', tier:200 },
+  { code:'va', ko:'바티칸', continent:'europe', tier:200 },
+  // 아시아
+  { code:'bt', ko:'부탄', continent:'asia', tier:200 },
+  { code:'mv', ko:'몰디브', continent:'asia', tier:200 },
+  { code:'tl', ko:'동티모르', continent:'asia', tier:200 },
+  { code:'bn', ko:'브루나이', continent:'asia', tier:200 },
+  { code:'om', ko:'오만', continent:'asia', tier:200 },
+  { code:'ye', ko:'예멘', continent:'asia', tier:200 },
+  { code:'bh', ko:'바레인', continent:'asia', tier:200 },
+  { code:'kg', ko:'키르기스스탄', continent:'asia', tier:200 },
+  { code:'tj', ko:'타지키스탄', continent:'asia', tier:200 },
+  { code:'tm', ko:'투르크메니스탄', continent:'asia', tier:200 },
+  { code:'am', ko:'아르메니아', continent:'asia', tier:200 },
+  { code:'az', ko:'아제르바이잔', continent:'asia', tier:200 },
+  { code:'ge', ko:'조지아', continent:'asia', tier:200 },
+  // 아프리카
+  { code:'sn', ko:'세네갈', continent:'africa', tier:200 },
+  { code:'ci', ko:'코트디부아르', continent:'africa', tier:200 },
+  { code:'cm', ko:'카메룬', continent:'africa', tier:200 },
+  { code:'cg', ko:'콩고공화국', continent:'africa', tier:200 },
+  { code:'cd', ko:'콩고민주공화국', continent:'africa', tier:200 },
+  { code:'tz', ko:'탄자니아', continent:'africa', tier:200 },
+  { code:'rw', ko:'르완다', continent:'africa', tier:200 },
+  { code:'bi', ko:'부룬디', continent:'africa', tier:200 },
+  { code:'mg', ko:'마다가스카르', continent:'africa', tier:200 },
+  { code:'mu', ko:'모리셔스', continent:'africa', tier:200 },
+  { code:'mz', ko:'모잠비크', continent:'africa', tier:200 },
+  { code:'zm', ko:'잠비아', continent:'africa', tier:200 },
+  { code:'bw', ko:'보츠와나', continent:'africa', tier:200 },
+  { code:'na', ko:'나미비아', continent:'africa', tier:200 },
+  { code:'mw', ko:'말라위', continent:'africa', tier:200 },
+  { code:'ls', ko:'레소토', continent:'africa', tier:200 },
+  { code:'sz', ko:'에스와티니', continent:'africa', tier:200 },
+  { code:'so', ko:'소말리아', continent:'africa', tier:200 },
+  { code:'dj', ko:'지부티', continent:'africa', tier:200 },
+  { code:'er', ko:'에리트레아', continent:'africa', tier:200 },
+  { code:'td', ko:'차드', continent:'africa', tier:200 },
+  { code:'cf', ko:'중앙아프리카공화국', continent:'africa', tier:200 },
+  { code:'ga', ko:'가봉', continent:'africa', tier:200 },
+  { code:'gq', ko:'적도기니', continent:'africa', tier:200 },
+  { code:'bj', ko:'베냉', continent:'africa', tier:200 },
+  { code:'tg', ko:'토고', continent:'africa', tier:200 },
+  { code:'bf', ko:'부르키나파소', continent:'africa', tier:200 },
+  { code:'ml', ko:'말리', continent:'africa', tier:200 },
+  { code:'ne', ko:'니제르', continent:'africa', tier:200 },
+  { code:'mr', ko:'모리타니', continent:'africa', tier:200 },
+  { code:'gm', ko:'감비아', continent:'africa', tier:200 },
+  { code:'gn', ko:'기니', continent:'africa', tier:200 },
+  { code:'gw', ko:'기니비사우', continent:'africa', tier:200 },
+  { code:'sl', ko:'시에라리온', continent:'africa', tier:200 },
+  { code:'lr', ko:'라이베리아', continent:'africa', tier:200 },
+  { code:'cv', ko:'카보베르데', continent:'africa', tier:200 },
+  { code:'st', ko:'상투메프린시페', continent:'africa', tier:200 },
+  { code:'sc', ko:'세이셸', continent:'africa', tier:200 },
+  { code:'km', ko:'코모로', continent:'africa', tier:200 },
+  { code:'ss', ko:'남수단', continent:'africa', tier:200 },
+  // 아메리카
+  { code:'tt', ko:'트리니다드토바고', continent:'america', tier:200 },
+  { code:'bs', ko:'바하마', continent:'america', tier:200 },
+  { code:'bb', ko:'바베이도스', continent:'america', tier:200 },
+  { code:'gd', ko:'그레나다', continent:'america', tier:200 },
+  { code:'vc', ko:'세인트빈센트그레나딘', continent:'america', tier:200 },
+  { code:'lc', ko:'세인트루시아', continent:'america', tier:200 },
+  { code:'dm', ko:'도미니카', continent:'america', tier:200 },
+  { code:'ag', ko:'앤티가바부다', continent:'america', tier:200 },
+  { code:'kn', ko:'세인트키츠네비스', continent:'america', tier:200 },
+  { code:'bz', ko:'벨리즈', continent:'america', tier:200 },
+  { code:'hn', ko:'온두라스', continent:'america', tier:200 },
+  { code:'sv', ko:'엘살바도르', continent:'america', tier:200 },
+  { code:'ni', ko:'니카라과', continent:'america', tier:200 },
+  { code:'gy', ko:'가이아나', continent:'america', tier:200 },
+  { code:'sr', ko:'수리남', continent:'america', tier:200 },
+  // 오세아니아
+  { code:'sb', ko:'솔로몬제도', continent:'oceania', tier:200 },
+  { code:'vu', ko:'바누아투', continent:'oceania', tier:200 },
+  { code:'fm', ko:'미크로네시아', continent:'oceania', tier:200 },
+  { code:'mh', ko:'마셜제도', continent:'oceania', tier:200 },
+  { code:'pw', ko:'팔라우', continent:'oceania', tier:200 },
+  { code:'ki', ko:'키리바시', continent:'oceania', tier:200 },
+  { code:'tv', ko:'투발루', continent:'oceania', tier:200 },
+  { code:'nr', ko:'나우루', continent:'oceania', tier:200 },
+];
+
+// ============================================================
+//  GAME CONFIG
+// ============================================================
+const TOTAL_QUESTIONS_HARD = 50;     // 난이도 상: 50문제 풀이
+const TOTAL_QUESTIONS_NORMAL = 30;   // 그 외: 30문제 풀이
+const COMBO_TIER_2X = 5;
+const COMBO_TIER_3X = 10;
+
+let selectedDifficulty = null;
+let activeCountries = [];
+let isRankingMode = false;
+let totalQuestions = TOTAL_QUESTIONS_NORMAL;
+let showTimer = false;
+
+function setDifficulty(mode, value) {
+  selectedDifficulty = { mode, value };
+  if (mode === 'tier') {
+    activeCountries = COUNTRIES.filter(c => c.tier <= value);
+    isRankingMode = (value === 200);
+  } else if (mode === 'cont') {
+    activeCountries = COUNTRIES.filter(c => c.continent === value);
+    isRankingMode = false;
+  }
+  totalQuestions = isRankingMode ? TOTAL_QUESTIONS_HARD : TOTAL_QUESTIONS_NORMAL;
+  showTimer = isRankingMode;   // 타이머는 난이도 상에서만 작동
+}
+
+function difficultyLabel() {
+  if (!selectedDifficulty) return '-';
+  const { mode, value } = selectedDifficulty;
+  if (mode === 'tier') {
+    if (value === 30) return '쉬움 (30개 나라)';
+    if (value === 100) return '보통 (100개 나라)';
+    return '어려움 (전 세계)';
+  }
+  const contNames = { asia:'아시아', europe:'유럽', america:'아메리카', africa:'아프리카', oceania:'오세아니아' };
+  return `대륙별 · ${contNames[value]}`;
+}
+
+// ============================================================
+//  SCENE / CAMERA / RENDERER
+// ============================================================
+const scene = new THREE.Scene();
+scene.background = null;   // 뒤의 밤하늘 그림(img/bg.jpg)이 보이도록 투명
+scene.fog = new THREE.Fog(0x5f4cb5, 45, 230);
+if (document.fonts) document.fonts.load('100px Jua').catch(() => {});
+
+const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 500);
+
+// PERFORMANCE: prioritize FPS on school laptops & integrated GPUs.
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+renderer.setClearColor(0x000000, 0);                 // was Math.min(devicePixelRatio, 2)
+renderer.shadowMap.enabled = false;        // shadows are the biggest GPU cost — off
+document.body.appendChild(renderer.domElement);
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+// Lights (cheap: no shadow casters)
+scene.add(new THREE.HemisphereLight(0xfff4e0, 0x5a4f9a, 1.0));
+const sun = new THREE.DirectionalLight(0xfff1cf, 0.9);
+sun.position.set(40, 90, 30);
+scene.add(sun);
+
+// Just a few far-off clouds for sky atmosphere (was 30)
+const cloudGroup = new THREE.Group();
+for (let i = 0; i < 8; i++) {
+  const cloud = new THREE.Mesh(
+    new THREE.SphereGeometry(4 + Math.random()*3, 8, 8),   // lower geometry detail
+    new THREE.MeshBasicMaterial({ color: 0xc6b3f0, transparent: true, opacity: 0.75 })
+  );
+  cloud.position.set(
+    (Math.random()-0.5)*220,
+    25 + Math.random()*60,
+    -i*30 - 40 + (Math.random()-0.5)*40
+  );
+  cloudGroup.add(cloud);
+}
+cloudGroup.visible = false;   // 구름은 배경 그림에 있어서 숨김
+scene.add(cloudGroup);
+
+// Distant floating islands for atmosphere (simplified)
+function createFloatingIsland(x, y, z, scale) {
+  const group = new THREE.Group();
+  const islandMat = new THREE.MeshLambertMaterial({ color: 0x4f7a5a });
+  const rockMat = new THREE.MeshLambertMaterial({ color: 0x6a5878 });
+
+  const base = new THREE.Mesh(new THREE.ConeGeometry(6, 8, 5), rockMat);
+  base.position.y = -4;
+  base.rotation.x = Math.PI;
+  group.add(base);
+
+  const top = new THREE.Mesh(new THREE.CylinderGeometry(6.5, 6.0, 1.5, 6), islandMat);
+  top.position.y = 0.5;
+  group.add(top);
+
+  group.position.set(x, y, z);
+  group.scale.set(scale, scale, scale);
+  group.visible = false;   // 떠 있는 섬도 배경 그림에 있어서 숨김
+  scene.add(group);
+  return group;
+}
+
+// Just two distant islands for a sense of depth
+createFloatingIsland(-70, 20, -160, 1.2);
+createFloatingIsland(80, 30, -220, 1.4);
+
+// ============================================================
+//  CAMERA CONTROLS (drag + pointer lock)
+// ============================================================
+let yaw = 0;
+let pitch = 0.35;
+let dragging = false;
+let pointerLocked = false;
+let lastMX = 0, lastMY = 0;
+const SENS = 0.003;
+const CAM_DIST = 5.0;
+const CAM_LOOK_Y = 0.7;
+
+function applyCameraRot() {
+  const cosP = Math.cos(pitch);
+  const sinP = Math.sin(pitch);
+  const cx = Math.sin(yaw) * cosP * CAM_DIST;
+  const cy = sinP * CAM_DIST;
+  const cz = Math.cos(yaw) * cosP * CAM_DIST;
+
+  camera.position.x = player.position.x + cx + camShakeX;
+  camera.position.y = player.position.y + CAM_LOOK_Y + cy + camShakeY;
+  camera.position.z = player.position.z + cz;
+
+  camera.lookAt(
+    player.position.x,
+    player.position.y + CAM_LOOK_Y,
+    player.position.z
+  );
+}
+
+let camShakeX = 0, camShakeY = 0, camShakeTime = 0;
+function triggerCamShake(intensity = 0.4, duration = 0.4) {
+  camShakeTime = duration;
+  camShakeIntensity = intensity;
+}
+let camShakeIntensity = 0.4;
+
+document.addEventListener('pointerlockchange', () => {
+  pointerLocked = document.pointerLockElement === document.body;
+});
+document.addEventListener('pointerlockerror', () => {
+  pointerLocked = false;
+});
+
+renderer.domElement.addEventListener('mousedown', e => {
+  if (gameState !== 'playing' && gameState !== 'failing') return;
+  dragging = true;
+  lastMX = e.clientX;
+  lastMY = e.clientY;
+});
+addEventListener('mouseup', () => { dragging = false; });
+addEventListener('mousemove', e => {
+  let mx = 0, my = 0;
+  if (pointerLocked) {
+    mx = e.movementX || 0;
+    my = e.movementY || 0;
+  } else if (dragging) {
+    mx = e.clientX - lastMX;
+    my = e.clientY - lastMY;
+    lastMX = e.clientX;
+    lastMY = e.clientY;
+  } else return;
+  yaw -= mx * SENS;
+  pitch += my * SENS;
+  if (pitch > 1.3) pitch = 1.3;
+  if (pitch < -0.2) pitch = -0.2;
+  applyCameraRot();
+});
+
+addEventListener('keydown', e => {
+  if (e.code === 'Escape' && pointerLocked) document.exitPointerLock?.();
+});
+
+// ============================================================
+//  PLAYER (cute character)
+// ============================================================
+const player = {
+  position: new THREE.Vector3(0, 1, 0),
+  velocity: new THREE.Vector3(),
+  onGround: false,
+  height: 1.6,
+  radius: 0.35
+};
+
+// Character always faces the camera direction (back to camera in 3rd person view).
+// Jump spin state — figure-skater style: one full Y-axis rotation in the air, smiling.
+let spinning = false;
+let spinOffset = 0;            // extra Y rotation on top of yaw
+const SPIN_DURATION = 0.7;     // seconds for one full 360° spin
+let spinStartTime = 0;
+
+function startFlip() {
+  spinning = true;
+  spinStartTime = performance.now();
+  setSmile(true);
+}
+function endFlip() {
+  spinning = false;
+  spinOffset = 0;
+  playerGroup.rotation.x = 0;
+  setSmile(false);
+}
+
+const playerGroup = new THREE.Group();
+playerGroup.rotation.order = 'YXZ';   // yaw first, then flip (X) in the rotated local frame
+scene.add(playerGroup);
+
+// References for face expressions (declared up here so jump handler can toggle them)
+// 꼬비 그림 (항상 카메라를 바라보는 그림판)
+const ggobiTex = {};
+const GGOBI_H = 1.75;
+const ggobiMat = new THREE.SpriteMaterial({ transparent: true, alphaTest: 0.3 });
+const ggobiSprite = new THREE.Sprite(ggobiMat);
+ggobiSprite.center.set(0.5, 0.02);
+ggobiSprite.visible = false;
+playerGroup.add(ggobiSprite);
+let ggobiPose = '';
+function setPose(name) {
+  if (ggobiPose === name) return;
+  const t = ggobiTex[name];
+  if (!t || !t.image) return;
+  ggobiPose = name;
+  ggobiMat.map = t;
+  ggobiMat.needsUpdate = true;
+  const h = (name === 'fall') ? 1.9 : GGOBI_H;
+  ggobiSprite.scale.set(h * t.image.width / t.image.height, h, 1);
+  ggobiSprite.visible = true;
+}
+{
+  const ldr = new THREE.TextureLoader();
+  ['back', 'back-jump', 'fall'].forEach(n => {
+    ggobiTex[n] = ldr.load(`img/ggobi-${n}.png`, t => {
+      t.colorSpace = THREE.SRGBColorSpace;
+      if (n === 'back' && !ggobiPose) setPose('back');
+    });
+  });
+}
+
+function setSmile(smile) { /* 예전 블록 캐릭터용 (꼬비 그림에서는 쓰지 않음) */ }
+
+const keys = {};
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  keys[e.code] = true;
+  // Space scroll prevention
+  if (e.code === 'Space' && gameState === 'playing') e.preventDefault();
+}, { passive: false });
+addEventListener('keyup', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  keys[e.code] = false;
+});
+
+// ============================================================
+//  GAME STATE
+// ============================================================
+let score = 0;
+let correctCount = 0;
+let totalAttempts = 0;     // 정답+오답 합산 시도 횟수
+let failCount = 0;         // 추락 횟수 (오답 + 구멍 추락)
+let combo = 0;
+let maxCombo = 0;
+let currentRound = 0;
+let gameState = 'idle';   // idle | playing | failing | over
+let gameStartTime = null;
+let elapsedMs = 0;
+let finalElapsedMs = 0;
+
+const respawnPosition = new THREE.Vector3(0, 0.5, 0);
+let respawnTimerId = null;
+const countdownEl = document.getElementById('countdown');
+const countdownNumEl = document.getElementById('countdownNum');
+
+function showCountdownNum(n) {
+  countdownNumEl.textContent = n;
+  countdownNumEl.classList.remove('pop');
+  void countdownNumEl.offsetWidth;
+  countdownNumEl.classList.add('pop');
+}
+
+function triggerRespawn() {
+  if (gameState !== 'playing') return;
+  gameState = 'failing';
+  countdownEl.classList.remove('hidden');
+
+  let n = 3;
+  showCountdownNum(n);
+  respawnTimerId = setInterval(() => {
+    n--;
+    if (n > 0) {
+      showCountdownNum(n);
+    } else {
+      clearInterval(respawnTimerId);
+      respawnTimerId = null;
+      countdownEl.classList.add('hidden');
+      if (gameState !== 'over') {
+        player.position.copy(respawnPosition);
+        player.velocity.set(0, 0, 0);
+        endFlip();
+        gameState = 'playing';
+      }
+    }
+  }, 1000);
+}
+
+// ============================================================
+//  COUNTRY NAME LABEL (Korean text on the FRONT face of the stone bridge)
+// ============================================================
+function makeCountryLabelPlane(countryName) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+  const draw = () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Stone-tablet style background (engraved stone / signboard)
+  ctx.fillStyle = '#fff6ec';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // Outer border
+  ctx.strokeStyle = '#2c2950';
+  ctx.lineWidth = 16;
+  ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+  // Inner thin border
+  ctx.strokeStyle = '#f1e2d2';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(28, 28, canvas.width - 56, canvas.height - 56);
+
+  // Text - dynamically scale font for long names
+  let fontSize = 180;
+  ctx.font = `${fontSize}px "Jua", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif`;
+  let w = ctx.measureText(countryName).width;
+  while (w > canvas.width - 80 && fontSize > 50) {
+    fontSize -= 8;
+    ctx.font = `${fontSize}px "Jua", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif`;
+    w = ctx.measureText(countryName).width;
+  }
+
+  // Engraved shadow + main text
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+  ctx.fillText(countryName, canvas.width/2 + 3, canvas.height/2 + 5);
+  ctx.fillStyle = '#2c2950';
+  ctx.fillText(countryName, canvas.width/2, canvas.height/2);
+
+  };
+  draw();
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  // 글꼴(Jua)이 아직 안 불러와졌으면 불러온 뒤 다시 그리기
+  if (document.fonts && !document.fonts.check('100px "Jua"', countryName)) {
+    document.fonts.load('100px "Jua"', countryName).then(() => { draw(); texture.needsUpdate = true; }).catch(() => {});
+  }
+  texture.minFilter = THREE.LinearFilter;
+  const material = new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+    side: THREE.DoubleSide
+  });
+  // Label proportions match the platform front face (4.0 wide × 1.0 tall)
+  const geo = new THREE.PlaneGeometry(4.0, 1.0);
+  const plane = new THREE.Mesh(geo, material);
+  // Default plane faces +Z — perfect for the front face of the bridge
+  return plane;
+}
+
+// ============================================================
+//  FLAG TEXTURE LOADER (flagcdn.com)
+// ============================================================
+const flagTextureCache = {};
+const textureLoader = new THREE.TextureLoader();
+textureLoader.crossOrigin = 'anonymous';
+
+function loadFlagTexture(code, onReady) {
+  if (flagTextureCache[code]) {
+    onReady(flagTextureCache[code]);
+    return;
+  }
+  const url = `https://flagcdn.com/w640/${code}.png`;
+  textureLoader.load(
+    url,
+    (tex) => {
+      tex.anisotropy = 4;
+      tex.colorSpace = THREE.SRGBColorSpace;
+      flagTextureCache[code] = tex;
+      onReady(tex);
+    },
+    undefined,
+    (err) => {
+      console.warn('[FLAG] load failed:', code, err);
+      // fallback: solid colored texture
+      const c = document.createElement('canvas');
+      c.width = 320; c.height = 200;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#888'; ctx.fillRect(0,0,c.width,c.height);
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 60px sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('?', c.width/2, c.height/2);
+      const tex = new THREE.CanvasTexture(c);
+      flagTextureCache[code] = tex;
+      onReady(tex);
+    }
+  );
+}
+
+// ============================================================
+//  ROUND / PLATFORM SYSTEM
+// ============================================================
+const rounds = [];         // each round: { z, leftPlatform, rightPlatform, monument, correctCountry, wrongCountry, answered }
+const START_Z = 0;
+const ROUND_Z_SPACING = 7;     // shorter forward gap for easier reach
+const PLATFORM_X = 2.7;        // smaller lateral offset for easier diagonal jump
+const PLATFORM_TOP_Y = 0.5;
+const PLATFORM_HEIGHT = 1.2;   // taller bridges so the front face fits the label
+
+let startPlatform = null;
+
+function createStartPlatform() {
+  const geo = new THREE.BoxGeometry(8, 1, 8);
+  const mat = new THREE.MeshLambertMaterial({ color: 0xe6dafc });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.set(0, 0, 0);
+  mesh.receiveShadow = true;
+  mesh.castShadow = true;
+  scene.add(mesh);
+
+  startPlatform = {
+    mesh,
+    x: 0, z: 0,
+    topY: 0.5, halfSize: 4, height: 1,
+    isStart: true,
+    broken: false
+  };
+}
+
+function createStonePlatform(x, z, country) {
+  // Group containing the glass platform and its sign
+  const group = new THREE.Group();
+
+  const halfSize = 2.2;
+  const height = PLATFORM_HEIGHT;
+
+  // Glass slab — semi-transparent panel with a light blue tint
+  const geometry = new THREE.BoxGeometry(halfSize*2, height, halfSize*2);
+  const material = new THREE.MeshPhongMaterial({
+    color: 0xbfe4ff,
+    transparent: true,
+    opacity: 0.5,
+    shininess: 90,
+    specular: 0xffffff,
+    side: THREE.DoubleSide,
+    depthWrite: false
+  });
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.position.set(0, -height/2, 0);
+  mesh.castShadow = false;        // glass shouldn't cast harsh shadows
+  mesh.receiveShadow = false;
+  group.add(mesh);
+
+  // Dark metal frame outlining the glass slab (so the player can see its edges clearly)
+  const frameMat = new THREE.MeshLambertMaterial({ color: 0x2c2950 });
+  const FT = 0.08;   // frame thickness
+  // Four horizontal edges of the top face
+  const topEdgeFront = new THREE.Mesh(new THREE.BoxGeometry(halfSize*2, FT, FT), frameMat);
+  topEdgeFront.position.set(0, 0, halfSize);
+  group.add(topEdgeFront);
+  const topEdgeBack = new THREE.Mesh(new THREE.BoxGeometry(halfSize*2, FT, FT), frameMat);
+  topEdgeBack.position.set(0, 0, -halfSize);
+  group.add(topEdgeBack);
+  const topEdgeLeft = new THREE.Mesh(new THREE.BoxGeometry(FT, FT, halfSize*2), frameMat);
+  topEdgeLeft.position.set(-halfSize, 0, 0);
+  group.add(topEdgeLeft);
+  const topEdgeRight = new THREE.Mesh(new THREE.BoxGeometry(FT, FT, halfSize*2), frameMat);
+  topEdgeRight.position.set(halfSize, 0, 0);
+  group.add(topEdgeRight);
+  // Bottom edges of the slab
+  const botEdgeFront = new THREE.Mesh(new THREE.BoxGeometry(halfSize*2, FT, FT), frameMat);
+  botEdgeFront.position.set(0, -height, halfSize);
+  group.add(botEdgeFront);
+  const botEdgeBack = new THREE.Mesh(new THREE.BoxGeometry(halfSize*2, FT, FT), frameMat);
+  botEdgeBack.position.set(0, -height, -halfSize);
+  group.add(botEdgeBack);
+  // Corner verticals connecting top and bottom frames
+  for (const sx of [-halfSize, halfSize]) {
+    for (const sz of [-halfSize, halfSize]) {
+      const pillar = new THREE.Mesh(new THREE.BoxGeometry(FT, height, FT), frameMat);
+      pillar.position.set(sx, -height/2, sz);
+      group.add(pillar);
+    }
+  }
+
+  // Small standing sign ("팻말") on top of the bridge, centered on the platform.
+  // Tilted slightly toward the player so it's easy to read from above.
+  const labelGroupFront = new THREE.Group();
+  const sign = makeCountryLabelPlane(country.ko);
+  sign.position.set(0, 0.6, 0);
+  sign.scale.set(0.55, 0.55, 1);   // ~2.2 wide × 0.55 tall (small sign)
+  sign.rotation.x = -0.35;          // ~20° tilted up so player looking down can read it
+  labelGroupFront.add(sign);
+
+  // Small wooden / stone post supporting the sign
+  const postMat = new THREE.MeshLambertMaterial({ color: 0x4a3d2f });
+  const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.4, 0.12), postMat);
+  post.position.set(0, 0.2, 0);
+  post.castShadow = true;
+  labelGroupFront.add(post);
+
+  // Small base plate so the sign post looks rooted on the bridge
+  const baseplate = new THREE.Mesh(
+    new THREE.BoxGeometry(0.4, 0.05, 0.4),
+    postMat
+  );
+  baseplate.position.set(0, 0.025, 0);
+  labelGroupFront.add(baseplate);
+
+  labelGroupFront.position.set(0, 0, 0);   // on top center of the platform
+  group.add(labelGroupFront);
+
+  group.position.set(x, PLATFORM_TOP_Y, z);
+  scene.add(group);
+
+  return {
+    group, mesh,
+    sprite: labelGroupFront,      // kept name for compatibility with updateActiveMonument
+    x, z,
+    topY: PLATFORM_TOP_Y,
+    halfSize, height,
+    country,
+    broken: false,
+    pieces: null
+  };
+}
+
+function createMonument(z, country) {
+  const group = new THREE.Group();
+
+  // Stone pillar (shorter)
+  const pillarMat = new THREE.MeshLambertMaterial({ color: 0x6a5d4f });
+  const pillar = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.3, 0.4, 2.5, 8),
+    pillarMat
+  );
+  pillar.position.y = 1.25;
+  pillar.castShadow = true;
+  group.add(pillar);
+
+  // Stone base
+  const base = new THREE.Mesh(
+    new THREE.BoxGeometry(1.2, 0.3, 1.2),
+    pillarMat
+  );
+  base.position.y = 0.15;
+  base.castShadow = true;
+  group.add(base);
+
+  // Flag display frame (stone border) - smaller and lower
+  const frameMat = new THREE.MeshLambertMaterial({ color: 0x4a3d2f });
+  const frameW = 3.5, frameH = 2.3, frameT = 0.15;
+  const flagCenterY = 4.0;
+
+  const topBar = new THREE.Mesh(new THREE.BoxGeometry(frameW + frameT*2, frameT, frameT), frameMat);
+  topBar.position.set(0, flagCenterY + frameH/2, 0);
+  group.add(topBar);
+  const botBar = new THREE.Mesh(new THREE.BoxGeometry(frameW + frameT*2, frameT, frameT), frameMat);
+  botBar.position.set(0, flagCenterY - frameH/2, 0);
+  group.add(botBar);
+  const leftBar = new THREE.Mesh(new THREE.BoxGeometry(frameT, frameH + frameT, frameT), frameMat);
+  leftBar.position.set(-frameW/2 - frameT/2, flagCenterY, 0);
+  group.add(leftBar);
+  const rightBar = new THREE.Mesh(new THREE.BoxGeometry(frameT, frameH + frameT, frameT), frameMat);
+  rightBar.position.set(frameW/2 + frameT/2, flagCenterY, 0);
+  group.add(rightBar);
+
+  // Flag plane (will be textured with country flag) - double sided
+  const flagGeo = new THREE.PlaneGeometry(frameW, frameH);
+  const flagMat = new THREE.MeshBasicMaterial({ color: 0xeeeeee, side: THREE.DoubleSide });
+  const flagPlane = new THREE.Mesh(flagGeo, flagMat);
+  flagPlane.position.set(0, flagCenterY, 0);
+  group.add(flagPlane);
+
+  group.position.set(0, 0, z);
+  scene.add(group);
+
+  // Load flag texture asynchronously
+  loadFlagTexture(country.code, (tex) => {
+    flagMat.map = tex;
+    flagMat.color.setHex(0xffffff);
+    flagMat.needsUpdate = true;
+  });
+
+  return { group, flagPlane, flagMat, country };
+}
+
+// Shuffled queue of countries used as correct answers — no flag repeats until the
+// whole active pool is exhausted. After exhaustion, we reshuffle and start over
+// (relevant only for very small pools like Oceania with target > pool size).
+let questionQueue = [];
+
+function shuffleInPlace(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function refillQuestionQueue() {
+  questionQueue = shuffleInPlace([...activeCountries]);
+}
+
+function pickTwoCountries() {
+  if (activeCountries.length < 2) {
+    return [activeCountries[0], activeCountries[0]];
+  }
+  if (questionQueue.length === 0) refillQuestionQueue();
+  const correct = questionQueue.pop();
+  // Wrong answer: any other country (its flag isn't shown, so repeats here are fine)
+  let wrong;
+  do {
+    wrong = activeCountries[Math.floor(Math.random() * activeCountries.length)];
+  } while (wrong === correct);
+  return [correct, wrong];
+}
+
+function createRound(idx) {
+  const [a, b] = pickTwoCountries();
+  // randomly assign which side is correct
+  const correctOnLeft = Math.random() < 0.5;
+  const correctCountry = a;
+  const wrongCountry = b;
+  const leftCountry = correctOnLeft ? correctCountry : wrongCountry;
+  const rightCountry = correctOnLeft ? wrongCountry : correctCountry;
+
+  const z = START_Z - ROUND_Z_SPACING * (idx + 1);
+
+  const leftPlatform = createStonePlatform(-PLATFORM_X, z, leftCountry);
+  const rightPlatform = createStonePlatform(PLATFORM_X, z, rightCountry);
+  const monument = createMonument(z, correctCountry);
+
+  return {
+    idx, z,
+    leftPlatform, rightPlatform,
+    monument,
+    correctCountry, wrongCountry,
+    answered: false
+  };
+}
+
+function ensureRoundsAhead(currentIdx, lookahead = 3) {
+  while (rounds.length < currentIdx + lookahead + 1) {
+    const r = createRound(rounds.length);
+    rounds.push(r);
+  }
+  updateActiveMonument();
+}
+
+function updateActiveMonument() {
+  // Only show current round's monument and labels to reduce visual clutter
+  rounds.forEach((r, idx) => {
+    r.monument.group.visible = (idx === currentRound);
+    const showLabel = (idx === currentRound);
+    r.leftPlatform.sprite.visible = showLabel;
+    r.rightPlatform.sprite.visible = showLabel;
+  });
+}
+
+function clearWorld() {
+  for (const r of rounds) {
+    scene.remove(r.leftPlatform.group);
+    scene.remove(r.rightPlatform.group);
+    scene.remove(r.monument.group);
+    if (r.leftPlatform.pieces) r.leftPlatform.pieces.forEach(p => scene.remove(p.mesh));
+    if (r.rightPlatform.pieces) r.rightPlatform.pieces.forEach(p => scene.remove(p.mesh));
+  }
+  rounds.length = 0;
+  if (startPlatform) {
+    scene.remove(startPlatform.mesh);
+    startPlatform = null;
+  }
+}
+
+// ============================================================
+//  FLAG MINI HUD (top-left flag display)
+// ============================================================
+const flagMiniEl = document.getElementById('flagMini');
+function updateFlagMini(country) {
+  flagMiniEl.innerHTML = `<img src="https://flagcdn.com/w320/${country.code}.png" alt="${country.ko}">`;
+}
+
+// ============================================================
+//  COMBO POPUP
+// ============================================================
+const comboPopupEl = document.getElementById('comboPopup');
+function showComboPopup(text) {
+  const bad = text.includes('추락');
+  comboPopupEl.classList.toggle('bad', bad);
+  comboPopupEl.innerHTML = bad ? '앗, 틀렸어요!' : '<img src="img/ggobi-cheer.png" alt="">' + text.replace(/🔥/g, '').trim();
+  comboPopupEl.classList.remove('show');
+  void comboPopupEl.offsetWidth;
+  comboPopupEl.classList.add('show');
+}
+
+// ============================================================
+//  PHYSICS
+// ============================================================
+const GRAVITY = 25;
+const JUMP_V = 12;
+const MOVE_SPD = 7.5;
+
+function getPlatformOverlap(platform) {
+  if (platform.broken) return null;
+  const px = player.position.x, py = player.position.y, pz = player.position.z;
+  const r = player.radius, h = player.height;
+  const inX = px + r > platform.x - platform.halfSize && px - r < platform.x + platform.halfSize;
+  const inZ = pz + r > platform.z - platform.halfSize && pz - r < platform.z + platform.halfSize;
+  const inY = py + h > platform.topY - platform.height && py < platform.topY;
+  return (inX && inY && inZ) ? platform : null;
+}
+
+function getAllPlatforms() {
+  const list = [];
+  if (startPlatform && !startPlatform.broken) list.push(startPlatform);
+  for (const r of rounds) {
+    if (!r.leftPlatform.broken) list.push(r.leftPlatform);
+    if (!r.rightPlatform.broken) list.push(r.rightPlatform);
+  }
+  return list;
+}
+
+function handleLanding(platform) {
+  if (platform.isStart) return;
+  // find the round this platform belongs to
+  const round = rounds.find(r => r.leftPlatform === platform || r.rightPlatform === platform);
+  if (!round) return;
+  if (round.answered) return;
+
+  const isCorrect = (platform.country === round.correctCountry);
+
+  if (isCorrect) {
+    round.answered = true;        // lock only on a correct landing → advance round
+    onCorrect(round, platform);
+  } else {
+    // do NOT lock the round on a wrong answer — player should still be able to
+    // come back after respawning and land on the correct bridge to score.
+    onWrong(round, platform);
+  }
+}
+
+function onCorrect(round, platform) {
+  combo++;
+  if (combo > maxCombo) maxCombo = combo;
+  correctCount++;
+  totalAttempts++;
+  sfxCorrect();
+
+  // Green flash effect
+  platform.mesh.material.color.setHex(0x7ccf74);
+  setTimeout(() => {
+    if (!platform.broken) {
+      const stoneColors = [0x8a8780, 0x9a9590, 0x7a7670, 0x8e8a82];
+      platform.mesh.material.color.setHex(0xbfe4ff);
+    }
+  }, 500);
+
+  // Golden light pillar effect
+  spawnLightPillar(platform.x, platform.z);
+
+  respawnPosition.copy(player.position);
+  respawnPosition.y = platform.topY + 0.5;
+
+  currentRound = round.idx + 1;
+
+  // 목표 문제 수 달성 시 게임 종료
+  if (correctCount >= totalQuestions) {
+    updateHUD();
+    setTimeout(() => endGame(), 700);   // 살짝 딜레이로 정답 이펙트 보여주고 종료
+    return;
+  }
+
+  ensureRoundsAhead(currentRound);
+  updateActiveMonument();
+
+  // Update HUD
+  updateHUD();
+
+  // Combo popup + combo SFX
+  if (combo === COMBO_TIER_2X) {
+    showComboPopup('🔥 5연속!');
+    sfxCombo(5);
+  } else if (combo === COMBO_TIER_3X) {
+    showComboPopup('🔥🔥 10연속!');
+    sfxCombo(10);
+  } else if (combo > 0 && combo % 5 === 0) {
+    showComboPopup(`🔥 ${combo} 연속!`);
+    sfxCombo(combo);
+  }
+
+  // Round milestones every 10 rounds (10, 20, 30, 40) — but not on final round (handled by victory)
+  if (correctCount > 0 && correctCount % 10 === 0 && correctCount < totalQuestions) {
+    sfxMilestone();
+  }
+
+  // Update monument flag for next round
+  if (rounds[currentRound]) {
+    updateFlagMini(rounds[currentRound].correctCountry);
+  }
+}
+
+function onWrong(round, platform) {
+  combo = 0;
+  totalAttempts++;
+  failCount++;
+  triggerCamShake(0.5, 0.6);
+  sfxGlassBreak();
+
+  // Shake then crumble
+  let t = 0;
+  const shakeInt = setInterval(() => {
+    t++;
+    platform.group.position.x = platform.x + (Math.random()-0.5) * 0.2;
+    platform.group.position.z = platform.z + (Math.random()-0.5) * 0.2;
+    if (t >= 10) {
+      clearInterval(shakeInt);
+      crumblePlatform(platform);
+    }
+  }, 40);
+
+  showComboPopup('💥 추락!');
+  updateHUD();
+  triggerRespawn();
+}
+
+function crumblePlatform(platform) {
+  platform.broken = true;
+  scene.remove(platform.group);
+
+  // Glass shards — many small, thin, angular pieces flying outward
+  const pieces = [];
+  const shardCount = 24;
+  const shardMat = new THREE.MeshPhongMaterial({
+    color: 0xbfe4ff,
+    transparent: true,
+    opacity: 0.7,
+    shininess: 100,
+    specular: 0xffffff,
+    side: THREE.DoubleSide,
+    depthWrite: false
+  });
+  for (let i = 0; i < shardCount; i++) {
+    // Mix of thin triangular tetrahedrons and small thin slabs
+    const geo = (Math.random() < 0.6)
+      ? new THREE.TetrahedronGeometry(0.2 + Math.random() * 0.3)
+      : new THREE.BoxGeometry(
+          0.3 + Math.random() * 0.4,
+          0.05 + Math.random() * 0.06,
+          0.3 + Math.random() * 0.4
+        );
+    const mesh = new THREE.Mesh(geo, shardMat);
+    mesh.position.set(
+      platform.x + (Math.random() - 0.5) * 3.6,
+      platform.topY - Math.random() * 0.4,
+      platform.z + (Math.random() - 0.5) * 3.6
+    );
+    mesh.rotation.set(
+      Math.random() * Math.PI * 2,
+      Math.random() * Math.PI * 2,
+      Math.random() * Math.PI * 2
+    );
+    scene.add(mesh);
+    pieces.push({
+      mesh,
+      velocity: new THREE.Vector3(
+        (Math.random() - 0.5) * 5,
+        1 + Math.random() * 3,
+        (Math.random() - 0.5) * 5
+      ),
+      angularVelocity: new THREE.Vector3(
+        (Math.random() - 0.5) * 10,
+        (Math.random() - 0.5) * 10,
+        (Math.random() - 0.5) * 10
+      ),
+      life: 4.0
+    });
+  }
+  platform.pieces = pieces;
+}
+
+// Update falling pieces
+function updatePieces(dt) {
+  for (const r of rounds) {
+    for (const platform of [r.leftPlatform, r.rightPlatform]) {
+      if (!platform.pieces) continue;
+      for (let i = platform.pieces.length - 1; i >= 0; i--) {
+        const p = platform.pieces[i];
+        p.velocity.y -= GRAVITY * dt;
+        p.mesh.position.x += p.velocity.x * dt;
+        p.mesh.position.y += p.velocity.y * dt;
+        p.mesh.position.z += p.velocity.z * dt;
+        p.mesh.rotation.x += p.angularVelocity.x * dt;
+        p.mesh.rotation.y += p.angularVelocity.y * dt;
+        p.mesh.rotation.z += p.angularVelocity.z * dt;
+        p.life -= dt;
+        if (p.life <= 0 || p.mesh.position.y < -50) {
+          scene.remove(p.mesh);
+          platform.pieces.splice(i, 1);
+        }
+      }
+    }
+  }
+}
+
+// Light pillar effect for correct answers
+const lightPillars = [];
+function spawnLightPillar(x, z) {
+  const geo = new THREE.CylinderGeometry(1.8, 1.8, 20, 16, 1, true);
+  const mat = new THREE.MeshBasicMaterial({
+    color: 0xffe066,
+    transparent: true,
+    opacity: 0.6,
+    side: THREE.DoubleSide,
+    depthWrite: false
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.set(x, 10, z);
+  scene.add(mesh);
+  lightPillars.push({ mesh, mat, life: 1.0 });
+}
+
+function updateLightPillars(dt) {
+  for (let i = lightPillars.length - 1; i >= 0; i--) {
+    const lp = lightPillars[i];
+    lp.life -= dt * 1.5;
+    lp.mat.opacity = Math.max(0, lp.life * 0.6);
+    lp.mesh.scale.x = lp.mesh.scale.z = 1 + (1 - lp.life) * 0.5;
+    if (lp.life <= 0) {
+      scene.remove(lp.mesh);
+      lightPillars.splice(i, 1);
+    }
+  }
+}
+
+function updatePlayer(dt) {
+  if (gameState !== 'playing' && gameState !== 'failing') return;
+
+  if (gameState === 'playing') {
+    // Camera-relative movement (W = forward from camera POV)
+    const forward = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
+    const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+
+    const moveDir = new THREE.Vector3();
+    if (keys['KeyW'] || keys['ArrowUp']) moveDir.add(forward);
+    if (keys['KeyS'] || keys['ArrowDown']) moveDir.sub(forward);
+    if (keys['KeyA'] || keys['ArrowLeft']) moveDir.sub(right);
+    if (keys['KeyD'] || keys['ArrowRight']) moveDir.add(right);
+    if (moveDir.lengthSq() > 0) moveDir.normalize();
+
+    player.velocity.x = moveDir.x * MOVE_SPD;
+    player.velocity.z = moveDir.z * MOVE_SPD;
+
+    if (keys['Space'] && player.onGround) {
+      player.velocity.y = JUMP_V;
+      player.onGround = false;
+      startFlip();
+      sfxJump();
+    }
+  } else if (gameState === 'failing') {
+    player.velocity.x *= 0.94;
+    player.velocity.z *= 0.94;
+  }
+
+  player.velocity.y -= GRAVITY * dt;
+  if (player.velocity.y < -35) player.velocity.y = -35;
+
+  const dx = player.velocity.x * dt;
+  const dz = player.velocity.z * dt;
+  const dy = player.velocity.y * dt;
+
+  const platforms = getAllPlatforms();
+
+  player.position.x += dx;
+  if (gameState === 'playing') {
+    for (const p of platforms) {
+      if (getPlatformOverlap(p)) {
+        if (dx > 0) player.position.x = (p.x - p.halfSize) - player.radius;
+        else if (dx < 0) player.position.x = (p.x + p.halfSize) + player.radius;
+        player.velocity.x = 0;
+      }
+    }
+  }
+
+  player.position.z += dz;
+  if (gameState === 'playing') {
+    for (const p of platforms) {
+      if (getPlatformOverlap(p)) {
+        if (dz > 0) player.position.z = (p.z - p.halfSize) - player.radius;
+        else if (dz < 0) player.position.z = (p.z + p.halfSize) + player.radius;
+        player.velocity.z = 0;
+      }
+    }
+  }
+
+  player.position.y += dy;
+  player.onGround = false;
+  if (gameState === 'playing') {
+    for (const p of platforms) {
+      if (getPlatformOverlap(p)) {
+        if (dy > 0) {
+          player.position.y = (p.topY - p.height) - player.height;
+          player.velocity.y = 0;
+        } else {
+          player.position.y = p.topY;
+          player.velocity.y = 0;
+          if (!player.onGround) {
+            endFlip();    // landing → back to normal face and rotation
+          }
+          player.onGround = true;
+          handleLanding(p);
+        }
+      }
+    }
+  }
+
+  playerGroup.position.copy(player.position);
+  setPose(gameState === 'failing' ? 'fall' : (player.onGround ? 'back' : 'back-jump'));
+  ggobiMat.rotation = (gameState === 'failing') ? Math.sin(performance.now() / 70) * 0.25 : 0;
+
+  // Figure-skater style spin around vertical (Y) axis while airborne
+  if (spinning) {
+    const elapsedSec = (performance.now() - spinStartTime) / 1000;
+    const t = Math.min(elapsedSec / SPIN_DURATION, 1);
+    spinOffset = -t * Math.PI * 2;   // one full rotation; face faces camera at t=0.5
+    if (t >= 1) {
+      spinning = false;
+      spinOffset = 0;
+      // Keep the smile until the player lands (handled in landing detection)
+    }
+  }
+  playerGroup.rotation.x = 0;
+  playerGroup.rotation.y = yaw + spinOffset;
+
+  applyCameraRot();
+
+  if (player.position.y < -8 && gameState === 'playing') {
+    // Falling into the gap also breaks combo and counts as a fail
+    combo = 0;
+    failCount++;
+    sfxFall();
+    updateHUD();
+    triggerRespawn();
+  }
+}
+
+// Update camera shake
+function updateCamShake(dt) {
+  if (camShakeTime > 0) {
+    camShakeTime -= dt;
+    const t = Math.max(0, camShakeTime);
+    camShakeX = (Math.random() - 0.5) * camShakeIntensity * t * 2;
+    camShakeY = (Math.random() - 0.5) * camShakeIntensity * t * 2;
+  } else {
+    camShakeX = 0;
+    camShakeY = 0;
+  }
+}
+
+// ============================================================
+//  HUD
+// ============================================================
+function updateHUD() {
+  // 현재 진행 중인 라운드 번호 (1부터 시작, 마지막 라운드까지 캡)
+  const currentRoundNum = Math.min(correctCount + 1, totalQuestions);
+  document.getElementById('correctNum').textContent = currentRoundNum;
+  document.getElementById('totalQ').textContent = totalQuestions;
+  document.getElementById('combo').textContent = combo;
+}
+
+const timerEl = document.getElementById('timer');
+const timerWrapEl = document.getElementById('timerWrap');
+
+function formatElapsedTime(ms) {
+  const total = Math.max(0, ms) / 1000;
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${String(m).padStart(2, '0')}:${s.toFixed(1).padStart(4, '0')}`;
+}
+
+// ============================================================
+//  OVERLAY SECTION MANAGEMENT
+// ============================================================
+const overlayEl = document.getElementById('overlay');
+const hudEl = document.getElementById('hud');
+const crosshairEl = document.getElementById('crosshair');
+
+function showSection(id) {
+  overlayEl.classList.remove('hidden');
+  ['start-section', 'gameover-section', 'ranking-section'].forEach(sId => {
+    document.getElementById(sId).classList.toggle('hidden', sId !== id);
+  });
+  hudEl.classList.add('hidden');
+  crosshairEl.classList.add('hidden');
+  document.body.classList.remove('playing');
+  for (const k in keys) keys[k] = false;
+  document.querySelectorAll('.tbtn.on').forEach(b => b.classList.remove('on'));
+}
+function hideOverlay() {
+  overlayEl.classList.add('hidden');
+  hudEl.classList.remove('hidden');
+  crosshairEl.classList.remove('hidden');
+  document.body.classList.add('playing');
+}
+
+// ============================================================
+//  START / RESTART
+// ============================================================
+let submittedEntry = null;
+
+function startGame() {
+  if (!selectedDifficulty) return;
+  if (activeCountries.length < 2) return;
+
+  clearWorld();
+  refillQuestionQueue();   // fresh shuffled list of correct-answer countries
+
+  score = 0;
+  correctCount = 0;
+  totalAttempts = 0;
+  failCount = 0;
+  combo = 0;
+  maxCombo = 0;
+  currentRound = 0;
+
+  player.position.set(0, 1, 0);
+  player.velocity.set(0, 0, 0);
+  respawnPosition.set(0, 0.5, 0);
+  yaw = 0;
+  pitch = 0.35;
+  endFlip();   // reset flip/smile on new game
+  if (respawnTimerId) { clearInterval(respawnTimerId); respawnTimerId = null; }
+  countdownEl.classList.add('hidden');
+
+  createStartPlatform();
+  ensureRoundsAhead(0, 2);
+
+  playerGroup.position.copy(player.position);
+  playerGroup.rotation.y = yaw;
+  applyCameraRot();
+
+  gameState = 'playing';
+  gameStartTime = performance.now();
+  elapsedMs = 0;
+  finalElapsedMs = 0;
+  submittedEntry = null;
+
+  updateHUD();
+  updateFlagMini(rounds[0].correctCountry);
+
+  // 타이머: 난이도 상에서만 표시
+  if (showTimer) {
+    timerWrapEl.classList.remove('hidden');
+    timerEl.textContent = formatElapsedTime(0);
+  } else {
+    timerWrapEl.classList.add('hidden');
+  }
+
+  hideOverlay();
+
+  if (document.body.requestPointerLock && !matchMedia('(pointer: coarse)').matches) {
+    try { document.body.requestPointerLock(); } catch(e) {}
+  }
+}
+
+// ============================================================
+//  SCORE CALCULATION (난이도 상 전용 복합 공식)
+// ============================================================
+function calculateFinalScore() {
+  if (!isRankingMode) {
+    // 연습 모드 — 단순히 맞힌 개수 × 100
+    return correctCount * 100;
+  }
+  const totalSeconds = elapsedMs / 1000;
+  const baseScore = correctCount * 1000;
+  const completionBonus = (correctCount >= TOTAL_QUESTIONS_HARD) ? 100000 : 0;
+  const timeBonus = Math.max(0, Math.floor((1500 - totalSeconds) * 150));
+  const comboBonus = Math.floor((maxCombo * (maxCombo + 1)) / 2) * 80;
+  const accuracyBonus = (totalAttempts > 0)
+    ? Math.floor((correctCount / totalAttempts) * 30000)
+    : 0;
+  return baseScore + completionBonus + timeBonus + comboBonus + accuracyBonus;
+}
+
+// ============================================================
+//  GAME OVER
+// ============================================================
+function endGame() {
+  gameState = 'over';
+  if (respawnTimerId) { clearInterval(respawnTimerId); respawnTimerId = null; }
+  countdownEl.classList.add('hidden');
+  if (pointerLocked) document.exitPointerLock?.();
+  stopBgm();
+  sfxVictory();
+
+  finalElapsedMs = elapsedMs;
+  score = calculateFinalScore();
+
+  document.getElementById('r-combo').textContent = `${maxCombo} 연속`;
+  document.getElementById('r-diff').textContent = difficultyLabel();
+  document.getElementById('r-score').textContent = score.toLocaleString();
+
+  // 난이도 상에서는 걸린 시간과 추락 횟수도 표시
+  const timeRow = document.getElementById('r-time-row');
+  const failRow = document.getElementById('r-fail-row');
+  if (isRankingMode) {
+    document.getElementById('r-time').textContent = formatElapsedTime(finalElapsedMs);
+    document.getElementById('r-fail').textContent = `${failCount} 회`;
+    timeRow.classList.remove('hidden');
+    failRow.classList.remove('hidden');
+  } else {
+    timeRow.classList.add('hidden');
+    failRow.classList.add('hidden');
+  }
+
+  const saveForm = document.getElementById('save-form');
+  const practiceNote = document.getElementById('practice-note');
+  const afterSave = document.getElementById('after-save');
+
+  if (isRankingMode) {
+    saveForm.classList.remove('hidden');
+    practiceNote.classList.add('hidden');
+    afterSave.classList.add('hidden');
+
+    document.getElementById('input-school').value = localStorage.getItem('lastSchool') || '';
+    document.getElementById('input-name').value = localStorage.getItem('lastName') || '';
+
+    const saveBtn = document.getElementById('save-btn');
+    saveBtn.disabled = false;
+    saveBtn.textContent = '💾 기록 저장';
+    const statusEl = document.getElementById('save-status');
+    statusEl.textContent = '';
+    statusEl.classList.remove('error');
+  } else {
+    saveForm.classList.add('hidden');
+    practiceNote.classList.remove('hidden');
+    afterSave.classList.remove('hidden');
+  }
+
+  showSection('gameover-section');
+}
+
+// ============================================================
+//  SAVE TO FIRESTORE
+// ============================================================
+async function saveScore() {
+  if (!isRankingMode) return;
+
+  const schoolInput = document.getElementById('input-school');
+  const nameInput = document.getElementById('input-name');
+  const statusEl = document.getElementById('save-status');
+  const saveBtn = document.getElementById('save-btn');
+
+  const school = schoolInput.value.trim();
+  const name = nameInput.value.trim();
+
+  statusEl.classList.remove('error');
+  if (!school) {
+    statusEl.textContent = '학교명을 입력해주세요';
+    statusEl.classList.add('error');
+    schoolInput.focus();
+    return;
+  }
+  if (!name) {
+    statusEl.textContent = '이름을 입력해주세요';
+    statusEl.classList.add('error');
+    nameInput.focus();
+    return;
+  }
+  if (school.length > 20) {
+    statusEl.textContent = '학교명은 20자 이내로 입력해주세요';
+    statusEl.classList.add('error');
+    return;
+  }
+  if (name.length > 10) {
+    statusEl.textContent = '이름은 10자 이내로 입력해주세요';
+    statusEl.classList.add('error');
+    return;
+  }
+
+  saveBtn.disabled = true;
+  saveBtn.textContent = '저장 중...';
+  statusEl.textContent = '서버로 전송 중...';
+
+  const totalTimeSec = Math.round((finalElapsedMs / 1000) * 100) / 100;
+  const entry = {
+    school,
+    name,
+    score: score,                  // 복합 공식 최종 점수
+    correctCount: correctCount,    // 맞힌 개수 (목표는 50)
+    totalTime: totalTimeSec,       // 걸린 시간(초)
+    maxCombo: maxCombo,             // 최고 콤보
+    failCount: failCount,           // 추락 횟수
+    totalAttempts: totalAttempts,   // 총 시도
+    createdAt: serverTimestamp(),
+  };
+
+  try {
+    console.log('[SAVE] 전송 시작:', entry);
+    console.log('[SAVE] 컬렉션:', COLLECTION_NAME);
+    const docRef = await addDoc(collection(db, COLLECTION_NAME), entry);
+    console.log('[SAVE] 성공! 문서 ID:', docRef.id);
+
+    localStorage.setItem('lastSchool', school);
+    localStorage.setItem('lastName', name);
+    statusEl.textContent = '✓ 저장 완료!';
+    statusEl.classList.remove('error');
+
+    submittedEntry = { ...entry, _id: docRef.id, createdAt: Date.now() };
+
+    setTimeout(() => {
+      document.getElementById('save-form').classList.add('hidden');
+      document.getElementById('after-save').classList.remove('hidden');
+    }, 700);
+  } catch (e) {
+    console.error('[SAVE] 에러:', e);
+    statusEl.textContent = '저장 실패: ' + (e.code || '') + ' ' + (e.message || '네트워크 오류');
+    statusEl.classList.add('error');
+    saveBtn.disabled = false;
+    saveBtn.textContent = '💾 다시 시도';
+  }
+}
+
+// ============================================================
+//  RANKING
+// ============================================================
+function escapeHTML(s) {
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+async function showRanking() {
+  if (pointerLocked) document.exitPointerLock?.();
+  showSection('ranking-section');
+  const listEl = document.getElementById('ranking-list');
+  const myNoteEl = document.getElementById('my-rank-note');
+  myNoteEl.classList.add('hidden');
+  listEl.innerHTML = '<div class="ranking-empty">불러오는 중...</div>';
+
+  try {
+    // 점수 내림차순 정렬 (높을수록 1등)
+    const q = query(collection(db, COLLECTION_NAME), orderBy('score', 'desc'), limit(50));
+    const snap = await getDocs(q);
+    const entries = [];
+    snap.forEach(doc => entries.push({ _id: doc.id, ...doc.data() }));
+
+    if (entries.length === 0) {
+      listEl.innerHTML = '<div class="ranking-empty">아직 기록이 없어요.<br>첫 번째 도전자가 되어보세요! 🎯</div>';
+      return;
+    }
+
+    const me = submittedEntry;
+    let myRankInTop50 = -1;
+
+    // 동점 처리: 같은 점수 = 같은 순위
+    let prevScore = null;
+    let prevDisplayRank = 0;
+
+    let html = '';
+    entries.forEach((e, i) => {
+      let displayRank;
+      if (e.score === prevScore) {
+        displayRank = prevDisplayRank;
+      } else {
+        displayRank = i + 1;
+        prevDisplayRank = displayRank;
+        prevScore = e.score;
+      }
+
+      const isMe = me && e._id === me._id;
+      if (isMe) myRankInTop50 = displayRank;
+
+      const medal = displayRank === 1 ? '🥇' : displayRank === 2 ? '🥈' : displayRank === 3 ? '🥉' : displayRank;
+      const timeStr = e.totalTime ? formatElapsedTime(e.totalTime * 1000) : '-';
+      const comboStr = (typeof e.maxCombo === 'number') ? `${e.maxCombo}연속` : '';
+      const subInfo = comboStr ? `⏱ ${timeStr} · 🔥 ${comboStr}` : `⏱ ${timeStr}`;
+      html += `
+        <div class="ranking-row ${isMe ? 'me' : ''}">
+          <div class="rank-num">${medal}</div>
+          <div class="rank-name">
+            ${escapeHTML(e.name || '')}
+            <span class="school">${escapeHTML(e.school || '')}</span>
+          </div>
+          <div class="rank-score">
+            <span class="score-main">${(e.score || 0).toLocaleString()}</span>
+            <span class="score-sub">${subInfo}</span>
+          </div>
+        </div>
+      `;
+    });
+    listEl.innerHTML = html;
+
+    // 내 기록이 TOP 50 밖이면 전체 순위 계산
+    if (me && myRankInTop50 === -1) {
+      try {
+        const allQ = query(collection(db, COLLECTION_NAME), orderBy('score', 'desc'));
+        const allSnap = await getDocs(allQ);
+        let rank = 1;
+        allSnap.forEach(doc => {
+          const d = doc.data();
+          if ((d.score || 0) > me.score) rank++;
+        });
+        myNoteEl.innerHTML = `📍 내 등수: <b>${rank}위</b> · ${me.score}점 · ${escapeHTML(me.school)} / ${escapeHTML(me.name)}`;
+        myNoteEl.classList.remove('hidden');
+      } catch (e2) {
+        console.warn('Rank lookup failed', e2);
+      }
+    }
+  } catch (e) {
+    console.error(e);
+    listEl.innerHTML = `<div class="ranking-empty" style="color:#c8455a;">랭킹 불러오기 실패<br><small>${escapeHTML(e.message || '')}</small></div>`;
+  }
+}
+
+// ============================================================
+//  SOUND EFFECTS + PROCEDURAL BGM (Web Audio API — no audio files needed)
+// ============================================================
+let audioCtx = null;
+let sfxGainNode = null;
+let bgmGainNode = null;
+
+function ensureAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    sfxGainNode = audioCtx.createGain();
+    sfxGainNode.gain.value = 1.0;
+    sfxGainNode.connect(audioCtx.destination);
+    bgmGainNode = audioCtx.createGain();
+    bgmGainNode.gain.value = 0.0;   // start silent; ramp up when starting
+    bgmGainNode.connect(audioCtx.destination);
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function sfx(builder) {
+  if (bgmMuted) return;
+  if (!audioCtx) return;
+  try { builder(audioCtx, sfxGainNode); } catch (e) { console.warn('sfx error', e); }
+}
+
+// Jump — short rising chirp ("boing")
+function sfxJump() {
+  sfx((ctx, out) => {
+    const t0 = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(280, t0);
+    osc.frequency.exponentialRampToValueAtTime(880, t0 + 0.12);
+    gain.gain.setValueAtTime(0.08, t0);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.14);
+    osc.connect(gain).connect(out);
+    osc.start(t0); osc.stop(t0 + 0.15);
+  });
+}
+
+// Correct answer — two-note cheerful ding (E5 → B5)
+function sfxCorrect() {
+  sfx((ctx, out) => {
+    const t0 = ctx.currentTime;
+    [659.25, 987.77].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      const start = t0 + i * 0.08;
+      gain.gain.setValueAtTime(0.0, start);
+      gain.gain.linearRampToValueAtTime(0.15, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.3);
+      osc.connect(gain).connect(out);
+      osc.start(start); osc.stop(start + 0.32);
+    });
+  });
+}
+
+// Glass shatter — high-passed noise burst + crystal tinkles
+function sfxGlassBreak() {
+  sfx((ctx, out) => {
+    const t0 = ctx.currentTime;
+    const bufSize = Math.floor(ctx.sampleRate * 0.45);
+    const buffer = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) {
+      const decay = Math.pow(1 - i / bufSize, 1.5);
+      data[i] = (Math.random() * 2 - 1) * decay;
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    const hp = ctx.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.value = 2500;
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.value = 0.25;
+    src.connect(hp).connect(noiseGain).connect(out);
+    src.start(t0);
+
+    [2400, 3200, 4100, 5300].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const start = t0 + 0.02 + i * 0.04;
+      g.gain.setValueAtTime(0.07, start);
+      g.gain.exponentialRampToValueAtTime(0.001, start + 0.25);
+      osc.connect(g).connect(out);
+      osc.start(start); osc.stop(start + 0.26);
+    });
+  });
+}
+
+// Fall into gap — descending "whoaaa" tone
+function sfxFall() {
+  sfx((ctx, out) => {
+    const t0 = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(440, t0);
+    osc.frequency.exponentialRampToValueAtTime(80, t0 + 0.7);
+    gain.gain.setValueAtTime(0.12, t0);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.75);
+    osc.connect(gain).connect(out);
+    osc.start(t0); osc.stop(t0 + 0.8);
+  });
+}
+
+// Combo milestone — sparkly arpeggio
+function sfxCombo(level) {
+  sfx((ctx, out) => {
+    const t0 = ctx.currentTime;
+    // 3-note rising arpeggio, higher pitch for bigger combos
+    const base = level >= 10 ? 880 : level >= 5 ? 659.25 : 523.25;
+    const notes = [base, base * 1.25, base * 1.5, base * 2];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      const start = t0 + i * 0.07;
+      g.gain.setValueAtTime(0, start);
+      g.gain.linearRampToValueAtTime(0.16, start + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, start + 0.35);
+      osc.connect(g).connect(out);
+      osc.start(start); osc.stop(start + 0.37);
+    });
+  });
+}
+
+// Round milestone (every 10 rounds) — short cheerful pop
+function sfxMilestone() {
+  sfx((ctx, out) => {
+    const t0 = ctx.currentTime;
+    [523.25, 783.99, 1046.50].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.value = freq;
+      const start = t0 + i * 0.05;
+      g.gain.setValueAtTime(0.08, start);
+      g.gain.exponentialRampToValueAtTime(0.001, start + 0.2);
+      osc.connect(g).connect(out);
+      osc.start(start); osc.stop(start + 0.22);
+    });
+  });
+}
+
+// Game complete — victory fanfare (C-E-G-C ascending major chord)
+function sfxVictory() {
+  sfx((ctx, out) => {
+    const t0 = ctx.currentTime;
+    const notes = [
+      { f: 523.25, d: 0.0,  l: 0.5 },   // C5
+      { f: 659.25, d: 0.12, l: 0.5 },   // E5
+      { f: 783.99, d: 0.24, l: 0.5 },   // G5
+      { f: 1046.5, d: 0.36, l: 0.9 }    // C6 (sustained)
+    ];
+    notes.forEach(n => {
+      ['triangle', 'sine'].forEach((type, ti) => {
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.type = type;
+        osc.frequency.value = n.f;
+        const start = t0 + n.d;
+        g.gain.setValueAtTime(0, start);
+        g.gain.linearRampToValueAtTime(ti === 0 ? 0.18 : 0.08, start + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.001, start + n.l);
+        osc.connect(g).connect(out);
+        osc.start(start); osc.stop(start + n.l + 0.05);
+      });
+    });
+  });
+}
+
+// Game start — quick "ready" chime
+function sfxGameStart() {
+  sfx((ctx, out) => {
+    const t0 = ctx.currentTime;
+    [659.25, 880, 1318.5].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      const start = t0 + i * 0.06;
+      g.gain.setValueAtTime(0, start);
+      g.gain.linearRampToValueAtTime(0.13, start + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, start + 0.25);
+      osc.connect(g).connect(out);
+      osc.start(start); osc.stop(start + 0.27);
+    });
+  });
+}
+
+// ============================================================
+//  PROCEDURAL BGM (looped chord progression with bass + soft drum)
+// ============================================================
+let bgmTimer = null;
+let bgmBeat = 0;
+const BGM_BPM = 105;
+const BGM_BEAT_SEC = 60 / BGM_BPM;
+// I - V - vi - IV in C: C, G, Am, F (each chord lasts 4 beats)
+const bgmChords = [
+  { bass: 65.41,  notes: [261.63, 329.63, 392.00] },  // C major  (C2, C4 E4 G4)
+  { bass: 98.00,  notes: [293.66, 392.00, 493.88] },  // G major  (G2, D4 G4 B4)
+  { bass: 110.00, notes: [329.63, 440.00, 523.25] },  // A minor  (A2, E4 A4 C5)
+  { bass: 87.31,  notes: [349.23, 440.00, 523.25] }   // F major  (F2, F4 A4 C5)
+];
+
+function bgmPluck(ctx, out, freq, type, vol, dur) {
+  const t0 = ctx.currentTime + 0.01;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0, t0);
+  gain.gain.linearRampToValueAtTime(vol, t0 + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+  osc.connect(gain).connect(out);
+  osc.start(t0); osc.stop(t0 + dur + 0.05);
+}
+
+function bgmKick(ctx, out) {
+  const t0 = ctx.currentTime + 0.01;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(110, t0);
+  osc.frequency.exponentialRampToValueAtTime(40, t0 + 0.08);
+  gain.gain.setValueAtTime(0.25, t0);
+  gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.1);
+  osc.connect(gain).connect(out);
+  osc.start(t0); osc.stop(t0 + 0.12);
+}
+
+function bgmHat(ctx, out) {
+  const t0 = ctx.currentTime + 0.01;
+  const bufSize = Math.floor(ctx.sampleRate * 0.05);
+  const buffer = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1);
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  const hp = ctx.createBiquadFilter();
+  hp.type = 'highpass';
+  hp.frequency.value = 6000;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.05, t0);
+  g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.04);
+  src.connect(hp).connect(g).connect(out);
+  src.start(t0);
+}
+
+function bgmTick() {
+  if (bgmMuted || !audioCtx || !bgmGainNode) return;
+  const out = bgmGainNode;
+  const ctx = audioCtx;
+  const chord = bgmChords[Math.floor(bgmBeat / 4) % bgmChords.length];
+  const beatInBar = bgmBeat % 4;
+
+  // Bass on every beat
+  bgmPluck(ctx, out, chord.bass, 'triangle', 0.18, 0.45);
+  // Octave-up bass on offbeats for a bounce
+  if (beatInBar === 1 || beatInBar === 3) {
+    bgmPluck(ctx, out, chord.bass * 2, 'triangle', 0.08, 0.3);
+  }
+  // Chord stab on beat 1 of each bar
+  if (beatInBar === 0) {
+    chord.notes.forEach(freq => bgmPluck(ctx, out, freq, 'sine', 0.06, 0.6));
+  }
+  // Kick drum on beats 0 and 2
+  if (beatInBar % 2 === 0) bgmKick(ctx, out);
+  // Hi-hat on every offbeat (8th notes)
+  bgmHat(ctx, out);
+
+  bgmBeat++;
+}
+
+function startBgm() {
+  if (bgmTimer || !audioCtx) return;
+  bgmBeat = 0;
+  // Fade in
+  const t0 = audioCtx.currentTime;
+  bgmGainNode.gain.cancelScheduledValues(t0);
+  bgmGainNode.gain.setValueAtTime(0, t0);
+  bgmGainNode.gain.linearRampToValueAtTime(0.5, t0 + 1.2);
+  bgmTick();   // first beat immediately
+  bgmTimer = setInterval(bgmTick, BGM_BEAT_SEC * 1000);
+}
+
+function stopBgm() {
+  if (bgmTimer) {
+    clearInterval(bgmTimer);
+    bgmTimer = null;
+  }
+  if (audioCtx && bgmGainNode) {
+    const t0 = audioCtx.currentTime;
+    bgmGainNode.gain.cancelScheduledValues(t0);
+    bgmGainNode.gain.linearRampToValueAtTime(0, t0 + 0.2);
+  }
+}
+
+// ============================================================
+//  SOUND TOGGLE (controls procedurally generated SFX only)
+// ============================================================
+const bgmToggleEl = document.getElementById('bgmToggle');
+let bgmMuted = localStorage.getItem('bgmMuted') === '1';   // variable kept for compatibility — now means "all sound muted"
+
+function refreshBgmIcon() {
+  bgmToggleEl.textContent = bgmMuted ? '🔇' : '🔊';
+  bgmToggleEl.classList.toggle('muted', bgmMuted);
+}
+refreshBgmIcon();
+
+bgmToggleEl.addEventListener('click', () => {
+  ensureAudio();
+  bgmMuted = !bgmMuted;
+  localStorage.setItem('bgmMuted', bgmMuted ? '1' : '0');
+  refreshBgmIcon();
+  if (bgmMuted) {
+    stopBgm();
+  } else if (gameState === 'playing' || gameState === 'failing') {
+    startBgm();
+  }
+});
+
+// ============================================================
+//  BUTTON HANDLERS
+// ============================================================
+// Difficulty buttons
+document.querySelectorAll('.diff-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    ensureAudio();        // initialize Web Audio context on first user gesture
+    const mode = btn.dataset.mode;
+    const raw = btn.dataset.value;
+    const value = (mode === 'tier') ? parseInt(raw, 10) : raw;
+    setDifficulty(mode, value);
+    startGame();
+    sfxGameStart();
+    startBgm();
+  });
+});
+
+document.getElementById('view-ranking-btn').addEventListener('click', showRanking);
+
+document.getElementById('save-btn').addEventListener('click', saveScore);
+document.getElementById('skip-btn').addEventListener('click', () => {
+  document.getElementById('save-form').classList.add('hidden');
+  document.getElementById('after-save').classList.remove('hidden');
+});
+
+document.getElementById('goto-ranking-btn').addEventListener('click', showRanking);
+document.getElementById('retry-btn').addEventListener('click', () => {
+  showSection('start-section');
+});
+
+document.getElementById('rank-back-btn').addEventListener('click', () => showSection('start-section'));
+
+// Enter in school → focus name
+document.getElementById('input-school').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('input-name').focus(); }
+});
+// Enter in name → submit
+document.getElementById('input-name').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); saveScore(); }
+});
+
+// ============================================================
+//  INITIAL STATE
+// ============================================================
+// ============================================================
+//  휴대폰·태블릿 터치 버튼 + 손가락으로 둘러보기
+// ============================================================
+document.querySelectorAll('.tbtn').forEach(btn => {
+  const k = btn.dataset.key;
+  const down = e => {
+    e.preventDefault();
+    ensureAudio();
+    keys[k] = true;
+    btn.classList.add('on');
+    try { btn.setPointerCapture(e.pointerId); } catch (_) {}
+  };
+  const up = () => { keys[k] = false; btn.classList.remove('on'); };
+  btn.addEventListener('pointerdown', down);
+  btn.addEventListener('pointerup', up);
+  btn.addEventListener('pointercancel', up);
+  btn.addEventListener('lostpointercapture', up);
+  btn.addEventListener('contextmenu', e => e.preventDefault());
+});
+let lookId = null, lookX = 0, lookY = 0;
+renderer.domElement.addEventListener('pointerdown', e => {
+  if (e.pointerType === 'mouse') return;
+  if (gameState !== 'playing' && gameState !== 'failing') return;
+  lookId = e.pointerId; lookX = e.clientX; lookY = e.clientY;
+});
+addEventListener('pointermove', e => {
+  if (e.pointerId !== lookId) return;
+  yaw -= (e.clientX - lookX) * 0.006;
+  pitch += (e.clientY - lookY) * 0.006;
+  if (pitch > 1.3) pitch = 1.3;
+  if (pitch < -0.2) pitch = -0.2;
+  lookX = e.clientX; lookY = e.clientY;
+  applyCameraRot();
+});
+const endLook = e => { if (e.pointerId === lookId) lookId = null; };
+addEventListener('pointerup', endLook);
+addEventListener('pointercancel', endLook);
+
+showSection('start-section');
+
+// ============================================================
+//  MAIN LOOP
+// ============================================================
+const clock = new THREE.Clock();
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  updateCamShake(dt);
+  updatePlayer(dt);
+  updatePieces(dt);
+  updateLightPillars(dt);
+
+  if (gameState === 'playing' || gameState === 'failing') {
+    elapsedMs = performance.now() - gameStartTime;
+    if (showTimer) {
+      timerEl.textContent = formatElapsedTime(elapsedMs);
+    }
+  }
+
+  renderer.render(scene, camera);
+}
+animate();
+</script>
+</body>
+</html>
