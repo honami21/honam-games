@@ -199,6 +199,10 @@
     .topbar{top:6px;left:6px;right:6px}
     .topbar a,.topbar button{font-size:13px;padding:7px 10px}
   }
+  /* 버튼 아래 두꺼운 그림자를 없애 테두리 두께를 위아래 같게 */
+  .game-btn, .diff-btn, .btn, .btn-s, .btn-r, .btn-p, .tbtn, .pad button, .topbar a, .topbar button { box-shadow:none !important; }
+  .game-btn:active, .diff-btn:active, .btn:active, .pad button:active { transform:translateY(2px) scale(.97) !important; }
+  .tbtn.on { transform:scale(.94) !important; }
 </style>
 </head>
 <body class="menu">
