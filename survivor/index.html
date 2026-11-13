@@ -83,13 +83,14 @@
   /* 시작 화면 */
   #start { background:radial-gradient(ellipse at 50% 30%, rgba(40,70,90,.35), rgba(6,10,22,.82)); }
   #start .panel { width:min(760px,100%); background:rgba(255,246,236,.97); }
-  #title-logo { width:min(520px,92%); display:block; margin:0 auto 4px; }
+  #title-logo { width:auto; max-width:92%; height:auto; max-height:min(124px,17vh); display:block; margin:0 auto 4px; }
   #title-text { font-size:clamp(30px,6vw,50px); color:var(--ink); line-height:1.15; word-break:keep-all; }
   #title-text b { color:#3e9a52; font-weight:normal; }
   .pick-title { margin:14px 0 8px; font-size:18px; }
   #weapon-pick { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
   .wp { border:3px solid var(--edge); background:#fff; border-radius:16px; padding:8px 4px 6px; cursor:pointer; font-family:'Jua',sans-serif; color:var(--ink); font-size:15px; }
   .wp .ic { margin:0 auto 4px; }
+  @media (min-width:760px) { #start .panel { width:min(900px,100%); } #weapon-pick { grid-template-columns:repeat(6,1fr); } }
   .wp.on { border-color:var(--wpn); background:#fff1ee; transform:scale(1.03); }
   .wp small { display:block; color:var(--ink2); font-size:12px; margin-top:2px; word-break:keep-all; }
   #wp-desc { min-height:40px; margin-top:10px; font-size:15px; color:var(--ink2); word-break:keep-all; }
@@ -516,7 +517,7 @@ const isTouch = matchMedia('(pointer:coarse)').matches || ('ontouchstart' in win
 const IMG = {};
 function loadImg(name, src) {
   const im = new Image();
-  im.onload = () => { IMG[name] = im; if (name === 'logo') { $('title-logo').classList.remove('hidden'); $('title-text').classList.add('hidden'); } if (name === 'ground') groundPattern = null; };
+  im.onload = () => { IMG[name] = im; if (name === 'logo') { $('title-logo').classList.remove('hidden'); $('title-text').classList.add('hidden'); } if (name === 'ground') groundPattern = null; clearTimeout(loadImg.t); loadImg.t = setTimeout(() => { if (typeof modal !== 'undefined' && modal === 'start') buildPick(); }, 120); };
   im.src = src;
 }
 IMG_NAMES.forEach(n => loadImg(n, 'img/' + n + (n === 'ground' ? '.jpg' : '.png')));
@@ -798,7 +799,7 @@ function spawnBoss(type) {
   }
   $('bossname').textContent = MONSTERS[type].name;
   $('bossbar').classList.remove('hidden');
-  banner(MONSTERS[type].name + '이(가) 나타났어요!', type === 'imugi' ? '마지막 보스! 물리치면 클리어!' : '물리치면 보물상자를 줘요');
+  banner(MONSTERS[type].name + ((MONSTERS[type].name.charCodeAt(MONSTERS[type].name.length - 1) - 0xAC00) % 28 ? '이' : '가') + ' 나타났어요!', type === 'imugi' ? '마지막 보스! 물리치면 클리어!' : '물리치면 보물상자를 줘요');
   sfx('boss');
 }
 let bannerTimer = 0;
@@ -1452,7 +1453,7 @@ function drawMonster(e) {
   }
   if (e.type === 'eodum') { const gr = ctx.createRadialGradient(e.x, e.y, e.r * .5, e.x, e.y, e.r * 2.2); gr.addColorStop(0, 'rgba(20,10,40,.6)'); gr.addColorStop(1, 'rgba(20,10,40,0)'); ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(e.x, e.y, e.r * 2.2, 0, TAU); ctx.fill(); }
   if (e.type === 'lantern') { const gr = ctx.createRadialGradient(e.x, e.y, 4, e.x, e.y, 70); gr.addColorStop(0, 'rgba(255,190,90,.45)'); gr.addColorStop(1, 'rgba(255,190,90,0)'); ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(e.x, e.y, 70, 0, TAU); ctx.fill(); }
-  let h = e.r * (M.boss ? 2.6 : e.type === 'seg' ? 2.2 : 2.7);
+  let h = e.r * (e.type === 'imugi' ? 2.6 : M.boss ? 3.1 : e.type === 'seg' ? 2.2 : 2.7);
   if (e.type === 'mini') h = e.r * 2.6;
   const y = e.y + bob - (e.type === 'toad' && e.st === 1 ? Math.sin((1 - e.stT / .55) * Math.PI) * 26 : 0);
   if (e.type === 'seg' && IMG[key]) {
@@ -1509,7 +1510,7 @@ function drawPlayer() {
   ctx.save(); ctx.translate(p.x, p.y + 22 - bob);
   const sq = p.moving ? 1 + Math.sin(G.t * 24) * .03 : 1;
   ctx.scale(sq, 2 - sq);
-  if (!spr(im, 0, -30, 60, p.face < 0)) { circle(0, -24, 16, '#f0a868'); eyes(0, -26, 5, p.fx, p.fy); }
+  if (!spr(im, 0, -35, 70, p.face < 0)) { circle(0, -24, 16, '#f0a868'); eyes(0, -26, 5, p.fx, p.fy); }
   ctx.restore();
   if (p.hurtT > 0) { ctx.globalAlpha = p.hurtT * 2; circle(p.x, p.y, 26, 'rgba(255,60,60,.5)'); ctx.globalAlpha = 1; }
   const w = 40, f = p.hp / S.maxHp;
@@ -1549,14 +1550,14 @@ function render() {
   // 바닥 효과 (먹물)
   for (const a of G.areas) {
     const fade = Math.min(1, (a.life - a.t) * 2);
-    if (a.k === 'ink') { if (!spr('fx-ink', a.x, a.y, a.r * 2.1, false, .85 * fade)) { ctx.globalAlpha = .75 * fade; ctx.fillStyle = '#141020'; ctx.beginPath(); ctx.ellipse(a.x, a.y, a.r, a.r * .75, 0, 0, TAU); ctx.fill(); ctx.fillStyle = '#2d2445'; ctx.beginPath(); ctx.ellipse(a.x - a.r * .25, a.y - a.r * .2, a.r * .35, a.r * .2, 0, 0, TAU); ctx.fill(); ctx.globalAlpha = 1; } }
+    if (a.k === 'ink') { if (!spr('fx-ink', a.x, a.y, a.r * 2.1, false, .6 * fade)) { ctx.globalAlpha = .75 * fade; ctx.fillStyle = '#141020'; ctx.beginPath(); ctx.ellipse(a.x, a.y, a.r, a.r * .75, 0, 0, TAU); ctx.fill(); ctx.fillStyle = '#2d2445'; ctx.beginPath(); ctx.ellipse(a.x - a.r * .25, a.y - a.r * .2, a.r * .35, a.r * .2, 0, 0, TAU); ctx.fill(); ctx.globalAlpha = 1; } }
     if (a.k === 'vortex') { ctx.save(); ctx.translate(a.x, a.y); ctx.globalAlpha = .75 * fade; ctx.strokeStyle = a.evo ? '#d9b8ff' : '#9fdcff'; ctx.lineWidth = 4;
       for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.ellipse(0, 0, a.r * (1 - i * .28), a.r * (1 - i * .28) * .7, 0, G.t * (6 + i * 2) + i * 2, G.t * (6 + i * 2) + i * 2 + 4); ctx.stroke(); }
       if (!spr(a.evo ? 'e-gourd' : 'w-gourd', 0, -a.r * .2, 34)) circle(0, 0, 8, a.evo ? '#d9b8ff' : '#9fdcff'); ctx.restore(); ctx.globalAlpha = 1; }
     if (a.k === 'stroke') { ctx.globalAlpha = .8 * fade; ctx.strokeStyle = '#120e1c'; ctx.lineCap = 'round'; ctx.lineWidth = a.w * 2 * Math.min(1, a.t * 6); ctx.beginPath(); ctx.moveTo(a.x1, a.y1); ctx.lineTo(a.x2, a.y2); ctx.stroke(); ctx.globalAlpha = 1; }
   }
   // 구슬과 물건
-  for (const g of G.gems) { const c = gemColor(g.v); if (!spr('gem-' + c, g.x, g.y, c === 'red' ? 20 : 15)) { ctx.fillStyle = c === 'blue' ? '#5ad1ff' : c === 'green' ? '#6fe08a' : '#ff5a6a'; ctx.beginPath(); ctx.moveTo(g.x, g.y - 7); ctx.lineTo(g.x + 5, g.y); ctx.lineTo(g.x, g.y + 7); ctx.lineTo(g.x - 5, g.y); ctx.fill(); } }
+  for (const g of G.gems) { const c = gemColor(g.v); if (!spr('gem-' + c, g.x, g.y, c === 'red' ? 26 : 18)) { ctx.fillStyle = c === 'blue' ? '#5ad1ff' : c === 'green' ? '#6fe08a' : '#ff5a6a'; ctx.beginPath(); ctx.moveTo(g.x, g.y - 7); ctx.lineTo(g.x + 5, g.y); ctx.lineTo(g.x, g.y + 7); ctx.lineTo(g.x - 5, g.y); ctx.fill(); } }
   for (const k of G.picks) {
     const b = Math.sin(k.t * 4) * 3;
     if (k.type === 'chest') { const gr = ctx.createRadialGradient(k.x, k.y, 2, k.x, k.y, 50); gr.addColorStop(0, 'rgba(255,220,120,.6)'); gr.addColorStop(1, 'rgba(255,220,120,0)'); ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(k.x, k.y, 50, 0, TAU); ctx.fill(); }
