@@ -52,11 +52,11 @@
   .flagboard::before { content:''; position:absolute; left:50%; top:-36px; width:26px; height:34px; margin-left:-13px; background:url(img/wisp.png) center / contain no-repeat; }
   .deco { animation:bob 3s ease-in-out infinite; } .deco img { width:44px; opacity:.9; }
   @keyframes bob { 0%,100%{ translate:0 0 } 50%{ translate:0 -8px } }
-  #ggobi { left:0; top:0; width:140px; height:130px; object-fit:contain; object-position:center bottom; z-index:5; pointer-events:none;
+  #ggobi { left:0; top:0; width:140px; height:130px; transform-origin:50% 100%; object-fit:contain; object-position:center bottom; z-index:5; pointer-events:none;
     filter:drop-shadow(0 4px 0 rgba(20,10,50,.25)); }
   #ggobi.land { animation:land .2s ease-out; }
   @keyframes land { 0%{ scale:1.08 .9 } 100%{ scale:1 1 } }
-  #ggobi.fall { animation:wobble .25s ease-in-out infinite alternate; }
+  #ggobi.fall { transform-origin:50% 50%; animation:wobble .25s ease-in-out infinite alternate; }
   @keyframes wobble { from{ rotate:-12deg } to{ rotate:12deg } }
   #ggobi.poof { animation:poof .4s ease-out; }
   @keyframes poof { 0%{ opacity:0; scale:.5 } 100%{ opacity:1; scale:1 } }
@@ -1102,7 +1102,7 @@ function updateCamera(dt, snap) {
   stageEl.style.backgroundPosition = `center calc(50% + ${Math.min(camY * 0.04, 200)}px)`;
 
   const bob = (ggobiPose === 'walk-1' || ggobiPose === 'walk-2') ? Math.abs(Math.sin(performance.now() / 160 * Math.PI)) * 4 : 0;
-  ggobiEl.style.transform = `translate(${player.x - GGOBI_W / 2}px, ${-player.y - GGOBI_H - bob + 4}px)`;
+  ggobiEl.style.translate = `${player.x - GGOBI_W / 2}px ${-player.y - GGOBI_H - bob + 4}px`;   // translate로 두어야 착지 찌그러짐(scale)이 위치까지 키우지 않아요
 }
 const GGOBI_W = 140;   // 꼬비 그림 칸 너비 (그림은 가운데 정렬)
 
