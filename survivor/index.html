@@ -111,7 +111,7 @@
   .card:hover, .card:focus { border-color:var(--ink); transform:translateY(-1px); outline:none; }
   .card .t { font-size:19px; }
   .card .t em { font-style:normal; font-size:13px; color:#fff; background:var(--wpn); border-radius:8px; padding:1px 7px; margin-left:6px; vertical-align:2px; }
-  .card .t em.p { background:var(--psv); } .card .t em.new { background:var(--mint-d); } .card .t em.e { background:var(--evo); }
+  .card .t em.p { background:var(--psv); } .card .t em.new-w { background:#f08a24; } .card .t em.new-p { background:#2f8fd8; } .card .t em.e { background:var(--evo); }
   .card .d { font-size:14.5px; color:var(--ink2); margin-top:2px; word-break:keep-all; }
   .card .pair { font-size:12.5px; color:#a0569a; margin-top:3px; }
   .card .key { position:absolute; right:10px; top:8px; font-family:'Fredoka',sans-serif; font-size:13px; color:#b8a99a; }
@@ -1617,13 +1617,13 @@ function cardHTML(o, i, forChest) {
   if (o.k === 'w') {
     const W = WEAPONS[o.id], w = weaponById(o.id), next = w ? w.lv + 1 : 1;
     icon = iconHTML('w', o.id); title = W.name;
-    tag = w ? `<em>Lv ${next}</em>` : '<em class="new">새 무기</em>';
+    tag = w ? `<em>Lv ${next}</em>` : '<em class="new-w">새 무기</em>';
     desc = W.desc[next] + (next === 8 ? ' · 최고 레벨!' : '');
     pair = `짝꿍: ${PASSIVES[W.pair].emoji} ${PASSIVES[W.pair].name} → ${W.evoName}`;
   } else if (o.k === 'p') {
     const P = PASSIVES[o.id], lv = (G.passives[o.id] || 0) + 1;
     icon = iconHTML('p', o.id); title = P.name;
-    tag = G.passives[o.id] ? `<em class="p">Lv ${lv}</em>` : '<em class="new">새 강화</em>';
+    tag = G.passives[o.id] ? `<em class="p">Lv ${lv}</em>` : '<em class="new-p">새 강화</em>';
     desc = P.each;
     const pw = PAIR_OF[o.id]; if (pw) pair = `짝꿍 무기: ${WEAPONS[pw].emoji} ${WEAPONS[pw].name}`;
   } else if (o.k === 'evo') {
