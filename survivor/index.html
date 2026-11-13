@@ -520,7 +520,7 @@ const IMG_NAMES = [
   'm-dust','m-bat','m-egg','m-broom','m-fox','m-scare','m-toad','m-cloud','m-jang',
   'b-gumiho','b-eodum','b-imugi-head','b-imugi-body',
   'gem-blue','gem-green','gem-red','coin','ricecake','bokjori','chest','lantern',
-  'ggobi-run2','ggobi-idle','ggobi-hurt','fx-slash','fx-ring','fx-bolt','fx-gust','fx-vortex','fx-crack','fx-poof','fx-sparkle','chest-open',
+  'ggobi-run2','ggobi-run3','ggobi-run4','ggobi-down1','ggobi-down2','ggobi-idle-down','ggobi-up1','ggobi-up2','ggobi-idle-up','ggobi-idle','ggobi-hurt','fx-slash','fx-ring','fx-bolt','fx-gust','fx-vortex','fx-crack','fx-poof','fx-sparkle','chest-open',
   'fx-wisp','fx-ewisp','fx-ink','fx-straw','fx-foxfire','fx-dark','fx-tornado','fx-magpie','fx-dart','fx-fireball',
   'd-tree','d-pine','d-rock','d-jar','d-tower','d-grass','d-flower','d-mush',
 ];
@@ -1543,13 +1543,19 @@ function drawPlayer() {
   ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(p.x, p.y + 22, 16, 6, 0, 0, TAU); ctx.fill();
   const bob = p.moving ? Math.abs(Math.sin(G.t * 12)) * 4 : Math.sin(G.t * 3) * 1;
   let im = IMG['ggobi-run'] ? 'ggobi-run' : '_ggobi', ph = 70;
-  if (p.hurtT > 0 && IMG['ggobi-hurt']) im = 'ggobi-hurt';
-  else if (p.moving) { if (IMG['ggobi-run2'] && Math.floor(G.t / .13) % 2) { im = 'ggobi-run2'; ph = 72; } }
-  else if (IMG['ggobi-idle']) { im = 'ggobi-idle'; ph = 74; }
+  const vert = Math.abs(p.fy) > Math.abs(p.fx) * 1.5 ? (p.fy > 0 ? 'down' : 'up') : '';
+  let pick = null;
+  if (p.hurtT > 0) pick = ['ggobi-hurt', 70];
+  else if (p.moving) {
+    if (vert) pick = ['ggobi-' + vert + (Math.floor(G.t / .14) % 2 + 1), 72];
+    else pick = [['ggobi-run', 70], ['ggobi-run3', 76], ['ggobi-run2', 72], ['ggobi-run4', 76]][Math.floor(G.t / .09) % 4];
+  } else pick = vert ? ['ggobi-idle-' + vert, 74] : ['ggobi-idle', 74];
+  if (pick && !IMG[pick[0]] && p.moving && IMG['ggobi-run2'] && Math.floor(G.t / .13) % 2) pick = ['ggobi-run2', 72];
+  if (pick && IMG[pick[0]]) { im = pick[0]; ph = pick[1]; }
   ctx.save(); ctx.translate(p.x, p.y + 22 - bob);
   const sq = p.moving ? 1 + Math.sin(G.t * 24) * .03 : 1;
   ctx.scale(sq, 2 - sq);
-  if (!spr(im, 0, -ph / 2, ph, p.face < 0)) { circle(0, -24, 16, '#f0a868'); eyes(0, -26, 5, p.fx, p.fy); }
+  if (!spr(im, 0, -ph / 2, ph, p.face < 0 && !(vert && im.indexOf('-' + vert) > 0))) { circle(0, -24, 16, '#f0a868'); eyes(0, -26, 5, p.fx, p.fy); }
   ctx.restore();
   if (p.hurtT > 0) { ctx.globalAlpha = p.hurtT * 2; circle(p.x, p.y, 26, 'rgba(255,60,60,.5)'); ctx.globalAlpha = 1; }
   const w = 40, f = p.hp / S.maxHp;
