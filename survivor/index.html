@@ -1677,6 +1677,8 @@ function render() {
     }
   }
   // 요괴 (위에서 아래 순서로)
+  // 꼬비보다 뒤쪽(위쪽)에 있는 나무는 먼저 그려서 꼬비가 앞에 보이게 해요
+  for (const d of tall) if (d.y + 4 <= G.p.y + 14) spr(d.t[0], d.x, d.y - d.t[2] * .4, d.t[2]) || drawDecoFallback(d.t[0], d.x, d.y, d.t[2]);
   const list = G.enemies.slice().sort((a, b) => a.y - b.y);
   for (const e of list) if (e.type === 'seg') drawMonster(e);
   for (const e of list) if (e.type !== 'seg') drawMonster(e);
@@ -1753,7 +1755,7 @@ function render() {
     ctx.restore();
   }
   // 키 큰 소품은 맨 위 (반투명)
-  for (const d of tall) { const near = Math.abs(d.x - p.x) < 60 && d.y > p.y && d.y - p.y < 120; if (!spr(d.t[0], d.x, d.y - d.t[2] * .4, d.t[2], false, near ? .45 : 1)) { if (near) ctx.globalAlpha = .45; drawDecoFallback(d.t[0], d.x, d.y, d.t[2]); ctx.globalAlpha = 1; } }
+  for (const d of tall) { if (d.y + 4 <= p.y + 14) continue; const near = Math.abs(d.x - p.x) < 60 && d.y > p.y && d.y - p.y < 120; if (!spr(d.t[0], d.x, d.y - d.t[2] * .4, d.t[2], false, near ? .45 : 1)) { if (near) ctx.globalAlpha = .45; drawDecoFallback(d.t[0], d.x, d.y, d.t[2]); ctx.globalAlpha = 1; } }
   // 숫자
   ctx.font = '600 15px Fredoka, Jua, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(20,16,40,.85)';
   for (const t of G.texts) { ctx.globalAlpha = 1 - t.t / .7; const y = t.y - t.t * 40; const c = textSprite(t.s, t.c); ctx.drawImage(c, t.x - c.width / TXS / 2, y - c.height / TXS / 2, c.width / TXS, c.height / TXS); }
