@@ -321,6 +321,10 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
 .modal-pic{display:block;width:130px;height:auto;margin:-4px auto 4px;max-height:18vh;object-fit:contain}
 @media (max-height:820px){.logo-img{width:min(400px,32vw)}}
 @media (max-width:760px), (pointer:coarse){.logo-img{width:min(330px,78vw)}#pause-overlay .pause-cat{width:110px}.modal-pic{width:110px}}
+  /* 버튼 아래 두꺼운 그림자를 없애 테두리 두께를 위아래 같게 */
+  .game-btn, .diff-btn, .btn, .btn-s, .btn-r, .btn-p, .tbtn, .pad button, .topbar a, .topbar button { box-shadow:none !important; }
+  .game-btn:active, .diff-btn:active, .btn:active, .pad button:active { transform:translateY(2px) scale(.97) !important; }
+  .tbtn.on { transform:scale(.94) !important; }
 </style>
 </head>
 <body>
