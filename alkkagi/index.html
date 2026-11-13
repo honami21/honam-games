@@ -1084,6 +1084,24 @@ function stageVal() {
 function powerColor(p) {
   const h = 120 - 120 * p; return `hsl(${h},85%,50%)`;
 }
+const imgHand = new Image(); imgHand.src = 'img/flick-finger.png';
+const HAND_TIP = [0.97, 0.715];   // 그림에서 손가락 끝(알에 닿는 곳) 위치
+// (sx,sy) 알 중심, r 알 반지름(화면), ang 나갈 방향(화면), gap 알과 손가락 사이
+function drawHand(sx, sy, r, ang, gap, alpha) {
+  const hw = Math.max(64, r * 3.3), hh = hw * 392 / 360;
+  const tx = sx - Math.cos(ang) * (r + gap), ty = sy - Math.sin(ang) * (r + gap);
+  cx.save(); cx.globalAlpha = alpha;
+  cx.translate(tx, ty); cx.rotate(ang);
+  if (Math.cos(ang) < 0) cx.scale(1, -1);   // 왼쪽으로 쏠 때도 손가락이 위로 보이게
+  if (imgHand.complete && imgHand.naturalWidth) {
+    cx.shadowColor = 'rgba(30,15,5,.35)'; cx.shadowBlur = 6; cx.shadowOffsetY = 3;
+    cx.drawImage(imgHand, -HAND_TIP[0] * hw, -HAND_TIP[1] * hh, hw, hh);
+  } else {
+    cx.lineCap = 'round'; cx.strokeStyle = '#2c2950'; cx.lineWidth = Math.max(9, r * .36);
+    cx.beginPath(); cx.moveTo(0, 0); cx.lineTo(-hw * .8, 0); cx.stroke();
+  }
+  cx.restore();
+}
 function drawAim(pos, a, live) {
   const i = a.i; if (!isAlive(pos, i)) return;
   const [sx, sy] = toS(pos[2 * i], pos[2 * i + 1]);
@@ -1093,18 +1111,10 @@ function drawAim(pos, a, live) {
   // 선택 표시
   cx.strokeStyle = '#ee5a6f'; cx.lineWidth = Math.max(3, r * .16);
   cx.beginPath(); cx.arc(sx, sy, r * 1.14, 0, 7); cx.stroke();
-  // 새총처럼: 나갈 방향의 반대쪽으로 당긴 줄만 보여 줘요 (앞쪽 조준선은 없어요)
+  // 알 뒤에서 손가락으로 튕기려는 손 (힘을 모을수록 뒤로 물러나요). 앞쪽 조준선은 없어요
   const back = ang + Math.PI;
   const len = ringR + 10 + (a.stage === 'aim' ? 26 : power * 70);
-  const bx = sx + Math.cos(back) * len, by = sy + Math.sin(back) * len;
-  cx.lineCap = 'round';
-  cx.strokeStyle = '#2c2950'; cx.lineWidth = Math.max(9, r * .36);
-  cx.beginPath(); cx.moveTo(sx + Math.cos(back) * r * 1.15, sy + Math.sin(back) * r * 1.15); cx.lineTo(bx, by); cx.stroke();
-  cx.strokeStyle = a.stage === 'aim' ? '#fff' : powerColor(power); cx.lineWidth = Math.max(5, r * .22);
-  cx.beginPath(); cx.moveTo(sx + Math.cos(back) * r * 1.15, sy + Math.sin(back) * r * 1.15); cx.lineTo(bx, by); cx.stroke();
-  // 당기는 손잡이
-  cx.fillStyle = '#ffd25e'; cx.strokeStyle = '#2c2950'; cx.lineWidth = 3;
-  cx.beginPath(); cx.arc(bx, by, Math.max(8, r * .38), 0, 7); cx.fill(); cx.stroke();
+  drawHand(sx, sy, r, ang, 4 + (a.stage === 'aim' ? 0 : power * 46), 1);
   cx.lineCap = 'butt';
   if (a.stage === 'aim') return;
   // 힘 게이지: 알 둘레의 큰 고리
@@ -1135,7 +1145,8 @@ function drawAim(pos, a, live) {
   if (a.stage !== 'acc') return;
   // 정확도: 당긴 줄 끝 너머에 부채꼴 눈금, 가운데 초록에서 멈추면 '딱!'
   const VIS = 30 * Math.PI / 180, AR = ringR + lw / 2 + 22;
-  { const ang = back;
+  { // 손과 겹치지 않게 알 앞쪽에 그려요
+
   const val = live ? stageVal() : (a.showA || 0);
   cx.lineWidth = Math.max(12, r * .6);
   cx.strokeStyle = 'rgba(44,41,80,.85)'; cx.lineWidth += 6;
@@ -1184,17 +1195,23 @@ function draw() {
   for (let k = 0; k < 2 * NS; k++) if (isAlive(pos, k)) drawStone(k, pos[2 * k], pos[2 * k + 1]);
   // 조준
   const showAim = aim && room.status === 'playing' && !animBusy();
-  if (showAim || cpuShow || alDirty) {
+  const flk = fx.flick && performance.now() - fx.flick.t0 < 380 ? fx.flick : null;
+  if (showAim || cpuShow || flk || alDirty) {
     const w = Math.round(innerWidth * dpr), h = Math.round(innerHeight * dpr);
     if (al.width !== w || al.height !== h) { al.width = w; al.height = h; }
     alCx.setTransform(1, 0, 0, 1, 0, 0); alCx.clearRect(0, 0, w, h);
     alDirty = false;
-    if (showAim || cpuShow) {
+    if (showAim || cpuShow || flk) {
       const br = cv.getBoundingClientRect();
       alCx.setTransform(dpr, 0, 0, dpr, br.left * dpr, br.top * dpr);
       cx = alCx;
       if (showAim) drawAim(pos, aim, !aim.cpu && aim.stage !== 'aim');
       if (cpuShow) drawAim(pos, cpuShow, false);
+      if (flk) {
+        // 딱! 손가락이 튕기고 사라져요
+        const e = (performance.now() - flk.t0) / 380, [fx0, fy0] = toS(flk.x, flk.y);
+        drawHand(fx0, fy0, RAD[flk.i] * K, sAng(flk.ang), 40 * (1 - Math.min(1, e * 4)) - 4, Math.max(0, 1 - e));
+      }
       cx = boardCx; alDirty = true;
     }
   }
@@ -1270,6 +1287,7 @@ function startAnim(sk) {
   const s = room.shot;
   const res = simulate(room.pos, s.i, s.vx, s.vy, true);
   anim = { key: sk, res, t0: performance.now(), done: false, shooter: colorOf(s.i) };
+  fx.flick = { x: room.pos[2 * s.i], y: room.pos[2 * s.i + 1], i: s.i, ang: Math.atan2(s.vy, s.vx), t0: performance.now() };
   beep('shoot');
   const j = s.j;
   if (j === 'perfect') { addText('딱!', [room.pos[2 * s.i], room.pos[2 * s.i + 1]], '#7cf08a', 1.2); beep('perfect'); }
