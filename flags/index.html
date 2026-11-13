@@ -21,7 +21,42 @@
   html, body { width:100%; height:100%; overflow:hidden; background:#2a2860 url(img/bg.jpg) center / cover no-repeat;
     font-family:'Jua','Apple SD Gothic Neo','Malgun Gothic',sans-serif; color:var(--ink); }
   body { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
-  canvas { display:block; touch-action:none; }
+  /* ===== 2D 무대 ===== */
+  #stage { position:fixed; inset:0; overflow:hidden; background:#2a2860 url(img/bg.jpg) center / cover no-repeat; touch-action:none; }
+  #world { position:absolute; left:0; top:0; width:640px; height:0; transform-origin:0 0; }
+  #world > * { position:absolute; }
+  .floor { width:1440px; height:900px; background:#f5e6cc url(img/tile-start.png) 0 0 / 90px 90px; border-top:6px solid var(--ink);
+    box-shadow:inset 0 10px 0 rgba(255,255,255,.5); }
+  .plat { width:210px; height:30px; border:4px solid var(--ink); border-radius:12px; box-shadow:0 6px 0 rgba(44,41,80,.45);
+    background:linear-gradient(115deg, rgba(255,255,255,0) 0 22%, rgba(255,255,255,.9) 22% 27%, rgba(255,255,255,0) 27% 58%, rgba(255,255,255,.75) 58% 61%, rgba(255,255,255,0) 61%), rgba(160,212,250,.82);
+    transition:background-color .2s; }
+  .plat .sign { position:absolute; left:50%; bottom:calc(100% + 6px); transform:translateX(-50%); display:none; }
+  .plat.show .sign { display:block; }
+  .plat .sign span { display:block; white-space:nowrap; background:var(--cream); border:3px solid var(--ink); border-radius:12px; box-shadow:0 3px 0 var(--ink);
+    padding:2px 12px 3px; font-size:22px; color:var(--ink); }
+  .plat.ok { background-color:rgba(143,224,138,.9); }
+  .plat.bad { animation:crack .38s linear; background-color:rgba(255,170,180,.85); }
+  @keyframes crack { 0%,100%{ translate:0 0 } 20%{ translate:-5px 2px } 40%{ translate:5px -1px } 60%{ translate:-4px 1px } 80%{ translate:4px 0 } }
+  .plat.gone { visibility:hidden; }
+  .flagboard { width:124px; height:88px; border:5px solid var(--ink); border-radius:12px; background:#fff; overflow:visible; box-shadow:0 6px 0 rgba(44,41,80,.45);
+    display:none; animation:bob 2.4s ease-in-out infinite; }
+  .flagboard.show { display:block; }
+  .flagboard img { width:100%; height:100%; object-fit:cover; display:block; border-radius:6px; }
+  .flagboard::before { content:''; position:absolute; left:50%; top:-36px; width:26px; height:34px; margin-left:-13px; background:url(img/wisp.png) center / contain no-repeat; }
+  .deco { animation:bob 3s ease-in-out infinite; } .deco img { width:44px; opacity:.9; }
+  @keyframes bob { 0%,100%{ translate:0 0 } 50%{ translate:0 -8px } }
+  #ggobi { left:0; top:0; width:140px; height:130px; object-fit:contain; object-position:center bottom; z-index:5; pointer-events:none;
+    filter:drop-shadow(0 4px 0 rgba(20,10,50,.25)); }
+  #ggobi.land { animation:land .2s ease-out; }
+  @keyframes land { 0%{ scale:1.08 .9 } 100%{ scale:1 1 } }
+  #ggobi.fall { animation:wobble .25s ease-in-out infinite alternate; }
+  @keyframes wobble { from{ rotate:-12deg } to{ rotate:12deg } }
+  #ggobi.poof { animation:poof .4s ease-out; }
+  @keyframes poof { 0%{ opacity:0; scale:.5 } 100%{ opacity:1; scale:1 } }
+  .fx-star { z-index:6; animation:fxStar .85s ease-out forwards; } .fx-star img { width:28px; }
+  @keyframes fxStar { 0%{ translate:0 0; opacity:1; scale:.6 } 100%{ translate:var(--dx) var(--dy); opacity:0; scale:1.1 } }
+  .fx-shard { width:16px; height:10px; background:rgba(190,228,255,.95); border:2px solid var(--ink); border-radius:3px; z-index:6; animation:fxShard 1.05s ease-in forwards; }
+  @keyframes fxShard { 0%{ translate:0 0; rotate:0deg; opacity:1 } 100%{ translate:var(--dx) var(--dy); rotate:var(--r); opacity:0 } }
   .hidden { display:none !important; }
 
   /* ===== 상단 바 (쉬는 시간 / 소리 / 전체화면) ===== */
@@ -81,10 +116,8 @@
     background:rgba(255,246,236,.92); color:var(--ink); display:flex; align-items:center; justify-content:center; touch-action:none; padding:0; cursor:pointer; }
   .tbtn svg { width:30px; height:30px; fill:none; stroke:currentColor; stroke-width:3.2; stroke-linecap:round; stroke-linejoin:round; }
   .tbtn.on { transform:translateY(4px); box-shadow:0 1px 0 var(--ink); background:var(--sun); }
-  #t-up    { left:86px;  bottom:96px; }
-  #t-down  { left:86px;  bottom:18px; }
-  #t-left  { left:18px;  bottom:57px; }
-  #t-right { left:154px; bottom:57px; }
+  #t-left  { left:18px;  bottom:28px; width:76px; height:76px; }
+  #t-right { left:110px; bottom:28px; width:76px; height:76px; }
   #t-jump  { right:20px; bottom:30px; width:96px; height:96px; border-radius:50%; background:rgba(255,210,94,.95); font-size:24px; font-family:'Jua',sans-serif; }
   #t-jump.on { background:var(--coral); color:#fff; }
   .t-tip { position:fixed; left:50%; bottom:14px; transform:translateX(-50%); z-index:16; font-size:14px; color:#fff; white-space:nowrap; text-shadow:0 2px 0 rgba(20,10,50,.7); pointer-events:none; }
@@ -185,8 +218,7 @@
   }
   @media (max-height:520px) and (pointer:coarse){
     .tbtn { width:52px; height:52px; }
-    #t-up { left:72px; bottom:78px; } #t-down { left:72px; bottom:12px; }
-    #t-left { left:14px; bottom:45px; } #t-right { left:130px; bottom:45px; }
+    #t-left { left:14px; bottom:16px; width:62px; height:62px; } #t-right { left:88px; bottom:16px; width:62px; height:62px; }
     #t-jump { width:80px; height:80px; bottom:20px; }
     .t-tip { display:none; }
   }
@@ -221,6 +253,9 @@
 })();
 </script>
 
+<!-- 2D 무대 -->
+<div id="stage"><div id="world"><img id="ggobi" src="img/ggobi-back.png" alt="꼬비"></div></div>
+
 <!-- 게임 중 점수판 -->
 <div id="hud" class="hidden">
   <div class="panel">
@@ -245,8 +280,6 @@
 
 <!-- 휴대폰·태블릿 터치 버튼 -->
 <div id="touch">
-  <button class="tbtn" id="t-up" data-key="ArrowUp" aria-label="앞으로"><svg viewBox="0 0 24 24"><path d="M5 15l7-7 7 7"/></svg></button>
-  <button class="tbtn" id="t-down" data-key="ArrowDown" aria-label="뒤로"><svg viewBox="0 0 24 24"><path d="M5 9l7 7 7-7"/></svg></button>
   <button class="tbtn" id="t-left" data-key="ArrowLeft" aria-label="왼쪽"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
   <button class="tbtn" id="t-right" data-key="ArrowRight" aria-label="오른쪽"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
   <button class="tbtn" id="t-jump" data-key="Space" aria-label="점프">점프</button>
@@ -259,7 +292,7 @@
     <div class="start-wrap">
       <div class="card">
         <img class="logo" src="img/logo.png" alt="꼬비의 국기 맞히기" width="1000" height="312">
-        <p class="lead">하늘에 뜬 유리 다리 두 개 중에서<br><b>국기에 맞는 나라</b>로 점프해요!<br>틀린 다리를 밟으면 유리가 깨져 떨어져요.</p>
+        <p class="lead">꼬비가 하늘 위로 폴짝폴짝 올라가요!<br>국기를 보고 <b>맞는 나라 발판</b>으로 점프해요.<br>틀린 발판을 밟으면 유리가 깨져 떨어져요.</p>
         <div class="diff-section">
           <div class="diff-title">난이도 고르기</div>
           <div class="diff-buttons">
@@ -280,7 +313,7 @@
         <div class="hint">
           <div class="hint-title">조작법</div>
           <div class="hint-keys">
-            <div class="hint-row">이동 <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 또는 <kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> · 점프 <kbd>Space</kbd></div>
+            <div class="hint-row">이동 <kbd>←</kbd><kbd>→</kbd> 또는 <kbd>A</kbd><kbd>D</kbd> · 점프 <kbd>Space</kbd> 또는 <kbd>↑</kbd></div>
           </div>
           <div class="hint-touch">
             <div class="hint-row">왼쪽 화살표 버튼으로 이동, 오른쪽 <b>점프</b> 버튼으로 점프!</div>
@@ -351,19 +384,10 @@
   </div>
 </div>
 
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
-  }
-}
-</script>
-
 <script type="module">
 // ============================================================
 //  FIREBASE SETUP
 // ============================================================
-import * as THREE from 'three';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 import {
   getFirestore, collection, addDoc, query, where, orderBy, limit, getDocs, serverTimestamp
@@ -641,237 +665,53 @@ function difficultyLabel() {
 }
 
 // ============================================================
-//  SCENE / CAMERA / RENDERER
+//  2D 무대 (꼬비가 유리 발판을 타고 위로 올라가요)
+//  좌표: x는 왼쪽→오른쪽, y는 땅에서 위로 올라간 높이 (단위: 화면 점)
 // ============================================================
-const scene = new THREE.Scene();
-scene.background = null;   // 뒤의 밤하늘 그림(img/bg.jpg)이 보이도록 투명
-scene.fog = new THREE.Fog(0x5f4cb5, 45, 230);
-if (document.fonts) document.fonts.load('100px Jua').catch(() => {});
+const W = 640;              // 무대 너비
+const ROW = 175;            // 발판 줄 사이 높이
+const PLAT_W = 210, PLAT_H = 30;
+const PLAT_XL = 150, PLAT_XR = 490;   // 왼쪽·오른쪽 발판 가운데
+const GGOBI_H = 130;        // 꼬비 키
+const FOOT = 18;            // 발 너비의 절반 (발판 판정용)
+const GRAVITY = 2400, JUMP_V = 1060, MOVE_SPD = 300;
 
-const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 500);
+const stageEl = document.getElementById('stage');
+const worldEl = document.getElementById('world');
+const ggobiEl = document.getElementById('ggobi');
+let pointerLocked = false;   // 예전 코드와 맞추기 위한 값 (마우스 잠금 사용 안 함)
 
-// PERFORMANCE: prioritize FPS on school laptops & integrated GPUs.
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
-renderer.setClearColor(0x000000, 0);                 // was Math.min(devicePixelRatio, 2)
-renderer.shadowMap.enabled = false;        // shadows are the biggest GPU cost — off
-document.body.appendChild(renderer.domElement);
-
-addEventListener('resize', () => {
-  camera.aspect = innerWidth/innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-});
-
-// Lights (cheap: no shadow casters)
-scene.add(new THREE.HemisphereLight(0xfff4e0, 0x5a4f9a, 1.0));
-const sun = new THREE.DirectionalLight(0xfff1cf, 0.9);
-sun.position.set(40, 90, 30);
-scene.add(sun);
-
-// Just a few far-off clouds for sky atmosphere (was 30)
-const cloudGroup = new THREE.Group();
-for (let i = 0; i < 8; i++) {
-  const cloud = new THREE.Mesh(
-    new THREE.SphereGeometry(4 + Math.random()*3, 8, 8),   // lower geometry detail
-    new THREE.MeshBasicMaterial({ color: 0xc6b3f0, transparent: true, opacity: 0.75 })
-  );
-  cloud.position.set(
-    (Math.random()-0.5)*220,
-    25 + Math.random()*60,
-    -i*30 - 40 + (Math.random()-0.5)*40
-  );
-  cloudGroup.add(cloud);
+let viewScale = 1;
+function fitStage() {
+  viewScale = Math.min(innerWidth / (W + 30), innerHeight / 600);
 }
-cloudGroup.visible = false;   // 구름은 배경 그림에 있어서 숨김
-scene.add(cloudGroup);
+addEventListener('resize', fitStage);
+fitStage();
 
-// Distant floating islands for atmosphere (simplified)
-function createFloatingIsland(x, y, z, scale) {
-  const group = new THREE.Group();
-  const islandMat = new THREE.MeshLambertMaterial({ color: 0x4f7a5a });
-  const rockMat = new THREE.MeshLambertMaterial({ color: 0x6a5878 });
-
-  const base = new THREE.Mesh(new THREE.ConeGeometry(6, 8, 5), rockMat);
-  base.position.y = -4;
-  base.rotation.x = Math.PI;
-  group.add(base);
-
-  const top = new THREE.Mesh(new THREE.CylinderGeometry(6.5, 6.0, 1.5, 6), islandMat);
-  top.position.y = 0.5;
-  group.add(top);
-
-  group.position.set(x, y, z);
-  group.scale.set(scale, scale, scale);
-  group.visible = false;   // 떠 있는 섬도 배경 그림에 있어서 숨김
-  scene.add(group);
-  return group;
+function place(el, x, y) {  // x: 왼쪽 끝, y: 위쪽 끝의 높이
+  el.style.left = x + 'px';
+  el.style.top = (-y) + 'px';
 }
 
-// Just two distant islands for a sense of depth
-createFloatingIsland(-70, 20, -160, 1.2);
-createFloatingIsland(80, 30, -220, 1.4);
-
-// ============================================================
-//  CAMERA CONTROLS (drag + pointer lock)
-// ============================================================
-let yaw = 0;
-let pitch = 0.35;
-let dragging = false;
-let pointerLocked = false;
-let lastMX = 0, lastMY = 0;
-const SENS = 0.003;
-const CAM_DIST = 5.0;
-const CAM_LOOK_Y = 0.7;
-
-function applyCameraRot() {
-  const cosP = Math.cos(pitch);
-  const sinP = Math.sin(pitch);
-  const cx = Math.sin(yaw) * cosP * CAM_DIST;
-  const cy = sinP * CAM_DIST;
-  const cz = Math.cos(yaw) * cosP * CAM_DIST;
-
-  camera.position.x = player.position.x + cx + camShakeX;
-  camera.position.y = player.position.y + CAM_LOOK_Y + cy + camShakeY;
-  camera.position.z = player.position.z + cz;
-
-  camera.lookAt(
-    player.position.x,
-    player.position.y + CAM_LOOK_Y,
-    player.position.z
-  );
-}
-
-let camShakeX = 0, camShakeY = 0, camShakeTime = 0;
-function triggerCamShake(intensity = 0.4, duration = 0.4) {
-  camShakeTime = duration;
-  camShakeIntensity = intensity;
-}
-let camShakeIntensity = 0.4;
-
-document.addEventListener('pointerlockchange', () => {
-  pointerLocked = document.pointerLockElement === document.body;
-});
-document.addEventListener('pointerlockerror', () => {
-  pointerLocked = false;
-});
-
-renderer.domElement.addEventListener('mousedown', e => {
-  if (gameState !== 'playing' && gameState !== 'failing') return;
-  return;   // 카메라는 꼬비 뒤에 고정 (마우스로 둘러보기 없음)
-  lastMX = e.clientX;
-  lastMY = e.clientY;
-});
-addEventListener('mouseup', () => { dragging = false; });
-addEventListener('mousemove', e => {
-  let mx = 0, my = 0;
-  if (pointerLocked) {
-    mx = e.movementX || 0;
-    my = e.movementY || 0;
-  } else if (dragging) {
-    mx = e.clientX - lastMX;
-    my = e.clientY - lastMY;
-    lastMX = e.clientX;
-    lastMY = e.clientY;
-  } else return;
-  yaw -= mx * SENS;
-  pitch += my * SENS;
-  if (pitch > 1.3) pitch = 1.3;
-  if (pitch < -0.2) pitch = -0.2;
-  applyCameraRot();
-});
-
-addEventListener('keydown', e => {
-  if (e.code === 'Escape' && pointerLocked) document.exitPointerLock?.();
-});
-
-// ============================================================
-//  PLAYER (cute character)
-// ============================================================
-const player = {
-  position: new THREE.Vector3(0, 1, 0),
-  velocity: new THREE.Vector3(),
-  onGround: false,
-  height: 1.6,
-  radius: 0.35
-};
-
-// Character always faces the camera direction (back to camera in 3rd person view).
-// Jump spin state — figure-skater style: one full Y-axis rotation in the air, smiling.
-let spinning = false;
-let spinOffset = 0;            // extra Y rotation on top of yaw
-const SPIN_DURATION = 0.7;     // seconds for one full 360° spin
-let spinStartTime = 0;
-
-function startFlip() {
-  spinning = true;
-  spinStartTime = performance.now();
-  setSmile(true);
-}
-function endFlip() {
-  spinning = false;
-  spinOffset = 0;
-  playerGroup.rotation.x = 0;
-  setSmile(false);
-}
-
-const playerGroup = new THREE.Group();
-playerGroup.rotation.order = 'YXZ';   // yaw first, then flip (X) in the rotated local frame
-scene.add(playerGroup);
-
-// References for face expressions (declared up here so jump handler can toggle them)
-// 꼬비 그림 (항상 카메라를 바라보는 그림판)
-const ggobiTex = {};
-const GGOBI_H = 1.75;
-const ggobiMat = new THREE.SpriteMaterial({ transparent: true, alphaTest: 0.3 });
-const ggobiSprite = new THREE.Sprite(ggobiMat);
-ggobiSprite.center.set(0.5, 0.02);
-ggobiSprite.visible = false;
-playerGroup.add(ggobiSprite);
+// ---------- 꼬비 ----------
+const player = { x: W / 2, y: 0, vx: 0, vy: 0, onGround: true, face: 1 };
+const POSES = ['back', 'walk-1', 'walk-2', 'back-jump', 'fall'];
+POSES.forEach(n => { const im = new Image(); im.src = `img/ggobi-${n}.png`; });   // 미리 불러오기
 let ggobiPose = '';
 function setPose(name) {
   if (ggobiPose === name) return;
-  const t = ggobiTex[name];
-  if (!t || !t.image) return;
   ggobiPose = name;
-  ggobiMat.map = t;
-  ggobiMat.needsUpdate = true;
-  const h = (name === 'fall') ? 1.9 : GGOBI_H;
-  ggobiSprite.scale.set(h * t.image.width / t.image.height, h, 1);
-  ggobiSprite.visible = true;
+  ggobiEl.src = `img/ggobi-${name}.png`;
+  ggobiEl.classList.toggle('fall', name === 'fall');
 }
-{
-  const ldr = new THREE.TextureLoader();
-  ['back', 'walk-1', 'walk-2', 'back-jump', 'fall'].forEach(n => {
-    ggobiTex[n] = ldr.load(`img/ggobi-${n}.png`, t => {
-      t.colorSpace = THREE.SRGBColorSpace;
-      if (n === 'back' && !ggobiPose) setPose('back');
-    });
-  });
-}
+setPose('back');
+function endFlip() {}   // 예전 코드 호환
 
-function setSmile(smile) { /* 예전 블록 캐릭터용 (꼬비 그림에서는 쓰지 않음) */ }
-
-const keys = {};
-addEventListener('keydown', e => {
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-  keys[e.code] = true;
-  // Space scroll prevention
-  if (e.code === 'Space' && gameState === 'playing') e.preventDefault();
-}, { passive: false });
-addEventListener('keyup', e => {
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-  keys[e.code] = false;
-});
-
-// ============================================================
-//  GAME STATE
-// ============================================================
+// ---------- 게임 상태 ----------
 let score = 0;
 let correctCount = 0;
 let totalAttempts = 0;     // 정답+오답 합산 시도 횟수
-let failCount = 0;         // 추락 횟수 (오답 + 구멍 추락)
+let failCount = 0;         // 떨어진 횟수
 let combo = 0;
 let maxCombo = 0;
 let currentRound = 0;
@@ -880,7 +720,7 @@ let gameStartTime = null;
 let elapsedMs = 0;
 let finalElapsedMs = 0;
 
-const respawnPosition = new THREE.Vector3(0, 0.5, 0);
+const respawnPosition = { x: W / 2, y: 0 };
 let respawnTimerId = null;
 const countdownEl = document.getElementById('countdown');
 const countdownNumEl = document.getElementById('countdownNum');
@@ -896,7 +736,6 @@ function triggerRespawn() {
   if (gameState !== 'playing') return;
   gameState = 'failing';
   countdownEl.classList.remove('hidden');
-
   let n = 3;
   showCountdownNum(n);
   respawnTimerId = setInterval(() => {
@@ -908,324 +747,61 @@ function triggerRespawn() {
       respawnTimerId = null;
       countdownEl.classList.add('hidden');
       if (gameState !== 'over') {
-        player.position.copy(respawnPosition);
-        player.velocity.set(0, 0, 0);
-        endFlip();
+        player.x = respawnPosition.x;
+        player.y = respawnPosition.y;
+        player.vx = player.vy = 0;
+        player.onGround = true;
+        ggobiEl.classList.remove('poof'); void ggobiEl.offsetWidth; ggobiEl.classList.add('poof');
         gameState = 'playing';
       }
     }
   }, 1000);
 }
 
-// ============================================================
-//  COUNTRY NAME LABEL (Korean text on the FRONT face of the stone bridge)
-// ============================================================
-function makeCountryLabelPlane(countryName) {
-  const canvas = document.createElement('canvas');
-  canvas.width = 1024;
-  canvas.height = 256;
-  const ctx = canvas.getContext('2d');
-  const draw = () => {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+// ---------- 키보드 ----------
+const keys = {};
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  keys[e.code] = true;
+  if ((e.code === 'Space' || e.code.startsWith('Arrow')) && gameState === 'playing') e.preventDefault();
+}, { passive: false });
+addEventListener('keyup', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  keys[e.code] = false;
+});
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
 
-  // Stone-tablet style background (engraved stone / signboard)
-  ctx.fillStyle = '#fff6ec';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  // Outer border
-  ctx.strokeStyle = '#2c2950';
-  ctx.lineWidth = 16;
-  ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
-  // Inner thin border
-  ctx.strokeStyle = '#f1e2d2';
-  ctx.lineWidth = 3;
-  ctx.strokeRect(28, 28, canvas.width - 56, canvas.height - 56);
+// ---------- 발판 / 문제 ----------
+const rounds = [];
+let floorEl = null;
+const decoEls = [];
 
-  // Text - dynamically scale font for long names
-  let fontSize = 180;
-  ctx.font = `${fontSize}px "Jua", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif`;
-  let w = ctx.measureText(countryName).width;
-  while (w > canvas.width - 80 && fontSize > 50) {
-    fontSize -= 8;
-    ctx.font = `${fontSize}px "Jua", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif`;
-    w = ctx.measureText(countryName).width;
-  }
-
-  // Engraved shadow + main text
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-  ctx.fillText(countryName, canvas.width/2 + 3, canvas.height/2 + 5);
-  ctx.fillStyle = '#2c2950';
-  ctx.fillText(countryName, canvas.width/2, canvas.height/2);
-
-  };
-  draw();
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  // 글꼴(Jua)이 아직 안 불러와졌으면 불러온 뒤 다시 그리기
-  if (document.fonts && !document.fonts.check('100px "Jua"', countryName)) {
-    document.fonts.load('100px "Jua"', countryName).then(() => { draw(); texture.needsUpdate = true; }).catch(() => {});
-  }
-  texture.minFilter = THREE.LinearFilter;
-  const material = new THREE.MeshBasicMaterial({
-    map: texture,
-    transparent: true,
-    side: THREE.DoubleSide
-  });
-  // Label proportions match the platform front face (4.0 wide × 1.0 tall)
-  const geo = new THREE.PlaneGeometry(4.0, 1.0);
-  const plane = new THREE.Mesh(geo, material);
-  // Default plane faces +Z — perfect for the front face of the bridge
-  return plane;
+function makeEl(cls, html) {
+  const el = document.createElement('div');
+  el.className = cls;
+  if (html) el.innerHTML = html;
+  worldEl.appendChild(el);
+  return el;
 }
 
-// ============================================================
-//  FLAG TEXTURE LOADER (flagcdn.com)
-// ============================================================
-const flagTextureCache = {};
-const textureLoader = new THREE.TextureLoader();
-textureLoader.crossOrigin = 'anonymous';
-
-function loadFlagTexture(code, onReady) {
-  if (flagTextureCache[code]) {
-    onReady(flagTextureCache[code]);
-    return;
-  }
-  const url = `https://flagcdn.com/w640/${code}.png`;
-  textureLoader.load(
-    url,
-    (tex) => {
-      tex.anisotropy = 4;
-      tex.colorSpace = THREE.SRGBColorSpace;
-      flagTextureCache[code] = tex;
-      onReady(tex);
-    },
-    undefined,
-    (err) => {
-      console.warn('[FLAG] load failed:', code, err);
-      // fallback: solid colored texture
-      const c = document.createElement('canvas');
-      c.width = 320; c.height = 200;
-      const ctx = c.getContext('2d');
-      ctx.fillStyle = '#888'; ctx.fillRect(0,0,c.width,c.height);
-      ctx.fillStyle = '#fff'; ctx.font = 'bold 60px sans-serif';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('?', c.width/2, c.height/2);
-      const tex = new THREE.CanvasTexture(c);
-      flagTextureCache[code] = tex;
-      onReady(tex);
-    }
-  );
+function createFloor() {
+  floorEl = makeEl('floor');
+  place(floorEl, -400, 0);
 }
 
-// ============================================================
-//  ROUND / PLATFORM SYSTEM
-// ============================================================
-const rounds = [];         // each round: { z, leftPlatform, rightPlatform, monument, correctCountry, wrongCountry, answered }
-const START_Z = 0;
-const ROUND_Z_SPACING = 7;     // shorter forward gap for easier reach
-const PLATFORM_X = 2.7;        // smaller lateral offset for easier diagonal jump
-const PLATFORM_TOP_Y = 0.5;
-const PLATFORM_HEIGHT = 1.2;   // taller bridges so the front face fits the label
-
-let startPlatform = null;
-
-// 위에서 본 발판 그림 (그림책 느낌)
-const tileTex = {};
-{
-  const ldr = new THREE.TextureLoader();
-  ['glass', 'start'].forEach(n => {
-    tileTex[n] = ldr.load(`img/tile-${n}.png`);
-    tileTex[n].colorSpace = THREE.SRGBColorSpace;
-    tileTex[n].anisotropy = 4;
-  });
-}
-function tintPlatform(platform, hex) {
-  if (platform.topMat) platform.topMat.color.setHex(hex);
+function createPlatform(cx, y, country) {
+  const el = makeEl('plat', `<div class="sign"><span>${country.ko}</span></div>`);
+  place(el, cx - PLAT_W / 2, y);
+  return { el, x: cx, y, country, broken: false };
 }
 
-function createStartPlatform() {
-  const geo = new THREE.BoxGeometry(8, 1, 8);
-  const sideMat = new THREE.MeshBasicMaterial({ color: 0xd9bf94 });
-  const topMat = new THREE.MeshBasicMaterial({ map: tileTex.start, transparent: true, alphaTest: 0.1 });
-  // 상자 면 순서: 오른쪽, 왼쪽, 위, 아래, 앞, 뒤
-  const mesh = new THREE.Mesh(geo, [sideMat, sideMat, topMat, sideMat, sideMat, sideMat]);
-  mesh.position.set(0, 0, 0);
-  mesh.receiveShadow = true;
-  mesh.castShadow = true;
-  scene.add(mesh);
-
-  startPlatform = {
-    mesh,
-    x: 0, z: 0,
-    topY: 0.5, halfSize: 4, height: 1,
-    isStart: true,
-    broken: false
-  };
+function createFlagBoard(y, country) {
+  const el = makeEl('flagboard', `<img src="https://flagcdn.com/w320/${country.code}.png" alt="">`);
+  place(el, W / 2 - 62, y + 150);
+  return el;
 }
 
-function createStonePlatform(x, z, country) {
-  // Group containing the glass platform and its sign
-  const group = new THREE.Group();
-
-  const halfSize = 2.2;
-  const height = PLATFORM_HEIGHT;
-
-  // Glass slab — semi-transparent panel with a light blue tint
-  const geometry = new THREE.BoxGeometry(halfSize*2, height, halfSize*2);
-  const sideMat = new THREE.MeshBasicMaterial({
-    color: 0x9fd0f5,
-    transparent: true,
-    opacity: 0.5,
-    depthWrite: false
-  });
-  const topMat = new THREE.MeshBasicMaterial({ map: tileTex.glass, transparent: true, opacity: 0.92, depthWrite: false });
-  const mesh = new THREE.Mesh(geometry, [sideMat, sideMat, topMat, sideMat, sideMat, sideMat]);
-  mesh.position.set(0, -height/2, 0);
-  mesh.castShadow = false;        // glass shouldn't cast harsh shadows
-  mesh.receiveShadow = false;
-  group.add(mesh);
-
-  // Dark metal frame outlining the glass slab (so the player can see its edges clearly)
-  const frameMat = new THREE.MeshBasicMaterial({ color: 0x2c2950 });
-  const FT = 0.08;   // frame thickness
-  // Four horizontal edges of the top face
-  const topEdgeFront = new THREE.Mesh(new THREE.BoxGeometry(halfSize*2, FT, FT), frameMat);
-  topEdgeFront.position.set(0, 0, halfSize);
-  group.add(topEdgeFront);
-  const topEdgeBack = new THREE.Mesh(new THREE.BoxGeometry(halfSize*2, FT, FT), frameMat);
-  topEdgeBack.position.set(0, 0, -halfSize);
-  group.add(topEdgeBack);
-  const topEdgeLeft = new THREE.Mesh(new THREE.BoxGeometry(FT, FT, halfSize*2), frameMat);
-  topEdgeLeft.position.set(-halfSize, 0, 0);
-  group.add(topEdgeLeft);
-  const topEdgeRight = new THREE.Mesh(new THREE.BoxGeometry(FT, FT, halfSize*2), frameMat);
-  topEdgeRight.position.set(halfSize, 0, 0);
-  group.add(topEdgeRight);
-  // Bottom edges of the slab
-  const botEdgeFront = new THREE.Mesh(new THREE.BoxGeometry(halfSize*2, FT, FT), frameMat);
-  botEdgeFront.position.set(0, -height, halfSize);
-  group.add(botEdgeFront);
-  const botEdgeBack = new THREE.Mesh(new THREE.BoxGeometry(halfSize*2, FT, FT), frameMat);
-  botEdgeBack.position.set(0, -height, -halfSize);
-  group.add(botEdgeBack);
-  // Corner verticals connecting top and bottom frames
-  for (const sx of [-halfSize, halfSize]) {
-    for (const sz of [-halfSize, halfSize]) {
-      const pillar = new THREE.Mesh(new THREE.BoxGeometry(FT, height, FT), frameMat);
-      pillar.position.set(sx, -height/2, sz);
-      group.add(pillar);
-    }
-  }
-
-  // Small standing sign ("팻말") on top of the bridge, centered on the platform.
-  // Tilted slightly toward the player so it's easy to read from above.
-  const labelGroupFront = new THREE.Group();
-  const sign = makeCountryLabelPlane(country.ko);
-  sign.position.set(0, 0.6, 0);
-  sign.scale.set(0.55, 0.55, 1);   // ~2.2 wide × 0.55 tall (small sign)
-  sign.rotation.x = -0.35;          // ~20° tilted up so player looking down can read it
-  labelGroupFront.add(sign);
-
-  // Small wooden / stone post supporting the sign
-  const postMat = new THREE.MeshBasicMaterial({ color: 0x7a4e2f });
-  const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.4, 0.12), postMat);
-  post.position.set(0, 0.2, 0);
-  post.castShadow = true;
-  labelGroupFront.add(post);
-
-  // Small base plate so the sign post looks rooted on the bridge
-  const baseplate = new THREE.Mesh(
-    new THREE.BoxGeometry(0.4, 0.05, 0.4),
-    postMat
-  );
-  baseplate.position.set(0, 0.025, 0);
-  labelGroupFront.add(baseplate);
-
-  labelGroupFront.position.set(0, 0, 0);   // on top center of the platform
-  group.add(labelGroupFront);
-
-  group.position.set(x, PLATFORM_TOP_Y, z);
-  scene.add(group);
-
-  return {
-    group, mesh,
-    sprite: labelGroupFront,      // kept name for compatibility with updateActiveMonument
-    x, z,
-    topY: PLATFORM_TOP_Y,
-    halfSize, height,
-    country,
-    broken: false,
-    pieces: null,
-    topMat
-  };
-}
-
-function createMonument(z, country) {
-  const group = new THREE.Group();
-
-  // Stone pillar (shorter)
-  const pillarMat = new THREE.MeshBasicMaterial({ color: 0x8a5a3c });
-  const pillar = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.3, 0.4, 2.5, 8),
-    pillarMat
-  );
-  pillar.position.y = 1.25;
-  pillar.castShadow = true;
-  group.add(pillar);
-
-  // Stone base
-  const base = new THREE.Mesh(
-    new THREE.BoxGeometry(1.2, 0.3, 1.2),
-    pillarMat
-  );
-  base.position.y = 0.15;
-  base.castShadow = true;
-  group.add(base);
-
-  // Flag display frame (stone border) - smaller and lower
-  const frameMat = new THREE.MeshBasicMaterial({ color: 0x2c2950 });
-  const frameW = 3.5, frameH = 2.3, frameT = 0.15;
-  const flagCenterY = 4.0;
-
-  const topBar = new THREE.Mesh(new THREE.BoxGeometry(frameW + frameT*2, frameT, frameT), frameMat);
-  topBar.position.set(0, flagCenterY + frameH/2, 0);
-  group.add(topBar);
-  const botBar = new THREE.Mesh(new THREE.BoxGeometry(frameW + frameT*2, frameT, frameT), frameMat);
-  botBar.position.set(0, flagCenterY - frameH/2, 0);
-  group.add(botBar);
-  const leftBar = new THREE.Mesh(new THREE.BoxGeometry(frameT, frameH + frameT, frameT), frameMat);
-  leftBar.position.set(-frameW/2 - frameT/2, flagCenterY, 0);
-  group.add(leftBar);
-  const rightBar = new THREE.Mesh(new THREE.BoxGeometry(frameT, frameH + frameT, frameT), frameMat);
-  rightBar.position.set(frameW/2 + frameT/2, flagCenterY, 0);
-  group.add(rightBar);
-
-  // Flag plane (will be textured with country flag) - double sided
-  const flagGeo = new THREE.PlaneGeometry(frameW, frameH);
-  const flagMat = new THREE.MeshBasicMaterial({ color: 0xeeeeee, side: THREE.DoubleSide });
-  const flagPlane = new THREE.Mesh(flagGeo, flagMat);
-  flagPlane.position.set(0, flagCenterY, 0);
-  group.add(flagPlane);
-
-  group.position.set(0, 0, z);
-  scene.add(group);
-
-  // Load flag texture asynchronously
-  loadFlagTexture(country.code, (tex) => {
-    flagMat.map = tex;
-    flagMat.color.setHex(0xffffff);
-    flagMat.needsUpdate = true;
-  });
-
-  return { group, flagPlane, flagMat, country };
-}
-
-// Shuffled queue of countries used as correct answers — no flag repeats until the
-// whole active pool is exhausted. After exhaustion, we reshuffle and start over
-// (relevant only for very small pools like Oceania with target > pool size).
 let questionQueue = [];
-
 function shuffleInPlace(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -1233,18 +809,13 @@ function shuffleInPlace(arr) {
   }
   return arr;
 }
-
 function refillQuestionQueue() {
   questionQueue = shuffleInPlace([...activeCountries]);
 }
-
 function pickTwoCountries() {
-  if (activeCountries.length < 2) {
-    return [activeCountries[0], activeCountries[0]];
-  }
+  if (activeCountries.length < 2) return [activeCountries[0], activeCountries[0]];
   if (questionQueue.length === 0) refillQuestionQueue();
   const correct = questionQueue.pop();
-  // Wrong answer: any other country (its flag isn't shown, so repeats here are fine)
   let wrong;
   do {
     wrong = activeCountries[Math.floor(Math.random() * activeCountries.length)];
@@ -1253,73 +824,52 @@ function pickTwoCountries() {
 }
 
 function createRound(idx) {
-  const [a, b] = pickTwoCountries();
-  // randomly assign which side is correct
+  const [correctCountry, wrongCountry] = pickTwoCountries();
   const correctOnLeft = Math.random() < 0.5;
-  const correctCountry = a;
-  const wrongCountry = b;
-  const leftCountry = correctOnLeft ? correctCountry : wrongCountry;
-  const rightCountry = correctOnLeft ? wrongCountry : correctCountry;
-
-  const z = START_Z - ROUND_Z_SPACING * (idx + 1);
-
-  const leftPlatform = createStonePlatform(-PLATFORM_X, z, leftCountry);
-  const rightPlatform = createStonePlatform(PLATFORM_X, z, rightCountry);
-  const monument = createMonument(z, correctCountry);
-
-  return {
-    idx, z,
-    leftPlatform, rightPlatform,
-    monument,
-    correctCountry, wrongCountry,
-    answered: false
-  };
+  const y = ROW * (idx + 1);
+  const leftPlatform = createPlatform(PLAT_XL, y, correctOnLeft ? correctCountry : wrongCountry);
+  const rightPlatform = createPlatform(PLAT_XR, y, correctOnLeft ? wrongCountry : correctCountry);
+  const board = createFlagBoard(y, correctCountry);
+  // 옆에 떠 있는 도깨비불 장식
+  if (idx % 2 === 0) {
+    const d = makeEl('deco', '<img src="img/wisp.png" alt="">');
+    place(d, Math.random() < 0.5 ? -70 - Math.random() * 60 : W + 20 + Math.random() * 60, y + 120 + Math.random() * 40);
+    d.style.animationDelay = (-Math.random() * 3) + 's';
+    decoEls.push(d);
+  }
+  return { idx, y, leftPlatform, rightPlatform, board, correctCountry, wrongCountry, answered: false };
 }
 
-function ensureRoundsAhead(currentIdx, lookahead = 3) {
-  while (rounds.length < currentIdx + lookahead + 1) {
-    const r = createRound(rounds.length);
-    rounds.push(r);
+function ensureRoundsAhead(currentIdx, lookahead = 2) {
+  while (rounds.length < Math.min(currentIdx + lookahead + 1, totalQuestions)) {
+    rounds.push(createRound(rounds.length));
   }
   updateActiveMonument();
 }
 
 function updateActiveMonument() {
-  // Only show current round's monument and labels to reduce visual clutter
   rounds.forEach((r, idx) => {
-    r.monument.group.visible = (idx === currentRound);
-    const showLabel = (idx === currentRound);
-    r.leftPlatform.sprite.visible = showLabel;
-    r.rightPlatform.sprite.visible = showLabel;
+    const on = (idx === currentRound);
+    r.board.classList.toggle('show', on);
+    r.leftPlatform.el.classList.toggle('show', on);
+    r.rightPlatform.el.classList.toggle('show', on);
   });
 }
 
 function clearWorld() {
-  for (const r of rounds) {
-    scene.remove(r.leftPlatform.group);
-    scene.remove(r.rightPlatform.group);
-    scene.remove(r.monument.group);
-    if (r.leftPlatform.pieces) r.leftPlatform.pieces.forEach(p => scene.remove(p.mesh));
-    if (r.rightPlatform.pieces) r.rightPlatform.pieces.forEach(p => scene.remove(p.mesh));
-  }
+  worldEl.innerHTML = '';
+  worldEl.appendChild(ggobiEl);
   rounds.length = 0;
-  if (startPlatform) {
-    scene.remove(startPlatform.mesh);
-    startPlatform = null;
-  }
+  decoEls.length = 0;
+  floorEl = null;
 }
 
-// ============================================================
-//  FLAG MINI HUD (top-left flag display)
-// ============================================================
+// ---------- 국기 / 알림 ----------
 const flagMiniEl = document.getElementById('flagMini');
 function updateFlagMini(country) {
-  flagMiniEl.innerHTML = `<img src="https://flagcdn.com/w320/${country.code}.png" alt="${country.ko}">`;
+  flagMiniEl.innerHTML = `<img src="https://flagcdn.com/w320/${country.code}.png" alt="">`;
 }
 
-// ============================================================
-//  COMBO POPUP
-// ============================================================
 const comboPopupEl = document.getElementById('comboPopup');
 function showComboPopup(text) {
   const bad = text.includes('추락');
@@ -1330,48 +880,36 @@ function showComboPopup(text) {
   comboPopupEl.classList.add('show');
 }
 
-// ============================================================
-//  PHYSICS
-// ============================================================
-const GRAVITY = 25;
-const JUMP_V = 12;
-const MOVE_SPD = 7.5;
-
-function getPlatformOverlap(platform) {
-  if (platform.broken) return null;
-  const px = player.position.x, py = player.position.y, pz = player.position.z;
-  const r = player.radius, h = player.height;
-  const inX = px + r > platform.x - platform.halfSize && px - r < platform.x + platform.halfSize;
-  const inZ = pz + r > platform.z - platform.halfSize && pz - r < platform.z + platform.halfSize;
-  const inY = py + h > platform.topY - platform.height && py < platform.topY;
-  return (inX && inY && inZ) ? platform : null;
-}
-
-function getAllPlatforms() {
-  const list = [];
-  if (startPlatform && !startPlatform.broken) list.push(startPlatform);
-  for (const r of rounds) {
-    if (!r.leftPlatform.broken) list.push(r.leftPlatform);
-    if (!r.rightPlatform.broken) list.push(r.rightPlatform);
+// ---------- 효과 ----------
+function burstStars(x, y) {
+  for (let i = 0; i < 7; i++) {
+    const s = makeEl('fx-star', '<img src="img/star.png" alt="">');
+    place(s, x - 14, y + 20);
+    const a = Math.PI * (0.1 + 0.8 * i / 6);
+    s.style.setProperty('--dx', Math.cos(a) * 110 + 'px');
+    s.style.setProperty('--dy', -Math.sin(a) * 90 - 30 + 'px');
+    setTimeout(() => s.remove(), 900);
   }
-  return list;
+}
+function shatter(platform) {
+  for (let i = 0; i < 12; i++) {
+    const s = makeEl('fx-shard');
+    place(s, platform.x - PLAT_W / 2 + Math.random() * PLAT_W, platform.y - Math.random() * PLAT_H);
+    s.style.setProperty('--dx', (Math.random() - 0.5) * 160 + 'px');
+    s.style.setProperty('--dy', 220 + Math.random() * 200 + 'px');
+    s.style.setProperty('--r', (Math.random() - 0.5) * 720 + 'deg');
+    setTimeout(() => s.remove(), 1100);
+  }
 }
 
+// ---------- 착지 판정 ----------
 function handleLanding(platform) {
-  if (platform.isStart) return;
-  // find the round this platform belongs to
   const round = rounds.find(r => r.leftPlatform === platform || r.rightPlatform === platform);
-  if (!round) return;
-  if (round.answered) return;
-
-  const isCorrect = (platform.country === round.correctCountry);
-
-  if (isCorrect) {
-    round.answered = true;        // lock only on a correct landing → advance round
+  if (!round || round.answered) return;
+  if (platform.country === round.correctCountry) {
+    round.answered = true;
     onCorrect(round, platform);
   } else {
-    // do NOT lock the round on a wrong answer — player should still be able to
-    // come back after respawning and land on the correct bridge to score.
     onWrong(round, platform);
   }
 }
@@ -1382,38 +920,22 @@ function onCorrect(round, platform) {
   correctCount++;
   totalAttempts++;
   sfxCorrect();
-
-  // Green flash effect
-  tintPlatform(platform, 0x8fe08a);
-  setTimeout(() => {
-    if (!platform.broken) {
-      const stoneColors = [0x8a8780, 0x9a9590, 0x7a7670, 0x8e8a82];
-      tintPlatform(platform, 0xffffff);
-    }
-  }, 500);
-
-  // Golden light pillar effect
-  spawnLightPillar(platform.x, platform.z);
-
-  respawnPosition.copy(player.position);
-  respawnPosition.y = platform.topY + 0.5;
-
+  platform.el.classList.add('ok');
+  burstStars(player.x, platform.y);
+  respawnPosition.x = player.x;
+  respawnPosition.y = platform.y;
   currentRound = round.idx + 1;
 
-  // 목표 문제 수 달성 시 게임 종료
   if (correctCount >= totalQuestions) {
     updateHUD();
-    setTimeout(() => endGame(), 700);   // 살짝 딜레이로 정답 이펙트 보여주고 종료
+    round.board.classList.remove('show');
+    setTimeout(() => endGame(), 700);
     return;
   }
-
   ensureRoundsAhead(currentRound);
   updateActiveMonument();
-
-  // Update HUD
   updateHUD();
 
-  // Combo popup + combo SFX
   if (combo === COMBO_TIER_2X) {
     showComboPopup('🔥 5연속!');
     sfxCombo(5);
@@ -1424,282 +946,115 @@ function onCorrect(round, platform) {
     showComboPopup(`🔥 ${combo} 연속!`);
     sfxCombo(combo);
   }
-
-  // Round milestones every 10 rounds (10, 20, 30, 40) — but not on final round (handled by victory)
-  if (correctCount > 0 && correctCount % 10 === 0 && correctCount < totalQuestions) {
-    sfxMilestone();
-  }
-
-  // Update monument flag for next round
-  if (rounds[currentRound]) {
-    updateFlagMini(rounds[currentRound].correctCountry);
-  }
+  if (correctCount > 0 && correctCount % 10 === 0 && correctCount < totalQuestions) sfxMilestone();
+  if (rounds[currentRound]) updateFlagMini(rounds[currentRound].correctCountry);
 }
 
 function onWrong(round, platform) {
   combo = 0;
   totalAttempts++;
   failCount++;
-  triggerCamShake(0.5, 0.6);
   sfxGlassBreak();
-
-  // Shake then crumble
-  let t = 0;
-  const shakeInt = setInterval(() => {
-    t++;
-    platform.group.position.x = platform.x + (Math.random()-0.5) * 0.2;
-    platform.group.position.z = platform.z + (Math.random()-0.5) * 0.2;
-    if (t >= 10) {
-      clearInterval(shakeInt);
-      crumblePlatform(platform);
-    }
-  }, 40);
-
+  platform.el.classList.add('bad');
+  platform.broken = true;
   showComboPopup('💥 추락!');
   updateHUD();
-  triggerRespawn();
+  setTimeout(() => {
+    platform.el.classList.add('gone');
+    shatter(platform);
+    player.onGround = false;
+    player.vy = 120;
+    gameState = 'playing';
+    triggerRespawn();
+  }, 380);
+  gameState = 'cracking';
 }
 
-function crumblePlatform(platform) {
-  platform.broken = true;
-  scene.remove(platform.group);
-
-  // Glass shards — many small, thin, angular pieces flying outward
-  const pieces = [];
-  const shardCount = 24;
-  const shardMat = new THREE.MeshPhongMaterial({
-    color: 0xbfe4ff,
-    transparent: true,
-    opacity: 0.7,
-    shininess: 100,
-    specular: 0xffffff,
-    side: THREE.DoubleSide,
-    depthWrite: false
-  });
-  for (let i = 0; i < shardCount; i++) {
-    // Mix of thin triangular tetrahedrons and small thin slabs
-    const geo = (Math.random() < 0.6)
-      ? new THREE.TetrahedronGeometry(0.2 + Math.random() * 0.3)
-      : new THREE.BoxGeometry(
-          0.3 + Math.random() * 0.4,
-          0.05 + Math.random() * 0.06,
-          0.3 + Math.random() * 0.4
-        );
-    const mesh = new THREE.Mesh(geo, shardMat);
-    mesh.position.set(
-      platform.x + (Math.random() - 0.5) * 3.6,
-      platform.topY - Math.random() * 0.4,
-      platform.z + (Math.random() - 0.5) * 3.6
-    );
-    mesh.rotation.set(
-      Math.random() * Math.PI * 2,
-      Math.random() * Math.PI * 2,
-      Math.random() * Math.PI * 2
-    );
-    scene.add(mesh);
-    pieces.push({
-      mesh,
-      velocity: new THREE.Vector3(
-        (Math.random() - 0.5) * 5,
-        1 + Math.random() * 3,
-        (Math.random() - 0.5) * 5
-      ),
-      angularVelocity: new THREE.Vector3(
-        (Math.random() - 0.5) * 10,
-        (Math.random() - 0.5) * 10,
-        (Math.random() - 0.5) * 10
-      ),
-      life: 4.0
-    });
-  }
-  platform.pieces = pieces;
-}
-
-// Update falling pieces
-function updatePieces(dt) {
+// ---------- 움직임 ----------
+function allPlatforms() {
+  const list = [];
   for (const r of rounds) {
-    for (const platform of [r.leftPlatform, r.rightPlatform]) {
-      if (!platform.pieces) continue;
-      for (let i = platform.pieces.length - 1; i >= 0; i--) {
-        const p = platform.pieces[i];
-        p.velocity.y -= GRAVITY * dt;
-        p.mesh.position.x += p.velocity.x * dt;
-        p.mesh.position.y += p.velocity.y * dt;
-        p.mesh.position.z += p.velocity.z * dt;
-        p.mesh.rotation.x += p.angularVelocity.x * dt;
-        p.mesh.rotation.y += p.angularVelocity.y * dt;
-        p.mesh.rotation.z += p.angularVelocity.z * dt;
-        p.life -= dt;
-        if (p.life <= 0 || p.mesh.position.y < -50) {
-          scene.remove(p.mesh);
-          platform.pieces.splice(i, 1);
-        }
-      }
-    }
+    if (!r.leftPlatform.broken) list.push(r.leftPlatform);
+    if (!r.rightPlatform.broken) list.push(r.rightPlatform);
   }
-}
-
-// Light pillar effect for correct answers
-const lightPillars = [];
-function spawnLightPillar(x, z) {
-  const geo = new THREE.CylinderGeometry(1.8, 1.8, 20, 16, 1, true);
-  const mat = new THREE.MeshBasicMaterial({
-    color: 0xffe066,
-    transparent: true,
-    opacity: 0.6,
-    side: THREE.DoubleSide,
-    depthWrite: false
-  });
-  const mesh = new THREE.Mesh(geo, mat);
-  mesh.position.set(x, 10, z);
-  scene.add(mesh);
-  lightPillars.push({ mesh, mat, life: 1.0 });
-}
-
-function updateLightPillars(dt) {
-  for (let i = lightPillars.length - 1; i >= 0; i--) {
-    const lp = lightPillars[i];
-    lp.life -= dt * 1.5;
-    lp.mat.opacity = Math.max(0, lp.life * 0.6);
-    lp.mesh.scale.x = lp.mesh.scale.z = 1 + (1 - lp.life) * 0.5;
-    if (lp.life <= 0) {
-      scene.remove(lp.mesh);
-      lightPillars.splice(i, 1);
-    }
-  }
+  return list;
 }
 
 function updatePlayer(dt) {
   if (gameState !== 'playing' && gameState !== 'failing') return;
 
   if (gameState === 'playing') {
-    // Camera-relative movement (W = forward from camera POV)
-    const forward = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
-    const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
-
-    const moveDir = new THREE.Vector3();
-    if (keys['KeyW'] || keys['ArrowUp']) moveDir.add(forward);
-    if (keys['KeyS'] || keys['ArrowDown']) moveDir.sub(forward);
-    if (keys['KeyA'] || keys['ArrowLeft']) moveDir.sub(right);
-    if (keys['KeyD'] || keys['ArrowRight']) moveDir.add(right);
-    if (moveDir.lengthSq() > 0) moveDir.normalize();
-
-    player.velocity.x = moveDir.x * MOVE_SPD;
-    player.velocity.z = moveDir.z * MOVE_SPD;
-
-    if (keys['Space'] && player.onGround) {
-      player.velocity.y = JUMP_V;
+    let dir = 0;
+    if (keys['KeyA'] || keys['ArrowLeft']) dir -= 1;
+    if (keys['KeyD'] || keys['ArrowRight']) dir += 1;
+    player.vx = dir * MOVE_SPD;
+    if (dir) player.face = dir;
+    if ((keys['Space'] || keys['ArrowUp'] || keys['KeyW']) && player.onGround) {
+      player.vy = JUMP_V;
       player.onGround = false;
-      startFlip();
       sfxJump();
     }
-  } else if (gameState === 'failing') {
-    player.velocity.x *= 0.94;
-    player.velocity.z *= 0.94;
+  } else {
+    player.vx *= 0.9;
   }
 
-  player.velocity.y -= GRAVITY * dt;
-  if (player.velocity.y < -35) player.velocity.y = -35;
+  const prevY = player.y;
+  player.vy -= GRAVITY * dt;
+  if (player.vy < -1600) player.vy = -1600;
+  player.x += player.vx * dt;
+  player.y += player.vy * dt;
+  player.x = Math.max(34, Math.min(W - 34, player.x));
 
-  const dx = player.velocity.x * dt;
-  const dz = player.velocity.z * dt;
-  const dy = player.velocity.y * dt;
-
-  const platforms = getAllPlatforms();
-
-  player.position.x += dx;
   if (gameState === 'playing') {
-    for (const p of platforms) {
-      if (getPlatformOverlap(p)) {
-        if (dx > 0) player.position.x = (p.x - p.halfSize) - player.radius;
-        else if (dx < 0) player.position.x = (p.x + p.halfSize) + player.radius;
-        player.velocity.x = 0;
-      }
-    }
-  }
-
-  player.position.z += dz;
-  if (gameState === 'playing') {
-    for (const p of platforms) {
-      if (getPlatformOverlap(p)) {
-        if (dz > 0) player.position.z = (p.z - p.halfSize) - player.radius;
-        else if (dz < 0) player.position.z = (p.z + p.halfSize) + player.radius;
-        player.velocity.z = 0;
-      }
-    }
-  }
-
-  player.position.y += dy;
-  player.onGround = false;
-  if (gameState === 'playing') {
-    for (const p of platforms) {
-      if (getPlatformOverlap(p)) {
-        if (dy > 0) {
-          player.position.y = (p.topY - p.height) - player.height;
-          player.velocity.y = 0;
-        } else {
-          player.position.y = p.topY;
-          player.velocity.y = 0;
-          if (!player.onGround) {
-            endFlip();    // landing → back to normal face and rotation
-          }
-          player.onGround = true;
-          handleLanding(p);
+    let landed = null;
+    if (player.vy <= 0) {
+      if (prevY >= 0 && player.y <= 0) { landed = { y: 0, floor: true }; }
+      for (const p of allPlatforms()) {
+        if (prevY >= p.y - 1 && player.y <= p.y && Math.abs(player.x - p.x) <= PLAT_W / 2 + 4) {
+          if (!landed || p.y > landed.y) landed = p;
         }
       }
     }
+    // 발판 끝에서 걸어 나가면 떨어지기
+    if (player.onGround && !landed) {
+      const under = player.y <= 0 || allPlatforms().some(p => Math.abs(player.y - p.y) < 1 && Math.abs(player.x - p.x) <= PLAT_W / 2 + 4);
+      if (!under) player.onGround = false;
+      else { player.vy = 0; player.y = Math.round(player.y); }
+    }
+    if (landed) {
+      player.y = landed.y;
+      player.vy = 0;
+      const wasAir = !player.onGround;
+      player.onGround = true;
+      if (wasAir) { ggobiEl.classList.remove('land'); void ggobiEl.offsetWidth; ggobiEl.classList.add('land'); }
+      if (!landed.floor) handleLanding(landed);
+    }
   }
 
-  playerGroup.position.copy(player.position);
   // 꼬비 모습: 떨어짐 / 점프 / 걷기(두 그림 번갈아) / 서 있기
-  const moving = Math.hypot(player.velocity.x, player.velocity.z) > 0.5;
+  const moving = Math.abs(player.vx) > 20;
   let pose = 'back';
   if (gameState === 'failing') pose = 'fall';
   else if (!player.onGround) pose = 'back-jump';
-  else if (moving) pose = (Math.floor(performance.now() / 170) % 2) ? 'walk-1' : 'walk-2';
+  else if (moving) pose = (Math.floor(performance.now() / 160) % 2) ? 'walk-1' : 'walk-2';
   setPose(pose);
-  // 걸을 때 살짝 통통 튀기
-  ggobiSprite.position.y = (moving && player.onGround && gameState === 'playing') ? Math.abs(Math.sin(performance.now() / 170 * Math.PI)) * 0.05 : 0;
-  ggobiMat.rotation = (gameState === 'failing') ? Math.sin(performance.now() / 70) * 0.25 : 0;
-
-  // Figure-skater style spin around vertical (Y) axis while airborne
-  if (spinning) {
-    const elapsedSec = (performance.now() - spinStartTime) / 1000;
-    const t = Math.min(elapsedSec / SPIN_DURATION, 1);
-    spinOffset = -t * Math.PI * 2;   // one full rotation; face faces camera at t=0.5
-    if (t >= 1) {
-      spinning = false;
-      spinOffset = 0;
-      // Keep the smile until the player lands (handled in landing detection)
-    }
-  }
-  playerGroup.rotation.x = 0;
-  playerGroup.rotation.y = yaw + spinOffset;
-
-  applyCameraRot();
-
-  if (player.position.y < -8 && gameState === 'playing') {
-    // Falling into the gap also breaks combo and counts as a fail
-    combo = 0;
-    failCount++;
-    sfxFall();
-    updateHUD();
-    triggerRespawn();
-  }
 }
 
-// Update camera shake
-function updateCamShake(dt) {
-  if (camShakeTime > 0) {
-    camShakeTime -= dt;
-    const t = Math.max(0, camShakeTime);
-    camShakeX = (Math.random() - 0.5) * camShakeIntensity * t * 2;
-    camShakeY = (Math.random() - 0.5) * camShakeIntensity * t * 2;
-  } else {
-    camShakeX = 0;
-    camShakeY = 0;
-  }
+// ---------- 화면 따라가기 ----------
+let camY = 0;
+function updateCamera(dt, snap) {
+  // 꼬비가 서 있던 줄을 화면 아래쪽에 두고, 떨어질 때는 따라 내려가지 않아요
+  const target = Math.max(0, respawnPosition.y);
+  camY = snap ? target : camY + (target - camY) * Math.min(1, dt * 4);
+  const ox = (innerWidth - W * viewScale) / 2;
+  const oy = innerHeight * 0.80 + camY * viewScale;
+  worldEl.style.transform = `translate(${ox}px, ${oy}px) scale(${viewScale})`;
+  stageEl.style.backgroundPosition = `center calc(50% + ${Math.min(camY * 0.04, 200)}px)`;
+
+  const bob = (ggobiPose === 'walk-1' || ggobiPose === 'walk-2') ? Math.abs(Math.sin(performance.now() / 160 * Math.PI)) * 4 : 0;
+  ggobiEl.style.transform = `translate(${player.x - GGOBI_W / 2}px, ${-player.y - GGOBI_H - bob + 4}px)`;
 }
+const GGOBI_W = 140;   // 꼬비 그림 칸 너비 (그림은 가운데 정렬)
 
 // ============================================================
 //  HUD
@@ -1757,7 +1112,7 @@ function startGame() {
   if (activeCountries.length < 2) return;
 
   clearWorld();
-  refillQuestionQueue();   // fresh shuffled list of correct-answer countries
+  refillQuestionQueue();   // 정답 나라 목록을 새로 섞기
 
   score = 0;
   correctCount = 0;
@@ -1767,21 +1122,15 @@ function startGame() {
   maxCombo = 0;
   currentRound = 0;
 
-  player.position.set(0, 1, 0);
-  player.velocity.set(0, 0, 0);
-  respawnPosition.set(0, 0.5, 0);
-  yaw = 0;
-  pitch = 0.35;
-  endFlip();   // reset flip/smile on new game
+  player.x = W / 2; player.y = 0; player.vx = player.vy = 0; player.onGround = true;
+  respawnPosition.x = W / 2; respawnPosition.y = 0;
+  setPose('back');
   if (respawnTimerId) { clearInterval(respawnTimerId); respawnTimerId = null; }
   countdownEl.classList.add('hidden');
 
-  createStartPlatform();
-  ensureRoundsAhead(0, 2);
-
-  playerGroup.position.copy(player.position);
-  playerGroup.rotation.y = yaw;
-  applyCameraRot();
+  createFloor();
+  ensureRoundsAhead(0);
+  updateCamera(0, true);
 
   gameState = 'playing';
   gameStartTime = performance.now();
@@ -1792,7 +1141,7 @@ function startGame() {
   updateHUD();
   updateFlagMini(rounds[0].correctCountry);
 
-  // 타이머: 난이도 상에서만 표시
+  // 타이머: 어려움에서만 표시
   if (showTimer) {
     timerWrapEl.classList.remove('hidden');
     timerEl.textContent = formatElapsedTime(0);
@@ -1801,10 +1150,6 @@ function startGame() {
   }
 
   hideOverlay();
-
-  if (false) {   // 마우스 잠금 사용 안 함
-    try { document.body.requestPointerLock(); } catch(e) {}
-  }
 }
 
 // ============================================================
@@ -2455,26 +1800,20 @@ showSection('start-section');
 // ============================================================
 //  MAIN LOOP
 // ============================================================
-const clock = new THREE.Clock();
-
-function animate() {
+let lastT = performance.now();
+function animate(now) {
   requestAnimationFrame(animate);
-  const dt = Math.min(clock.getDelta(), 0.05);
-  updateCamShake(dt);
+  const dt = Math.min(((now || performance.now()) - lastT) / 1000, 0.05);
+  lastT = now || performance.now();
   updatePlayer(dt);
-  updatePieces(dt);
-  updateLightPillars(dt);
+  updateCamera(dt);
 
-  if (gameState === 'playing' || gameState === 'failing') {
+  if (gameState === 'playing' || gameState === 'failing' || gameState === 'cracking') {
     elapsedMs = performance.now() - gameStartTime;
-    if (showTimer) {
-      timerEl.textContent = formatElapsedTime(elapsedMs);
-    }
+    if (showTimer) timerEl.textContent = formatElapsedTime(elapsedMs);
   }
-
-  renderer.render(scene, camera);
 }
-animate();
+requestAnimationFrame(animate);
 </script>
 </body>
 </html>
