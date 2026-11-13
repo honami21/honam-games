@@ -6,39 +6,76 @@
 <link rel="apple-touch-icon" href="/icons/icon-180.png"/>
 <link rel="icon" type="image/png" href="/icons/icon-192.png"/>
 <link rel="manifest" href="/manifest.webmanifest"/>
-<meta name="apple-mobile-web-app-title" content="꼬비샘 게임방"/>
+<meta name="apple-mobile-web-app-title" content="꼬비샘과 쉬는 시간"/>
 <meta name="theme-color" content="#2a2860"/>
-<title>꼬비샘 게임방</title>
+<title>꼬비샘과 쉬는 시간</title>
+<link rel="preload" as="image" href="img/bg.jpg"/>
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet"/>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--cream:#fff6ec;--edge:#ecc9b0;--ink:#2c2950;--coral:#ee5a6f}
-body{font-family:'Jua',sans-serif;color:var(--ink);min-height:100vh;padding:48px 16px 40px;
-  background:radial-gradient(ellipse 60% 45% at 50% 30%,#45428f 0%,transparent 70%),linear-gradient(180deg,#26245a,#33307a 60%,#4a3f86);}
-h1{text-align:center;font-size:44px;color:#fff;letter-spacing:2px;text-shadow:0 4px 0 rgba(0,0,0,.25)}
-h1 span{color:#ffd25e}
-.sub{text-align:center;color:#cfc9f2;margin:10px 0 36px;font-size:17px}
-.grid{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:24px}
-.game{display:block;text-decoration:none;color:inherit;background:var(--cream);border-radius:24px;overflow:hidden;
-  box-shadow:0 6px 0 var(--edge),0 12px 26px rgba(0,0,0,.25);transition:transform .15s}
-.game:hover{transform:translateY(-4px)}
-.game img{display:block;width:100%;aspect-ratio:10/9;object-fit:cover;background:#1d1c48}
-.info{padding:14px 18px 18px}
-.info b{display:block;font-size:24px;font-weight:normal;color:var(--coral)}
-.info p{font-size:15px;color:#6f6585;margin-top:4px}
-.soon{display:flex;align-items:center;justify-content:center;min-height:200px;border:3px dashed rgba(255,255,255,.25);border-radius:24px;color:#cfc9f2;font-size:18px}
-footer{text-align:center;color:rgba(255,255,255,.5);font-size:13px;margin-top:40px;letter-spacing:1px}
-/* ====== TOP BAR (게임방 / 전체화면) ====== */
+:root{--cream:#fff6e4;--line:#3a2b33;--ink:#2c2950;--coral:#f2685f;--yellow:#ffd75e;--night:#2a2860}
+html{background:var(--night)}
+body{font-family:'Jua',sans-serif;color:var(--ink);min-height:100vh;padding:28px 20px 48px;position:relative;overflow-x:hidden;
+  background:#2a2860 url(img/bg.jpg) center top/cover no-repeat fixed}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(30,26,80,.15),rgba(30,26,80,0) 40%,rgba(30,26,80,.25))}
+.page{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:250px 1fr;grid-template-areas:"head head" "char cards";column-gap:12px;align-items:end;position:relative}
+header{grid-area:head;text-align:center;position:relative;padding:40px 0 30px}
+.logo{display:block;width:min(680px,92%);height:auto;margin:0 auto;filter:drop-shadow(0 6px 0 rgba(20,16,60,.35))}
+h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.sub{color:#fff;font-size:22px;margin-top:10px;text-shadow:0 2px 0 rgba(20,16,60,.6),0 0 12px rgba(20,16,60,.6);letter-spacing:.5px}
+.char{grid-area:char;align-self:end;width:100%;height:auto;margin-bottom:-6px;transform-origin:50% 100%;animation:wave 3.2s ease-in-out infinite;filter:drop-shadow(0 8px 10px rgba(10,8,40,.45))}
+@keyframes wave{0%,100%{transform:rotate(0)}50%{transform:rotate(-2.5deg) translateY(-4px)}}
+.grid{grid-area:cards;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:22px}
+.game,.soon{position:relative;display:flex;flex-direction:column;background:var(--cream);border:3px solid var(--line);border-radius:28px;padding:14px 14px 16px;
+  box-shadow:0 6px 0 rgba(58,43,51,.55),0 14px 28px rgba(10,8,40,.35);text-decoration:none;color:inherit}
+.game{transition:transform .15s}
+.game:hover,.game:focus-visible{transform:translateY(-5px) rotate(-.4deg)}
+.game:focus-visible{outline:4px solid var(--yellow);outline-offset:4px}
+.game img{display:block;width:100%;aspect-ratio:10/9;object-fit:cover;border-radius:18px;background:#1d1c48}
+.title{display:flex;align-items:center;justify-content:center;gap:8px;margin:14px 0 8px}
+.title b{font-weight:normal;font-size:24px;background:var(--yellow);border-radius:999px;padding:5px 22px 3px;box-shadow:inset 0 -3px 0 rgba(200,140,20,.25);white-space:nowrap}
+.burst{width:22px;height:26px;flex:none}
+.burst path{stroke:var(--coral);stroke-width:3.4;stroke-linecap:round;fill:none}
+.burst.r{transform:scaleX(-1)}
+.game p{text-align:center;font-size:15px;color:#3d3446}
+.soon{justify-content:center;align-items:center;min-height:300px;overflow:hidden}
+.soon::before{content:"";position:absolute;inset:12px;border:3px dashed #b9a99a;border-radius:20px}
+.soon span{font-size:26px;color:#7a6a63;margin-bottom:40px}
+.soon img{position:absolute;right:6px;bottom:12px;width:58%;max-width:200px;height:auto;animation:peek 4s ease-in-out infinite}
+@keyframes peek{0%,70%,100%{transform:translateY(0)}80%{transform:translateY(8px)}}
+.wisp{position:absolute;width:44px;height:auto;pointer-events:none;opacity:.95;filter:drop-shadow(0 0 14px rgba(255,220,110,.85));animation:float 5s ease-in-out infinite}
+.w1{left:6%;top:18%}.w2{right:8%;top:6%;width:36px;animation-delay:-1.6s}.w3{right:2%;top:62%;width:30px;animation-delay:-3s}.w4{left:16%;top:70%;width:26px;animation-delay:-2.2s}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@media (prefers-reduced-motion:reduce){.char,.wisp,.soon img{animation:none}}
+/* ====== TOP BAR (전체화면) ====== */
 .topbar{position:fixed;top:12px;left:12px;right:12px;z-index:50;display:flex;justify-content:flex-end;pointer-events:none}
-.topbar a,.topbar button{pointer-events:auto;display:inline-flex;align-items:center;gap:6px;border:none;border-radius:20px;padding:7px 14px;
-  font-family:'Jua',sans-serif;font-size:16px;color:var(--ink);background:rgba(255,246,236,.92);box-shadow:0 3px 0 var(--edge);text-decoration:none;cursor:pointer}
-.topbar a:hover,.topbar button:hover{filter:brightness(1.04)}
-.topbar svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.topbar a,.topbar button{pointer-events:auto;display:inline-flex;align-items:center;gap:6px;border:3px solid var(--line);border-radius:999px;padding:6px 16px;
+  font-family:'Jua',sans-serif;font-size:17px;color:var(--ink);background:var(--yellow);box-shadow:0 3px 0 rgba(58,43,51,.55);text-decoration:none;cursor:pointer}
+.topbar a:hover,.topbar button:hover{filter:brightness(1.05)}
+.topbar svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+/* 태블릿: 캐릭터 조금 작게 */
+@media (max-width:1000px){.page{grid-template-columns:190px 1fr}}
+/* 휴대폰: 캐릭터는 제목 옆, 카드는 한 줄씩 */
+@media (max-width:760px){
+  body{padding:16px 16px 36px;background-attachment:scroll;background-size:auto 100vh;background-position:30% top}
+  .page{grid-template-columns:96px 1fr;grid-template-areas:"char head" "cards cards";column-gap:6px;align-items:center}
+  header{padding:30px 0 18px}
+  .logo{width:100%}
+  .sub{font-size:15px;margin-top:6px}
+  .char{align-self:center;margin:24px 0 14px}
+  .grid{grid-template-columns:1fr;gap:18px}
+  .game img{aspect-ratio:4/3;object-position:center top}
+  .title b{font-size:22px}
+  .soon{min-height:190px}
+  .soon img{width:140px}
+  .soon{align-items:flex-start;padding-left:34px}
+  .soon span{margin:0 0 20px;font-size:22px}
+  .wisp{width:28px}.w3,.w4{display:none}
+}
 @media (max-width:760px), (pointer:coarse){
   .topbar{top:6px;left:6px;right:6px}
-  .topbar a,.topbar button{font-size:12px;padding:7px 8px;gap:0}
-  .topbar svg{width:18px;height:18px}
-  .topbar .t{display:none}
+  .topbar a,.topbar button{font-size:13px;padding:5px 10px;gap:4px;border-width:2px}
+  .topbar svg{width:16px;height:16px}
 }
 </style>
 </head>
@@ -67,18 +104,33 @@ footer{text-align:center;color:rgba(255,255,255,.5);font-size:13px;margin-top:40
 })();
 </script>
 
-<h1>🎮 꼬비샘 <span>게임방</span></h1>
-<p class="sub">쉬는 시간에 친구들과 즐겨 보세요!</p>
-<div class="grid">
-  <a class="game" href="tetris/">
-    <img src="tetris/thumb.jpg" alt="냥냥 테트리스 게임 화면">
-    <div class="info"><b>냥냥 테트리스</b><p>10단계까지 완주하고 랭킹 TOP 50에 도전!</p></div>
-  </a>
-  <a class="game" href="spelling/">
-    <img src="spelling/thumb.jpg" alt="맞춤법 게임 화면">
-    <div class="info"><b>맞춤법 게임</b><p>맞춤법이 옳은 블록으로 점프! 50문제에 도전!</p></div>
-  </a>
-  <div class="soon">새 게임 준비 중 🐾</div>
+<div class="page">
+  <header>
+    <img class="wisp w1" src="img/wisp.png" alt="">
+    <img class="wisp w2" src="img/wisp.png" alt="">
+    <img class="wisp w3" src="img/wisp.png" alt="">
+    <img class="wisp w4" src="img/wisp.png" alt="">
+    <h1>꼬비샘과 쉬는 시간</h1>
+    <img class="logo" src="img/logo.png" alt="꼬비샘과 쉬는 시간" width="1100" height="197">
+    <p class="sub">쉬는 시간에 친구들과 즐겨 보세요!</p>
+  </header>
+  <img class="char" src="img/ggobi-wave.png" alt="손을 흔드는 꼬비" width="382" height="640">
+  <div class="grid">
+    <a class="game" href="tetris/">
+      <img src="tetris/thumb.jpg" alt="꼬비꼬비 테트리스 게임 화면">
+      <div class="title"><svg class="burst" viewBox="0 0 22 26" aria-hidden="true"><path d="M4 4l6 4M2 13h8M4 22l6-4"/></svg><b>꼬비꼬비 테트리스</b><svg class="burst r" viewBox="0 0 22 26" aria-hidden="true"><path d="M4 4l6 4M2 13h8M4 22l6-4"/></svg></div>
+      <p>10단계까지 완주하고 랭킹 TOP 50에 도전!</p>
+    </a>
+    <a class="game" href="spelling/">
+      <img src="spelling/thumb.jpg" alt="맞춤법 게임 화면">
+      <div class="title"><svg class="burst" viewBox="0 0 22 26" aria-hidden="true"><path d="M4 4l6 4M2 13h8M4 22l6-4"/></svg><b>맞춤법 게임</b><svg class="burst r" viewBox="0 0 22 26" aria-hidden="true"><path d="M4 4l6 4M2 13h8M4 22l6-4"/></svg></div>
+      <p>맞춤법이 옳은 블록으로 점프! 50문제에 도전!</p>
+    </a>
+    <div class="soon">
+      <span>새 게임 준비 중</span>
+      <img src="img/ggobi-peek.png" alt="" width="440" height="411">
+    </div>
+  </div>
 </div>
 </body>
 </html>
