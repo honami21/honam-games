@@ -2329,7 +2329,19 @@ function padTick(dt) {
   const b = i => !!(gp.buttons[i] && gp.buttons[i].pressed);
   let x = gp.axes[0] || 0, y = gp.axes[1] || 0;
   if (Math.hypot(x, y) < .22) { x = 0; y = 0; }
-  if (b(14)) x = -1; if (b(15)) x = 1; if (b(12)) y = -1; if (b(13)) y = 1;
+  // 십자키: 표준 배치는 버튼 12~15, 그 밖의 컨트롤러는 축(6·7번) 또는 방향 모자(9번 축)로 와요
+  let hx = 0, hy = 0;
+  if (b(14)) hx = -1; if (b(15)) hx = 1; if (b(12)) hy = -1; if (b(13)) hy = 1;
+  if (!hx && !hy && gp.mapping !== 'standard') {
+    const ax = gp.axes, hat = ax[9];
+    if (ax.length > 9 && hat !== undefined && Math.abs(hat) <= 1.05) {
+      const k = Math.round((hat + 1) / (2 / 7)) % 8;   // 0 위, 1 오른쪽 위, 2 오른쪽 ... 7 왼쪽 위
+      hx = [0, 1, 1, 1, 0, -1, -1, -1][k]; hy = [-1, -1, 0, 1, 1, 1, 0, -1][k];
+    } else if (ax.length >= 8) {
+      if (Math.abs(ax[6]) > .5) hx = Math.sign(ax[6]); if (Math.abs(ax[7]) > .5) hy = Math.sign(ax[7]);
+    }
+  }
+  if (hx || hy) { x = hx; y = hy; }
   PAD.x = x; PAD.y = y; PAD.mag = Math.hypot(x, y);
   const down = i => b(i) && !PAD.prev[i];
   const ov = (modal && modal !== 'x') || !G || G.ended ? padOverlay() : null;
