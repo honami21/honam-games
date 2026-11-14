@@ -8,7 +8,7 @@
 <link rel="manifest" href="/manifest.webmanifest"/>
 <meta name="apple-mobile-web-app-title" content="꼬비샘과 쉬는 시간"/>
 <meta name="theme-color" content="#2a2860"/>
-<title>꼬비꼬비 테트리스 - 꼬비샘과 쉬는 시간</title>
+<title>꼬비의 블록 쌓기 - 꼬비샘과 쉬는 시간</title>
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet"/>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -317,12 +317,12 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
 @media (prefers-reduced-motion:reduce){.ggobi,.wisp,.logo .wisp-i{animation:none}}
 
 /* 받은 그림 (로고, 상황별 꼬비) */
-.logo-img{display:block;width:min(470px,36vw);height:auto;filter:drop-shadow(0 6px 0 rgba(20,16,60,.35))}
+.logo-img{display:block;width:min(420px,32vw);height:auto;filter:drop-shadow(0 6px 0 rgba(20,16,60,.35))}
 .ggobi.block{right:1.2vw;bottom:-4px;width:clamp(110px,11vw,180px);animation:wave 3.6s ease-in-out infinite;animation-delay:-1.4s}
 #pause-overlay .pause-cat{display:block;width:150px;height:auto;margin:0 auto 6px}
 .modal-pic{display:block;width:130px;height:auto;margin:-4px auto 4px;max-height:18vh;object-fit:contain}
-@media (max-height:820px){.logo-img{width:min(400px,32vw)}}
-@media (max-width:760px), (pointer:coarse){.logo-img{width:min(330px,78vw)}#pause-overlay .pause-cat{width:110px}.modal-pic{width:110px}}
+@media (max-height:820px){.logo-img{width:min(360px,29vw)}}
+@media (max-width:760px), (pointer:coarse){.logo-img{width:min(300px,72vw)}#pause-overlay .pause-cat{width:110px}.modal-pic{width:110px}}
   /* 버튼 아래 두꺼운 그림자를 없애 테두리 두께를 위아래 같게 */
   .game-btn, .diff-btn, .btn, .btn-s, .btn-r, .btn-p, .tbtn, .pad button, .topbar a, .topbar button { box-shadow:none !important; }
   .game-btn:active, .diff-btn:active, .btn:active, .pad button:active { transform:translateY(2px) scale(.97) !important; }
@@ -400,7 +400,7 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
   <div class="logo">
     <img class="peek" src="img/ggobi-peek.png" alt="">
     <img class="wisp-i" src="img/wisp.png" alt="">
-    <h1 class="game-title"><img class="logo-img" src="img/logo.png" alt="꼬비꼬비 테트리스"></h1>
+    <h1 class="game-title"><img class="logo-img" src="img/logo.png" alt="꼬비의 블록 쌓기"></h1>
     <img class="wisp-i r" src="img/wisp.png" alt="">
   </div>
   <div id="layout">
@@ -468,7 +468,7 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
 <div id="start-modal" class="modal show">
   <div class="modal-box">
     <div class="modal-hero"><img src="img/ggobi-wave.png" alt="" style="width:46%;margin:0 auto"><svg class="hs a"><use href="#i-spark"/></svg><svg class="hs b"><use href="#i-spark"/></svg></div>
-    <div class="modal-title">꼬비꼬비 테트리스</div>
+    <div class="modal-title">꼬비의 블록 쌓기</div>
     <div class="modal-sub">10단계까지 완주해 보세요!</div>
     <div class="result-card rules">
       <div class="rt">🎯 게임 규칙</div>
