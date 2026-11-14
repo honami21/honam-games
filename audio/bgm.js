@@ -111,6 +111,7 @@
   var css = document.createElement('style');
   css.textContent =
     '.kbgm-btn.muted{opacity:.6}' +
+    '@media (max-width:760px),(pointer:coarse){.kbgm-l{display:none}}' +
     '.kbgm-pop{position:fixed;z-index:9999;background:#fffaf2;border:3px solid #6b4a3a;border-radius:16px;padding:12px 14px;' +
     'font:600 15px/1.3 "Jua","Gowun Dodum",system-ui,sans-serif;color:#4a3328;box-shadow:0 6px 18px rgba(60,30,20,.22);' +
     'display:none;width:230px;max-width:calc(100vw - 24px);box-sizing:border-box;text-align:center}' +
@@ -153,7 +154,8 @@
   function refresh() {
     var shown = B.on && B.vol > 0;
     B.buttons.forEach(function (b) {
-      b.el.textContent = b.long ? (shown ? '🎵 음악 ON' : '🎵 음악 OFF') : '🎵';
+      if (b.long) b.el.innerHTML = '🎵<span class="kbgm-l">' + (shown ? ' 음악 ON' : ' 음악 OFF') + '</span>';
+      else b.el.textContent = '🎵';
       b.el.classList.toggle('muted', !shown);
       b.el.title = shown ? '배경 음악 (켜짐)' : '배경 음악 (꺼짐)';
     });
