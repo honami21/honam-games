@@ -213,6 +213,9 @@
   @keyframes pop { 0%{transform:scale(.4);opacity:0} 70%{transform:scale(1.12)} 100%{transform:scale(1);opacity:1} }
 
   @media (max-width:760px), (pointer:coarse){
+    #dev-open { width:38px; height:38px; padding:0; border-radius:50%; font-size:17px; opacity:.75; }
+    #dev-open .dev-txt { display:none; }
+    #title { padding-bottom:calc(58px + env(safe-area-inset-bottom)); }
     .topbar{top:6px;left:6px;right:6px}
     .topbar a,.topbar button{font-size:13px;padding:6px 10px}
     #timer { top:8px; font-size:24px; }
@@ -296,7 +299,7 @@
     <button class="game-btn white" id="title-music" type="button">🎵 음악 켬</button>
     <p class="title-tip">무기를 고르고, 몰려오는 요괴를 피해 20분을 버텨요!</p>
   </div>
-  <button id="dev-open" type="button">🔧 개발자 모드</button>
+  <button id="dev-open" type="button" aria-label="개발자 모드">🔧<span class="dev-txt"> 개발자 모드</span></button>
 </div>
 <div class="ov hidden" id="devpw" style="z-index:60">
   <div class="panel">
@@ -1598,7 +1601,7 @@ function drawMonster(e) {
   const p = G.p, M = MONSTERS[e.type];
   const bob = Math.sin(G.t * 8 + e.ph) * 1.5;
   const flip = e.type === 'seg' ? false : e.face < 0;
-  const key = e.type === 'imugi' ? 'b-imugi-head' : e.type === 'seg' ? 'b-imugi-body' : (M.boss ? 'b-' : 'm-') + (e.type === 'mini' ? 'cloud' : e.type);
+  const key = e.type === 'imugi' ? 'b-imugi-head' : e.type === 'seg' ? 'b-imugi-body' : e.type === 'lantern' ? 'lantern' : (M.boss ? 'b-' : 'm-') + (e.type === 'mini' ? 'cloud' : e.type);
   // 그림자
   ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.beginPath(); ctx.ellipse(e.x, e.y + e.r * .85, e.r * .85, e.r * .3, 0, 0, TAU); ctx.fill();
   if (e.type === 'fox' && e.st === 1 || e.type === 'gumiho' && e.st === 1) {
@@ -1608,6 +1611,7 @@ function drawMonster(e) {
   if (e.type === 'lantern') { const gr = ctx.createRadialGradient(e.x, e.y, 4, e.x, e.y, 70); gr.addColorStop(0, 'rgba(255,190,90,.45)'); gr.addColorStop(1, 'rgba(255,190,90,0)'); ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(e.x, e.y, 70, 0, TAU); ctx.fill(); }
   let h = e.r * (e.type === 'imugi' ? 2.6 : M.boss ? 3.1 : e.type === 'seg' ? 2.2 : 2.7);
   if (e.type === 'mini') h = e.r * 2.6;
+  if (e.type === 'lantern') h = e.r * 3.6;
   const y = e.y + bob - (e.type === 'toad' && e.st === 1 ? Math.sin((1 - e.stT / .55) * Math.PI) * 26 : 0);
   if (e.type === 'seg' && IMG[key]) {
     ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(Math.atan2(e.prev.y - e.y, e.prev.x - e.x)); const im = IMG[key]; const w = h * im.width / im.height; ctx.drawImage(im, -w / 2, -h / 2, w, h); ctx.restore();
@@ -1927,15 +1931,15 @@ function cardHTML(o, i, forChest) {
     tag = w ? `<em>Lv ${next}</em>` : '<em class="new-w">새 무기</em>';
     desc = W.desc[next] + (next === 8 ? ' · 최고 레벨!' : '');
     pair = `짝꿍: ${PASSIVES[W.pair].emoji} ${PASSIVES[W.pair].name} → ${W.evoName}`;
-    if (!forChest && G.passives[W.pair]) link = next >= 8 ? `🔗 조합 준비 완료! 다음 보물상자에서 ${W.evoName} 등장` : `🔗 가지고 있는 ${wa(PASSIVES[W.pair].name)} 조합돼요! 8레벨이 되면 ${W.evoName}`;
+    if (!forChest && G.passives[W.pair]) link = next >= 8 ? `✅ 짝꿍 ${PASSIVES[W.pair].name} 완성! 다음 보물상자에서 ${W.evoName} 등장` : `✅ 짝꿍 ${PASSIVES[W.pair].name} 완성! 8레벨이 되면 ${W.evoName}`;
   } else if (o.k === 'p') {
     const P = PASSIVES[o.id], lv = (G.passives[o.id] || 0) + 1;
     icon = iconHTML('p', o.id); title = P.name;
     tag = G.passives[o.id] ? `<em class="p">Lv ${lv}</em>` : '<em class="new-p">새 강화</em>';
     desc = P.each;
-    const pw = PAIR_OF[o.id]; if (pw) pair = `짝꿍 무기: ${WEAPONS[pw].emoji} ${WEAPONS[pw].name} → ${WEAPONS[pw].evoName}`;
+    const pw = PAIR_OF[o.id], pwo = pw && weaponById(pw); if (pw) pair = pwo && pwo.evo ? `✅ 이미 조합 완료: ${WEAPONS[pw].evoEmoji} ${WEAPONS[pw].evoName}` : `짝꿍 무기: ${WEAPONS[pw].emoji} ${WEAPONS[pw].name} → ${WEAPONS[pw].evoName}`;
     const ow = pw && weaponById(pw);
-    if (!forChest && ow && !ow.evo && !G.passives[o.id]) link = `🔗 가지고 있는 ${wa(WEAPONS[pw].name)} 조합돼요! → ${WEAPONS[pw].evoName}` + (ow.lv >= 8 ? ' (다음 보물상자에서 바로!)' : ` (무기 8레벨 필요, 지금 Lv ${ow.lv})`);
+    if (!forChest && ow && !ow.evo && !G.passives[o.id]) link = `🔗 고르면 ${WEAPONS[pw].name} 짝꿍 완성! → ${WEAPONS[pw].evoName}` + (ow.lv >= 8 ? ' (다음 보물상자에서 바로!)' : ` (${WEAPONS[pw].name} 8레벨 필요, 지금 Lv ${ow.lv})`);
   } else if (o.k === 'evo') {
     const W = WEAPONS[o.id];
     icon = iconHTML('e', o.id); title = W.evoName; tag = '<em class="e">조합!</em>'; desc = W.evoDesc;
