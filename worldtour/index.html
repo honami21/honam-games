@@ -106,31 +106,33 @@
   #board { position:relative; width:100%; height:100%; display:grid; grid-template-columns:1.45fr repeat(9, 1fr) 1.45fr; grid-template-rows:1.45fr repeat(9, 1fr) 1.45fr;
     background:#1f1d4a; border:4px solid var(--ink); border-radius:calc(var(--u) * 2.2); gap:calc(var(--u) * .28); padding:calc(var(--u) * .28); box-shadow:0 16px 30px rgba(20,10,50,.4); }
   .tile { position:relative; background:var(--cream); border-radius:calc(var(--u) * .8); overflow:hidden; display:flex; cursor:pointer; min-width:0; min-height:0; }
-  .tile .band { flex:none; background:var(--g, transparent); }
   .tile.sb { flex-direction:column; } .tile.st { flex-direction:column-reverse; }
   .tile.sl { flex-direction:row-reverse; } .tile.sr { flex-direction:row; }
-  .tile.sb .band, .tile.st .band { height:calc(var(--u) * 1.1); }
-  .tile.sl .band, .tile.sr .band { width:calc(var(--u) * 1.1); }
+  /* 건물 자리 3칸: 보드 안쪽 가장자리 */
+  .tile .bstrip { flex:none; display:flex; background:rgba(44,41,80,.1); }
+  .tile.sb .bstrip, .tile.st .bstrip { height:calc(var(--u) * 2.5); flex-direction:row; }
+  .tile.sl .bstrip, .tile.sr .bstrip { width:calc(var(--u) * 2.5); flex-direction:column; }
+  .tile .bstrip span { flex:1; min-width:0; min-height:0; position:relative; display:flex; align-items:center; justify-content:center; font-size:calc(var(--u) * 1.6); line-height:1; }
+  .tile.sb .bstrip span + span, .tile.st .bstrip span + span { border-left:calc(var(--u) * .12) dashed rgba(44,41,80,.22); }
+  .tile.sl .bstrip span + span, .tile.sr .bstrip span + span { border-top:calc(var(--u) * .12) dashed rgba(44,41,80,.22); }
+  .tile .bstrip img { position:absolute; inset:4%; width:92%; height:92%; object-fit:contain; filter:drop-shadow(0 calc(var(--u) * .15) 0 rgba(20,10,50,.3)); animation:bpop .35s ease-out; }
+  @keyframes bpop { from{ transform:scale(.2) translateY(-60%) } 70%{ transform:scale(1.2) } }
   .tile .col { flex:1; min-width:0; min-height:0; display:flex; flex-direction:column; }
-  .tile .body { flex:1; min-width:0; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:calc(var(--u) * .15); padding:calc(var(--u) * .2); }
-  .tile.sl .body, .tile.sr .body { flex-direction:row; }
-  .tile .pic { flex:1; min-width:0; min-height:0; align-self:stretch; display:flex; align-items:center; justify-content:center; font-size:calc(var(--u) * 3); line-height:1; }
-  .tile .pic img { width:100%; height:100%; object-fit:contain; display:block; }
-  .tile .blds { flex:none; display:flex; gap:calc(var(--u) * .1); align-items:flex-end; justify-content:center; font-size:calc(var(--u) * 1.6); line-height:1; }
-  .tile.sl .blds, .tile.sr .blds { flex-direction:column; align-items:center; }
-  .tile .blds span { display:block; width:calc(var(--u) * 2.1); height:calc(var(--u) * 2.1); }
-  .tile.sl .blds span, .tile.sr .blds span { width:calc(var(--u) * 1.6); height:calc(var(--u) * 1.6); font-size:calc(var(--u) * 1.3); }
-  .tile .blds img { width:100%; height:100%; object-fit:contain; display:block; filter:drop-shadow(0 calc(var(--u) * .15) 0 rgba(20,10,50,.3)); }
+  .tile .pic { flex:1; min-width:0; min-height:0; position:relative; display:flex; align-items:center; justify-content:center; font-size:calc(var(--u) * 3); line-height:1; }
+  .tile .pic img { position:absolute; left:6%; top:5%; width:88%; height:92%; object-fit:contain; display:block; }
   .tile .nm { flex:none; text-align:center; line-height:1.12; color:var(--ink); white-space:nowrap; overflow:hidden; padding:calc(var(--u) * .3) 0 calc(var(--u) * .25); background:rgba(44,41,80,.09); font-size:calc(var(--u) * 1.7); }
   .tile .nm.l1, .tile .nm.l2, .tile .nm.l3 { font-size:calc(var(--u) * 1.9); }
   .tile .nm.l5 { font-size:calc(var(--u) * 1.38); letter-spacing:-.03em; }
   .tile.sl .nm.l5, .tile.sr .nm.l5, .tile.corner .nm.l5 { font-size:calc(var(--u) * 1.7); }
   .tile.sl .nm br, .tile.sr .nm br { display:none; }
-  .tile.own { background:var(--ot); box-shadow:inset 0 0 0 calc(var(--u) * .5) var(--oc); }
+  .tile.own { background:var(--ot); }
   .tile.own .nm { background:var(--oc); color:var(--otx, #fff); }
-  .tile.lm .pic { animation:lmglow 1.6s ease-in-out infinite alternate; }
-  .tile.lm { box-shadow:inset 0 0 0 calc(var(--u) * .5) var(--oc), inset 0 0 calc(var(--u) * 2.5) calc(var(--u) * .6) var(--sun); }
-  @keyframes lmglow { to { filter:drop-shadow(0 0 calc(var(--u) * .8) #ffd25e) } }
+  .tile.own .bstrip { background:rgba(255,255,255,.45); }
+  /* 랜드마크: 카드 전체가 주인 색, 금테와 반짝임 */
+  .tile.lm { background:var(--oc); box-shadow:inset 0 0 0 calc(var(--u) * .45) var(--sun); }
+  .tile.lm .pic img { left:3%; top:3%; width:94%; height:96%; filter:drop-shadow(0 0 calc(var(--u) * .6) #fff6c0); }
+  .tile.lm .shine { position:absolute; inset:0; pointer-events:none; background:linear-gradient(115deg, transparent 35%, rgba(255,255,255,.75) 50%, transparent 65%); background-size:300% 100%; animation:shine 2.6s linear infinite; }
+  @keyframes shine { from{ background-position:150% 0 } to{ background-position:-50% 0 } }
   .tile.corner { background:#fff1c9; }
   .tile.corner .pic { font-size:calc(var(--u) * 5); }
   .tile.t-card { background:#e8e0ff; } .tile.t-give { background:#ffe3ea; } .tile.t-mark { background:#e0f4ff; }
@@ -321,7 +323,6 @@ const $ = id => document.getElementById(id);
 function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
 
 // ---------- 보드 자료 ----------
-const GROUPS = ['#f6a04d', '#f2c230', '#e9697b', '#b98a5e', '#58b8c9', '#7ccf74', '#3f9c6a', '#ef8fc0', '#9a7fe0', '#5b8def', '#ee5a6f'];
 const C = (name, price, g, key, short) => ({ type:'city', name, price, g, key, short: short || name });
 const TILES = [
   { type:'start', name:'꼬비 마을', key:'start', emo:'🏡' },
@@ -359,8 +360,8 @@ const B = [{ n:'텐트', emo:'⛺', key:'bld-tent', cost:.5, toll:.4, fix:30 }, 
 const LAND_TOLL = .1, LM_COST = 2, LM_TOLL = 6, TAKE = 2, MARK_TOLL = [0, 80, 200, 400, 700];
 const r10 = v => Math.round(v / 10) * 10;
 const COLORS = [
-  { key:'red', name:'빨강', c:'#ee5a6f', t:'#ffd9df' }, { key:'blue', name:'파랑', c:'#4f8ff0', t:'#d8e7ff' },
-  { key:'green', name:'초록', c:'#4fb86a', t:'#d9f3dc' }, { key:'yellow', name:'노랑', c:'#f0b21e', t:'#fff0c2' }
+  { key:'red', name:'빨강', c:'#ee5a6f', t:'#ffb3bf' }, { key:'blue', name:'파랑', c:'#4f8ff0', t:'#a9cbff' },
+  { key:'green', name:'초록', c:'#4fb86a', t:'#a8e6b4' }, { key:'yellow', name:'노랑', c:'#f0b21e', t:'#ffe07a' }
 ];
 const CARDS = [
   { t:'여행 사진 대회에서 1등! 상금 200냥을 받아요.', emo:'📸', f:'gain', v:200 },
@@ -489,7 +490,7 @@ const HOW = '<h2>놀이 방법</h2>' +
   '<p style="text-align:left">🎲 주사위 2개를 굴려 나온 만큼 가요. <b>같은 숫자</b>가 나오면 한 번 더! (세 번 연속이면 도깨비섬)<br>' +
   '🏡 <b>꼬비 마을</b>을 지날 때마다 용돈 ' + SALARY + '냥.<br>' +
   '🏙️ 주인 없는 도시에 서면 땅을 살 수 있어요. <b>내 땅에 다시 도착하면</b> 건물을 지어요. <b>텐트, 게스트하우스, 호텔</b>은 함께 설 수 있고 통행료가 더해져요.<br>' +
-  '💸 남의 도시에 서면 통행료를 내요. <b>같은 색 도시를 다 모으면 통행료 2배!</b><br>' +
+  '💸 남의 도시에 서면 통행료를 내요. 건물이 많을수록 비싸요.<br>' +
   '🤝 통행료를 낸 뒤, 그 도시에 들어간 값의 <b>2배</b>를 주인에게 주면 <b>인수</b>할 수 있어요.<br>' +
   '🏰 건물 3개를 다 지은 내 도시에 또 도착하면 <b>랜드마크</b>를 세워요. 랜드마크 도시는 아무도 인수할 수 없어요!<br>' +
   '⭐ 제주도, 사하라, 하와이, 남극은 건물을 못 짓지만 많이 가질수록 통행료가 올라요.<br>' +
@@ -506,14 +507,13 @@ const sp = ms => fast ? ms * .45 : ms;
 function wait(ms) { const my = gid; return new Promise((res, rej) => setTimeout(() => my === gid ? res() : rej(ABORT), sp(ms))); }
 const alive = () => G.players.filter(p => p.alive);
 const owned = p => TILES.map((t, i) => i).filter(i => G.owner[i] === p.id);
-const hasSet = i => { const t = TILES[i], o = G.owner[i]; return t.type === 'city' && o != null && TILES.every((x, j) => x.type !== 'city' || x.g !== t.g || G.owner[j] === o); };
 function toll(i, lv) {
   const t = TILES[i], o = G.owner[i];
   if (t.type === 'mark') { const n = o == null ? 1 : TILES.filter((x, j) => x.type === 'mark' && G.owner[j] === o).length; return MARK_TOLL[n]; }
   return tollOf(i, G.bld[i], G.lm[i]);
 }
 const bCost = (i, k) => r10(TILES[i].price * B[k].cost), lmCost = i => r10(TILES[i].price * LM_COST);
-const tollOf = (i, bld, lm) => (lm ? r10(TILES[i].price * LM_TOLL) : r10(TILES[i].price * LAND_TOLL) + [0, 1, 2].reduce((s, k) => s + (bld >> k & 1 ? r10(TILES[i].price * B[k].toll) : 0), 0)) * (hasSet(i) ? 2 : 1);
+const tollOf = (i, bld, lm) => (lm ? r10(TILES[i].price * LM_TOLL) : r10(TILES[i].price * LAND_TOLL) + [0, 1, 2].reduce((s, k) => s + (bld >> k & 1 ? r10(TILES[i].price * B[k].toll) : 0), 0));
 const invested = i => TILES[i].price + (TILES[i].type === 'city' ? bList(i).reduce((s, k) => s + bCost(i, k), 0) + (G.lm[i] ? lmCost(i) : 0) : 0);
 const sellValue = i => Math.round(invested(i) / 2);
 const assets = p => p.money + owned(p).reduce((s, i) => s + invested(i), 0);
@@ -562,7 +562,6 @@ function buildBoard() {
   TILES.forEach((t, i) => {
     const d = document.createElement('div'), [c, r] = tileCell(i), sd = tileSide(i);
     d.className = 'tile ' + sd + ' t-' + t.type; d.dataset.i = i; d.style.gridColumn = c; d.style.gridRow = r;
-    if (t.type === 'city') d.style.setProperty('--g', GROUPS[t.g]);
     $('board').appendChild(d); tileEls.push(d);
   });
 }
@@ -573,12 +572,11 @@ function nameHtml(t) {
 }
 function drawTiles() {
   TILES.forEach((t, i) => {
-    const d = tileEls[i], o = G.owner[i], city = t.type === 'city', lmk = city && G.lm[i], bl = city && !lmk ? bList(i) : [];
-    d.classList.toggle('own', o != null); d.classList.toggle('lm', !!lmk); d.classList.toggle('hasb', bl.length > 0);
+    const d = tileEls[i], o = G.owner[i], city = t.type === 'city', lmk = city && G.lm[i];
+    d.classList.toggle('own', o != null); d.classList.toggle('lm', !!lmk);
     if (o != null) { const c = COLORS[G.players[o].ci]; d.style.setProperty('--oc', c.c); d.style.setProperty('--ot', c.t); d.style.setProperty('--otx', c.key === 'yellow' ? '#2c2950' : '#fff'); }
-    d.innerHTML = (city ? '<div class="band"></div>' : '') + '<div class="col"><div class="body"><div class="pic">' + (lmk ? lmPic(t) : tilePic(t)) + '</div>' +
-      (bl.length ? '<div class="blds">' + bl.map(k => '<span>' + bIcon(k) + '</span>').join('') + '</div>' : '') + '</div>' +
-      (t.type === 'fund' ? '<div class="nm l4">🪙 ' + nf(G.pot) + '</div>' : nameHtml(t)) + '</div>';
+    d.innerHTML = (city && !lmk ? '<div class="bstrip">' + [0, 1, 2].map(k => '<span class="' + (G.bld[i] >> k & 1 ? 'on' : '') + '">' + (G.bld[i] >> k & 1 ? bIcon(k) : '') + '</span>').join('') + '</div>' : '') +
+      '<div class="col"><div class="pic">' + (lmk ? lmPic(t) : tilePic(t)) + '</div>' + (t.type === 'fund' ? '<div class="nm l4">🪙 ' + nf(G.pot) + '</div>' : nameHtml(t)) + '</div>' + (lmk ? '<i class="shine"></i>' : '');
   });
 }
 let boardSize = 600, pieceEls = [];
@@ -653,14 +651,14 @@ async function notice(p, head, ms) { // 사람에게는 창, AI 차례에는 잠
 // 칸 정보
 function tileInfo(i) {
   const t = TILES[i], o = G.owner[i];
-  let h = '<div class="big">' + (t.type === 'city' && G.lm[i] ? lmPic(t) : tilePic(t)) + '</div><h2>' + (t.type === 'city' ? '<span class="gband" style="background:' + GROUPS[t.g] + '"></span>' : '') + t.name + '</h2>';
+  let h = '<div class="big">' + (t.type === 'city' && G.lm[i] ? lmPic(t) : tilePic(t)) + '</div><h2>' + t.name + '</h2>';
   if (t.type === 'city') {
-    h += '<p>' + (o != null ? pn(G.players[o]) + '의 도시' : '주인 없는 도시') + (hasSet(i) ? ' · <b>같은 색 완성! 통행료 2배</b>' : '') + '</p><table class="toll">' +
+    h += '<p>' + (o != null ? pn(G.players[o]) + '의 도시' : '주인 없는 도시') + '</p><table class="toll">' +
       '<tr class="' + (o != null ? 'now' : '') + '"><td>🚩 땅</td><td>땅값 ' + nf(t.price) + '</td><td>통행료 ' + nf(r10(t.price * LAND_TOLL)) + '</td></tr>' +
       [0, 1, 2].map(k => '<tr class="' + (G.bld[i] >> k & 1 ? 'now' : '') + '"><td>' + B[k].emo + ' ' + B[k].n + '</td><td>짓는 값 ' + nf(bCost(i, k)) + '</td><td>통행료 +' + nf(r10(t.price * B[k].toll)) + '</td></tr>').join('') +
       '<tr class="' + (G.lm[i] ? 'now' : '') + '"><td>🏰 랜드마크</td><td>짓는 값 ' + nf(lmCost(i)) + '</td><td>통행료 ' + nf(r10(t.price * LM_TOLL)) + '</td></tr></table>' +
       '<p style="font-size:14px;color:var(--ink2)">건물 3개는 함께 서고 통행료가 더해져요. 3개를 다 지은 뒤 다시 도착하면 랜드마크!</p>' + (o != null ? '<p>지금 통행료 <b>' + nf(toll(i)) + '냥</b></p>' : '') +
-      (o != null ? '<p style="font-size:15px">' + (G.lm[i] ? '🏰 랜드마크가 있어 아무도 인수할 수 없어요.' : '인수하는 값 <b>' + nf(takeCost(i)) + '냥</b>') + '</p>' : '') + '<p style="font-size:14px;color:var(--ink2)">같은 색: ' + TILES.filter(x => x.type === 'city' && x.g === t.g).map(x => x.name).join(', ') + '</p>';
+      (o != null ? '<p style="font-size:15px">' + (G.lm[i] ? '🏰 랜드마크가 있어 아무도 인수할 수 없어요.' : '인수하는 값 <b>' + nf(takeCost(i)) + '냥</b>') + '</p>' : '');
   } else if (t.type === 'mark') {
     h += '<p>' + (o != null ? pn(G.players[o]) + '의 명소' : '주인 없는 명소') + ' · 값 ' + nf(t.price) + '냥</p><p>건물은 못 지어요. 명소를 많이 가질수록 통행료가 올라요.</p><table class="toll">' + [1, 2, 3, 4].map(n => '<tr><td>명소 ' + n + '곳</td><td>통행료 ' + nf(MARK_TOLL[n]) + '</td></tr>').join('') + '</table>';
   } else h += '<p>' + ({ start:'지나갈 때마다 용돈 ' + SALARY + '냥을 받아요.', card:'도깨비 주머니에서 행운 카드를 한 장 뽑아요.', give:GIVE + '냥을 꼬비 저금통에 넣어요.',
@@ -779,9 +777,9 @@ async function land(p) {
       if (p.money < t.price) { say(pn(p) + ' ' + t.name + ' 도착. 살 돈이 모자라요.'); await wait(900); return; }
       let yes;
       if (p.ai) { say(pn(p) + ' ' + t.name + ' 도착. 살까 말까…', true); await wait(900); yes = p.money - t.price >= Math.min(aiReserve(p), 80 + t.price / 4); }
-      else yes = await ask('<div class="big">' + tilePic(t) + '</div><h2>' + (t.type === 'city' ? '<span class="gband" style="background:' + GROUPS[t.g] + '"></span>' : '') + t.name + '</h2><p>주인이 없어요. 살까요? (가진 돈 ' + nf(p.money) + '냥)' + (t.type === 'city' ? '<br><small style="color:var(--ink2)">건물은 다음에 내 땅에 다시 도착하면 지을 수 있어요.</small>' : '') + '</p>',
+      else yes = await ask('<div class="big">' + tilePic(t) + '</div><h2>' + t.name + '</h2><p>주인이 없어요. 살까요? (가진 돈 ' + nf(p.money) + '냥)' + (t.type === 'city' ? '<br><small style="color:var(--ink2)">건물은 다음에 내 땅에 다시 도착하면 지을 수 있어요.</small>' : '') + '</p>',
         [{ label:'🚩 ' + (t.type === 'mark' ? '명소 사기' : '땅 사기'), right:nf(t.price) + '냥', cls:'btn-info', v:true }, { label:'안 살래요', v:false }]);
-      if (yes) { money(p, -t.price); G.owner[i] = p.id; beep('buy'); say(pn(p) + ' <b>' + t.name + '</b>을(를) 샀어요!'); refresh(); if (hasSet(i)) { toast('같은 색 도시 완성! 통행료 2배'); } await wait(700); }
+      if (yes) { money(p, -t.price); G.owner[i] = p.id; beep('buy'); say(pn(p) + ' <b>' + t.name + '</b>을(를) 샀어요!'); refresh(); await wait(700); }
       else { say(pn(p) + ' ' + t.name + '을(를) 그냥 지나가요.'); await wait(500); }
     } else if (o === p.id) {
       if (t.type === 'mark' || G.lm[i]) { say(pn(p) + ' 내 ' + (t.type === 'mark' ? '명소' : '도시') + ' ' + t.name + '에서 쉬어 가요.'); await wait(800); return; }
@@ -813,11 +811,11 @@ async function land(p) {
       if (p.alive && t.type === 'city' && G.owner[i] === o && !G.lm[i]) {
         const c = p.half ? Math.round(takeCost(i) / 2) : takeCost(i); let yes = false;
         if (p.money >= c) {
-          if (p.ai) { const mine = TILES.some((x, j) => x.type === 'city' && x.g === t.g && G.owner[j] === p.id); yes = p.money - c >= 300 && (mine || G.bld[i] || hasSet(i)); if (yes) await wait(600); }
+          if (p.ai) { yes = p.money - c >= 300 && (G.bld[i] > 0 || t.price >= 400); if (yes) await wait(600); }
           else yes = await ask('<div class="big">' + tilePic(t) + '</div><h2>' + t.name + ' 인수</h2><p>' + pn(own) + '의 도시예요. ' + (G.bld[i] ? '건물까지 통째로 ' : '') + '인수할까요?' + (p.half ? ' <b>반값 인수권 사용!</b>' : '') + '<br>인수하면 ' + pn(own) + '에게 돈을 주고 내 도시가 돼요. (가진 돈 ' + nf(p.money) + '냥)</p>',
             [{ label:'🤝 인수하기', right:nf(c) + '냥', cls:'btn-mint', v:true }, { label:'안 할래요', v:false }]);
         }
-        if (yes) { if (p.half) p.half--; money(p, -c); money(own, c); G.owner[i] = p.id; beep('buy'); say(pn(p) + ' ' + pn(own) + '의 <b>' + t.name + '</b>을(를) ' + nf(c) + '냥에 인수했어요!'); refresh(); if (hasSet(i)) toast('같은 색 도시 완성! 통행료 2배'); await wait(800); }
+        if (yes) { if (p.half) p.half--; money(p, -c); money(own, c); G.owner[i] = p.id; beep('buy'); say(pn(p) + ' ' + pn(own) + '의 <b>' + t.name + '</b>을(를) ' + nf(c) + '냥에 인수했어요!'); refresh(); await wait(800); }
       }
     }
   } else if (t.type === 'card') await drawCard(p);
@@ -868,7 +866,7 @@ function aiBalloon(p) {
   TILES.forEach((t, i) => {
     if (i === BALLOON) return; let s = 0;
     if (t.type === 'city' && G.owner[i] === p.id && !G.lm[i] && (G.bld[i] === 7 ? p.money - lmCost(i) > 300 : aiBuild(p, i).length > 0)) s = 50 + t.price / 10;
-    else if ((t.type === 'city' || t.type === 'mark') && G.owner[i] == null && p.money - t.price > 300) s = 30 + t.price / 12 + (t.type === 'city' && TILES.some((x, j) => x.type === 'city' && x.g === t.g && G.owner[j] === p.id) ? 40 : 0);
+    else if ((t.type === 'city' || t.type === 'mark') && G.owner[i] == null && p.money - t.price > 300) s = 30 + t.price / 12;
     else if (i === FUND && G.pot >= 300) s = 20 + G.pot / 10;
     if (s > score) { score = s; best = i; }
   });
