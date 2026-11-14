@@ -518,10 +518,10 @@ const MONSTERS = {
   toad:   { name:'두꺼비',      hp:130, spd:0,   dmg:14, r:23, xp:6, kb:.3,  color:'#6f9a4a' },
   cloud:  { name:'먹구름 귀신', hp:95,  spd:56,  dmg:10, r:21, xp:5, kb:.6,  color:'#4a4f66' },
   mini:   { name:'꼬마 먹구름', hp:25,  spd:80,  dmg:6,  r:12, xp:1, kb:1,   color:'#5c6178' },
-  jang:   { name:'장승',        hp:500, spd:46,  dmg:12, r:34, xp:40, kb:0,  color:'#a0703a', elite:true },
-  gumiho: { name:'구미호',      hp:6000,  spd:88,  dmg:16, r:44, xp:150, kb:0, color:'#fff0f5', boss:true, bonus:2000 },
-  eodum:  { name:'어둑시니',    hp:14000, spd:78,  dmg:24, r:46, xp:300, kb:0, color:'#262040', boss:true, bonus:4000 },
-  imugi:  { name:'이무기',      hp:60000, spd:135, dmg:28, r:40, xp:0,   kb:0, color:'#3f8f7a', boss:true, bonus:10000 },
+  jang:   { name:'장승',        hp:700, spd:46,  dmg:12, r:34, xp:40, kb:0,  color:'#a0703a', elite:true },
+  gumiho: { name:'구미호',      hp:12000, spd:88,  dmg:16, r:44, xp:150, kb:0, color:'#fff0f5', boss:true, bonus:2000 },
+  eodum:  { name:'어둑시니',    hp:28000, spd:78,  dmg:24, r:46, xp:300, kb:0, color:'#262040', boss:true, bonus:4000 },
+  imugi:  { name:'이무기',      hp:100000, spd:135, dmg:28, r:40, xp:0,   kb:0, color:'#3f8f7a', boss:true, bonus:10000 },
   seg:    { name:'이무기 몸통', hp:1,     spd:0,   dmg:22, r:30, xp:0,   kb:0, color:'#3f8f7a' },
   lantern:{ name:'청사초롱',    hp:1,     spd:0,   dmg:0,  r:16, xp:0,   kb:0, color:'#e85050', prop:true },
 };
@@ -552,8 +552,8 @@ const WAVES = [
 ];
 // 특별한 사건 (초)
 const EVENTS = [
-  { at:210,  type:'elite' },
   { at:180,  type:'swarm', m:'bat', n:40 },
+  { at:210,  type:'elite' },
   { at:300,  type:'elite' },
   { at:330,  type:'ring', m:'egg', n:26 },
   { at:420,  type:'boss', m:'gumiho' },
@@ -779,7 +779,7 @@ function calcStats() {
   S.luck = 1 + .1 * L('pouch');
   S.magnet = 90 * (1 + .3 * L('yeot'));
   S.maxHp = 120 + 20 * L('ginseng');
-  S.regen = .25 + .4 * L('ginseng');
+  S.regen = .25 * L('ginseng');   // 기본 회복은 없고, 인삼이 있어야 조금씩 차요
   S.armor = L('lid');
 }
 
@@ -863,8 +863,8 @@ function randomOnScreen(n) {
 function hitCD(e, key, t) { if (!e.cd) e.cd = {}; if ((e.cd[key] || 0) > G.t) return false; e.cd[key] = G.t + t; return true; }
 
 /* ---------- 요괴 만들기 ---------- */
-function hpMul() { return 1 + G.t / 60 * .17; }
-function dmgMul() { return 1 + G.t / 60 * .045; }
+function hpMul() { const m = G.t / 60; return 1 + m * .2 + m * m * .015; }
+function dmgMul() { return 1 + G.t / 60 * .085; }
 function spawnPos(dist) {
   const p = G.p, a = Math.random() * TAU;
   const R = dist || Math.hypot(VW, VH) / 2 + 60;
@@ -876,10 +876,10 @@ function spawnPos(dist) {
 function makeEnemy(type, x, y, extra) {
   const M = MONSTERS[type];
   const scale = (M.boss || type === 'seg' || M.prop) ? 1 : hpMul();
-  const e = { id: G.nextId++, type, x, y, r: M.r, hp: M.hp * scale, maxHp: M.hp * scale, spd: M.spd, dmg: M.dmg, xp: M.xp,
+  const e = { id: G.nextId++, type, x, y, r: M.r, hp: M.hp * scale, maxHp: M.hp * scale, spd: M.boss ? M.spd : M.spd * (1 + Math.min(.2, G.t / 6000)), dmg: M.dmg, xp: M.xp,
     kbRes: M.kb, kbx: 0, kby: 0, flash: 0, face: 1, slowT: 0, st: 0, stT: rnd(1, 3), ph: Math.random() * TAU,
     boss: !!M.boss, elite: !!M.elite, prop: !!M.prop };
-  if (M.elite) { e.hp = e.maxHp = M.hp * (1 + G.t / 60 * .4); e.dmg = M.dmg * (1 + G.t / 600); }
+  if (M.elite) { e.hp = e.maxHp = M.hp * (1 + G.t / 60 * .6); e.dmg = M.dmg * (1 + G.t / 600); }
   if (extra) Object.assign(e, extra);
   G.enemies.push(e); return e;
 }
@@ -973,7 +973,7 @@ function damagePlayer(d) {
   const p = G.p;
   if (G.t < p.inv || G.over || G.god) return;
   d = Math.max(1, d * dmgMul() - S.armor);
-  p.hp -= d; p.inv = G.t + .6; p.hurtT = .25; G.hurtFlash = .35; G.shake = Math.min(1, G.shake + .35);
+  p.hp -= d; p.inv = G.t + .5; p.hurtT = .25; G.hurtFlash = .35; G.shake = Math.min(1, G.shake + .35);
   sfx('hurt');
   if (p.hp <= 0) { p.hp = 0; G.over = true; sfx('over'); setTimeout(() => endGame(false), 900); }
 }
@@ -1441,7 +1441,7 @@ function updatePickups(dt) {
   }
   G.picks = G.picks.filter(k => !k.dead);
 }
-function xpNeed(L) { return L < 20 ? 5 + (L - 1) * 5 : L < 40 ? 100 + (L - 20) * 9 : 280 + (L - 40) * 20; }
+function xpNeed(L) { if (L < 10) return 5 + (L - 1) * 5; const k = L - 10; return Math.round(50 + k * 9 + k * k * .9); }
 function gainXp(v) {
   const p = G.p; p.xp += v * S.growth;
   while (p.xp >= p.need) { p.xp -= p.need; p.lv++; p.need = xpNeed(p.lv); G.pendingLv++; }
@@ -1467,8 +1467,9 @@ function update(dt) {
   // 등장
   const wv = WAVES[Math.min(WAVES.length - 1, Math.floor(G.t / 60))];
   let alive = 0; for (const e of G.enemies) if (!e.prop && !e.boss && !e.parent) alive++;
-  if (alive < wv.max) {
-    G.spawnAcc += dt * Math.max(3, (wv.max - alive) * .9);
+  const more = clamp((G.t - 120) / 240, 0, 1), cap = Math.min(330, Math.round(wv.max * (1 + .3 * more)));   // 2분부터 6분까지 서서히 30% 더 많이 나와요
+  if (alive < cap) {
+    G.spawnAcc += dt * Math.max(3, (cap - alive) * (.9 + .3 * more));
     let c = 0; while (G.spawnAcc >= 1 && c++ < 12) { G.spawnAcc--; spawnOne(pickMix(wv.mix)); }
   } else G.spawnAcc = 0;
   updateLanterns(dt);
