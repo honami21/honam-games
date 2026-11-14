@@ -212,8 +212,8 @@
           <div class="box-title">규칙 고르기</div>
           <label class="opt"><input type="checkbox" id="optTimer" checked><span>한 수에 1분 제한<small>1분 안에 두지 않으면 차례가 친구에게 넘어가요.</small></span></label>
           <label class="opt"><input type="checkbox" id="optRenju"><span>공식 규칙 (렌주 규칙)<small>먼저 두는 흑은 3·3, 4·4, 여섯 개 이상(장목) 자리에 둘 수 없어요. 어른들의 정식 오목이에요.</small></span></label>
-          <div class="btn-row"><button class="game-btn btn-primary" id="createBtn">방 만들기</button><button class="game-btn btn-info" id="localBtn">한 화면에서 둘이 하기</button></div>
-          <p style="font-size:14px;color:var(--ink2);margin-top:8px;text-align:center;word-break:keep-all">한 화면에서 둘이 하기는 컴퓨터나 휴대폰 하나로 번갈아 둬요. 방 코드가 필요 없어요.</p>
+          <div class="btn-row"><button class="game-btn btn-primary" id="createBtn">방 만들기</button><button class="game-btn btn-info" id="localBtn">한 화면에서 둘이 하기</button><button class="game-btn" id="cpuBtn" style="background:var(--sky);color:var(--ink)">🤖 꼬비와 하기</button></div>
+          <p style="font-size:14px;color:var(--ink2);margin-top:8px;text-align:center;word-break:keep-all">한 화면에서 둘이 하기는 컴퓨터나 휴대폰 하나로 번갈아 둬요. 꼬비와 하기는 혼자서 꼬비와 겨뤄요. 둘 다 방 코드가 필요 없어요.</p>
         </div>
         <div class="box">
           <div class="box-title">방 코드로 들어가기</div>
@@ -265,6 +265,21 @@
     </div>
     <div class="tags" id="localTags"></div>
     <div class="btn-row"><button class="game-btn btn-secondary" id="lnCancel">취소</button><button class="game-btn btn-primary" id="lnStart">시작!</button></div>
+  </div>
+</div>
+
+<!-- 꼬비와 하기 -->
+<div id="cpuModal" class="modal hidden">
+  <div class="card">
+    <img class="res-img" src="img/ggobi-think.png" alt="">
+    <h2 style="font-size:28px">꼬비와 하기</h2>
+    <p>꼬비 실력을 골라요.</p>
+    <div class="btn-row" style="flex-direction:column;align-items:center">
+      <button class="game-btn btn-info lv" data-lv="1" style="min-width:240px">쉬움 <small style="font-size:14px">· 처음 배우는 친구</small></button>
+      <button class="game-btn btn-primary lv" data-lv="2" style="min-width:240px">보통 <small style="font-size:14px">· 오목을 아는 친구</small></button>
+      <button class="game-btn lv" data-lv="3" style="min-width:240px;background:#6b4bb8">어려움 <small style="font-size:14px">· 어른도 힘들어요</small></button>
+      <button class="game-btn btn-secondary" id="cpuCancel" style="min-width:140px">취소</button>
+    </div>
   </div>
 </div>
 
@@ -465,6 +480,7 @@ const keyOf = d => `${d.round || 0}-${d.tick || 0}`;
 function myColor() {
   if (!room || role === 'watch') return null;
   if (role === 'local') return room.turn;
+  if (role === 'cpu') return room.hostColor;
   const hc = room.hostColor || 'b';
   return role === 'host' ? hc : other(hc);
 }
@@ -646,14 +662,16 @@ function onRoom(snap) {
   if (room.status === 'done') showResult();
   else { $('resultModal').classList.add('hidden'); shownResultFor = ''; }
   // 선 정하기: 방장(한 화면 모드는 이 기기)이 고름
-  if (room.status === 'choosing' && (role === 'host' || role === 'local')) showChoose();
+  if (room.status === 'choosing' && (role === 'host' || (role === 'local' || role === 'cpu'))) showChoose();
   else $('chooseModal').classList.add('hidden');
+  maybeAiMove();
 }
 function showChoose() {
   const hn = room.hostName || '방장', gn = room.guestName || '친구';
   const local = role === 'local';
   $('chText').textContent = (room.round || 1) > 1 ? `${room.round}번째 판이에요. 먼저 두는 사람이 흑이에요.` : '먼저 두는 사람이 흑이에요.';
   $('chHost').textContent = local ? hn : `나 (${hn})`;
+  if (role === 'cpu') $('chText').textContent = (room.round || 1) > 1 ? `${room.round}번째 판이에요. 먼저 두는 쪽이 흑이에요.` : `꼬비 실력: ${['', '쉬움', '보통', '어려움'][room.level]}. 먼저 두는 쪽이 흑이에요.`;
   $('chGuest').textContent = local ? gn : gn;
   $('chooseModal').classList.remove('hidden');
 }
@@ -697,11 +715,11 @@ function render() {
   if (playing) { KBGM.full(); bgmJingled = false; } else KBGM.calm();
   $('pB').classList.toggle('turn', playing && room.turn === 'b');
   $('pW').classList.toggle('turn', playing && room.turn === 'w');
-  $('sideCode').textContent = code; $('sideRoom').classList.toggle('hidden', role === 'local');
+  $('sideCode').textContent = code; $('sideRoom').classList.toggle('hidden', (role === 'local' || role === 'cpu'));
   $('sideRule').innerHTML = (room.rule === 'renju' ? '공식 규칙' : '쉬운 규칙') + ' · ' + (room.timer ? '1분' : '시간 무제한');
   // 연결 끊김 표시
   document.querySelectorAll('.pcard .off').forEach(e => e.remove());
-  if (role !== 'watch' && role !== 'local' && room.status !== 'waiting' && Date.now() - otherSeenAt > 75000) {
+  if (role !== 'watch' && !(role === 'local' || role === 'cpu') && room.status !== 'waiting' && Date.now() - otherSeenAt > 75000) {
     const oc = other(myColor());
     const el = document.createElement('span'); el.className = 'off'; el.textContent = '연결 끊김?';
     $(oc === 'b' ? 'pB' : 'pW').appendChild(el);
@@ -719,7 +737,7 @@ function renderStatus() {
   const st = $('status'), mine = myColor();
   if (room.status === 'waiting') { st.innerHTML = '친구가 들어오기를 기다리고 있어요'; return; }
   if (room.status === 'choosing') {
-    st.innerHTML = role === 'host' || role === 'local' ? '먼저 둘 사람(흑)을 골라요' : `방장 <b>${esc(room.hostName)}</b>님이 먼저 둘 사람을 정하고 있어요<span class="dots"></span>`; return;
+    st.innerHTML = role === 'host' || (role === 'local' || role === 'cpu') ? '먼저 둘 사람(흑)을 골라요' : `방장 <b>${esc(room.hostName)}</b>님이 먼저 둘 사람을 정하고 있어요<span class="dots"></span>`; return;
   }
   if (room.status === 'done') {
     st.innerHTML = room.winner === 'draw' ? '비겼어요!' : `<b>${esc(nameOf(room.winner))}</b> 승리!`; return;
@@ -735,7 +753,7 @@ function renderStatus() {
     const touch = matchMedia('(pointer:coarse)').matches;
     st.innerHTML = selected >= 0 ? '이 자리가 맞으면 <b>여기에 두기</b>를 눌러요'
       : `<b>내 차례예요!</b> ${touch ? '둘 곳을 눌러요' : '둘 곳을 클릭해요'}`;
-  } else st.innerHTML = `${esc(nameOf(room.turn))} 차례예요<span class="dots"></span>`;
+  } else st.innerHTML = role === 'cpu' ? `꼬비가 생각하고 있어요<span class="dots"></span>` : `${esc(nameOf(room.turn))} 차례예요<span class="dots"></span>`;
 }
 function renderActions() {
   const a = $('actions'), mine = myColor();
@@ -744,10 +762,10 @@ function renderActions() {
     h += '<button class="game-btn" id="placeBtn">여기에 두기</button><button class="game-btn btn-secondary" id="unselBtn">취소</button>';
   else if (room.status === 'done' && role !== 'watch')
     h += '<button class="game-btn btn-info" id="resBtn">결과 보기</button>';
-  if (role !== 'local' && room.status !== 'waiting' && !(room.status === 'playing' && selected >= 0 && room.turn === mine))
+  if (!(role === 'local' || role === 'cpu') && room.status !== 'waiting' && !(room.status === 'playing' && selected >= 0 && room.turn === mine))
     h += '<button class="game-btn" id="stkBtn">😊 응원</button>';
   if (!(room.status === 'playing' && selected >= 0 && room.turn === mine))
-    h += `<button class="game-btn btn-secondary" id="leaveBtn">${role === 'watch' ? '구경 그만하기' : role === 'local' ? '그만하기' : '나가기'}</button>`;
+    h += `<button class="game-btn btn-secondary" id="leaveBtn">${role === 'watch' ? '구경 그만하기' : role === 'local' || role === 'cpu' ? '그만하기' : '나가기'}</button>`;
   if (a.dataset.h !== h) {
     a.innerHTML = h; a.dataset.h = h;
     if ($('placeBtn')) $('placeBtn').onclick = () => { if (selected >= 0) tryPlace(selected); };
@@ -906,9 +924,148 @@ cv.addEventListener('pointerup', e => {
   selected = i; render();
 });
 
+// ============================================================
+//  꼬비 (컴퓨터) 실력
+// ============================================================
+const AI_PAT = [
+  ['XXXXX', 1e7],
+  ['.XXXX.', 2e5],
+  ['XXXX.', 12000], ['.XXXX', 12000], ['X.XXX', 12000], ['XXX.X', 12000], ['XX.XX', 12000],
+  ['..XXX.', 3000], ['.XXX..', 3000], ['.X.XX.', 2800], ['.XX.X.', 2800],
+  ['XXX..', 300], ['..XXX', 300], ['X.XX.', 280], ['.XX.X', 280], ['XX.X.', 280], ['.X.XX', 280], ['X..XX', 250], ['XX..X', 250], ['X.X.X', 250],
+  ['..XX..', 200], ['..XX.', 120], ['.XX..', 120], ['.X.X.', 100], ['.X..X.', 60],
+  ['XX...', 20], ['...XX', 20], ['.X...', 8], ['...X.', 8], ['..X..', 10]
+];
+function aiLine(bd, x, y, dx, dy, c) {
+  let t = '';
+  for (let k = -5; k <= 5; k++) { const v = k === 0 ? c : at(bd, x + k * dx, y + k * dy); t += v === c ? 'X' : v === '.' ? '.' : 'O'; }
+  let best = 0;
+  for (const [p, sc] of AI_PAT) {
+    if (sc <= best) continue;
+    for (let st = Math.max(0, 5 - p.length + 1); st <= 5 && st + p.length <= 11; st++) if (t.substr(st, p.length) === p) { best = sc; break; }
+  }
+  return best;
+}
+function aiCell(bd, x, y, c) {
+  let sum = 0, big = 0;
+  for (const [dx, dy] of DIRS) { const v = aiLine(bd, x, y, dx, dy, c); sum += v; if (v >= 2800) big++; }
+  if (big >= 2) sum += 60000;          // 4-3, 3-3 같은 겹치기 공격
+  return sum;
+}
+function aiCands(bd) {
+  const out = [];
+  for (let i = 0; i < N * N; i++) {
+    if (bd[i] !== '.') continue;
+    const x = i % N, y = Math.floor(i / N);
+    let near = false;
+    for (let dy = -2; dy <= 2 && !near; dy++) for (let dx = -2; dx <= 2; dx++) { const v = at(bd, x + dx, y + dy); if (v === 'b' || v === 'w') { near = true; break; } }
+    if (near) out.push(i);
+  }
+  return out;
+}
+function aiWins(bd, i, c, renju) { const x = i % N, y = Math.floor(i / N); put(bd, x, y, c); const w = winLine(bd, x, y, c, renju); put(bd, x, y, '.'); return !!w; }
+function aiLegal(bd, i, c, renju) { return !(renju && c === 'b' && !aiWins(bd, i, c, renju) && isForbidden(bd, i % N, Math.floor(i / N))); }
+// 계속 4를 두어 이기는 길(VCF) 찾기
+function aiVCF(bd, me, renju, depth, budget) {
+  if (depth <= 0 || budget.n-- <= 0) return -1;
+  const opp = other(me), cands = aiCands(bd);
+  for (const i of cands) {
+    const x = i % N, y = Math.floor(i / N);
+    let four = false;
+    for (const [dx, dy] of DIRS) if (aiLine(bd, x, y, dx, dy, me) >= 12000) { four = true; break; }
+    if (!four || !aiLegal(bd, i, me, renju)) continue;
+    put(bd, x, y, me);
+    const fives = cands.filter(j => j !== i && bd[j] === '.' && aiWins(bd, j, me, renju));
+    let ok = false;
+    if (fives.length >= 2) ok = true;
+    else if (fives.length === 1 && !cands.some(j => bd[j] === '.' && aiWins(bd, j, opp, renju))) {
+      const b = fives[0]; put(bd, b % N, Math.floor(b / N), opp);
+      ok = aiVCF(bd, me, renju, depth - 1, budget) >= 0;
+      put(bd, b % N, Math.floor(b / N), '.');
+    }
+    put(bd, x, y, '.');
+    if (ok) return i;
+  }
+  return -1;
+}
+function aiMove(boardStr, me, level, renju) {
+  const bd = boardStr.split(''), opp = other(me);
+  if (!bd.includes('b') && !bd.includes('w')) return 7 * N + 7;
+  let cands = aiCands(bd).filter(i => aiLegal(bd, i, me, renju));
+  if (!cands.length) return bd.indexOf('.');
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  // 1. 바로 이기는 자리
+  const win = cands.find(i => aiWins(bd, i, me, renju)); if (win !== undefined) return win;
+  // 2. 상대가 바로 이기는 자리 막기 (쉬움은 가끔 놓침)
+  const block = aiCands(bd).filter(i => aiWins(bd, i, opp, renju) && aiLegal(bd, i, me, renju));
+  if (block.length && !(level === 1 && Math.random() < .3)) return block[0];
+  // 3. 어려움: 계속 4로 몰아 이기는 길
+  if (level === 3) { const v = aiVCF(bd, me, renju, 10, { n: 400 }); if (v >= 0) return v; }
+  const scored = cands.map(i => {
+    const x = i % N, y = Math.floor(i / N);
+    const a = aiCell(bd, x, y, me), d = aiCell(bd, x, y, opp);
+    return { i, a, d, s: a + d * (level === 1 ? .55 : level === 2 ? .9 : AIW.d) };
+  }).sort((p, q) => q.s - p.s);
+  if (level === 1) {
+    const top = scored.slice(0, Math.random() < .35 ? 8 : 3);
+    return pick(top).i;
+  }
+  if (level === 2) {
+    const best = scored[0].s, top = scored.filter(o => o.s >= best * .95).slice(0, 3);
+    return pick(top).i;
+  }
+  // 어려움: 상위 후보마다 상대의 가장 좋은 대답까지 살펴봄
+  let bestI = scored[0].i, bestV = -Infinity;
+  for (const o of scored.slice(0, 12)) {
+    const x = o.i % N, y = Math.floor(o.i / N);
+    put(bd, x, y, me);
+    let oppBest = 0;
+    for (const j of aiCands(bd)) {
+      const jx = j % N, jy = Math.floor(j / N);
+      if (renju && opp === 'b' && isForbidden(bd, jx, jy)) continue;
+      const v = aiCell(bd, jx, jy, opp) + aiCell(bd, jx, jy, me) * .5;
+      if (v > oppBest) oppBest = v;
+    }
+    put(bd, x, y, '.');
+    const val = o.s - oppBest * AIW.o + Math.random() * 5;
+    if (val > bestV) { bestV = val; bestI = o.i; }
+  }
+  return bestI;
+}
+const AIW = { d: .8, o: .6 };
+let aiTimer = 0, aiKey = '';
+function maybeAiMove() {
+  if (role !== 'cpu' || !room || room.status !== 'playing') return;
+  const cpuC = other(room.hostColor);
+  if (room.turn !== cpuC || aiKey === tickKey) return;
+  aiKey = tickKey;
+  const key = tickKey;
+  clearTimeout(aiTimer);
+  aiTimer = setTimeout(() => {
+    if (role !== 'cpu' || !room || tickKey !== key || room.status !== 'playing') return;
+    const i = aiMove(room.board, cpuC, room.level || 2, room.rule === 'renju');
+    tryPlace(i, cpuC);
+  }, 450 + Math.random() * 400);
+}
+function startCpu(level) {
+  $('cpuModal').classList.add('hidden');
+  const n = ($('nameInput').value.trim() || '나').slice(0, 8);
+  code = ''; ref = null; role = 'cpu'; aiKey = '';
+  room = null; tickKey = ''; passSent = ''; selected = -1; shownResultFor = ''; lastMoveSeen = ''; lastStk = null;
+  onRoom({ exists: () => true, data: () => ({
+    code: '', status: 'choosing', rule: $('optRenju').checked ? 'renju' : 'free', timer: $('optTimer').checked, level,
+    hostId: 'ME', hostName: n, guestId: 'CPU', guestName: '꼬비', hostColor: 'b',
+    board: EMPTY_BOARD, turn: 'b', tick: 1, round: 1, moveNo: 0, last: -1,
+    winner: '', winLine: [], endReason: '', lastEvent: 'start', left: '', again: { host: false, guest: false }
+  }) });
+}
+$('cpuBtn').onclick = () => { $('startMsg').textContent = ''; $('cpuModal').classList.remove('hidden'); };
+$('cpuCancel').onclick = () => $('cpuModal').classList.add('hidden');
+document.querySelectorAll('#cpuModal .lv').forEach(b => b.onclick = () => startCpu(+b.dataset.lv));
+
 // 한 화면 모드에서는 Firebase 대신 이 기기 안에서만 바꿔요
 async function txRun(fn) {
-  if (role !== 'local') return runTransaction(db, fn);
+  if (!(role === 'local' || role === 'cpu')) return runTransaction(db, fn);
   const cur = JSON.parse(JSON.stringify(room));
   let up = null;
   const res = await fn({ get: async () => ({ exists: () => true, data: () => cur }), update: (r, d) => { up = d; } });
@@ -937,9 +1094,9 @@ $('localBtn').onclick = () => {
 $('lnCancel').onclick = () => $('localModal').classList.add('hidden');
 $('lnStart').onclick = startLocal;
 
-async function tryPlace(i) {
+async function tryPlace(i, as) {
   if (busy || !room) return;
-  const mine = myColor(), expected = tickKey;
+  const mine = as || myColor(), expected = tickKey;
   busy = true; selected = -1; hover = -1;
   try {
     await txRun(async tx => {
@@ -1011,11 +1168,11 @@ function showResult() {
   if (w === 'draw') { title = '비겼어요!'; text = '판이 꽉 찼어요. 둘 다 정말 잘했어요!'; img = 'ggobi-cheer'; }
   else if (role === 'local') { title = `${nameOf(w)} 승리!`; text = reason + ' 한 판 더 하면 먼저 둘 사람을 다시 골라요.'; img = 'ggobi-cheer'; if (first) beep('win'); }
   else if (!mine) { title = `${nameOf(w)} 승리!`; text = reason; }
-  else if (w === mine) { title = '이겼어요!'; text = reason; img = 'ggobi-cheer'; if (first) beep('win'); }
-  else { title = '아쉽게 졌어요'; text = room.endReason === 'leave' ? '내가 나가서 끝났어요.' : `${nameOf(w)}님이 다섯 개를 이었어요. 다음엔 꼭 이겨요!`; img = 'ggobi-cry'; if (first) beep('lose'); }
+  else if (w === mine) { title = role === 'cpu' ? '꼬비를 이겼어요!' : '이겼어요!'; text = reason + (role === 'cpu' ? ' 한 판 더 하면 먼저 둘 쪽을 다시 골라요.' : ''); img = 'ggobi-cheer'; if (first) beep('win'); }
+  else { title = '아쉽게 졌어요'; text = room.endReason === 'leave' ? '내가 나가서 끝났어요.' : (role === 'cpu' ? '꼬비가 다섯 개를 이었어요. 다음엔 꼭 이겨요!' : `${nameOf(w)}님이 다섯 개를 이었어요. 다음엔 꼭 이겨요!`); img = 'ggobi-cry'; if (first) beep('lose'); }
   $('resImg').src = `img/${img}.png`; $('resTitle').textContent = title; $('resText').textContent = text;
   let h = '<button class="game-btn btn-secondary" id="seeBoardBtn">판 보기</button>';
-  if (role === 'local') h += '<button class="game-btn btn-primary" id="againBtn">한 판 더</button><button class="game-btn btn-info" id="watchLeaveBtn">그만하기</button>';
+  if ((role === 'local' || role === 'cpu')) h += '<button class="game-btn btn-primary" id="againBtn">한 판 더</button><button class="game-btn btn-info" id="watchLeaveBtn">그만하기</button>';
   else if (role !== 'watch') {
     const meK = role, otK = role === 'host' ? 'guest' : 'host', ag = room.again || {};
     if (room.left) h += '';
@@ -1024,7 +1181,7 @@ function showResult() {
     if (room.left && room.left !== role) $('resText').textContent = text + ' 친구가 방을 나갔어요.';
     else if (ag[otK] && !ag[meK]) $('resText').textContent = text + ' 친구가 한 판 더 하자고 해요!';
   } else h += '<button class="game-btn btn-primary" id="watchLeaveBtn">구경 그만하기</button>';
-  if (role !== 'local') h += '<button class="game-btn" id="resStkBtn" style="background:var(--sky);color:var(--ink)">😊 응원</button>';
+  if (!(role === 'local' || role === 'cpu')) h += '<button class="game-btn" id="resStkBtn" style="background:var(--sky);color:var(--ink)">😊 응원</button>';
   $('resBtns').innerHTML = h;
   if ($('resStkBtn')) $('resStkBtn').onclick = toggleTray;
   $('resultModal').classList.remove('hidden');
@@ -1038,7 +1195,7 @@ async function rematch() {
       const s = await tx.get(ref); const d = s.data();
       if (!d || d.status !== 'done' || d.left) return;
       const ag = Object.assign({ host: false, guest: false }, d.again || {}); ag[role] = true;
-      if (role === 'local') ag.host = ag.guest = true;
+      if ((role === 'local' || role === 'cpu')) ag.host = ag.guest = true;
       if (ag.host && ag.guest) {
         tx.update(ref, {
           status: 'choosing', board: EMPTY_BOARD, turn: 'b', tick: (d.tick || 0) + 1, round: (d.round || 1) + 1, moveNo: 0, last: -1,
@@ -1053,7 +1210,7 @@ async function rematch() {
 // ---------- 나가기 ----------
 function askLeave() {
   if (role === 'watch') { leaveRoomLocal(); return; }
-  if (role === 'local') {
+  if ((role === 'local' || role === 'cpu')) {
     $('cfTitle').textContent = '그만할까요?'; $('cfText').textContent = '처음 화면으로 돌아가요.';
     $('confirmModal').classList.remove('hidden'); return;
   }
@@ -1067,7 +1224,7 @@ $('cfYes').onclick = async () => {
   $('confirmModal').classList.add('hidden');
   const myC = myColor(), r = role, rf = ref;
   leaveRoomLocal();
-  if (r === 'local') return;
+  if (r === 'local' || r === 'cpu') return;
   try {
     await runTransaction(db, async tx => {
       const s = await tx.get(rf); const d = s.data(); if (!d) return;
