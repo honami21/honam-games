@@ -338,6 +338,7 @@
       <button class="game-btn white small" type="button" data-b="imugi">이무기 부르기</button>
     </div>
     <div id="dev-msg"></div>
+    <div id="dev-pad" style="font-size:12px;color:var(--ink2);word-break:break-all;margin-top:4px"></div>
     <div class="btns">
       <button class="game-btn" id="dev-go" type="button">▶ 시험 시작</button>
       <button class="game-btn white small" id="dev-max" type="button">고른 것 모두 최고로</button>
@@ -2322,16 +2323,25 @@ function padBack(ov) {
   else if (id === 'devpw') $('devpw-close').click();
   else if (id === 'chest' && !$('chest-ok').disabled) $('chest-ok').click();
 }
+function padDebug(gp, std) {
+  const el = $('dev-pad'); if (!el || $('dev').classList.contains('hidden')) return;
+  const on = gp.buttons.map((o, i) => o.pressed ? i : -1).filter(i => i >= 0);
+  el.textContent = `🎮 ${gp.id.slice(0, 40)} · ${std ? '표준 배치' : '날것 배치'} · 누른 버튼: ${on.join(', ') || '없음'} · 축: ${gp.axes.map(v => v.toFixed(1)).join(' ')}`;
+}
 function padTick(dt) {
   const pads = navigator.getGamepads ? navigator.getGamepads() : [];
   let gp = null; for (const g of pads) if (g && g.connected) { gp = g; break; }
   if (!gp) { PAD.x = PAD.y = PAD.mag = 0; return; }
-  const b = i => !!(gp.buttons[i] && gp.buttons[i].pressed);
+  const b = i => i !== undefined && !!(gp.buttons[i] && gp.buttons[i].pressed);
+  // 버튼 번호 배치: 표준 배치(엑스박스식)와, 안드로이드 등에서 오는 날것 배치(L2·R2가 8·9번, SELECT·START가 10·11번, L3·R3가 13·14번)
+  const std = gp.mapping === 'standard' || gp.buttons.length < 12;
+  const M = std ? { a: 0, b: 1, sel: 8, start: 9, up: 12, down: 13, left: 14, right: 15 } : { a: 0, b: 1, sel: 10, start: 11 };
+  padDebug(gp, std);
   let x = gp.axes[0] || 0, y = gp.axes[1] || 0;
   if (Math.hypot(x, y) < .22) { x = 0; y = 0; }
   // 십자키: 표준 배치는 버튼 12~15, 그 밖의 컨트롤러는 축(6·7번) 또는 방향 모자(9번 축)로 와요
   let hx = 0, hy = 0;
-  if (b(14)) hx = -1; if (b(15)) hx = 1; if (b(12)) hy = -1; if (b(13)) hy = 1;
+  if (b(M.left)) hx = -1; if (b(M.right)) hx = 1; if (b(M.up)) hy = -1; if (b(M.down)) hy = 1;
   if (!hx && !hy && gp.mapping !== 'standard') {
     const ax = gp.axes, hat = ax[9];
     if (ax.length > 9 && hat !== undefined && Math.abs(hat) <= 1.05) {
@@ -2343,7 +2353,7 @@ function padTick(dt) {
   }
   if (hx || hy) { x = hx; y = hy; }
   PAD.x = x; PAD.y = y; PAD.mag = Math.hypot(x, y);
-  const down = i => b(i) && !PAD.prev[i];
+  const down = i => i !== undefined && b(i) && !PAD.prev[i];
   const ov = (modal && modal !== 'x') || !G || G.ended ? padOverlay() : null;
   if (ov) {
     // 메뉴: 방향은 처음 한 번, 오래 누르면 천천히 반복해요
@@ -2351,9 +2361,9 @@ function padTick(dt) {
     if (dir && dir !== PAD.dir) { PAD.rep = .35; padMove(ov, dir === 'r' ? 1 : dir === 'l' ? -1 : 0, dir === 'd' ? 1 : dir === 'u' ? -1 : 0); }
     else if (dir) { PAD.rep -= dt; if (PAD.rep <= 0) { PAD.rep = .14; padMove(ov, dir === 'r' ? 1 : dir === 'l' ? -1 : 0, dir === 'd' ? 1 : dir === 'u' ? -1 : 0); } }
     PAD.dir = dir;
-    if (down(0)) { const cur = padCurrent(ov); if (cur) { cur._padNew = false; ensureAudio(); cur.click(); } }
-    if (down(1)) padBack(ov);
-    if (down(9)) {
+    if (down(M.a)) { const cur = padCurrent(ov); if (cur) { cur._padNew = false; ensureAudio(); cur.click(); } }
+    if (down(M.b)) padBack(ov);
+    if (down(M.start)) {
       if (ov.id === 'title') $('title-start').click();
       else if (ov.id === 'start') $('start-btn').click();
       else if (ov.id === 'pause') $('resume-btn').click();
@@ -2361,7 +2371,7 @@ function padTick(dt) {
   } else {
     PAD.dir = '';
     const f = document.querySelector('.padf'); if (f) { f.classList.remove('padf'); f.blur(); }
-    if (G && !G.over && !modal && (down(9) || down(8))) openPause();
+    if (G && !G.over && !modal && (down(M.start) || down(M.sel))) openPause();
   }
   PAD.prev = gp.buttons.map(o => o.pressed);
 }
