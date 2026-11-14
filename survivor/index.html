@@ -595,7 +595,7 @@ const IMG_NAMES = [
   'p-tooth','p-lamp','p-beans','p-straw','p-cloth','p-sundial','p-book','p-feather','p-pouch','p-yeot','p-ginseng','p-lid',
   'm-dust','m-bat','m-egg','m-broom','m-fox','m-scare','m-toad','m-cloud','m-jang',
   'b-gumiho','b-eodum','b-imugi-head','b-imugi-body',
-  'gem-blue','gem-green','gem-red','coin','ricecake','bokjori','chest','lantern',
+  'gem-blue','gem-green','gem-red','coin','coin-bundle','ricecake','bokjori','chest','lantern',
   'ggobi-run2','ggobi-run3','ggobi-run4','ggobi-down1','ggobi-down2','ggobi-idle-down','ggobi-up1','ggobi-up2','ggobi-idle-up','ggobi-idle','ggobi-hurt','fx-slash','fx-ring','fx-bolt','fx-gust','fx-vortex','fx-crack','fx-poof','fx-sparkle','chest-open',
   'fx-wisp','fx-ewisp','fx-ink','fx-straw','fx-foxfire','fx-dark','fx-tornado','fx-magpie','fx-dart','fx-fireball',
   'd-tree','d-pine','d-rock','d-jar','d-tower','d-grass','d-flower','d-mush',
@@ -1961,8 +1961,8 @@ function cardHTML(o, i, forChest) {
     const W = WEAPONS[o.id];
     icon = iconHTML('e', o.id); title = W.evoName; tag = '<em class="e">조합!</em>'; desc = W.evoDesc;
     pair = `${W.name} + ${PASSIVES[W.pair].name}`;
-  } else if (o.k === 'heal') { icon = '<div class="ic p">🍡</div>'; title = '쑥떡'; tag = ''; desc = '체력을 50 채워요.'; }
-  else { icon = '<div class="ic p">🪙</div>'; title = '엽전 꾸러미'; tag = ''; desc = '엽전 30개를 얻어요.'; }
+  } else if (o.k === 'heal') { icon = `<div class="ic p">${IMG.ricecake ? '<img src="img/ricecake.png" alt="">' : '🍡'}</div>`; title = '쑥떡'; tag = ''; desc = '체력을 50 채워요.'; }
+  else { const ck = IMG['coin-bundle'] ? 'coin-bundle' : IMG.coin ? 'coin' : ''; icon = `<div class="ic p">${ck ? `<img src="img/${ck}.png" alt="">` : '🪙'}</div>`; title = '엽전 꾸러미'; tag = ''; desc = '엽전 30개를 얻어요.'; }
   return `<button class="card ${o.k === 'evo' ? 'evo' : ''} ${link ? 'linked' : ''}" type="button" data-i="${i}">${icon}<div><div class="t">${title}${tag}</div><div class="d">${desc}</div>${link ? `<div class="link">${link}</div>` : pair ? `<div class="pair">${pair}</div>` : ''}</div>${forChest ? '' : `<span class="key">${i + 1}</span>`}</button>`;
 }
 function openLevelUp() {
