@@ -113,8 +113,11 @@
   .tile.sb .bstrip, .tile.st .bstrip { height:calc(var(--u) * 2.5); flex-direction:row; }
   .tile.sl .bstrip, .tile.sr .bstrip { width:calc(var(--u) * 2.5); flex-direction:column; }
   .tile .bstrip span { flex:1; min-width:0; min-height:0; position:relative; display:flex; align-items:center; justify-content:center; font-size:calc(var(--u) * 1.6); line-height:1; }
-  .tile.sb .bstrip span + span, .tile.st .bstrip span + span { border-left:calc(var(--u) * .12) dashed rgba(44,41,80,.22); }
-  .tile.sl .bstrip span + span, .tile.sr .bstrip span + span { border-top:calc(var(--u) * .12) dashed rgba(44,41,80,.22); }
+  .tile .bstrip { --ln:calc(var(--u) * .28) solid var(--ink); --ln2:calc(var(--u) * .16) solid rgba(44,41,80,.55); }
+  .tile.sb .bstrip { border-bottom:var(--ln); } .tile.st .bstrip { border-top:var(--ln); }
+  .tile.sl .bstrip { border-left:var(--ln); } .tile.sr .bstrip { border-right:var(--ln); }
+  .tile.sb .bstrip span + span, .tile.st .bstrip span + span { border-left:var(--ln2); }
+  .tile.sl .bstrip span + span, .tile.sr .bstrip span + span { border-top:var(--ln2); }
   .tile .bstrip img { position:absolute; inset:4%; width:92%; height:92%; object-fit:contain; filter:drop-shadow(0 calc(var(--u) * .15) 0 rgba(20,10,50,.3)); animation:bpop .35s ease-out; }
   @keyframes bpop { from{ transform:scale(.2) translateY(-60%) } 70%{ transform:scale(1.2) } }
   .tile .col { flex:1; min-width:0; min-height:0; display:flex; flex-direction:column; }
