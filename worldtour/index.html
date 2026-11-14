@@ -235,6 +235,38 @@
   }
   @media (max-height:520px){ #game { padding-top:44px; } #side { width:230px; } .pcard .chip { width:28px; height:28px; } .pcard { padding:3px 8px; } #log { display:none; } }
   .game-btn, .topbar a, .topbar button { box-shadow:none !important; }
+
+  /* ===== 방 만들기 ===== */
+  #playSeg button { padding:9px 14px; font-size:16.5px; }
+  .orow { display:flex; gap:8px; align-items:center; justify-content:center; margin-top:8px; flex-wrap:wrap; }
+  .orow input { flex:1; min-width:0; max-width:260px; padding:9px 12px; border-radius:14px; border:2.5px solid var(--cream2); background:#fff; color:var(--ink);
+    font-size:18px; font-family:'Jua',sans-serif; -webkit-user-select:text; user-select:text; outline:none; text-align:center; }
+  .orow input:focus { border-color:var(--coral); }
+  .orow .game-btn { min-width:0; padding:9px 18px; font-size:17px; }
+  .orow .or { font-size:14px; color:var(--ink2); width:100%; text-align:center; margin-top:2px; }
+  .lb-code { display:inline-flex; flex-direction:column; align-items:center; background:#fff; border:3px solid var(--ink); border-radius:20px; padding:4px 26px 8px; }
+  .lb-code small { font-size:15px; color:var(--ink2); }
+  .lb-code b { font-weight:normal; font-size:52px; letter-spacing:8px; color:var(--coral-d); line-height:1; }
+  .lseat { display:flex; align-items:center; gap:8px; padding:5px 2px; font-size:18px; border-bottom:1px dashed var(--cream2); }
+  .lseat:last-child { border-bottom:none; }
+  .lseat .chip { flex:none; width:34px; height:34px; border-radius:50%; border:3px solid var(--ink); background-size:cover; background-position:center top; }
+  .lseat .nm { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:left; }
+  .lseat.empty .nm { color:var(--ink2); opacity:.7; }
+  .lseat button { flex:none; border:2.5px solid var(--ink); border-radius:14px; background:#fff; color:var(--ink); font-size:14.5px; padding:5px 10px; cursor:pointer; }
+  .lseat button.add { background:var(--mint); }
+  #stkTray { position:fixed; left:50%; bottom:76px; transform:translateX(-50%); z-index:46; background:var(--cream); border:3px solid var(--ink); border-radius:22px;
+    box-shadow:0 6px 0 var(--ink), 0 14px 26px rgba(20,10,50,.35); padding:10px 12px 12px; display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; width:min(420px, calc(100vw - 20px)); }
+  #stkTray .tt { grid-column:1 / -1; font-size:15px; color:var(--ink2); text-align:center; }
+  #stkTray button { border:none; background:none; padding:2px; cursor:pointer; border-radius:14px; transition:transform .1s; }
+  #stkTray button:hover { background:#fff1c9; } #stkTray button:active { transform:scale(.9); }
+  #stkTray img { width:100%; display:block; }
+  #stkTray.cool button { opacity:.4; pointer-events:none; }
+  #stkShow { position:fixed; z-index:45; pointer-events:none; display:flex; flex-direction:column; align-items:center; }
+  #stkShow img { width:100%; display:block; filter:drop-shadow(0 6px 0 rgba(20,10,50,.3)); }
+  #stkShow span { margin-top:-8px; background:var(--cream); border:3px solid var(--ink); border-radius:16px; padding:2px 12px; font-size:17px; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
+  #stkShow.on { animation:stkPop 2.6s ease-out forwards; }
+  @keyframes stkPop { 0%{ opacity:0; transform:scale(.3) rotate(-12deg) } 12%{ opacity:1; transform:scale(1.08) rotate(3deg) } 20%{ transform:scale(1) rotate(0) } 82%{ opacity:1; transform:scale(1) } 100%{ opacity:0; transform:scale(.9) translateY(-20px) } }
+  #stkBtn { background:var(--sky) !important; }
 </style>
 </head>
 <body>
@@ -273,11 +305,19 @@
       <div class="card">
         <div id="logoBox"><div class="logo-txt"><small>꼬비의</small>세계 여행</div></div>
         <p class="lead">주사위를 굴려 세계 도시를 여행해요. <b>도시를 사고 건물을 지어</b> 통행료를 받아요!</p>
-        <div class="box">
+        <div class="segrow" style="margin-top:10px"><div class="seg" id="playSeg"><button data-v="local" class="on">🏠 한 기기에서 하기</button><button data-v="online">🌐 방 만들어 하기</button></div></div>
+        <div class="box" id="localBox">
           <div class="box-title">누가 함께 여행할까요? (2~4명)</div>
           <div id="slots"></div>
         </div>
-        <div class="box">
+        <div class="box hidden" id="onlineBox">
+          <div class="box-title">친구들과 각자 기기로 여행해요 (2~4명)</div>
+          <div class="orow"><input id="nameInput" maxlength="8" placeholder="내 이름" autocomplete="off"></div>
+          <div class="orow"><button class="game-btn btn-primary" id="createBtn">🏠 방 만들기</button></div>
+          <div class="orow"><span class="or">또는 친구가 만든 방에 들어가요</span><input id="codeInput" inputmode="numeric" maxlength="4" placeholder="방 번호 4자리" autocomplete="off" style="max-width:170px"><button class="game-btn btn-mint" id="joinBtn">들어가기</button></div>
+          <div class="hint">방을 만들면 번호 4자리가 나와요. 친구들은 그 번호로 들어와요. 다섯 번째로 들어온 사람부터는 구경하며 응원해요.</div>
+        </div>
+        <div class="box" id="endBox">
           <div class="box-title">언제 끝낼까요?</div>
           <div class="segrow">
             <div class="seg" id="endSeg"><button data-v="bank" class="on">파산할 때까지</button><button data-v="time">시간 정하기</button><button data-v="laps">바퀴 수 정하기</button></div>
@@ -293,6 +333,25 @@
         </div>
       </div>
       <img class="start-ggobi" id="startGgobi" src="../img/ggobi-wave.png" alt="">
+    </div>
+  </div>
+</div>
+
+<!-- 방 대기실 -->
+<div class="screen hidden" id="lobby">
+  <div class="section">
+    <div class="card">
+      <div class="lb-code"><small>방 번호</small><b id="lbCode">0000</b></div>
+      <p class="lead" id="lbLead"></p>
+      <div class="box"><div class="box-title">여행자 <span id="lbCount"></span></div><div id="lbSeats"></div></div>
+      <div class="hint" id="lbEnd"></div>
+      <div class="hint" id="lbWatch"></div>
+      <div class="msg" id="lbMsg"></div>
+      <div class="btn-row">
+        <button class="game-btn btn-secondary" id="lbLeave">나가기</button>
+        <button class="game-btn btn-info" id="lbStk">😊 응원</button>
+        <button class="game-btn btn-primary" id="lbStart">여행 시작!</button>
+      </div>
     </div>
   </div>
 </div>
@@ -314,17 +373,49 @@
     <div id="players"></div>
     <div id="info"></div>
     <div id="log"></div>
-    <div id="sideBtns"><button id="speedBtn" type="button">⏩ 빠르게</button><button id="helpBtn" type="button">❓ 놀이 방법</button><button id="quitBtn" type="button">🚪 그만하기</button></div>
+    <div id="sideBtns"><button id="stkBtn" type="button" class="hidden">😊 응원</button><button id="speedBtn" type="button">⏩ 빠르게</button><button id="helpBtn" type="button">❓ 놀이 방법</button><button id="quitBtn" type="button">🚪 그만하기</button></div>
   </div>
 </div>
 <div class="modal hidden" id="modal"><div class="card" id="modalCard"></div></div>
 <div id="toast"></div>
+<div id="stkTray" class="hidden"></div>
+<div id="stkShow" class="hidden"><img id="stkImg" src="" alt=""><span id="stkWho"></span></div>
 
+<script type="module">
+// 방 만들기에 쓰는 Firebase (랭킹과 같은 저장소)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import { getFirestore, doc, onSnapshot, runTransaction, updateDoc, serverTimestamp, increment, collection, query, where, limit, getDocs, deleteDoc, Timestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+const app = initializeApp({
+  apiKey: "AIzaSyDw2EvTh7PVBrPnkii2F1kPGcqbzcIo41s",
+  authDomain: "honamsaem-class-games.firebaseapp.com",
+  projectId: "honamsaem-class-games",
+  storageBucket: "honamsaem-class-games.firebasestorage.app",
+  messagingSenderId: "251087835017",
+  appId: "1:251087835017:web:ef601265c56affe8ca1b58"
+});
+window.FB = { db: getFirestore(app), doc, onSnapshot, runTransaction, updateDoc, serverTimestamp, increment, collection, query, where, limit, getDocs, deleteDoc, Timestamp };
+dispatchEvent(new Event('fbready'));
+</script>
 <script src="../audio/bgm.js"></script>
 <script>
 'use strict';
 const $ = id => document.getElementById(id);
 function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
+
+// ---------- 방 만들기 (온라인) 기본 ----------
+let myId = store('worldtour-uid');
+if (!myId) { myId = Math.random().toString(36).slice(2, 12); store('worldtour-uid', myId); }
+// drive: 이 기기가 지금 차례를 진행하는 중. 진행하는 기기만 일을 하고, 다른 기기는 받은 내용을 그대로 보여 줘요.
+const NET = { on:false, code:null, ref:null, unsub:null, room:null, role:null, driving:false, epoch:0, log:[], seq:0, lastSeen:0, applied:-1, floor:0,
+  pumping:false, flushT:0, lastFlush:0, chain:null, hbT:0, wdT:0, seen:{}, hbVal:{}, shownOver:false, stkId:undefined, taking:false };
+const bot = p => p.ai || (NET.on && p.uid !== myId);   // 이 기기에서 대신 정해 주는 사람
+function emit(e) {
+  if (!NET.driving) return;
+  e.n = ++NET.seq; NET.log.push(e);
+  if (NET.log.length > 80) NET.log.splice(0, NET.log.length - 80);
+  schedFlush();
+}
+function think(t) { if (NET.driving && G) emit({ k:'think', p:G.turn, t }); }
 
 // ---------- 보드 자료 ----------
 const C = (name, price, g, key, short) => ({ type:'city', name, price, g, key, short: short || name });
@@ -431,6 +522,7 @@ function updSnd() { $('sndToggle').textContent = soundOn ? '🔊' : '🔈'; $('s
 updSnd();
 $('sndToggle').onclick = () => { soundOn = !soundOn; store('worldtour-sound', soundOn ? 'on' : 'off'); updSnd(); };
 function beep(kind) {
+  if (kind !== 'step' && kind !== 'dice' && kind !== 'fly') emit({ k:'beep', b:kind });
   if (!soundOn) return;
   try {
     actx = actx || new (window.AudioContext || window.webkitAudioContext)();
@@ -525,14 +617,17 @@ const nf = v => v.toLocaleString('ko-KR');
 const pn = p => '<i style="color:' + COLORS[p.ci].c + '">' + esc(p.name) + '</i>';
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
 
+const newPlayer = (id, ci, ai, name, uid) => ({ id, ci, ai, name, uid: uid || '', money:START_MONEY, pos:0, island:0, ticket:0, free:0, half:0, balloon:false, alive:true, laps:0 });
+const makeG = (ps, mode, laps, mins) => ({ players:ps, owner:TILES.map(() => null), bld:TILES.map(() => 0), lm:TILES.map(() => false), pot:0, turn:0, deck:[], mode, laps, timeLeft:mins * 60, endAt:0, over:false, endFlag:false });
 function newGame() {
+  if (NET.on) return;
   const ps = [];
-  slots.forEach((s, i) => { if (s.kind !== 'off') ps.push({ id:ps.length, ci:i, ai:s.kind === 'ai', name:(s.name || '').trim() || defName(i, s.kind), money:START_MONEY, pos:0, island:0, ticket:0, free:0, half:0, balloon:false, alive:true, laps:0 }); });
+  slots.forEach((s, i) => { if (s.kind !== 'off') ps.push(newPlayer(ps.length, i, s.kind === 'ai', (s.name || '').trim() || defName(i, s.kind))); });
   if (ps.length < 2) { $('startMsg').textContent = '두 명 이상이어야 여행을 떠날 수 있어요.'; return; }
   $('startMsg').textContent = '';
   store('worldtour-slots', JSON.stringify(slots)); store('worldtour-end', endMode); store('worldtour-time', endTime); store('worldtour-laps', endLaps);
   gid++;
-  G = { players:ps, owner:TILES.map(() => null), bld:TILES.map(() => 0), lm:TILES.map(() => false), pot:0, turn:0, deck:[], mode:endMode, laps:endLaps, timeLeft:endTime * 60, over:false, endFlag:false };
+  G = makeG(ps, endMode, endLaps, endTime);
   $('start').classList.add('hidden'); $('game').classList.remove('hidden'); $('log').innerHTML = '';
   layout(); buildBoard(); drawTiles(); drawPieces(true); drawPlayers(); drawInfo();
   KBGM.track('play'); KBGM.full();
@@ -543,6 +638,11 @@ $('startBtn').onclick = newGame;
 function toStart() { gid++; G = null; hideModal(); $('game').classList.add('hidden'); $('start').classList.remove('hidden'); KBGM.calm(); }
 $('quitBtn').onclick = async () => {
   const my = gid;
+  if (NET.on) {
+    showModal('<h2>방에서 나갈까요?</h2><p>' + (NET.role === 'watch' ? '구경을 그만해요.' : '내 차례는 꼬비가 대신 해 줘요. 같은 방 번호로 다시 들어오면 이어서 할 수 있어요.') + '</p><div class="btn-row"><button class="game-btn btn-secondary" id="mNo">계속하기</button><button class="game-btn btn-primary" id="mYes">나가기</button></div>', true);
+    $('mNo').onclick = () => restoreModal(); $('mYes').onclick = () => leaveRoom();
+    return;
+  }
   showModal('<h2>그만할까요?</h2><p>지금 하던 여행은 사라져요.</p><div class="btn-row"><button class="game-btn btn-secondary" id="mNo">계속하기</button><button class="game-btn btn-primary" id="mYes">그만하기</button></div>', true);
   $('mNo').onclick = () => restoreModal(); $('mYes').onclick = () => { if (my === gid) toStart(); };
 };
@@ -550,7 +650,9 @@ function updSpeed() { $('speedBtn').classList.toggle('on', fast); }
 $('speedBtn').onclick = () => { fast = !fast; store('worldtour-fast', fast ? 'on' : 'off'); updSpeed(); };
 updSpeed();
 setInterval(() => {
-  if (!G || G.over || G.mode !== 'time' || document.hidden) return;
+  if (!G || G.over || G.mode !== 'time') return;
+  if (NET.on) { const t = Math.max(0, Math.ceil((G.endAt - Date.now()) / 1000)); if (t === 0 && G.timeLeft > 0) toast('시간이 다 됐어요! 이번 차례까지만 해요.'); G.timeLeft = t; drawInfo(); return; }
+  if (document.hidden) return;
   if (G.timeLeft > 0) { G.timeLeft--; if (G.timeLeft === 0) { G.endFlag = true; toast('시간이 다 됐어요! 이번 차례까지만 해요.'); } }
   drawInfo();
 }, 1000);
@@ -613,7 +715,7 @@ function drawPlayers() {
   $('players').innerHTML = G.players.map(p => {
     const n = owned(p).length, sub = !p.alive ? '파산' : (p.island ? '🏝️ ' + p.island + '번 쉬기 ' : '') + (p.balloon ? '🎈 ' : '') + (p.ticket ? '🎫' + p.ticket + ' ' : '') + (p.free ? '🎟️' + p.free + ' ' : '') + (p.half ? '🤝' + p.half + ' ' : '') + '도시 ' + n + '곳' + (G.mode === 'laps' ? ' · ' + p.laps + '바퀴' : '');
     return '<div class="pcard' + (G.turn === p.id && !G.over ? ' turn' : '') + (p.alive ? '' : ' out') + '" id="pc' + p.id + '"><div class="chip" style="' + chipBg(p.ci) + '"></div>' +
-      '<div style="min-width:0"><div class="nm">' + esc(p.name) + (p.ai ? ' 🤖' : '') + '</div><div class="sub">' + sub + '</div></div>' +
+      '<div style="min-width:0"><div class="nm">' + esc(p.name) + (p.ai ? ' 🤖' : '') + (NET.on && p.uid === myId ? ' <small style="color:var(--coral-d)">(나)</small>' : '') + (NET.on && NET.room && !p.ai && (NET.room.away || {})[p.uid] && p.alive ? ' 💤' : '') + '</div><div class="sub">' + sub + '</div></div>' +
       '<div class="mn">' + nf(p.money) + '냥<small>재산 ' + nf(assets(p)) + '</small></div></div>';
   }).join('');
 }
@@ -621,15 +723,15 @@ function drawInfo() {
   if (!G) return;
   const m = Math.floor(G.timeLeft / 60), s = G.timeLeft % 60;
   $('info').innerHTML = '<span>🐷 저금통 <b>' + nf(G.pot) + '냥</b></span>' +
-    (G.mode === 'time' ? '<span>⏰ 남은 시간 <b>' + m + ':' + String(s).padStart(2, '0') + '</b></span>' : G.mode === 'laps' ? '<span>🏁 <b>' + G.laps + '바퀴</b> 돌면 끝</span>' : '<span>🏁 파산할 때까지</span>');
+    (NET.on && NET.room && NET.room.watch && Object.keys(NET.room.watch).length ? '<span>👀 구경 <b>' + Object.keys(NET.room.watch).length + '명</b></span>' : '') + (G.mode === 'time' ? '<span>⏰ 남은 시간 <b>' + m + ':' + String(s).padStart(2, '0') + '</b></span>' : G.mode === 'laps' ? '<span>🏁 <b>' + G.laps + '바퀴</b> 돌면 끝</span>' : '<span>🏁 파산할 때까지</span>');
 }
 function refresh() { drawTiles(); drawPieces(); drawPlayers(); drawInfo(); mood(); }
 function mood() { if (!G || G.over) return; KBGM.track(G.lm.some(x => x) || alive().length < G.players.length || G.endFlag || (G.mode === 'time' && G.timeLeft <= 120) ? 'tense' : 'play', false); }
-function say(html, quiet) { $('status').innerHTML = '<span>' + html + '</span>'; if (!quiet) { const d = document.createElement('div'); d.innerHTML = html; $('log').prepend(d); while ($('log').children.length > 40) $('log').lastChild.remove(); } }
+function say(html, quiet) { emit({ k:'say', h:html, q:quiet ? 1 : 0 }); $('status').innerHTML = '<span>' + html + '</span>'; if (!quiet) { const d = document.createElement('div'); d.innerHTML = html; $('log').prepend(d); while ($('log').children.length > 40) $('log').lastChild.remove(); } }
 let toastT = 0;
-function toast(t) { $('toast').textContent = t; $('toast').classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => $('toast').classList.remove('show'), 2200); }
+function toast(t) { emit({ k:'toast', t }); $('toast').textContent = t; $('toast').classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => $('toast').classList.remove('show'), 2200); }
 function money(p, v) {
-  if (!v) return; p.money += v; drawPlayers(); drawInfo();
+  if (!v) return; emit({ k:'money', p:p.id, v }); p.money += v; drawPlayers(); drawInfo();
   const c = $('pc' + p.id); if (c) { const d = document.createElement('div'); d.className = 'delta ' + (v > 0 ? 'plus' : 'minus'); d.textContent = (v > 0 ? '+' : '') + nf(v); c.appendChild(d); }
 }
 
@@ -640,7 +742,8 @@ function restoreModal() { if (savedModal) { $('modalCard').innerHTML = ''; saved
 function hideModal() { savedModal = null; $('modal').classList.add('hidden'); }
 // 고르기 창: choices = [{ label, right, cls, v, disabled }]
 function ask(head, choices) {
-  const my = gid;
+  const my = gid, m = head.match(/<h2>(.*?)<\/h2>/);
+  think(m ? m[1].replace(/<[^>]+>/g, '') : '');
   return new Promise((res, rej) => {
     showModal(head + '<div class="choices">' + choices.map((c, k) => '<button class="game-btn ' + (c.cls || 'btn-secondary') + '" data-k="' + k + '"' + (c.disabled ? ' disabled' : '') + '><span>' + c.label + '</span><span>' + (c.right || '') + '</span></button>').join('') + '</div>');
     $('modalCard').querySelector('.choices').onclick = e => { const b = e.target.closest('button'); if (!b || b.disabled) return; hideModal(); my === gid ? res(choices[+b.dataset.k].v) : rej(ABORT); };
@@ -648,7 +751,8 @@ function ask(head, choices) {
 }
 const okBtn = (label) => [{ label: label || '알겠어요', cls:'btn-primary', v:true }];
 async function notice(p, head, ms) { // 사람에게는 창, AI 차례에는 잠깐 보여 주기
-  if (p.ai) { showModal(head); try { await wait(ms || 1500); } finally { hideModal(); } }
+  emit({ k:'note', h:head, ms:ms || 1500 });
+  if (bot(p)) { showModal(head); try { await wait(ms || 1500); } finally { hideModal(); } }
   else await ask(head, okBtn());
 }
 
@@ -686,49 +790,56 @@ const dieSpin = [[0, 0], [0, 0]];
 async function rollDice() {
   const v = [1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)];
   if (window.__dice && window.__dice.length) { const f = window.__dice.shift(); v[0] = f[0]; v[1] = f[1]; }
+  emit({ k:'dice', v });
+  await showDice(v);
+  return v;
+}
+async function showDice(v) {
   beep('dice');
   $('diceRow').classList.remove('jump'); void $('diceRow').offsetWidth; $('diceRow').classList.add('jump');
   [0, 1].forEach(k => { dieSpin[k][0] += 720; dieSpin[k][1] += 360 * (k ? 2 : 3); const [rx, ry] = ROT[v[k]];
     $('die' + k).style.transitionDuration = sp(900) + 'ms'; $('die' + k).style.transform = 'perspective(' + boardSize * .6 + 'px) rotateX(' + (dieSpin[k][0] + rx) + 'deg) rotateY(' + (dieSpin[k][1] + ry) + 'deg)'; });
   await wait(1000);
-  return v;
 }
 function waitRoll(p, label) {
   const my = gid, b = $('rollBtn');
   b.textContent = label || '주사위 굴리기';
-  if (p.ai) { b.disabled = true; b.classList.remove('pulse'); return wait(700); }
+  if (bot(p)) { b.disabled = true; b.classList.remove('pulse'); return wait(700); }
   return new Promise((res, rej) => { b.disabled = false; b.classList.add('pulse'); b.onclick = () => { b.disabled = true; b.classList.remove('pulse'); b.onclick = null; my === gid ? res() : rej(ABORT); }; });
 }
 
 // ---------- 이동 ----------
 function passStart(p) { p.laps++; money(p, SALARY); beep('coin'); say(pn(p) + ' 꼬비 마을을 지나 용돈 <b>' + nf(SALARY) + '냥</b>!'); if (G.mode === 'laps' && p.laps >= G.laps) G.endFlag = true; }
-async function walk(p, steps) {
+async function walk(p, steps, show) { // show: 다른 기기에서 보여 주기만
+  emit({ k:'walk', p:p.id, s:steps });
   const dir = steps > 0 ? 1 : -1, el = pieceEls[p.id];
   el.style.transitionDuration = sp(170) + 'ms';
   for (let k = 0; k < Math.abs(steps); k++) {
     p.pos = (p.pos + dir + N) % N;
     el.classList.remove('hop'); void el.offsetWidth; el.classList.add('hop'); drawPieces(); beep('step');
     await wait(190);
-    if (dir > 0 && p.pos === 0) passStart(p);
+    if (dir > 0 && p.pos === 0 && !show) passStart(p);
   }
   el.style.transitionDuration = '';
   landFx(p.pos);
 }
-async function sail(p, dest) { // 열기구: 앞으로만 날아가요 (꼬비 마을을 지나면 용돈)
+async function sail(p, dest, show) { // 열기구: 앞으로만 날아가요 (꼬비 마을을 지나면 용돈)
+  emit({ k:'sail', p:p.id, d:dest });
   const el = pieceEls[p.id]; el.classList.add('fly'); beep('fly');
   el.style.transitionDuration = sp(90) + 'ms';
-  do { p.pos = (p.pos + 1) % N; drawPieces(); await wait(95); if (p.pos === 0) passStart(p); } while (p.pos !== dest);
+  do { p.pos = (p.pos + 1) % N; drawPieces(); await wait(95); if (p.pos === 0 && !show) passStart(p); } while (p.pos !== dest);
   el.style.transitionDuration = ''; await wait(250); el.classList.remove('fly');
   landFx(dest);
 }
 async function fly(p, dest, salary) {
+  emit({ k:'fly', p:p.id, d:dest });
   const el = pieceEls[p.id]; el.classList.add('fly'); beep('fly');
   const wrap = dest <= p.pos; p.pos = dest; drawPieces();
   await wait(850); el.classList.remove('fly');
   if (salary && wrap) passStart(p);
   landFx(dest);
 }
-function landFx(i) { const d = tileEls[i]; d.classList.remove('here'); void d.offsetWidth; d.classList.add('here'); }
+function landFx(i) { emit({ k:'fx', i }); const d = tileEls[i]; d.classList.remove('here'); void d.offsetWidth; d.classList.add('here'); }
 
 // ---------- 돈 내기 / 팔기 / 파산 ----------
 function sell(p, i) { const v = sellValue(i); G.owner[i] = null; G.bld[i] = 0; G.lm[i] = false; money(p, v); say(pn(p) + ' ' + TILES[i].name + '을(를) <b>' + nf(v) + '냥</b>에 팔았어요.'); refresh(); return v; }
@@ -737,7 +848,7 @@ async function pay(p, amount, to, why) { // to: 다른 사람, 'pot', null(은�
   if (p.money < amount) {
     const all = owned(p).reduce((s, i) => s + sellValue(i), 0);
     if (p.money + all < amount) { await bankrupt(p, to, why); return false; }
-    if (p.ai) { const list = owned(p).sort((a, b) => sellValue(a) - sellValue(b)); while (p.money < amount) { sell(p, list.shift()); await wait(500); } }
+    if (bot(p)) { const list = owned(p).sort((a, b) => sellValue(a) - sellValue(b)); while (p.money < amount) { sell(p, list.shift()); await wait(500); } }
     else while (p.money < amount) {
       const list = owned(p);
       const i = await ask('<div class="big">' + (IMG['ggobi-sad'] ? '<img src="' + IMG['ggobi-sad'] + '">' : '😢') + '</div><h2>돈이 모자라요</h2><p>' + why + ' <b>' + nf(amount) + '냥</b>을 내야 해요.<br>지금 ' + nf(p.money) + '냥, <b>' + nf(amount - p.money) + '냥</b>이 더 필요해요. 팔 곳을 골라요.</p>',
@@ -755,7 +866,7 @@ async function bankrupt(p, to, why) {
   p.money = 0; p.alive = false; p.balloon = false; p.island = 0;
   if (to === 'pot') G.pot += total; else if (to) money(to, total);
   say(pn(p) + ' 파산했어요!'); refresh();
-  await notice(p.ai ? p : { ai:false }, '<div class="big">' + (IMG['ggobi-sad'] ? '<img src="' + IMG['ggobi-sad'] + '">' : '😭') + '</div><h2>' + esc(p.name) + ' 파산!</h2><p>' + why + ' 낼 돈이 모자라 여행을 마쳐요.' + (to && to !== 'pot' ? '<br>남은 ' + nf(total) + '냥은 ' + pn(to) + '에게 가요.' : '') + '</p>', 2200);
+  await notice(bot(p) ? p : { ai:false, uid:myId }, '<div class="big">' + (IMG['ggobi-sad'] ? '<img src="' + IMG['ggobi-sad'] + '">' : '😭') + '</div><h2>' + esc(p.name) + ' 파산!</h2><p>' + why + ' 낼 돈이 모자라 여행을 마쳐요.' + (to && to !== 'pot' ? '<br>남은 ' + nf(total) + '냥은 ' + pn(to) + '에게 가요.' : '') + '</p>', 2200);
 }
 
 // ---------- 칸에 도착했을 때 ----------
@@ -766,6 +877,7 @@ function aiBuild(p, i) { // 비싼 건물부터, 여유 돈을 남기고
   return out;
 }
 function askBuild(p, i) { // 지을 건물을 여러 개 골라요
+  think(TILES[i].name + ' 건물 고르기');
   const my = gid, t = TILES[i], sel = new Set(), miss = [0, 1, 2].filter(k => !(G.bld[i] >> k & 1));
   return new Promise((res, rej) => {
     const draw = () => {
@@ -786,7 +898,7 @@ async function buildAt(p, i) { // 내 땅에서 건물이나 랜드마크 짓기
   if (G.bld[i] === 7) { // 건물 3개가 다 있으면 랜드마크
     const c = lmCost(i); let yes = false;
     if (p.money >= c) {
-      if (p.ai) { await wait(700); yes = p.money - c >= aiReserve(p); }
+      if (bot(p)) { await wait(700); yes = p.money - c >= aiReserve(p); }
       else yes = await ask('<div class="big">' + lmPic(t) + '</div><h2>' + t.name + ' 랜드마크</h2><p>건물 3개를 다 지었어요! <b>랜드마크</b>를 세우면 통행료가 ' + nf(tollOf(i, 7, true)) + '냥이 되고, 아무도 인수할 수 없어요. (가진 돈 ' + nf(p.money) + '냥)</p>',
         [{ label:'🏰 랜드마크 세우기', right:nf(c) + '냥', cls:'btn-mint', v:true }, { label:'다음에 할래요', v:false }]);
     } else { say(pn(p) + ' ' + t.name + ' 랜드마크를 세울 돈(' + nf(c) + '냥)이 모자라요.'); await wait(900); }
@@ -794,7 +906,7 @@ async function buildAt(p, i) { // 내 땅에서 건물이나 랜드마크 짓기
     return;
   }
   let list;
-  if (p.ai) { await wait(700); list = aiBuild(p, i); }
+  if (bot(p)) { await wait(700); list = aiBuild(p, i); }
   else if ([0, 1, 2].some(k => !(G.bld[i] >> k & 1) && bCost(i, k) <= p.money)) list = await askBuild(p, i);
   else { list = []; say(pn(p) + ' 건물을 지을 돈이 모자라요.'); await wait(700); }
   if (list.length) { list.forEach(k => { money(p, -bCost(i, k)); G.bld[i] |= 1 << k; }); beep('buy'); say(pn(p) + ' ' + t.name + '에 <b>' + list.map(k => B[k].n).join(', ') + '</b>을(를) 지었어요!'); refresh(); landFx(i); if (G.bld[i] === 7) toast(t.name + ' 건물 3개 완성! 다음에 오면 랜드마크를 세울 수 있어요'); await wait(700); }
@@ -807,7 +919,7 @@ async function land(p) {
     if (o == null) {
       if (p.money < t.price) { say(pn(p) + ' ' + t.name + ' 도착. 살 돈이 모자라요.'); await wait(900); return; }
       let yes;
-      if (p.ai) { say(pn(p) + ' ' + t.name + ' 도착. 살까 말까…', true); await wait(900); yes = p.money - t.price >= Math.min(aiReserve(p), 80 + t.price / 4); }
+      if (bot(p)) { say(pn(p) + ' ' + t.name + ' 도착. 살까 말까…', true); await wait(900); yes = p.money - t.price >= Math.min(aiReserve(p), 80 + t.price / 4); }
       else yes = await ask('<div class="big">' + tilePic(t) + '</div><h2>' + t.name + '</h2><p>주인이 없어요. 살까요? (가진 돈 ' + nf(p.money) + '냥)' + (t.type === 'city' ? '<br><small style="color:var(--ink2)">건물은 다음에 내 땅에 다시 도착하면 지을 수 있어요.</small>' : '') + '</p>',
         [{ label:'🚩 ' + (t.type === 'mark' ? '명소 사기' : '땅 사기'), right:nf(t.price) + '냥', cls:'btn-info', v:true }, { label:'안 살래요', v:false }]);
       if (yes) { money(p, -t.price); G.owner[i] = p.id; beep('buy'); say(pn(p) + ' <b>' + t.name + '</b>을(를) 샀어요!'); refresh(); await wait(700); }
@@ -819,14 +931,14 @@ async function land(p) {
       say(pn(p) + ' ' + pn(own) + '의 ' + t.name + ' 도착! 통행료 <b>' + nf(v) + '냥</b>');
       await wait(900);
       let skip = false;
-      if (p.free) skip = p.ai ? v >= 150 : await ask('<div class="big">🎟️</div><h2>통행료 면제권</h2><p>' + t.name + ' 통행료 <b>' + nf(v) + '냥</b>이에요. 면제권을 쓸까요? (' + p.free + '장 있음)</p>', [{ label:'🎟️ 면제권 쓰기', cls:'btn-mint', v:true }, { label:'아껴 두고 통행료 내기', v:false }]);
+      if (p.free) skip = bot(p) ? v >= 150 : await ask('<div class="big">🎟️</div><h2>통행료 면제권</h2><p>' + t.name + ' 통행료 <b>' + nf(v) + '냥</b>이에요. 면제권을 쓸까요? (' + p.free + '장 있음)</p>', [{ label:'🎟️ 면제권 쓰기', cls:'btn-mint', v:true }, { label:'아껴 두고 통행료 내기', v:false }]);
       if (skip) { p.free--; beep('coin'); say(pn(p) + ' 통행료 면제권을 썼어요!'); refresh(); }
       else await pay(p, v, own, t.name + ' 통행료');
       await wait(500);
       if (p.alive && t.type === 'city' && G.owner[i] === o && !G.lm[i]) {
         const c = p.half ? Math.round(takeCost(i) / 2) : takeCost(i); let yes = false;
         if (p.money >= c) {
-          if (p.ai) { yes = p.money - c >= 300 && (G.bld[i] > 0 || t.price >= 400); if (yes) await wait(600); }
+          if (bot(p)) { yes = p.money - c >= 300 && (G.bld[i] > 0 || t.price >= 400); if (yes) await wait(600); }
           else yes = await ask('<div class="big">' + tilePic(t) + '</div><h2>' + t.name + ' 인수</h2><p>' + pn(own) + '의 도시예요. ' + (G.bld[i] ? '건물까지 통째로 ' : '') + '인수할까요?' + (p.half ? ' <b>반값 인수권 사용!</b>' : '') + '<br>인수하면 ' + pn(own) + '에게 돈을 주고 내 도시가 돼요. (가진 돈 ' + nf(p.money) + '냥)</p>',
             [{ label:'🤝 인수하기', right:nf(c) + '냥', cls:'btn-mint', v:true }, { label:'안 할래요', v:false }]);
         }
@@ -843,7 +955,7 @@ async function land(p) {
     const list = TILES.map((t, j) => j).filter(can);
     if (!list.length) { say(pn(p) + ' 꼬비 마을에 도착!'); await wait(600); return; }
     let i;
-    if (p.ai) { await wait(600); i = list.filter(j => G.bld[j] === 7 ? p.money - lmCost(j) >= aiReserve(p) : aiBuild(p, j).length).sort((a, b) => (G.bld[b] === 7) - (G.bld[a] === 7) || TILES[b].price - TILES[a].price)[0]; if (i == null) { say(pn(p) + ' 꼬비 마을에서 쉬어 가요.'); await wait(600); return; } }
+    if (bot(p)) { await wait(600); i = list.filter(j => G.bld[j] === 7 ? p.money - lmCost(j) >= aiReserve(p) : aiBuild(p, j).length).sort((a, b) => (G.bld[b] === 7) - (G.bld[a] === 7) || TILES[b].price - TILES[a].price)[0]; if (i == null) { say(pn(p) + ' 꼬비 마을에서 쉬어 가요.'); await wait(600); return; } }
     else { toast('🏡 꼬비 마을 도착 선물! 내 도시 한 곳에 건물을 지을 수 있어요'); say(pn(p) + ' 🏡 건물을 지을 내 도시를 눌러요!', true); i = list.length === 1 ? list[0] : await pickTile(can); }
     await buildAt(p, i);
   }
@@ -852,6 +964,7 @@ async function drawCard(p) {
   if (!G.deck.length) { G.deck = CARDS.map((c, k) => k); for (let k = G.deck.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [G.deck[k], G.deck[j]] = [G.deck[j], G.deck[k]]; } }
   const ck = window.__card != null ? window.__card : G.deck.pop(), c = CARDS[ck], ci = IMG['card-' + String(ck + 1).padStart(2, '0')];
   beep('card'); say(pn(p) + ' 도깨비 주머니를 열어요…', true);
+  emit({ k:'cardback' });
   if (IMG['card-back']) { showModal('<h2>🎁 도깨비 주머니</h2><img class="cardback" src="' + IMG['card-back'] + '" alt="">'); try { await wait(750); } finally { hideModal(); } }
   say(pn(p) + ' 도깨비 주머니: ' + c.t);
   await notice(p, '<h2>🎁 도깨비 주머니</h2><div class="cardface">' + (ci ? '<img class="cardimg" src="' + ci + '" alt="">' : '<div class="big">' + c.emo + '</div>') + '<div>' + c.t + '</div></div>', 2600);
@@ -874,7 +987,7 @@ async function drawCard(p) {
     if (!list.length) say(pn(p) + ' 건물을 지을 수 있는 내 도시가 없어요.');
     else {
       let i;
-      if (p.ai) i = list.sort((a, b) => TILES[b].price - TILES[a].price)[0];
+      if (bot(p)) i = list.sort((a, b) => TILES[b].price - TILES[a].price)[0];
       else if (list.length === 1) i = list[0];
       else { say(pn(p) + ' 🪄 공짜로 건물을 지을 내 도시를 눌러요!', true); i = await pickTile(j => list.includes(j)); }
       const k = [0, 1, 2].find(x => !(G.bld[i] >> x & 1)); G.bld[i] |= 1 << k; beep('buy'); say(pn(p) + ' ' + TILES[i].name + '에 <b>' + B[k].n + '</b>을(를) 공짜로 지었어요!'); refresh(); landFx(i);
@@ -896,6 +1009,7 @@ function aiBalloon(p) {
   return best;
 }
 async function pickTile(ok) {
+  think('칸 고르기');
   const my = gid; $('rollBtn').disabled = true; $('rollBtn').textContent = '칸을 골라요';
   tileEls.forEach((d, i) => d.classList.add(ok(i) ? 'pick' : 'nopick'));
   try { return await new Promise((res, rej) => { picking = { ok, res:i => my === gid ? res(i) : rej(ABORT) }; }); }
@@ -903,7 +1017,7 @@ async function pickTile(ok) {
 }
 async function balloonTurn(p) {
   p.balloon = false; let dest;
-  if (p.ai) { say(pn(p) + ' 열기구로 어디로 갈까…', true); await wait(1000); dest = aiBalloon(p); }
+  if (bot(p)) { say(pn(p) + ' 열기구로 어디로 갈까…', true); await wait(1000); dest = aiBalloon(p); }
   else {
     say(pn(p) + ' 🎈 가고 싶은 칸을 눌러요!', true);
     dest = await pickTile(i => i !== BALLOON);
@@ -915,13 +1029,13 @@ async function balloonTurn(p) {
 
 // ---------- 차례 ----------
 async function turn(p) {
-  G.turn = p.id; G.again = false; refresh();
+  G.turn = p.id; G.again = false; emit({ k:'turn', p:p.id }); refresh();
   if (p.balloon) { await balloonTurn(p); return; }
   let doubles = 0;
   for (;;) {
     if (p.island) {
       let act = 'roll';
-      if (p.ai) { if (p.ticket) act = 'ticket'; else if (p.money > 900 && G.owner.filter((o, i) => o == null && (TILES[i].type === 'city')).length > 8) act = 'pay'; }
+      if (bot(p)) { if (p.ticket) act = 'ticket'; else if (p.money > 900 && G.owner.filter((o, i) => o == null && (TILES[i].type === 'city')).length > 8) act = 'pay'; }
       else act = await ask('<div class="big">' + tilePic(TILES[ISLAND]) + '</div><h2>도깨비섬</h2><p>' + pn(p) + ' 앞으로 ' + p.island + '번 쉬어야 해요. 어떻게 할까요?</p>', [
         { label:'🎲 주사위 굴리기 (같은 숫자면 탈출)', cls:'btn-info', v:'roll' },
         { label:'💰 돈 내고 탈출', right:ISLAND_FEE + '냥', cls:'btn-mint', v:'pay', disabled:p.money < ISLAND_FEE },
@@ -971,13 +1085,417 @@ async function loop(my) {
 function finish() {
   G.over = true; refresh(); $('rollBtn').disabled = true; $('rollBtn').classList.remove('pulse');
   const rank = G.players.slice().sort((a, b) => (b.alive - a.alive) || (assets(b) - assets(a))), w = rank[0];
-  beep('win'); if (!w.ai || G.players.every(p => p.ai)) KBGM.jingle(); else KBGM.calm();
+  beep('win'); if (NET.on ? w.uid === myId : (!w.ai || G.players.every(p => p.ai))) KBGM.jingle(); else KBGM.calm();
+  NET.shownOver = true;
   say('🏆 ' + pn(w) + ' 우승!');
   showModal((IMG['ggobi-win'] ? '<img class="res-img" src="' + IMG['ggobi-win'] + '" alt="">' : '<div class="big">🏆</div>') + '<h2>' + esc(w.name) + ' 우승!</h2><p>' +
     (alive().length < 2 ? '마지막까지 남은 여행왕이에요.' : G.mode === 'time' ? '시간이 다 됐어요. 재산이 가장 많아요.' : '정한 바퀴를 다 돌았어요. 재산이 가장 많아요.') + '</p>' +
     '<div class="rank">' + rank.map((p, k) => '<div><span>' + (k + 1) + '등</span><span class="chip" style="' + chipBg(p.ci) + '"></span><span>' + esc(p.name) + '</span><span>' + (p.alive ? '재산 ' + nf(assets(p)) + '냥' : '파산') + '</span></div>').join('') + '</div>' +
-    '<div class="btn-row"><button class="game-btn btn-secondary" id="mBack">처음으로</button><button class="game-btn btn-primary" id="mAgain">한 판 더!</button></div>');
+    (NET.on ? '<div class="btn-row"><button class="game-btn btn-secondary" id="mBack">방에서 나가기</button>' + (NET.room && NET.room.hostId === myId ? '<button class="game-btn btn-primary" id="mAgain">한 판 더!</button>' : '<button class="game-btn btn-info" id="mStay">한 판 더 기다리기</button>') + '</div>'
+      : '<div class="btn-row"><button class="game-btn btn-secondary" id="mBack">처음으로</button><button class="game-btn btn-primary" id="mAgain">한 판 더!</button></div>'));
+  if (NET.on) { $('mBack').onclick = leaveRoom; if ($('mAgain')) $('mAgain').onclick = () => { hideModal(); roomAgain(); }; if ($('mStay')) $('mStay').onclick = hideModal; return; }
   $('mBack').onclick = toStart; $('mAgain').onclick = () => { hideModal(); newGame(); };
+}
+// ============================================================
+//  방 만들기 (온라인)
+// ============================================================
+const ROOMS = 'worldtour-rooms', STALE_MS = 3 * 60 * 60 * 1000, HB_MS = 10000, DEAD_MS = 35000;
+const fbReady = () => window.FB ? Promise.resolve(window.FB) : new Promise((res, rej) => { addEventListener('fbready', () => res(window.FB), { once:true }); setTimeout(() => rej(new Error('fbload')), 15000); });
+function errText(e) {
+  const c = String((e && (e.code || e.message)) || '');
+  if (c.includes('permission')) return '방 기능 설정이 아직 안 되어 있어요. 선생님께 알려 주세요.';
+  if (c.includes('fbload') || c.includes('unavailable') || !navigator.onLine) return '인터넷 연결을 확인해 주세요.';
+  return '잠시 후 다시 해 주세요.';
+}
+let playMode = store('worldtour-play') === 'online' ? 'online' : 'local';
+function updPlay() {
+  const on = playMode === 'online';
+  [...$('playSeg').children].forEach(b => b.classList.toggle('on', b.dataset.v === playMode));
+  $('localBox').classList.toggle('hidden', on); $('endBox').classList.toggle('hidden', on); $('onlineBox').classList.toggle('hidden', !on); $('startBtn').classList.toggle('hidden', on);
+  $('startMsg').textContent = '';
+}
+$('playSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; playMode = b.dataset.v; store('worldtour-play', playMode); updPlay(); if (playMode === 'online') fbReady().catch(() => {}); });
+$('nameInput').value = store('worldtour-name') || '';
+$('codeInput').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4); });
+$('codeInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('joinBtn').click(); });
+updPlay();
+function getName() {
+  const n = $('nameInput').value.trim().replace(/\s+/g, ' ').slice(0, 8);
+  if (!n) { $('startMsg').textContent = '먼저 내 이름을 적어 주세요.'; $('nameInput').focus(); return null; }
+  store('worldtour-name', n); return n;
+}
+const ts = () => FB.serverTimestamp();
+const ageOf = d => Date.now() - (d.updatedAt && d.updatedAt.toMillis ? d.updatedAt.toMillis() : 0);
+async function cleanupOld() {
+  try {
+    const snap = await FB.getDocs(FB.query(FB.collection(FB.db, ROOMS), FB.where('updatedAt', '<', FB.Timestamp.fromMillis(Date.now() - STALE_MS)), FB.limit(20)));
+    snap.forEach(d => FB.deleteDoc(d.ref).catch(() => {}));
+  } catch (e) {}
+}
+let busy = false;
+$('createBtn').onclick = async () => {
+  const name = getName(); if (!name || busy) return;
+  busy = true; $('createBtn').disabled = true; $('startMsg').textContent = '방을 만들고 있어요…';
+  try {
+    await fbReady();
+    let made = null;
+    for (let k = 0; k < 12 && !made; k++) {
+      const c = String(1000 + Math.floor(Math.random() * 9000)), r = FB.doc(FB.db, ROOMS, c);
+      made = await FB.runTransaction(FB.db, async tx => {
+        const s = await tx.get(r);
+        if (s.exists() && s.data().status !== 'closed' && ageOf(s.data()) < STALE_MS) return null;
+        tx.set(r, { game:'worldtour', code:c, status:'waiting', hostId:myId, seats:[{ uid:myId, name, ai:false }], watch:{},
+          mode:endMode, time:endTime, laps:endLaps, st:'', log:[], seq:0, epoch:0, drv:'', away:{}, hb:{}, stk:null, createdAt:ts(), updatedAt:ts() });
+        return c;
+      });
+    }
+    if (!made) throw new Error('full');
+    $('startMsg').textContent = '';
+    enterRoom(made, 'player');
+    cleanupOld();
+  } catch (e) { console.error(e); $('startMsg').textContent = '방을 만들지 못했어요. ' + errText(e); }
+  busy = false; $('createBtn').disabled = false;
+};
+$('joinBtn').onclick = async () => {
+  const name = getName(); if (!name || busy) return;
+  const c = $('codeInput').value;
+  if (!/^\d{4}$/.test(c)) { $('startMsg').textContent = '방 번호 숫자 4개를 적어 주세요.'; $('codeInput').focus(); return; }
+  busy = true; $('joinBtn').disabled = true; $('startMsg').textContent = '들어가고 있어요…';
+  try {
+    await fbReady();
+    const r = FB.doc(FB.db, ROOMS, c);
+    const role = await FB.runTransaction(FB.db, async tx => {
+      const s = await tx.get(r);
+      if (!s.exists()) throw new Error('none');
+      const d = s.data(), seats = d.seats || [], me = seats.find(x => x.uid === myId);
+      if (d.status === 'closed' || ageOf(d) > STALE_MS) throw new Error('closed');
+      if (me) { tx.update(r, { ['away.' + myId]: false, updatedAt:ts() }); return 'player'; }
+      if (d.status === 'waiting' && seats.length < 4) { tx.update(r, { seats:seats.concat([{ uid:myId, name, ai:false }]), updatedAt:ts() }); return 'player'; }
+      tx.update(r, { ['watch.' + myId]: name, updatedAt:ts() }); return 'watch';
+    });
+    $('startMsg').textContent = '';
+    enterRoom(c, role);
+    if (role === 'watch') toast('자리가 다 찼어요. 구경하며 응원해요!');
+  } catch (e) {
+    console.error(e);
+    $('startMsg').textContent = e.message === 'none' ? c + '번 방이 없어요. 번호를 다시 확인해 주세요.' : e.message === 'closed' ? c + '번 방은 이미 닫혔어요.' : '들어가지 못했어요. ' + errText(e);
+  }
+  busy = false; $('joinBtn').disabled = false;
+};
+
+function resetNet() {
+  Object.assign(NET, { driving:false, epoch:0, log:[], seq:0, lastSeen:0, applied:-1, floor:0, pumping:false, shownOver:false, chain:null, taking:false });
+  clearTimeout(NET.flushT);
+}
+function enterRoom(c, role) {
+  gid++; G = null; resetNet();
+  Object.assign(NET, { on:true, code:c, role, ref:FB.doc(FB.db, ROOMS, c), room:null, seen:{}, hbVal:{}, stkId:undefined });
+  if (NET.unsub) NET.unsub();
+  NET.unsub = FB.onSnapshot(NET.ref, onRoom, e => { console.error(e); toast('연결이 끊겼어요. ' + errText(e)); });
+  clearInterval(NET.hbT); clearInterval(NET.wdT);
+  NET.hbT = setInterval(heartbeat, HB_MS);
+  NET.wdT = setInterval(watchdog, 3000);
+  $('stkBtn').classList.remove('hidden');
+  $('start').classList.add('hidden');
+}
+function heartbeat() {
+  if (!NET.on || NET.role === 'watch' || !NET.room || NET.room.status === 'closed') return;
+  const up = { ['hb.' + myId]: FB.increment(1), updatedAt:ts() };
+  if ((NET.room.away || {})[myId]) up['away.' + myId] = false;
+  FB.updateDoc(NET.ref, up).catch(() => {});
+}
+async function leaveRoom() {
+  const r = NET.room, ref = NET.ref, role = NET.role;
+  closeRoomLocal();
+  if (!r || !ref) return;
+  try {
+    await FB.runTransaction(FB.db, async tx => {
+      const s = await tx.get(ref); if (!s.exists()) return;
+      const d = s.data();
+      if (role === 'watch') { const w = Object.assign({}, d.watch); delete w[myId]; tx.update(ref, { watch:w }); return; }
+      if (d.status === 'waiting') {
+        const seats = (d.seats || []).filter(x => x.uid !== myId), humans = seats.filter(x => !x.ai);
+        if (!humans.length) { tx.update(ref, { status:'closed', seats, updatedAt:ts() }); return; }
+        tx.update(ref, { seats, hostId: d.hostId === myId ? humans[0].uid : d.hostId, updatedAt:ts() });
+      } else {
+        const up = { ['away.' + myId]: true, updatedAt:ts() };
+        if (d.drv === myId) up.drv = '';
+        if (d.hostId === myId) { const h = (d.seats || []).find(x => !x.ai && x.uid !== myId && !(d.away || {})[x.uid]); if (h) up.hostId = h.uid; }
+        tx.update(ref, up);
+      }
+    });
+  } catch (e) { console.error(e); }
+}
+function closeRoomLocal() {
+  if (NET.unsub) NET.unsub();
+  clearInterval(NET.hbT); clearInterval(NET.wdT);
+  resetNet(); Object.assign(NET, { on:false, unsub:null, room:null, ref:null, code:null, role:null });
+  $('stkBtn').classList.add('hidden'); $('stkTray').classList.add('hidden'); $('lobby').classList.add('hidden');
+  toStart();
+}
+
+// ---------- 방 소식이 왔을 때 ----------
+function onRoom(snap) {
+  if (!snap.exists()) { toast('방이 사라졌어요.'); closeRoomLocal(); return; }
+  const prev = NET.room, r = snap.data(); NET.room = r;
+  const now = Date.now();
+  Object.entries(r.hb || {}).forEach(([u, v]) => { if (NET.hbVal[u] !== v) { NET.hbVal[u] = v; NET.seen[u] = now; } });
+  (r.seats || []).forEach(x => { if (!NET.seen[x.uid]) NET.seen[x.uid] = now; });
+  if (prev && r.seq !== prev.seq && r.drv) NET.seen[r.drv] = now;
+  if (prev && r.drv !== prev.drv && r.drv) NET.seen[r.drv] = now;
+  const inSeat = (r.seats || []).some(x => x.uid === myId);
+  if (NET.role === 'player' && !inSeat && r.status === 'waiting') { NET.role = 'watch'; }
+  if (r.stk && r.stk.id !== NET.stkId) { if (NET.stkId !== undefined) showSticker(r.stk); NET.stkId = r.stk.id; }
+  else if (NET.stkId === undefined) NET.stkId = r.stk ? r.stk.id : null;
+  if (r.status === 'closed') { toast('방이 닫혔어요.'); closeRoomLocal(); return; }
+  if (r.status === 'waiting') { showLobby(r); return; }
+  // 게임 중
+  if ($('game').classList.contains('hidden') || !G) enterGame(r);
+  if (NET.driving) { if (r.epoch !== NET.epoch && r.epoch !== NET.epoch + 1) lostDrive(); return; }
+  if (G) drawPlayers(), drawInfo();
+  pump();
+}
+function showLobby(r) {
+  if (!$('game').classList.contains('hidden') || G) { gid++; G = null; resetNet(); hideModal(); $('game').classList.add('hidden'); KBGM.calm(); }
+  $('start').classList.add('hidden'); $('lobby').classList.remove('hidden');
+  const seats = r.seats || [], host = r.hostId === myId, nw = Object.keys(r.watch || {}).length;
+  $('lbCode').textContent = r.code;
+  $('lbLead').innerHTML = host ? '친구들에게 <b>방 번호</b>를 알려 주세요. 모두 들어오면 <b>여행 시작!</b>을 눌러요.' : NET.role === 'watch' ? '자리가 다 찼어요. 여행이 시작되면 구경하며 응원해요!' : '방장이 여행을 시작할 때까지 기다려요.';
+  $('lbCount').textContent = '(' + seats.length + '/4)';
+  $('lbSeats').innerHTML = [0, 1, 2, 3].map(i => {
+    const x = seats[i];
+    if (!x) return '<div class="lseat empty"><div class="chip" style="' + chipBg(i) + ';opacity:.35"></div><div class="nm">빈 자리</div>' + (host ? '<button class="add" data-add="' + i + '">🤖 꼬비 AI 넣기</button>' : '') + '</div>';
+    return '<div class="lseat"><div class="chip" style="' + chipBg(i) + '"></div><div class="nm">' + esc(x.name) + (x.ai ? ' 🤖' : '') + (x.uid === r.hostId ? ' 👑' : '') + (x.uid === myId ? ' <small style="color:var(--coral-d)">(나)</small>' : '') + '</div>' +
+      (host && x.ai ? '<button data-del="' + x.uid + '">빼기</button>' : '') + '</div>';
+  }).join('');
+  const endTxt = r.mode === 'time' ? r.time + '분 동안 하고 재산이 가장 많은 사람 승리' : r.mode === 'laps' ? r.laps + '바퀴 돌면 끝, 재산이 가장 많은 사람 승리' : '한 명만 남을 때까지 (파산)';
+  const seg = (k, list, cur) => '<div class="seg" data-k="' + k + '">' + list.map(([v, l]) => '<button data-v="' + v + '" class="' + (String(cur) === String(v) ? 'on' : '') + '">' + l + '</button>').join('') + '</div>';
+  $('lbEnd').innerHTML = host ? '<div class="segrow" style="margin-top:4px">' + seg('mode', [['bank', '파산할 때까지'], ['time', '시간 정하기'], ['laps', '바퀴 수 정하기']], r.mode) +
+    (r.mode === 'time' ? seg('time', [[10, '10분'], [20, '20분'], [30, '30분'], [40, '40분']], r.time) : r.mode === 'laps' ? seg('laps', [[3, '3바퀴'], [5, '5바퀴'], [7, '7바퀴'], [10, '10바퀴']], r.laps) : '') + '</div><div style="margin-top:6px">' + endTxt + '</div>'
+    : '끝내기: ' + endTxt;
+  $('lbWatch').textContent = nw ? '👀 구경하는 친구 ' + nw + '명' : '';
+  $('lbStart').classList.toggle('hidden', !host); $('lbStart').disabled = seats.length < 2;
+  $('lbMsg').textContent = host && seats.length < 2 ? '두 명 이상이면 시작할 수 있어요. 친구를 기다리거나 꼬비 AI를 넣어요.' : '';
+}
+$('lbSeats').addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b || !NET.ref) return;
+  b.disabled = true;
+  try {
+    await FB.runTransaction(FB.db, async tx => {
+      const s = await tx.get(NET.ref), d = s.data(); if (d.status !== 'waiting' || d.hostId !== myId) return;
+      let seats = (d.seats || []).slice();
+      if (b.dataset.add != null && seats.length < 4) seats.push({ uid:'ai' + Math.random().toString(36).slice(2, 8), name:COLORS[seats.length].name + ' 꼬비', ai:true });
+      if (b.dataset.del) seats = seats.filter(x => x.uid !== b.dataset.del);
+      seats = seats.map((x, i) => x.ai ? Object.assign({}, x, { name:COLORS[i].name + ' 꼬비' }) : x);
+      tx.update(NET.ref, { seats, updatedAt:ts() });
+    });
+  } catch (err) { console.error(err); toast('잠시 후 다시 해 주세요.'); }
+});
+$('lbEnd').addEventListener('click', e => {
+  const b = e.target.closest('.seg button'); if (!b || !NET.ref || !NET.room || NET.room.hostId !== myId) return;
+  const k = b.parentNode.dataset.k, v = k === 'mode' ? b.dataset.v : +b.dataset.v;
+  if (k === 'mode') endMode = v; else if (k === 'time') endTime = v; else endLaps = v;
+  store('worldtour-end', endMode); store('worldtour-time', endTime); store('worldtour-laps', endLaps);
+  FB.updateDoc(NET.ref, { [k]: v, updatedAt:ts() }).catch(err => { console.error(err); toast('잠시 후 다시 해 주세요.'); });
+});
+$('lbLeave').onclick = leaveRoom;
+$('lbStart').onclick = async () => {
+  const r = NET.room; if (!r || r.hostId !== myId) return;
+  $('lbStart').disabled = true;
+  try {
+    await FB.runTransaction(FB.db, async tx => {
+      const s = await tx.get(NET.ref), d = s.data(); if (d.status !== 'waiting' || (d.seats || []).length < 2) return;
+      const ps = d.seats.map((x, i) => newPlayer(i, i, x.ai, x.name, x.uid)), g = makeG(ps, d.mode, d.laps, d.time);
+      g.endAt = Date.now() + d.time * 60000;
+      const first = ps[0].ai ? myId : ps[0].uid;
+      tx.update(NET.ref, { status:'playing', st:packG(g), log:[{ n:1, k:'say', h:'여행을 시작해요!', q:0 }], seq:1, epoch:(d.epoch || 0) + 1, drv:first, away:{}, updatedAt:ts() });
+    });
+  } catch (e) { console.error(e); $('lbMsg').textContent = '시작하지 못했어요. ' + errText(e); $('lbStart').disabled = false; }
+};
+async function roomAgain() {
+  try {
+    await FB.runTransaction(FB.db, async tx => {
+      const s = await tx.get(NET.ref), d = s.data(); if (d.hostId !== myId || d.status === 'waiting') return;
+      const away = d.away || {}, seats = (d.seats || []).filter(x => x.ai || !away[x.uid]).slice(0, 4);
+      tx.update(NET.ref, { status:'waiting', seats, st:'', log:[], seq:0, epoch:(d.epoch || 0) + 1, drv:'', away:{}, updatedAt:ts() });
+    });
+  } catch (e) { console.error(e); toast('잠시 후 다시 해 주세요.'); }
+}
+
+// ---------- 게임 상태 주고받기 ----------
+const packG = g => JSON.stringify({ players:g.players, owner:g.owner, bld:g.bld, lm:g.lm, pot:g.pot, turn:g.turn, deck:g.deck, mode:g.mode, laps:g.laps, endAt:g.endAt, over:g.over, endFlag:g.endFlag });
+function unpackG(st) { const o = JSON.parse(st); o.again = false; o.timeLeft = o.mode === 'time' ? Math.max(0, Math.ceil((o.endAt - Date.now()) / 1000)) : 0; return o; }
+function enterGame(r) {
+  gid++; hideModal();
+  $('lobby').classList.add('hidden'); $('start').classList.add('hidden'); $('game').classList.remove('hidden'); $('log').innerHTML = '';
+  G = unpackG(r.st); NET.applied = r.seq; NET.lastSeen = r.seq > 1 ? r.seq : 0; NET.shownOver = false;
+  layout(); buildBoard(); drawTiles(); drawPieces(true); drawPlayers(); drawInfo(); updRoll();
+  KBGM.track('play'); KBGM.full();
+  if (r.seq > 1) say('여행에 들어왔어요!', true);
+  if (G.over) finish();
+}
+function applyRoom(r) {
+  G = unpackG(r.st); NET.applied = r.seq;
+  refresh(); updRoll();
+  if (G.over && !NET.shownOver) finish();
+}
+function updRoll() {
+  if (!NET.on || NET.driving || !G) return;
+  const p = G.players[G.turn], b = $('rollBtn');
+  b.disabled = true; b.classList.remove('pulse'); b.textContent = G.over ? '여행 끝!' : (p ? p.name + ' 차례' : '');
+}
+function schedFlush() {
+  clearTimeout(NET.flushT);
+  const gap = Date.now() - NET.lastFlush;
+  if (gap >= 650) flush(); else NET.flushT = setTimeout(flush, 650 - gap);
+}
+function flush(extra) {
+  if (!NET.driving && !extra) return Promise.resolve();
+  clearTimeout(NET.flushT); NET.lastFlush = Date.now();
+  const data = Object.assign({ st:packG(G), log:NET.log.slice(), seq:NET.seq, updatedAt:ts() }, extra || {}), ep = NET.epoch, ref = NET.ref;
+  NET.floor = NET.seq;
+  NET.chain = (NET.chain || Promise.resolve()).then(() => FB.runTransaction(FB.db, async tx => {
+    const s = await tx.get(ref);
+    if (!s.exists() || s.data().epoch !== ep) throw new Error('lost');
+    tx.update(ref, data);
+  })).catch(e => { if (e && e.message === 'lost') lostDrive(); else console.error(e); });
+  return NET.chain;
+}
+function lostDrive() { // 다른 기기가 이 차례를 맡았어요
+  if (!NET.driving) return;
+  NET.driving = false; gid++; hideModal(); picking = null; tileEls.forEach(d => d.classList.remove('pick', 'nopick'));
+  NET.lastSeen = NET.room ? NET.room.seq : NET.lastSeen; NET.floor = 0; NET.applied = -1;
+  if (NET.room && NET.room.st) applyRoom(NET.room);
+  pump();
+}
+async function startDrive() {
+  const r = NET.room;
+  NET.driving = true; NET.epoch = r.epoch; NET.log = (r.log || []).slice(); NET.seq = r.seq || 0; NET.lastSeen = NET.seq; NET.floor = NET.seq;
+  gid++; const my = gid;
+  G = unpackG(r.st); NET.applied = r.seq; refresh();
+  try {
+    const p = G.players[G.turn];
+    if (p && p.alive && !G.over) await turn(p);
+    if (my !== gid) return;
+    refresh();
+    if (G.mode === 'time' && Date.now() >= G.endAt) G.endFlag = true;
+    if (alive().length < 2 || G.endFlag) {
+      G.over = true; emit({ k:'over' });
+      await flush({ status:'done', drv:'' });
+      if (my !== gid) return;
+      NET.driving = false; NET.lastSeen = NET.seq; finish(); return;
+    }
+    let k = G.turn; do { k = (k + 1) % G.players.length; } while (!G.players[k].alive);
+    await wait(350);
+    G.turn = k; emit({ k:'turn', p:k });
+    await flush({ drv:ownerUid(G.players[k]), epoch:NET.epoch + 1 });
+  } catch (e) { if (e !== ABORT) { console.error(e); toast('앗, 문제가 생겼어요.'); } return; }
+  if (my !== gid) return;
+  NET.driving = false; NET.lastSeen = NET.seq; NET.applied = NET.seq;
+  updRoll(); pump();
+}
+function ownerUid(p) { // 이 사람 차례를 진행할 기기
+  const r = NET.room, away = r.away || {};
+  if (!p.ai && !away[p.uid]) return p.uid;
+  const h = (r.seats || []).find(x => !x.ai && !away[x.uid] && (x.uid === myId || !dead(x.uid)));
+  return h ? h.uid : myId;
+}
+const dead = uid => uid !== myId && (!NET.seen[uid] || Date.now() - NET.seen[uid] > DEAD_MS);
+function checkDrive() {
+  const r = NET.room;
+  if (!NET.on || !r || r.status !== 'playing' || NET.driving || NET.pumping || !G || (r.seq || 0) < NET.floor) return;
+  if ((r.log || []).some(e => e.n > NET.lastSeen)) { pump(); return; }
+  if (NET.applied !== r.seq) applyRoom(r);
+  if (r.drv === myId && NET.role !== 'watch' && !G.over) startDrive();
+}
+function watchdog() { // 진행하던 기기가 사라지면 다른 기기가 이어서 해요
+  const r = NET.room;
+  if (!r || r.status !== 'playing' || NET.role === 'watch' || NET.driving || NET.taking || !G || G.over) return;
+  if (r.drv === myId) { checkDrive(); return; }
+  if (r.drv && !dead(r.drv)) return;
+  const mgr = (r.seats || []).find(x => !x.ai && (x.uid === myId || !dead(x.uid)));
+  if (!mgr || mgr.uid !== myId) return;
+  takeover(r.drv, r.epoch);
+}
+async function takeover(old, ep) {
+  NET.taking = true;
+  try {
+    await FB.runTransaction(FB.db, async tx => {
+      const s = await tx.get(NET.ref), d = s.data();
+      if (d.epoch !== ep || d.status !== 'playing') return;
+      const up = { drv:myId, epoch:ep + 1, updatedAt:ts() };
+      if (old && (d.seats || []).some(x => x.uid === old && !x.ai)) up['away.' + old] = true;
+      tx.update(NET.ref, up);
+    });
+  } catch (e) { console.error(e); }
+  NET.taking = false;
+}
+
+// ---------- 다른 기기의 진행을 그대로 보여 주기 ----------
+async function pump() {
+  if (NET.pumping || NET.driving || !NET.on) return;
+  NET.pumping = true; const my = gid;
+  try {
+    for (;;) {
+      const r = NET.room;
+      if (!r || r.status === 'waiting' || !r.st || my !== gid || NET.driving || !G || (r.seq || 0) < NET.floor) break;
+      const evs = (r.log || []).filter(e => e.n > NET.lastSeen);
+      if (!evs.length) { if (NET.applied !== r.seq) applyRoom(r); break; }
+      for (const e of evs) { await replay(e); if (my !== gid) break; NET.lastSeen = e.n; }
+    }
+  } catch (e) { if (e !== ABORT) console.error(e); }
+  NET.pumping = false;
+  if (my === gid) checkDrive(); else if (NET.on) pump();
+}
+async function replay(e) {
+  const P = i => G.players[i];
+  switch (e.k) {
+    case 'say': say(e.h, e.q); break;
+    case 'beep': beep(e.b); break;
+    case 'money': if (P(e.p)) money(P(e.p), e.v); break;
+    case 'toast': toast(e.t); break;
+    case 'fx': landFx(e.i); break;
+    case 'turn': G.turn = e.p; drawPlayers(); drawPieces(); updRoll(); break;
+    case 'think': if (P(e.p)) say(pn(P(e.p)) + ' 🤔 ' + esc(e.t || '고르는 중') + '…', true); break;
+    case 'dice': await showDice(e.v); break;
+    case 'walk': await walk(P(e.p), e.s, true); break;
+    case 'sail': await sail(P(e.p), e.d, true); break;
+    case 'fly': await fly(P(e.p), e.d, false); break;
+    case 'cardback': if (IMG['card-back']) { showModal('<h2>🎁 도깨비 주머니</h2><img class="cardback" src="' + IMG['card-back'] + '" alt="">'); try { await wait(750); } finally { hideModal(); } } break;
+    case 'note': showModal(e.h); try { await wait(Math.max(1500, e.ms || 1500)); } finally { hideModal(); } break;
+  }
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden && NET.on) { heartbeat(); watchdog(); } });
+
+// ---------- 응원 스티커 ----------
+const STICKERS = ['best', 'cheer', 'wow', 'clap', 'nervous', 'laugh', 'again', 'heart'];
+let stkCool = 0, stkHideT = 0;
+$('stkTray').innerHTML = '<div class="tt">응원 스티커를 골라요</div>' + STICKERS.map(n => '<button data-s="' + n + '"><img src="../omok/img/sticker-' + n + '.png" alt=""></button>').join('');
+$('stkTray').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $('stkTray').classList.add('hidden'); sendSticker(b.dataset.s); });
+document.addEventListener('pointerdown', e => { if (!$('stkTray').classList.contains('hidden') && !e.target.closest('#stkTray, #stkBtn, #lbStk')) $('stkTray').classList.add('hidden'); });
+$('stkBtn').onclick = $('lbStk').onclick = () => {
+  const t = $('stkTray'); t.classList.toggle('hidden'); t.classList.toggle('cool', Date.now() < stkCool);
+  if (Date.now() < stkCool) setTimeout(() => t.classList.remove('cool'), stkCool - Date.now());
+};
+async function sendSticker(n) {
+  if (!NET.ref || Date.now() < stkCool) return;
+  stkCool = Date.now() + 4000;
+  const r = NET.room || {}, me = (r.seats || []).find(x => x.uid === myId);
+  const by = me ? me.name : (r.watch || {})[myId] || store('worldtour-name') || '구경꾼';
+  try { await FB.updateDoc(NET.ref, { stk:{ id:Math.random().toString(36).slice(2, 9), s:n, by, w:me ? 0 : 1 } }); }
+  catch (e) { console.error(e); toast('스티커를 보내지 못했어요'); }
+}
+function showSticker(st) {
+  if (!STICKERS.includes(st.s)) return;
+  const el = $('stkShow'), box = $('game').classList.contains('hidden') ? $('lobby').querySelector('.card') : $('boardWrap');
+  const r = box.getBoundingClientRect(), size = Math.min(190, Math.max(110, r.width * .3));
+  el.style.width = size + 'px';
+  el.style.left = (r.left + r.width / 2 - size / 2) + 'px'; el.style.top = (r.top + r.height * .14) + 'px';
+  $('stkImg').src = '../omok/img/sticker-' + st.s + '.png';
+  $('stkWho').textContent = (st.w ? '👀 ' : '') + (st.by || '');
+  el.classList.remove('hidden', 'on'); void el.offsetWidth; el.classList.add('on');
+  clearTimeout(stkHideT); stkHideT = setTimeout(() => el.classList.add('hidden'), 2700);
+  beep('card');
 }
 layout();
 </script>
