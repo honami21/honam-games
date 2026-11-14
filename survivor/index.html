@@ -55,6 +55,7 @@
   @keyframes pairGlow { 0%,100% { box-shadow:0 0 3px var(--pc); } 50% { box-shadow:0 0 14px 3px var(--pc), inset 0 0 8px var(--pc); } }
   .slot.ready::after { content:''; position:absolute; inset:-4px; border-radius:11px; border:2px dashed var(--sun); animation:spin 4s linear infinite; }
   #stats { position:absolute; top:58px; right:12px; display:flex; flex-direction:column; align-items:flex-end; gap:5px; }
+  .chip-ic { height:1.25em; width:auto; vertical-align:-.25em; }
   .chip { background:rgba(10,14,30,.6); color:#fff; border-radius:14px; padding:3px 12px; font-size:clamp(16px,1.3vw,21px); }
   #pause-btn { pointer-events:auto; cursor:pointer; border:2px solid rgba(255,255,255,.35); font-family:'Jua',sans-serif; }
   #bossbar { position:absolute; left:50%; top:78px; transform:translateX(-50%); width:min(520px,70vw); text-align:center; color:#fff; font-size:16px; text-shadow:0 2px 0 #000; }
@@ -290,8 +291,8 @@
   <div id="slots"><div class="row" id="slots-w"></div><div class="row" id="slots-p"></div></div>
   <div id="stats">
     <div class="chip" id="lvl">Lv 1</div>
-    <div class="chip">👻 <span id="kills">0</span></div>
-    <div class="chip">🪙 <span id="coins">0</span></div>
+    <div class="chip"><img class="chip-ic" src="img/m-egg.png" alt="잡은 요괴" onerror="this.replaceWith('👻')"> <span id="kills">0</span></div>
+    <div class="chip"><img class="chip-ic" src="img/coin.png" alt="엽전" onerror="this.replaceWith('🪙')"> <span id="coins">0</span></div>
     <button class="chip" id="pause-btn" type="button" aria-label="멈춤">⏸<span class="t2"> 멈춤</span></button>
   </div>
   <div id="bossbar" class="hidden"><span id="bossname">보스</span><div class="bar"><div id="bossfill"></div></div></div>
