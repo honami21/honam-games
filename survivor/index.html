@@ -1952,7 +1952,7 @@ function cardHTML(o, i, forChest) {
     desc = P.each;
     const pw = PAIR_OF[o.id], pwo = pw && weaponById(pw); if (pw) pair = pwo && pwo.evo ? `✅ 이미 조합 완료: ${WEAPONS[pw].evoEmoji} ${WEAPONS[pw].evoName}` : `짝꿍 무기: ${WEAPONS[pw].emoji} ${WEAPONS[pw].name} → ${WEAPONS[pw].evoName}`;
     const ow = pw && weaponById(pw);
-    if (!forChest && ow && !ow.evo && !G.passives[o.id]) link = `🔗 고르면 ${WEAPONS[pw].name} 짝꿍 완성! → ${WEAPONS[pw].evoName}` + (ow.lv >= 8 ? ' (다음 보물상자에서 바로!)' : ` (${WEAPONS[pw].name} 8레벨 필요, 지금 Lv ${ow.lv})`);
+    if (!forChest && ow && !ow.evo && !G.passives[o.id]) link = `🔗 고르면 ${WEAPONS[pw].name} 짝꿍 완성! → ${WEAPONS[pw].evoName}`;
   } else if (o.k === 'evo') {
     const W = WEAPONS[o.id];
     icon = iconHTML('e', o.id); title = W.evoName; tag = '<em class="e">조합!</em>'; desc = W.evoDesc;
