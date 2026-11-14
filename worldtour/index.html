@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="apple-touch-icon" href="/icons/icon-180.png"/>
+<link rel="icon" type="image/png" href="/icons/icon-192.png"/>
+<link rel="manifest" href="/manifest.webmanifest"/>
+<meta name="apple-mobile-web-app-title" content="꼬비샘과 쉬는 시간"/>
+<meta name="theme-color" content="#2a2860"/>
+<title>꼬비의 세계 여행 - 꼬비샘과 쉬는 시간</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#fff6ec; --cream2:#f1e2d2; --edge:#ecc9b0; --ink:#2c2950; --ink2:#6f6585;
+    --coral:#ee5a6f; --coral-d:#c8455a; --sun:#ffd25e; --sun-d:#d9a92c; --mint:#7ccf74; --mint-d:#3f8f4a; --sky:#8fc7ff;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+  html, body { width:100%; height:100%; overflow:hidden; background:#2a2860 url(../img/bg.jpg) center / cover no-repeat;
+    font-family:'Jua','Apple SD Gothic Neo','Malgun Gothic',sans-serif; color:var(--ink); }
+  body { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+  body.hasbg { background-image:url(img/bg.jpg); }
+  .hidden { display:none !important; }
+  button { font-family:'Jua',sans-serif; }
+
+  /* ===== 상단 바 ===== */
+  .topbar{position:fixed;top:12px;left:12px;right:12px;z-index:50;display:flex;justify-content:space-between;pointer-events:none}
+  .topbar .right{display:flex;gap:8px}
+  .topbar a,.topbar button{pointer-events:auto;display:inline-flex;align-items:center;gap:6px;border:none;border-radius:20px;padding:7px 14px;
+    font-family:'Jua',sans-serif;font-size:16px;color:var(--ink);background:rgba(255,248,238,.94);text-decoration:none;cursor:pointer;line-height:1.2}
+  .topbar a:hover,.topbar button:hover{filter:brightness(1.04)}
+  .topbar svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+  #sndToggle{padding:7px 10px}
+  #sndToggle.muted{opacity:.7}
+  .kbgm-btn{padding:7px 10px}
+
+  /* ===== 시작 화면 ===== */
+  .screen { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:58px 16px 16px; z-index:20; overflow-y:auto; background:rgba(30,20,70,.3); }
+  .section { display:flex; flex-direction:column; align-items:center; gap:14px; width:100%; max-width:600px; margin:auto; }
+  .card { background:var(--cream); border:3px solid var(--ink); border-radius:28px; box-shadow:0 8px 0 var(--ink), 0 16px 30px rgba(20,10,50,.35);
+    padding:20px 24px 24px; width:100%; position:relative; }
+  .logo { height:auto; width:min(420px, 92%); display:block; margin:-4px auto 0; }
+  .logo-txt { font-size:clamp(34px,7vw,50px); color:var(--coral-d); line-height:1.1; }
+  .logo-txt small { display:block; font-size:.5em; color:var(--ink); }
+  .lead { font-size:clamp(16px,2.6vw,19px); line-height:1.5; color:var(--ink); margin:8px 0 4px; word-break:keep-all; }
+  .lead b { color:var(--coral-d); font-weight:normal; }
+  .start-wrap { position:relative; width:100%; }
+  .start-ggobi { position:absolute; width:170px; right:-140px; bottom:-10px; pointer-events:none; filter:drop-shadow(0 4px 0 rgba(20,10,50,.25)); }
+  @media (max-width:940px){ .start-ggobi{ display:none; } }
+  .box { background:#fff; border:2px solid var(--cream2); border-radius:18px; padding:10px 12px 12px; margin-top:12px; text-align:left; }
+  .box-title { color:var(--coral-d); font-size:18px; margin-bottom:8px; text-align:center; }
+  .slot { display:flex; align-items:center; gap:8px; padding:4px 0; }
+  .slot .chip { flex:none; width:34px; height:34px; border-radius:50%; border:3px solid var(--ink); background-size:cover; background-position:center top; }
+  .slot input { flex:1; min-width:0; padding:8px 12px; border-radius:14px; border:2.5px solid var(--cream2); background:#fff; color:var(--ink);
+    font-size:17px; font-family:'Jua',sans-serif; -webkit-user-select:text; user-select:text; outline:none; }
+  .slot input:focus { border-color:var(--coral); }
+  .slot.off input { opacity:.35; pointer-events:none; }
+  .seg { display:flex; flex:none; border:2.5px solid var(--ink); border-radius:16px; overflow:hidden; }
+  .seg button { border:none; background:#fff; color:var(--ink); font-size:15px; padding:7px 10px; cursor:pointer; white-space:nowrap; }
+  .seg button + button { border-left:2px solid var(--ink); }
+  .seg button.on { background:var(--sun); }
+  .segrow { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; align-items:center; }
+  .segrow .seg button { padding:8px 14px; font-size:16px; }
+  .hint { font-size:14px; color:var(--ink2); text-align:center; margin-top:8px; word-break:keep-all; line-height:1.4; }
+  .msg { min-height:20px; font-size:15px; color:var(--coral-d); margin-top:8px; text-align:center; word-break:keep-all; }
+
+  .game-btn { padding:11px 24px; font-size:clamp(17px,2.8vw,20px); border-radius:40px; border:3px solid var(--ink); color:#fff;
+    cursor:pointer; min-width:120px; box-shadow:none; transition:transform .08s; white-space:nowrap; }
+  .game-btn:active { transform:translateY(2px) scale(.97); }
+  .game-btn:disabled { opacity:.45; cursor:not-allowed; }
+  .btn-primary { background:var(--coral); }
+  .btn-info { background:var(--sun); color:var(--ink); }
+  .btn-secondary { background:#fff; color:var(--ink); }
+  .btn-mint { background:var(--mint); color:var(--ink); }
+  .btn-row { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:12px; }
+
+  /* ===== 게임 화면 ===== */
+  #game { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; gap:14px; padding:54px 10px 10px; }
+  #side { display:flex; flex-direction:column; gap:8px; width:290px; flex:none; align-self:stretch; min-height:0; }
+  #players { display:flex; flex-direction:column; gap:7px; }
+  .pcard { display:flex; align-items:center; gap:8px; background:var(--cream); border:3px solid var(--ink); border-radius:16px; padding:5px 10px; position:relative; transition:transform .2s, background .2s; min-width:0; }
+  .pcard .chip { flex:none; width:38px; height:38px; border-radius:50%; border:3px solid var(--ink); background-size:cover; background-position:center top; }
+  .pcard .nm { font-size:17px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pcard .sub { font-size:12.5px; color:var(--ink2); white-space:nowrap; }
+  .pcard .mn { margin-left:auto; flex:none; font-size:19px; color:var(--coral-d); text-align:right; white-space:nowrap; }
+  .pcard .mn small { display:block; font-size:11.5px; color:var(--ink2); }
+  .pcard.turn { background:#fff1c9; box-shadow:0 0 0 4px var(--sun); }
+  .pcard.out { opacity:.45; filter:grayscale(1); }
+  .pcard .delta { position:absolute; right:10px; top:-8px; font-size:18px; pointer-events:none; animation:delta 1.4s ease-out forwards; text-shadow:0 1px 0 #fff, 0 -1px 0 #fff, 1px 0 0 #fff, -1px 0 0 #fff; }
+  .delta.plus { color:var(--mint-d); } .delta.minus { color:var(--coral-d); }
+  @keyframes delta { 0%{ opacity:0; transform:translateY(8px) } 15%{ opacity:1; transform:translateY(0) } 75%{ opacity:1 } 100%{ opacity:0; transform:translateY(-16px) } }
+  #info { display:flex; gap:6px; flex-wrap:wrap; }
+  #info span { background:rgba(255,248,238,.94); border-radius:14px; padding:3px 10px; font-size:14px; white-space:nowrap; }
+  #info b { color:var(--coral-d); font-weight:normal; }
+  #log { flex:1; min-height:60px; background:rgba(255,248,238,.92); border:3px solid var(--ink); border-radius:16px; padding:8px 10px; overflow-y:auto; font-size:14px; line-height:1.45; word-break:keep-all; }
+  #log div { padding:2px 0; border-bottom:1px dashed var(--cream2); }
+  #log div:first-child { color:var(--ink); font-size:15px; } #log div { color:var(--ink2); }
+  i { font-style:normal; }
+  #log i { font-style:normal; }
+  #sideBtns { display:flex; gap:6px; }
+  #sideBtns button { flex:1; border:2.5px solid var(--ink); border-radius:16px; background:var(--cream); color:var(--ink); font-size:14px; padding:6px 4px; cursor:pointer; white-space:nowrap; }
+  #sideBtns button.on { background:var(--sun); }
+
+  #boardWrap { position:relative; flex:none; }
+  #board { position:relative; width:100%; height:100%; display:grid; grid-template-columns:1.45fr repeat(9, 1fr) 1.45fr; grid-template-rows:1.45fr repeat(9, 1fr) 1.45fr;
+    background:#1f1d4a; border:4px solid var(--ink); border-radius:calc(var(--u) * 2.2); gap:calc(var(--u) * .28); padding:calc(var(--u) * .28); box-shadow:0 16px 30px rgba(20,10,50,.4); }
+  .tile { position:relative; background:var(--cream); border-radius:calc(var(--u) * .8); overflow:hidden; display:flex; cursor:pointer; min-width:0; min-height:0; }
+  .tile.sb { flex-direction:column; } .tile.st { flex-direction:column-reverse; }
+  .tile.sl { flex-direction:row-reverse; } .tile.sr { flex-direction:row; }
+  /* 건물 자리 3칸: 보드 안쪽 가장자리 */
+  .tile .bstrip { flex:none; display:flex; background:rgba(44,41,80,.1); }
+  .tile.sb .bstrip, .tile.st .bstrip { height:calc(var(--u) * 2.5); flex-direction:row; }
+  .tile.sl .bstrip, .tile.sr .bstrip { width:calc(var(--u) * 2.5); flex-direction:column; }
+  .tile .bstrip span { flex:1; min-width:0; min-height:0; position:relative; display:flex; align-items:center; justify-content:center; font-size:calc(var(--u) * 1.6); line-height:1; }
+  .tile .bstrip { --ln:calc(var(--u) * .28) solid var(--ink); --ln2:calc(var(--u) * .16) solid rgba(44,41,80,.55); }
+  .tile.sb .bstrip { border-bottom:var(--ln); } .tile.st .bstrip { border-top:var(--ln); }
+  .tile.sl .bstrip { border-left:var(--ln); } .tile.sr .bstrip { border-right:var(--ln); }
+  .tile.sb .bstrip span + span, .tile.st .bstrip span + span { border-left:var(--ln2); }
+  .tile.sl .bstrip span + span, .tile.sr .bstrip span + span { border-top:var(--ln2); }
+  .tile .bstrip img { position:absolute; inset:4%; width:92%; height:92%; object-fit:contain; filter:drop-shadow(0 calc(var(--u) * .15) 0 rgba(20,10,50,.3)); animation:bpop .35s ease-out; }
+  @keyframes bpop { from{ transform:scale(.2) translateY(-60%) } 70%{ transform:scale(1.2) } }
+  .tile .col { flex:1; min-width:0; min-height:0; display:flex; flex-direction:column; }
+  .tile .pic { flex:1; min-width:0; min-height:0; position:relative; display:flex; align-items:center; justify-content:center; font-size:calc(var(--u) * 3); line-height:1; }
+  .tile .pic img { position:absolute; left:6%; top:5%; width:88%; height:92%; object-fit:contain; display:block; }
+  .tile .nm { flex:none; text-align:center; line-height:1.12; color:var(--ink); white-space:nowrap; overflow:hidden; padding:calc(var(--u) * .3) 0 calc(var(--u) * .25); background:rgba(44,41,80,.09); font-size:calc(var(--u) * 1.7); }
+  .tile .nm.l1, .tile .nm.l2, .tile .nm.l3 { font-size:calc(var(--u) * 1.9); }
+  .tile .nm.l5 { font-size:calc(var(--u) * 1.38); letter-spacing:-.03em; }
+  .tile.sl .nm.l5, .tile.sr .nm.l5, .tile.corner .nm.l5 { font-size:calc(var(--u) * 1.7); }
+  .tile.sl .nm br, .tile.sr .nm br { display:none; }
+  .tile.own { background:var(--ot); }
+  .tile.own .nm { background:var(--oc); color:var(--otx, #fff); }
+  .tile.own .bstrip { background:rgba(255,255,255,.45); }
+  /* 랜드마크: 카드 전체가 주인 색, 금테와 반짝임 */
+  .tile.lm { background:var(--oc); }
+  .tile.lm .pic img { left:3%; top:3%; width:94%; height:96%; filter:drop-shadow(0 0 calc(var(--u) * .6) #fff); }
+  .tile.lm .shine { position:absolute; inset:0; pointer-events:none; background:linear-gradient(115deg, transparent 35%, rgba(255,255,255,.75) 50%, transparent 65%); background-size:300% 100%; animation:shine 2.6s linear infinite; }
+  @keyframes shine { from{ background-position:150% 0 } to{ background-position:-50% 0 } }
+  .tile.corner { background:#fff1c9; }
+  .tile.corner .pic { font-size:calc(var(--u) * 5); }
+  .tile.t-card { background:#e8e0ff; } .tile.t-give { background:#ffe3ea; } .tile.t-mark { background:#e0f4ff; }
+  .tile.pick { animation:pick .7s ease-in-out infinite alternate; z-index:3; }
+  .tile.nopick { opacity:.4; }
+  @keyframes pick { from{ box-shadow:inset 0 0 0 calc(var(--u) * .5) var(--sun) } to{ box-shadow:inset 0 0 0 calc(var(--u) * .5) var(--coral) } }
+  .tile.here { animation:here .5s ease-out; }
+  @keyframes here { 0%{ transform:scale(1) } 40%{ transform:scale(1.12); z-index:4 } 100%{ transform:scale(1) } }
+
+  #center { grid-column:2 / 11; grid-row:2 / 11; position:relative; border-radius:calc(var(--u) * 1.2); overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:calc(var(--u) * 1.6);
+    background:radial-gradient(circle at 50% 40%, #4a47a0, #2a2860 75%); padding:calc(var(--u) * 2); }
+  #center.art { background:url(img/board-center.jpg) center / cover no-repeat; }
+  #cLogo { width:62%; max-height:26%; object-fit:contain; pointer-events:none; }
+  #cTitle { font-size:calc(var(--u) * 6); color:var(--sun); text-shadow:0 calc(var(--u) * .4) 0 var(--ink); line-height:1; }
+  #cTitle small { display:block; font-size:.5em; color:#fff; text-align:center; }
+  #status { min-height:calc(var(--u) * 7); display:flex; align-items:center; justify-content:center; font-size:calc(var(--u) * 2.9); color:#fff; text-shadow:0 2px 0 rgba(20,10,50,.8); text-align:center; word-break:keep-all; line-height:1.3; padding:0 2%; }
+  #status b { color:var(--sun); font-weight:normal; }
+  #diceRow { display:flex; gap:calc(var(--u) * 4); height:calc(var(--u) * 11); align-items:center; }
+  .die { --d:calc(var(--u) * 9); width:var(--d); height:var(--d); position:relative; transform-style:preserve-3d; transition:transform .9s cubic-bezier(.2,.8,.3,1); }
+  .die .f { position:absolute; inset:0; outline:1px solid transparent; background:#fff; border:calc(var(--u) * .35) solid var(--ink); border-radius:18%; display:grid; grid-template:repeat(3, 1fr) / repeat(3, 1fr); padding:14%; backface-visibility:hidden; }
+  .die .f i { width:70%; height:70%; border-radius:50%; background:var(--ink); align-self:center; justify-self:center; }
+  .die .f.one i { background:var(--coral); width:100%; height:100%; }
+  .die .f1 { transform:translateZ(calc(var(--d) / 2)); } .die .f6 { transform:rotateY(180deg) translateZ(calc(var(--d) / 2)); }
+  .die .f3 { transform:rotateY(90deg) translateZ(calc(var(--d) / 2)); } .die .f4 { transform:rotateY(-90deg) translateZ(calc(var(--d) / 2)); }
+  .die .f2 { transform:rotateX(90deg) translateZ(calc(var(--d) / 2)); } .die .f5 { transform:rotateX(-90deg) translateZ(calc(var(--d) / 2)); }
+  #diceRow.jump .die { animation:djump .9s ease-out; }
+  @keyframes djump { 0%{ top:0 } 30%{ top:calc(var(--u) * -6) } 60%{ top:0 } 75%{ top:calc(var(--u) * -1.6) } 100%{ top:0 } }
+  #rollBtn { font-size:calc(var(--u) * 3.2); padding:calc(var(--u) * 1.4) calc(var(--u) * 4.5); min-width:0; }
+  #rollBtn.pulse { animation:pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 50%{ transform:scale(1.07) } }
+
+  #pieces { position:absolute; inset:0; pointer-events:none; z-index:5; }
+  .piece { position:absolute; width:calc(var(--u) * 5.2); height:calc(var(--u) * 5.2); margin:calc(var(--u) * -2.6) 0 0 calc(var(--u) * -2.6); transition:left .17s linear, top .17s linear; filter:drop-shadow(0 calc(var(--u) * .5) 0 rgba(20,10,50,.35)); }
+  .piece.fly { transition:left .8s cubic-bezier(.5,0,.3,1), top .8s cubic-bezier(.5,0,.3,1); }
+  .piece .in { width:100%; height:100%; border-radius:50%; border:calc(var(--u) * .75) solid var(--pc); background:var(--pc) center top / cover no-repeat; box-shadow:0 0 0 calc(var(--u) * .3) var(--ink); }
+  .piece.img .in { border:none; border-radius:0; box-shadow:none; background-color:transparent; background-size:contain; background-position:center; transform:scale(1.55); transform-origin:50% 85%; }
+  .piece.hop .in { animation:hop .17s ease-out; }
+  @keyframes hop { 50%{ transform:translateY(calc(var(--u) * -2.2)) } }
+  .piece.img.hop .in { animation:hop2 .17s ease-out; } @keyframes hop2 { 50%{ transform:scale(1.55) translateY(calc(var(--u) * -1.6)) } }
+  .piece.img.cur .in { animation:bob2 1s ease-in-out infinite; } @keyframes bob2 { 0%,100%{ transform:scale(1.55) } 50%{ transform:scale(1.55) translateY(calc(var(--u) * -.7)) } }
+  .piece.cur { z-index:2; } .piece.cur .in { animation:bob 1s ease-in-out infinite; }
+  @keyframes bob { 50%{ transform:translateY(calc(var(--u) * -1)) } }
+  .piece.out { display:none; }
+
+  /* 알림 창 */
+  .modal { position:fixed; inset:0; z-index:40; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(30,20,70,.4); }
+  .modal .card { max-width:430px; text-align:center; max-height:calc(100vh - 32px); overflow-y:auto; animation:pop .22s ease-out; }
+  @keyframes pop { from{ transform:scale(.85); opacity:0 } }
+  .modal h2 { font-size:clamp(24px,5vw,30px); font-weight:normal; color:var(--coral-d); }
+  .modal p { font-size:17px; line-height:1.5; color:var(--ink); margin-top:6px; word-break:keep-all; }
+  .modal p b { color:var(--coral-d); font-weight:normal; }
+  .modal .big { font-size:54px; line-height:1.1; }
+  .modal .big img { width:150px; height:140px; object-fit:contain; }
+  .modal .res-img { width:140px; display:block; margin:0 auto; }
+  .choices { display:flex; flex-direction:column; gap:8px; margin-top:12px; }
+  .choices .game-btn { width:100%; white-space:normal; word-break:keep-all; padding:9px 14px; font-size:17px; display:flex; justify-content:space-between; gap:10px; align-items:center; text-align:left; }
+  .choices .game-btn span:last-child { flex:none; }
+  .choices .game-btn:only-child { justify-content:center; }
+  table.toll { width:100%; border-collapse:collapse; margin-top:10px; font-size:15px; }
+  table.toll td { padding:4px 6px; border-bottom:1px dashed var(--cream2); text-align:left; } table.toll td:last-child { text-align:right; color:var(--coral-d); }
+  table.toll tr.now td { background:#fff1c9; }
+  .gband { display:inline-block; width:14px; height:14px; border-radius:4px; vertical-align:-1px; margin-right:4px; border:2px solid var(--ink); }
+  .cardface { background:#fff; border:3px solid var(--ink); border-radius:18px; padding:14px 12px; margin-top:10px; font-size:19px; line-height:1.45; word-break:keep-all; }
+  .cardface .cardimg { width:min(230px, 60%); height:auto; max-height:230px; object-fit:contain; display:block; margin:0 auto 8px; }
+  .cardback { width:min(200px, 55%); display:block; margin:10px auto 0; border-radius:14px; animation:cardflip .75s ease-in-out forwards; }
+  @keyframes cardflip { 0%{ transform:rotateY(0) scale(.8) } 60%{ transform:rotateY(0) scale(1.05) } 100%{ transform:rotateY(90deg) scale(1.05) } }
+  .cardface { animation:cardin .3s ease-out both; }
+  @keyframes cardin { from{ transform:rotateY(-90deg) } }
+  .rank { text-align:left; margin-top:10px; }
+  .rank div { display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:12px; font-size:17px; }
+  .rank div:first-child { background:#fff1c9; }
+  .rank .chip { width:28px; height:28px; border-radius:50%; border:2.5px solid var(--ink); flex:none; background-size:cover; background-position:center top; }
+  .rank span:last-child { margin-left:auto; color:var(--coral-d); }
+
+  #toast { position:fixed; left:50%; top:16%; transform:translate(-50%,-50%); z-index:45; background:var(--cream); border:3px solid var(--ink); border-radius:20px;
+    padding:8px 18px; font-size:18px; white-space:nowrap; pointer-events:none; opacity:0; transition:opacity .25s; max-width:94vw; overflow:hidden; text-overflow:ellipsis; }
+  #toast.show { opacity:1; }
+
+  /* 세로 화면 (휴대폰) */
+  body.tall #game { flex-direction:column; gap:6px; padding:44px 4px 6px; justify-content:flex-start; }
+  body.tall #side { width:100%; align-self:auto; flex:1; min-height:0; }
+  body.tall #players { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+  body.tall .pcard { padding:3px 7px; gap:6px; border-width:2.5px; border-radius:12px; }
+  body.tall .pcard .chip { width:28px; height:28px; border-width:2px; }
+  body.tall .pcard .nm { font-size:14px; } body.tall .pcard .sub { font-size:11px; } body.tall .pcard .mn { font-size:15px; } body.tall .pcard .mn small { display:none; }
+  body.tall #log { min-height:34px; font-size:13px; border-width:2.5px; border-radius:12px; padding:4px 8px; }
+  body.tall #info span { font-size:12.5px; padding:2px 8px; }
+  body.tall #sideBtns button { font-size:13px; padding:5px 4px; }
+  @media (max-width:760px), (pointer:coarse){
+    .topbar{top:6px;left:6px;right:6px}
+    .topbar a,.topbar button{font-size:13px;padding:6px 10px;gap:4px}
+    .topbar .t{display:none}
+    .card { padding:16px 14px 18px; border-radius:24px; }
+    .seg button { padding:7px 8px; font-size:14px; }
+    .segrow .seg button { padding:8px 9px; font-size:14.5px; }
+  }
+  @media (max-height:520px){ #game { padding-top:44px; } #side { width:230px; } .pcard .chip { width:28px; height:28px; } .pcard { padding:3px 8px; } #log { display:none; } }
+  .game-btn, .topbar a, .topbar button { box-shadow:none !important; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a href="../" id="home-link" title="꼬비샘과 쉬는 시간으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">쉬는 시간</span></a>
+  <div class="right">
+    <button id="sndToggle" type="button" title="소리 켜기/끄기" aria-label="소리 켜기/끄기">🔊</button>
+    <button id="fs-btn" type="button" title="전체화면"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="t" id="fs-txt">전체화면</span></button>
+  </div>
+</div>
+<script>
+(function(){
+  var b=document.getElementById('fs-btn'),t=document.getElementById('fs-txt'),d=document,el=d.documentElement;
+  var can=d.fullscreenEnabled||d.webkitFullscreenEnabled;
+  var framed=false;try{framed=window.top!==window;}catch(e){framed=true;}
+  if(!can){
+    if(framed){t.textContent='새 창으로';b.title='새 창으로 크게 열기';b.addEventListener('click',function(){window.open(location.href,'_blank');});}
+    else b.style.display='none';
+    return;
+  }
+  var cur=function(){return d.fullscreenElement||d.webkitFullscreenElement;};
+  b.addEventListener('click',function(){
+    if(cur()){(d.exitFullscreen||d.webkitExitFullscreen).call(d);}
+    else{var pr=(el.requestFullscreen||el.webkitRequestFullscreen).call(el);if(pr&&pr.catch)pr.catch(function(){});}
+    b.blur();
+  });
+  var upd=function(){t.textContent=cur()?'나가기':'전체화면';};
+  d.addEventListener('fullscreenchange',upd);d.addEventListener('webkitfullscreenchange',upd);
+})();
+</script>
+
+<!-- 시작 화면 -->
+<div class="screen" id="start">
+  <div class="section">
+    <div class="start-wrap">
+      <div class="card">
+        <div id="logoBox"><div class="logo-txt"><small>꼬비의</small>세계 여행</div></div>
+        <p class="lead">주사위를 굴려 세계 도시를 여행해요. <b>도시를 사고 건물을 지어</b> 통행료를 받아요!</p>
+        <div class="box">
+          <div class="box-title">누가 함께 여행할까요? (2~4명)</div>
+          <div id="slots"></div>
+        </div>
+        <div class="box">
+          <div class="box-title">언제 끝낼까요?</div>
+          <div class="segrow">
+            <div class="seg" id="endSeg"><button data-v="bank" class="on">파산할 때까지</button><button data-v="time">시간 정하기</button><button data-v="laps">바퀴 수 정하기</button></div>
+            <div class="seg hidden" id="timeSeg"><button data-v="10">10분</button><button data-v="20" class="on">20분</button><button data-v="30">30분</button><button data-v="40">40분</button></div>
+            <div class="seg hidden" id="lapSeg"><button data-v="3">3바퀴</button><button data-v="5" class="on">5바퀴</button><button data-v="7">7바퀴</button><button data-v="10">10바퀴</button></div>
+          </div>
+          <div class="hint" id="endHint"></div>
+        </div>
+        <div class="msg" id="startMsg"></div>
+        <div class="btn-row">
+          <button class="game-btn btn-primary" id="startBtn">여행 시작!</button>
+          <button class="game-btn btn-info" id="howBtn">놀이 방법</button>
+        </div>
+      </div>
+      <img class="start-ggobi" id="startGgobi" src="../img/ggobi-wave.png" alt="">
+    </div>
+  </div>
+</div>
+
+<!-- 게임 화면 -->
+<div id="game" class="hidden">
+  <div id="boardWrap">
+    <div id="board">
+      <div id="center">
+        <div id="cTitle"><small>꼬비의</small>세계 여행</div>
+        <div id="status"></div>
+        <div id="diceRow"><div class="die" id="die0"></div><div class="die" id="die1"></div></div>
+        <button class="game-btn btn-primary" id="rollBtn" disabled>주사위 굴리기</button>
+      </div>
+    </div>
+    <div id="pieces"></div>
+  </div>
+  <div id="side">
+    <div id="players"></div>
+    <div id="info"></div>
+    <div id="log"></div>
+    <div id="sideBtns"><button id="speedBtn" type="button">⏩ 빠르게</button><button id="helpBtn" type="button">❓ 놀이 방법</button><button id="quitBtn" type="button">🚪 그만하기</button></div>
+  </div>
+</div>
+<div class="modal hidden" id="modal"><div class="card" id="modalCard"></div></div>
+<div id="toast"></div>
+
+<script src="../audio/bgm.js"></script>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
+
+// ---------- 보드 자료 ----------
+const C = (name, price, g, key, short) => ({ type:'city', name, price, g, key, short: short || name });
+const TILES = [
+  { type:'start', name:'꼬비 마을', key:'start', emo:'🏡' },
+  C('타이베이', 100, 0, 'taipei'), C('마닐라', 120, 0, 'manila'),
+  { type:'card', name:'도깨비 주머니', short:'주머니', emo:'🎁' },
+  C('방콕', 140, 1, 'bangkok'), C('싱가포르', 160, 1, 'singapore'),
+  { type:'mark', name:'제주도', price:300, key:'jeju', emo:'🌋' },
+  C('뉴델리', 180, 1, 'newdelhi'), C('베이징', 200, 2, 'beijing'), C('도쿄', 220, 2, 'tokyo'),
+  { type:'island', name:'도깨비섬', key:'island', emo:'🏝️' },
+  C('카이로', 240, 3, 'cairo'),
+  { type:'mark', name:'사하라 사막', short:'사하라', price:300, key:'sahara', emo:'🐪' },
+  C('이스탄불', 260, 3, 'istanbul'),
+  { type:'card', name:'도깨비 주머니', short:'주머니', emo:'🎁' },
+  C('아테네', 280, 3, 'athens'), C('코펜하겐', 300, 4, 'copenhagen'), C('스톡홀름', 320, 4, 'stockholm'),
+  { type:'give', name:'기부 천사', short:'기부', emo:'💝' },
+  C('베를린', 340, 4, 'berlin'),
+  { type:'fund', name:'꼬비 저금통', key:'fund', emo:'🐷' },
+  C('부에노스아이레스', 360, 5, 'buenosaires', '부에노스'), C('상파울루', 380, 5, 'saopaulo'),
+  { type:'card', name:'도깨비 주머니', short:'주머니', emo:'🎁' },
+  C('멕시코시티', 400, 5, 'mexicocity', '멕시코'), C('오타와', 420, 6, 'ottawa'),
+  { type:'mark', name:'하와이', price:300, key:'hawaii', emo:'🌺' },
+  C('시드니', 440, 6, 'sydney'), C('리스본', 460, 7, 'lisbon'), C('마드리드', 480, 7, 'madrid'),
+  { type:'balloon', name:'열기구 여행', key:'balloon', emo:'🎈' },
+  C('베른', 500, 8, 'bern'), C('로마', 520, 8, 'rome'),
+  { type:'card', name:'도깨비 주머니', short:'주머니', emo:'🎁' },
+  C('파리', 560, 9, 'paris'), C('런던', 580, 9, 'london'),
+  { type:'mark', name:'남극 기지', short:'남극', price:300, key:'antarctica', emo:'🐧' },
+  C('뉴욕', 640, 10, 'newyork'),
+  { type:'give', name:'기부 천사', short:'기부', emo:'💝' },
+  C('서울', 700, 10, 'seoul')
+];
+const N = TILES.length, ISLAND = 10, FUND = 20, BALLOON = 30, SEOUL = 39;
+const START_MONEY = 3000, SALARY = 1000, GIVE = 150, ISLAND_FEE = 200;
+const B = [{ n:'텐트', emo:'⛺', key:'bld-tent', cost:.5, toll:.4, fix:30 }, { n:'게스트하우스', emo:'🏠', key:'bld-house', cost:1, toll:1, fix:60 }, { n:'호텔', emo:'🏨', key:'bld-hotel', cost:1.5, toll:2, fix:100 }];
+const LAND_TOLL = .1, LM_COST = 2, LM_TOLL = 6, TAKE = 2, MARK_TOLL = [0, 80, 200, 400, 700];
+const r10 = v => Math.round(v / 10) * 10;
+const COLORS = [
+  { key:'red', name:'빨강', c:'#ee5a6f', t:'#ffb3bf' }, { key:'blue', name:'파랑', c:'#4f8ff0', t:'#a9cbff' },
+  { key:'green', name:'초록', c:'#4fb86a', t:'#a8e6b4' }, { key:'yellow', name:'노랑', c:'#f0b21e', t:'#ffe07a' }
+];
+const CARDS = [
+  { t:'여행 사진 대회에서 1등! 상금 200냥을 받아요.', emo:'📸', f:'gain', v:200 },
+  { t:'길에서 엽전 주머니를 주웠어요. 100냥을 받아요.', emo:'💰', f:'gain', v:100 },
+  { t:'내가 소개한 맛집이 인기 폭발! 150냥을 받아요.', emo:'🍜', f:'gain', v:150 },
+  { t:'기념품을 너무 많이 샀어요. 100냥을 저금통에 넣어요.', emo:'🛍️', f:'lose', v:100 },
+  { t:'여권을 잃어버렸어요. 다시 만드는 값 150냥을 저금통에 넣어요.', emo:'📕', f:'lose', v:150 },
+  { t:'비행기가 꼬비 마을로 돌아가요! 출발 칸으로 가서 용돈을 받아요.', emo:'✈️', f:'goto', v:0 },
+  { t:'태풍을 만나 도깨비섬에 내렸어요. 도깨비섬으로 가요.', emo:'🌀', f:'island' },
+  { t:'도깨비섬 탈출권! 가지고 있다가 섬에 갇혔을 때 써요.', emo:'🎫', f:'ticket' },
+  { t:'깜짝 열기구 탑승권! 열기구 여행 칸으로 가요.', emo:'🎈', f:'goto', v:BALLOON },
+  { t:'오늘은 내 생일! 친구들에게 50냥씩 선물을 받아요.', emo:'🎂', f:'each', v:50 },
+  { t:'기분이다! 친구들에게 간식값 30냥씩 나눠 줘요.', emo:'🍡', f:'each', v:-30 },
+  { t:'건물 고치는 날. 텐트 30냥, 게스트하우스 60냥, 호텔 100냥, 랜드마크 150냥씩 저금통에 넣어요.', emo:'🔨', f:'repair' },
+  { t:'지름길을 찾았어요! 앞으로 3칸 가요.', emo:'🧭', f:'step', v:3 },
+  { t:'지도를 거꾸로 봤어요. 뒤로 3칸 가요.', emo:'🗺️', f:'step', v:-3 },
+  { t:'서울 구경 가자! 서울로 가요.', emo:'🏙️', f:'goto', v:SEOUL },
+  { t:'꼬비 저금통 당첨! 저금통 칸으로 가서 모인 돈을 받아요.', emo:'🐷', f:'goto', v:FUND },
+  { t:'통행료 면제권! 가지고 있다가 남의 도시에서 통행료를 한 번 안 내요.', emo:'🎟️', f:'free' },
+  { t:'내 도시가 보고 싶어요. 가장 비싼 내 도시로 가요. (없으면 꼬비 마을로)', emo:'🏠', f:'mybest' },
+  { t:'도깨비 방망이 뚝딱! 내 도시 한 곳에 건물 하나를 공짜로 지어요.', emo:'🪄', f:'freebuild' },
+  { t:'반값 인수권! 가지고 있다가 남의 도시를 인수할 때 반값만 내요.', emo:'🤝', f:'half' },
+  { t:'여행 복권 당첨! 300냥을 받아요.', emo:'🎉', f:'gain', v:300 },
+  { t:'여행 영상이 조회수 대박! 250냥을 받아요.', emo:'🎬', f:'gain', v:250 },
+  { t:'늦잠을 자서 기차를 놓쳤어요. 새 표 값 120냥을 저금통에 넣어요.', emo:'🚂', f:'lose', v:120 },
+  { t:'길거리 음식을 너무 많이 먹어 배탈이 났어요. 병원비 200냥을 저금통에 넣어요.', emo:'🤒', f:'lose', v:200 },
+  { t:'귤 따기 체험 초대장! 제주도로 가요.', emo:'🍊', f:'goto', v:6 },
+  { t:'훌라춤 축제 초대장! 하와이로 가요.', emo:'🌺', f:'goto', v:26 },
+  { t:'꼬비 마을에서 응원 용돈이 왔어요. 300냥을 받아요.', emo:'💌', f:'gain', v:300 },
+  { t:'여행 안내 아르바이트! 돈이 가장 많은 친구에게 100냥을 받아요.', emo:'🧢', f:'rich', v:100 },
+  { t:'내 도시에서 축제가 열렸어요! 가진 도시 한 곳마다 30냥씩 받아요.', emo:'🎪', f:'fest', v:30 },
+  { t:'도깨비 바람이 등을 밀어 줘요. 주사위를 한 번 더 굴려요!', emo:'🎲', f:'again' }
+];
+
+// ---------- 그림 (있으면 쓰고, 없으면 그림 문자) ----------
+const IMG = {};
+const IMG_NAMES = ['logo', 'ggobi-travel', 'ggobi-happy', 'ggobi-sad', 'ggobi-win', 'card-back', 'bld-tent', 'bld-house', 'bld-hotel', 'bld-landmark',
+  'piece-red', 'piece-blue', 'piece-green', 'piece-yellow', 'corner-start', 'corner-island', 'corner-fund', 'corner-balloon', 'tile-card', 'tile-give']
+  .concat(TILES.filter(t => t.key && (t.type === 'city' || t.type === 'mark')).map(t => 'city-' + t.key)).concat(TILES.filter(t => t.type === 'city').map(t => 'lm-' + t.key)).concat(CARDS.map((c, k) => 'card-' + String(k + 1).padStart(2, '0')));
+IMG_NAMES.forEach(n => { const im = new Image(); im.onload = () => { IMG[n] = 'img/' + n + '.png'; imgReady(); }; im.src = 'img/' + n + '.png'; });
+[['bg.jpg', () => document.body.classList.add('hasbg')], ['board-center.jpg', () => $('center').classList.add('art')]].forEach(([f, cb]) => { const im = new Image(); im.onload = cb; im.src = 'img/' + f; });
+let imgTimer = 0;
+function imgReady() { clearTimeout(imgTimer); imgTimer = setTimeout(() => { applyStatic(); if (G) { drawTiles(); drawPieces(true); drawPlayers(); } }, 120); }
+function applyStatic() {
+  if (IMG.logo) { $('logoBox').innerHTML = '<img class="logo" src="' + IMG.logo + '" alt="꼬비의 세계 여행">'; if (!$('cLogo')) { $('cTitle').outerHTML = '<img id="cLogo" src="' + IMG.logo + '" alt="">'; } }
+  if (IMG['ggobi-travel']) $('startGgobi').src = IMG['ggobi-travel'];
+  drawSlots();
+}
+const chipBg = ci => 'background-color:' + COLORS[ci].c + ';background-image:url(' + (IMG['piece-' + COLORS[ci].key] || '../img/face-64.png') + ')';
+const tilePic = t => {
+  const k = t.type === 'city' || t.type === 'mark' ? 'city-' + t.key : t.type === 'card' ? 'tile-card' : t.type === 'give' ? 'tile-give' : 'corner-' + t.key;
+  return IMG[k] ? '<img src="' + IMG[k] + '" alt="">' : (t.emo || '');
+};
+const bIcon = k => IMG[B[k].key] ? '<img src="' + IMG[B[k].key] + '" alt="">' : B[k].emo;
+const lmPic = t => { const k = IMG['lm-' + t.key] ? 'lm-' + t.key : 'bld-landmark'; return IMG[k] ? '<img src="' + IMG[k] + '" alt="">' : '🏰'; };
+const bList = i => [0, 1, 2].filter(k => G.bld[i] >> k & 1);
+const bIcons = i => G.lm[i] ? '🏰' : bList(i).map(k => B[k].emo).join('');
+const takeCost = i => invested(i) * TAKE;
+
+// ---------- 소리 ----------
+let soundOn = store('worldtour-sound') !== 'off', actx = null;
+function updSnd() { $('sndToggle').textContent = soundOn ? '🔊' : '🔈'; $('sndToggle').classList.toggle('muted', !soundOn); }
+updSnd();
+$('sndToggle').onclick = () => { soundOn = !soundOn; store('worldtour-sound', soundOn ? 'on' : 'off'); updSnd(); };
+function beep(kind) {
+  if (!soundOn) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const t = actx.currentTime;
+    const tone = (f, s, d, type = 'sine', v = .2) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type; o.frequency.setValueAtTime(f, t + s);
+      g.gain.setValueAtTime(v, t + s); g.gain.exponentialRampToValueAtTime(.001, t + s + d);
+      o.connect(g); g.connect(actx.destination); o.start(t + s); o.stop(t + s + d + .02);
+    };
+    if (kind === 'step') tone(620, 0, .06, 'triangle', .16);
+    else if (kind === 'dice') { for (let i = 0; i < 7; i++) tone(240 + Math.random() * 500, i * .09, .05, 'square', .07); }
+    else if (kind === 'coin') { tone(988, 0, .08, 'square', .1); tone(1319, .08, .25, 'square', .1); }
+    else if (kind === 'pay') { tone(330, 0, .12, 'sawtooth', .1); tone(247, .12, .22, 'sawtooth', .1); }
+    else if (kind === 'buy') { [523, 659, 784].forEach((f, i) => tone(f, i * .08, .16, 'triangle', .2)); }
+    else if (kind === 'card') { tone(784, 0, .1, 'triangle'); tone(1047, .1, .1, 'triangle'); tone(1319, .2, .2, 'triangle'); }
+    else if (kind === 'fly') { for (let i = 0; i < 8; i++) tone(400 + i * 90, i * .07, .1, 'sine', .14); }
+    else if (kind === 'bad') { [392, 330, 262].forEach((f, i) => tone(f, i * .16, .3, 'sine', .2)); }
+    else if (kind === 'double') { tone(880, 0, .1, 'triangle'); tone(880, .14, .1, 'triangle'); tone(1175, .28, .25, 'triangle'); }
+    else if (kind === 'win') { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * .12, .3, 'triangle', .22)); }
+  } catch (e) {}
+}
+KBGM.init({ key:'worldtour', tracks:{ play:'audio/bgm-play.mp3', tense:'audio/bgm-tense.mp3' } });
+KBGM.button({ after: $('sndToggle') });
+KBGM.calm();
+
+// ---------- 시작 화면 ----------
+let slots = [{ kind:'human', name:'' }, { kind:'ai', name:'' }, { kind:'off', name:'' }, { kind:'off', name:'' }];
+try { const s = JSON.parse(store('worldtour-slots')); if (Array.isArray(s) && s.length === 4) slots = s; } catch (e) {}
+let endMode = store('worldtour-end') || 'bank', endTime = +(store('worldtour-time') || 20), endLaps = +(store('worldtour-laps') || 5);
+const defName = (i, kind) => kind === 'ai' ? COLORS[i].name + ' 꼬비' : (i + 1) + '번 여행자';
+function drawSlots() {
+  $('slots').innerHTML = slots.map((s, i) =>
+    '<div class="slot' + (s.kind === 'off' ? ' off' : '') + '"><div class="chip" style="' + chipBg(i) + '"></div>' +
+    '<input maxlength="8" data-i="' + i + '" placeholder="' + defName(i, s.kind) + '" value="' + (s.name || '').replace(/"/g, '&quot;') + '">' +
+    '<div class="seg" data-i="' + i + '">' + [['human', '사람'], ['ai', '꼬비 AI'], ['off', '쉬기']].map(([k, l]) => '<button data-k="' + k + '" class="' + (s.kind === k ? 'on' : '') + '">' + l + '</button>').join('') + '</div></div>').join('');
+}
+$('slots').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  slots[+b.parentNode.dataset.i].kind = b.dataset.k; drawSlots();
+});
+$('slots').addEventListener('input', e => { if (e.target.dataset.i) slots[+e.target.dataset.i].name = e.target.value; });
+function segInit(id, cur, cb) {
+  const el = $(id);
+  const upd = v => [...el.children].forEach(b => b.classList.toggle('on', b.dataset.v === String(v)));
+  upd(cur);
+  el.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; upd(b.dataset.v); cb(b.dataset.v); });
+}
+function updEnd() {
+  $('timeSeg').classList.toggle('hidden', endMode !== 'time'); $('lapSeg').classList.toggle('hidden', endMode !== 'laps');
+  $('endHint').textContent = endMode === 'bank' ? '한 명만 남을 때까지 해요. 돈이 다 떨어지면 파산!'
+    : endMode === 'time' ? '시간이 다 되면 재산(돈 + 도시 + 건물)이 가장 많은 사람이 이겨요.'
+    : '누군가 정한 바퀴를 다 돌면 끝! 재산(돈 + 도시 + 건물)이 가장 많은 사람이 이겨요.';
+}
+segInit('endSeg', endMode, v => { endMode = v; updEnd(); });
+segInit('timeSeg', endTime, v => { endTime = +v; });
+segInit('lapSeg', endLaps, v => { endLaps = +v; });
+updEnd(); drawSlots();
+
+const HOW = '<h2>놀이 방법</h2>' +
+  '<p style="text-align:left">🎲 주사위 2개를 굴려 나온 만큼 가요. <b>같은 숫자</b>가 나오면 한 번 더! (세 번 연속이면 도깨비섬)<br>' +
+  '🏡 <b>꼬비 마을</b>을 지날 때마다 용돈 ' + SALARY.toLocaleString('ko-KR') + '냥. 주사위로 <b>딱 도착하면</b> 내 도시 한 곳을 골라 건물을 지을 수 있어요.<br>' +
+  '🏙️ 주인 없는 도시에 서면 땅을 살 수 있어요. <b>내 땅에 다시 도착하면</b> 건물을 지어요. <b>텐트, 게스트하우스, 호텔</b>은 함께 설 수 있고 통행료가 더해져요.<br>' +
+  '💸 남의 도시에 서면 통행료를 내요. 건물이 많을수록 비싸요.<br>' +
+  '🤝 통행료를 낸 뒤, 그 도시에 들어간 값의 <b>2배</b>를 주인에게 주면 <b>인수</b>할 수 있어요.<br>' +
+  '🏰 건물 3개를 다 지은 내 도시에 또 도착하면 <b>랜드마크</b>를 세워요. 랜드마크 도시는 아무도 인수할 수 없어요!<br>' +
+  '⭐ 제주도, 사하라, 하와이, 남극은 건물을 못 짓지만 많이 가질수록 통행료가 올라요.<br>' +
+  '🏝️ <b>도깨비섬</b>: 3번 쉬어요. 같은 숫자가 나오거나 ' + ISLAND_FEE + '냥을 내면 탈출.<br>' +
+  '🐷 <b>꼬비 저금통</b>: 모인 돈을 몽땅 받아요. 🎈 <b>열기구</b>: 다음 차례에 원하는 칸으로! (앞으로 날아가서, 꼬비 마을을 지나면 용돈도 받아요)<br>' +
+  '😢 돈이 모자라면 도시를 반값에 팔아요. 그래도 못 내면 파산이에요.<br>' +
+  '👆 보드의 칸을 누르면 값과 통행료를 볼 수 있어요.</p>';
+$('howBtn').onclick = $('helpBtn').onclick = () => { showModal(HOW + '<div class="btn-row"><button class="game-btn btn-primary" id="mOk">알겠어요</button></div>'); $('mOk').onclick = hideModal; };
+
+// ---------- 게임 상태 ----------
+let G = null, gid = 0, fast = store('worldtour-fast') === 'on';
+const ABORT = { abort:true };
+const sp = ms => fast ? ms * .45 : ms;
+function wait(ms) { const my = gid; return new Promise((res, rej) => setTimeout(() => my === gid ? res() : rej(ABORT), sp(ms))); }
+const alive = () => G.players.filter(p => p.alive);
+const owned = p => TILES.map((t, i) => i).filter(i => G.owner[i] === p.id);
+function toll(i, lv) {
+  const t = TILES[i], o = G.owner[i];
+  if (t.type === 'mark') { const n = o == null ? 1 : TILES.filter((x, j) => x.type === 'mark' && G.owner[j] === o).length; return MARK_TOLL[n]; }
+  return tollOf(i, G.bld[i], G.lm[i]);
+}
+const bCost = (i, k) => r10(TILES[i].price * B[k].cost), lmCost = i => r10(TILES[i].price * LM_COST);
+const tollOf = (i, bld, lm) => (lm ? r10(TILES[i].price * LM_TOLL) : r10(TILES[i].price * LAND_TOLL) + [0, 1, 2].reduce((s, k) => s + (bld >> k & 1 ? r10(TILES[i].price * B[k].toll) : 0), 0));
+const invested = i => TILES[i].price + (TILES[i].type === 'city' ? bList(i).reduce((s, k) => s + bCost(i, k), 0) + (G.lm[i] ? lmCost(i) : 0) : 0);
+const sellValue = i => Math.round(invested(i) / 2);
+const assets = p => p.money + owned(p).reduce((s, i) => s + invested(i), 0);
+const nf = v => v.toLocaleString('ko-KR');
+const pn = p => '<i style="color:' + COLORS[p.ci].c + '">' + esc(p.name) + '</i>';
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+
+function newGame() {
+  const ps = [];
+  slots.forEach((s, i) => { if (s.kind !== 'off') ps.push({ id:ps.length, ci:i, ai:s.kind === 'ai', name:(s.name || '').trim() || defName(i, s.kind), money:START_MONEY, pos:0, island:0, ticket:0, free:0, half:0, balloon:false, alive:true, laps:0 }); });
+  if (ps.length < 2) { $('startMsg').textContent = '두 명 이상이어야 여행을 떠날 수 있어요.'; return; }
+  $('startMsg').textContent = '';
+  store('worldtour-slots', JSON.stringify(slots)); store('worldtour-end', endMode); store('worldtour-time', endTime); store('worldtour-laps', endLaps);
+  gid++;
+  G = { players:ps, owner:TILES.map(() => null), bld:TILES.map(() => 0), lm:TILES.map(() => false), pot:0, turn:0, deck:[], mode:endMode, laps:endLaps, timeLeft:endTime * 60, over:false, endFlag:false };
+  $('start').classList.add('hidden'); $('game').classList.remove('hidden'); $('log').innerHTML = '';
+  layout(); buildBoard(); drawTiles(); drawPieces(true); drawPlayers(); drawInfo();
+  KBGM.track('play'); KBGM.full();
+  say('여행을 시작해요!');
+  loop(gid).catch(e => { if (e !== ABORT) { console.error(e); say('앗, 문제가 생겼어요. 다시 시작해 주세요.'); } });
+}
+$('startBtn').onclick = newGame;
+function toStart() { gid++; G = null; hideModal(); $('game').classList.add('hidden'); $('start').classList.remove('hidden'); KBGM.calm(); }
+$('quitBtn').onclick = async () => {
+  const my = gid;
+  showModal('<h2>그만할까요?</h2><p>지금 하던 여행은 사라져요.</p><div class="btn-row"><button class="game-btn btn-secondary" id="mNo">계속하기</button><button class="game-btn btn-primary" id="mYes">그만하기</button></div>', true);
+  $('mNo').onclick = () => restoreModal(); $('mYes').onclick = () => { if (my === gid) toStart(); };
+};
+function updSpeed() { $('speedBtn').classList.toggle('on', fast); }
+$('speedBtn').onclick = () => { fast = !fast; store('worldtour-fast', fast ? 'on' : 'off'); updSpeed(); };
+updSpeed();
+setInterval(() => {
+  if (!G || G.over || G.mode !== 'time' || document.hidden) return;
+  if (G.timeLeft > 0) { G.timeLeft--; if (G.timeLeft === 0) { G.endFlag = true; toast('시간이 다 됐어요! 이번 차례까지만 해요.'); } }
+  drawInfo();
+}, 1000);
+
+// ---------- 화면 그리기 ----------
+function tileSide(i) { return i === 0 || i === 10 || i === 20 || i === 30 ? 'corner' : i < 10 ? 'sb' : i < 20 ? 'sl' : i < 30 ? 'st' : 'sr'; }
+function tileCell(i) { // 격자에서의 자리 (열, 행) 1~11
+  if (i <= 10) return [11 - i, 11]; if (i <= 20) return [1, 11 - (i - 10)]; if (i <= 30) return [1 + (i - 20), 1]; return [11, 1 + (i - 30)];
+}
+let tileEls = [];
+function buildBoard() {
+  tileEls.forEach(e => e.remove()); tileEls = [];
+  TILES.forEach((t, i) => {
+    const d = document.createElement('div'), [c, r] = tileCell(i), sd = tileSide(i);
+    d.className = 'tile ' + sd + ' t-' + t.type; d.dataset.i = i; d.style.gridColumn = c; d.style.gridRow = r;
+    $('board').appendChild(d); tileEls.push(d);
+  });
+}
+function nameHtml(t) {
+  const n = t.type === 'city' ? t.name : (t.short || t.name), len = n.replace(/ /g, '').length;
+  if (t.type === 'city' && len > 5) { const h = Math.ceil(len / 2); return '<div class="nm l5">' + n.slice(0, h) + '<br>' + n.slice(h) + '</div>'; }
+  return '<div class="nm l' + Math.min(5, len) + '">' + n + '</div>';
+}
+function drawTiles() {
+  TILES.forEach((t, i) => {
+    const d = tileEls[i], o = G.owner[i], city = t.type === 'city', lmk = city && G.lm[i];
+    d.classList.toggle('own', o != null); d.classList.toggle('lm', !!lmk);
+    if (o != null) { const c = COLORS[G.players[o].ci]; d.style.setProperty('--oc', c.c); d.style.setProperty('--ot', c.t); d.style.setProperty('--otx', c.key === 'yellow' ? '#2c2950' : '#fff'); }
+    d.innerHTML = (city && !lmk ? '<div class="bstrip">' + [0, 1, 2].map(k => '<span class="' + (G.bld[i] >> k & 1 ? 'on' : '') + '">' + (G.bld[i] >> k & 1 ? bIcon(k) : '') + '</span>').join('') + '</div>' : '') +
+      '<div class="col"><div class="pic">' + (lmk ? lmPic(t) : tilePic(t)) + '</div>' + (t.type === 'fund' ? '<div class="nm l4">🪙 ' + nf(G.pot) + '</div>' : nameHtml(t)) + '</div>' + (lmk ? '<i class="shine"></i>' : '');
+  });
+}
+let boardSize = 600, pieceEls = [];
+function layout() {
+  const w = innerWidth, h = innerHeight, tall = w < h * 1.15;
+  document.body.classList.toggle('tall', tall);
+  if (tall) boardSize = Math.max(240, Math.min(w - 8, h - 44 - 150));
+  else { const sw = h <= 520 ? 230 : 290; boardSize = Math.max(240, Math.min(h - 64, w - sw - 34)); }
+  const bw = $('boardWrap'); bw.style.width = bw.style.height = boardSize + 'px'; bw.style.setProperty('--u', boardSize / 100 + 'px');
+}
+addEventListener('resize', () => { layout(); if (G) { drawTiles(); drawPieces(true); } });
+function tileXY(i, slot, count) {
+  const b = $('boardWrap').getBoundingClientRect(), r = tileEls[i].getBoundingClientRect();
+  let x = r.left - b.left + r.width / 2, y = r.top - b.top + r.height / 2;
+  if (count > 1) { const u = boardSize / 100, a = (slot / count) * Math.PI * 2 - Math.PI / 4, k = count === 2 ? 1.5 : 1.9; x += Math.cos(a) * u * k; y += Math.sin(a) * u * k; }
+  return [x, y];
+}
+function drawPieces(reset) {
+  if (reset || pieceEls.length !== G.players.length) {
+    $('pieces').innerHTML = '';
+    pieceEls = G.players.map(p => { const d = document.createElement('div'), k = 'piece-' + COLORS[p.ci].key; d.className = 'piece' + (IMG[k] ? ' img' : '');
+      d.style.setProperty('--pc', COLORS[p.ci].c); d.innerHTML = '<div class="in" style="background-image:url(' + (IMG[k] || '../img/face-64.png') + ')"></div>'; $('pieces').appendChild(d); return d; });
+  }
+  G.players.forEach(p => {
+    const same = G.players.filter(q => q.alive && q.pos === p.pos), [x, y] = tileXY(p.pos, same.indexOf(p), same.length), d = pieceEls[p.id];
+    d.style.left = x + 'px'; d.style.top = y + 'px'; d.classList.toggle('out', !p.alive); d.classList.toggle('cur', G.turn === p.id && !G.over);
+  });
+}
+function drawPlayers() {
+  $('players').innerHTML = G.players.map(p => {
+    const n = owned(p).length, sub = !p.alive ? '파산' : (p.island ? '🏝️ ' + p.island + '번 쉬기 ' : '') + (p.balloon ? '🎈 ' : '') + (p.ticket ? '🎫' + p.ticket + ' ' : '') + (p.free ? '🎟️' + p.free + ' ' : '') + (p.half ? '🤝' + p.half + ' ' : '') + '도시 ' + n + '곳' + (G.mode === 'laps' ? ' · ' + p.laps + '바퀴' : '');
+    return '<div class="pcard' + (G.turn === p.id && !G.over ? ' turn' : '') + (p.alive ? '' : ' out') + '" id="pc' + p.id + '"><div class="chip" style="' + chipBg(p.ci) + '"></div>' +
+      '<div style="min-width:0"><div class="nm">' + esc(p.name) + (p.ai ? ' 🤖' : '') + '</div><div class="sub">' + sub + '</div></div>' +
+      '<div class="mn">' + nf(p.money) + '냥<small>재산 ' + nf(assets(p)) + '</small></div></div>';
+  }).join('');
+}
+function drawInfo() {
+  if (!G) return;
+  const m = Math.floor(G.timeLeft / 60), s = G.timeLeft % 60;
+  $('info').innerHTML = '<span>🐷 저금통 <b>' + nf(G.pot) + '냥</b></span>' +
+    (G.mode === 'time' ? '<span>⏰ 남은 시간 <b>' + m + ':' + String(s).padStart(2, '0') + '</b></span>' : G.mode === 'laps' ? '<span>🏁 <b>' + G.laps + '바퀴</b> 돌면 끝</span>' : '<span>🏁 파산할 때까지</span>');
+}
+function refresh() { drawTiles(); drawPieces(); drawPlayers(); drawInfo(); mood(); }
+function mood() { if (!G || G.over) return; KBGM.track(G.lm.some(x => x) || alive().length < G.players.length || G.endFlag || (G.mode === 'time' && G.timeLeft <= 120) ? 'tense' : 'play', false); }
+function say(html, quiet) { $('status').innerHTML = '<span>' + html + '</span>'; if (!quiet) { const d = document.createElement('div'); d.innerHTML = html; $('log').prepend(d); while ($('log').children.length > 40) $('log').lastChild.remove(); } }
+let toastT = 0;
+function toast(t) { $('toast').textContent = t; $('toast').classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => $('toast').classList.remove('show'), 2200); }
+function money(p, v) {
+  if (!v) return; p.money += v; drawPlayers(); drawInfo();
+  const c = $('pc' + p.id); if (c) { const d = document.createElement('div'); d.className = 'delta ' + (v > 0 ? 'plus' : 'minus'); d.textContent = (v > 0 ? '+' : '') + nf(v); c.appendChild(d); }
+}
+
+// 창
+let savedModal = null;
+function showModal(html, keep) { const m = $('modal'); if (keep && !m.classList.contains('hidden') && !savedModal) { savedModal = [...$('modalCard').childNodes]; savedModal.forEach(n => n.remove()); const tmp = document.createElement('div'); tmp.id = 'mTmp'; tmp.innerHTML = html; $('modalCard').appendChild(tmp); } else { if (!keep) savedModal = null; $('modalCard').innerHTML = html; } m.classList.remove('hidden'); }
+function restoreModal() { if (savedModal) { $('modalCard').innerHTML = ''; savedModal.forEach(n => $('modalCard').appendChild(n)); savedModal = null; } else hideModal(); }
+function hideModal() { savedModal = null; $('modal').classList.add('hidden'); }
+// 고르기 창: choices = [{ label, right, cls, v, disabled }]
+function ask(head, choices) {
+  const my = gid;
+  return new Promise((res, rej) => {
+    showModal(head + '<div class="choices">' + choices.map((c, k) => '<button class="game-btn ' + (c.cls || 'btn-secondary') + '" data-k="' + k + '"' + (c.disabled ? ' disabled' : '') + '><span>' + c.label + '</span><span>' + (c.right || '') + '</span></button>').join('') + '</div>');
+    $('modalCard').querySelector('.choices').onclick = e => { const b = e.target.closest('button'); if (!b || b.disabled) return; hideModal(); my === gid ? res(choices[+b.dataset.k].v) : rej(ABORT); };
+  });
+}
+const okBtn = (label) => [{ label: label || '알겠어요', cls:'btn-primary', v:true }];
+async function notice(p, head, ms) { // 사람에게는 창, AI 차례에는 잠깐 보여 주기
+  if (p.ai) { showModal(head); try { await wait(ms || 1500); } finally { hideModal(); } }
+  else await ask(head, okBtn());
+}
+
+// 칸 정보
+function tileInfo(i) {
+  const t = TILES[i], o = G.owner[i];
+  let h = '<div class="big">' + (t.type === 'city' && G.lm[i] ? lmPic(t) : tilePic(t)) + '</div><h2>' + t.name + '</h2>';
+  if (t.type === 'city') {
+    h += '<p>' + (o != null ? pn(G.players[o]) + '의 도시' : '주인 없는 도시') + '</p><table class="toll">' +
+      '<tr class="' + (o != null ? 'now' : '') + '"><td>🚩 땅</td><td>땅값 ' + nf(t.price) + '</td><td>통행료 ' + nf(r10(t.price * LAND_TOLL)) + '</td></tr>' +
+      [0, 1, 2].map(k => '<tr class="' + (G.bld[i] >> k & 1 ? 'now' : '') + '"><td>' + B[k].emo + ' ' + B[k].n + '</td><td>짓는 값 ' + nf(bCost(i, k)) + '</td><td>통행료 +' + nf(r10(t.price * B[k].toll)) + '</td></tr>').join('') +
+      '<tr class="' + (G.lm[i] ? 'now' : '') + '"><td>🏰 랜드마크</td><td>짓는 값 ' + nf(lmCost(i)) + '</td><td>통행료 ' + nf(r10(t.price * LM_TOLL)) + '</td></tr></table>' +
+      '<p style="font-size:14px;color:var(--ink2)">건물 3개는 함께 서고 통행료가 더해져요. 3개를 다 지은 뒤 다시 도착하면 랜드마크!</p>' + (o != null ? '<p>지금 통행료 <b>' + nf(toll(i)) + '냥</b></p>' : '') +
+      (o != null ? '<p style="font-size:15px">' + (G.lm[i] ? '🏰 랜드마크가 있어 아무도 인수할 수 없어요.' : '인수하는 값 <b>' + nf(takeCost(i)) + '냥</b>') + '</p>' : '');
+  } else if (t.type === 'mark') {
+    h += '<p>' + (o != null ? pn(G.players[o]) + '의 명소' : '주인 없는 명소') + ' · 값 ' + nf(t.price) + '냥</p><p>건물은 못 지어요. 명소를 많이 가질수록 통행료가 올라요.</p><table class="toll">' + [1, 2, 3, 4].map(n => '<tr><td>명소 ' + n + '곳</td><td>통행료 ' + nf(MARK_TOLL[n]) + '</td></tr>').join('') + '</table>';
+  } else h += '<p>' + ({ start:'지나갈 때마다 용돈 ' + nf(SALARY) + '냥을 받아요. 주사위로 딱 도착하면 내 도시 한 곳에 건물을 지을 수 있어요.', card:'도깨비 주머니에서 행운 카드를 한 장 뽑아요.', give:GIVE + '냥을 꼬비 저금통에 넣어요.',
+    island:'3번 쉬어요. 같은 숫자가 나오거나 ' + ISLAND_FEE + '냥을 내면 나올 수 있어요.', fund:'지금까지 모인 ' + nf(G.pot) + '냥을 몽땅 받아요.', balloon:'다음 차례에 원하는 칸으로 날아가요. 앞으로만 날아가서, 꼬비 마을을 지나면 용돈도 받아요.' }[t.type]) + '</p>';
+  return h;
+}
+let picking = null;
+$('board').addEventListener('click', e => {
+  const d = e.target.closest('.tile'); if (!d || !G) return;
+  const i = +d.dataset.i;
+  if (picking) { if (picking.ok(i)) { const f = picking.res; picking = null; f(i); } return; }
+  if (!$('modal').classList.contains('hidden')) return;
+  showModal(tileInfo(i) + '<div class="btn-row"><button class="game-btn btn-primary" id="mOk">닫기</button></div>'); $('mOk').onclick = hideModal;
+});
+
+// ---------- 주사위 ----------
+const ROT = { 1:[0, 0], 6:[0, 180], 3:[0, -90], 4:[0, 90], 2:[-90, 0], 5:[90, 0] };
+const PIPS = { 1:[5], 2:[1, 9], 3:[1, 5, 9], 4:[1, 3, 7, 9], 5:[1, 3, 5, 7, 9], 6:[1, 3, 4, 6, 7, 9] };
+const dieSpin = [[0, 0], [0, 0]];
+[0, 1].forEach(k => { $('die' + k).innerHTML = [1, 2, 3, 4, 5, 6].map(v => '<div class="f f' + v + (v === 1 ? ' one' : '') + '">' + [1, 2, 3, 4, 5, 6, 7, 8, 9].map(c => PIPS[v].includes(c) ? '<i style="grid-area:' + Math.ceil(c / 3) + '/' + ((c - 1) % 3 + 1) + '"></i>' : '').join('') + '</div>').join(''); });
+async function rollDice() {
+  const v = [1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)];
+  if (window.__dice && window.__dice.length) { const f = window.__dice.shift(); v[0] = f[0]; v[1] = f[1]; }
+  beep('dice');
+  $('diceRow').classList.remove('jump'); void $('diceRow').offsetWidth; $('diceRow').classList.add('jump');
+  [0, 1].forEach(k => { dieSpin[k][0] += 720; dieSpin[k][1] += 360 * (k ? 2 : 3); const [rx, ry] = ROT[v[k]];
+    $('die' + k).style.transitionDuration = sp(900) + 'ms'; $('die' + k).style.transform = 'perspective(' + boardSize * .6 + 'px) rotateX(' + (dieSpin[k][0] + rx) + 'deg) rotateY(' + (dieSpin[k][1] + ry) + 'deg)'; });
+  await wait(1000);
+  return v;
+}
+function waitRoll(p, label) {
+  const my = gid, b = $('rollBtn');
+  b.textContent = label || '주사위 굴리기';
+  if (p.ai) { b.disabled = true; b.classList.remove('pulse'); return wait(700); }
+  return new Promise((res, rej) => { b.disabled = false; b.classList.add('pulse'); b.onclick = () => { b.disabled = true; b.classList.remove('pulse'); b.onclick = null; my === gid ? res() : rej(ABORT); }; });
+}
+
+// ---------- 이동 ----------
+function passStart(p) { p.laps++; money(p, SALARY); beep('coin'); say(pn(p) + ' 꼬비 마을을 지나 용돈 <b>' + nf(SALARY) + '냥</b>!'); if (G.mode === 'laps' && p.laps >= G.laps) G.endFlag = true; }
+async function walk(p, steps) {
+  const dir = steps > 0 ? 1 : -1, el = pieceEls[p.id];
+  el.style.transitionDuration = sp(170) + 'ms';
+  for (let k = 0; k < Math.abs(steps); k++) {
+    p.pos = (p.pos + dir + N) % N;
+    el.classList.remove('hop'); void el.offsetWidth; el.classList.add('hop'); drawPieces(); beep('step');
+    await wait(190);
+    if (dir > 0 && p.pos === 0) passStart(p);
+  }
+  el.style.transitionDuration = '';
+  landFx(p.pos);
+}
+async function sail(p, dest) { // 열기구: 앞으로만 날아가요 (꼬비 마을을 지나면 용돈)
+  const el = pieceEls[p.id]; el.classList.add('fly'); beep('fly');
+  el.style.transitionDuration = sp(90) + 'ms';
+  do { p.pos = (p.pos + 1) % N; drawPieces(); await wait(95); if (p.pos === 0) passStart(p); } while (p.pos !== dest);
+  el.style.transitionDuration = ''; await wait(250); el.classList.remove('fly');
+  landFx(dest);
+}
+async function fly(p, dest, salary) {
+  const el = pieceEls[p.id]; el.classList.add('fly'); beep('fly');
+  const wrap = dest <= p.pos; p.pos = dest; drawPieces();
+  await wait(850); el.classList.remove('fly');
+  if (salary && wrap) passStart(p);
+  landFx(dest);
+}
+function landFx(i) { const d = tileEls[i]; d.classList.remove('here'); void d.offsetWidth; d.classList.add('here'); }
+
+// ---------- 돈 내기 / 팔기 / 파산 ----------
+function sell(p, i) { const v = sellValue(i); G.owner[i] = null; G.bld[i] = 0; G.lm[i] = false; money(p, v); say(pn(p) + ' ' + TILES[i].name + '을(를) <b>' + nf(v) + '냥</b>에 팔았어요.'); refresh(); return v; }
+async function pay(p, amount, to, why) { // to: 다른 사람, 'pot', null(은행)
+  if (amount <= 0) return true;
+  if (p.money < amount) {
+    const all = owned(p).reduce((s, i) => s + sellValue(i), 0);
+    if (p.money + all < amount) { await bankrupt(p, to, why); return false; }
+    if (p.ai) { const list = owned(p).sort((a, b) => sellValue(a) - sellValue(b)); while (p.money < amount) { sell(p, list.shift()); await wait(500); } }
+    else while (p.money < amount) {
+      const list = owned(p);
+      const i = await ask('<div class="big">' + (IMG['ggobi-sad'] ? '<img src="' + IMG['ggobi-sad'] + '">' : '😢') + '</div><h2>돈이 모자라요</h2><p>' + why + ' <b>' + nf(amount) + '냥</b>을 내야 해요.<br>지금 ' + nf(p.money) + '냥, <b>' + nf(amount - p.money) + '냥</b>이 더 필요해요. 팔 곳을 골라요.</p>',
+        list.map(i => ({ label:'🚩' + bIcons(i) + ' ' + TILES[i].name, right:'+' + nf(sellValue(i)) + '냥', v:i })));
+      sell(p, i);
+    }
+  }
+  money(p, -amount); beep('pay');
+  if (to === 'pot') G.pot += amount; else if (to) money(to, amount);
+  refresh(); return true;
+}
+async function bankrupt(p, to, why) {
+  beep('bad');
+  let total = p.money; owned(p).forEach(i => { total += sellValue(i); G.owner[i] = null; G.bld[i] = 0; G.lm[i] = false; });
+  p.money = 0; p.alive = false; p.balloon = false; p.island = 0;
+  if (to === 'pot') G.pot += total; else if (to) money(to, total);
+  say(pn(p) + ' 파산했어요!'); refresh();
+  await notice(p.ai ? p : { ai:false }, '<div class="big">' + (IMG['ggobi-sad'] ? '<img src="' + IMG['ggobi-sad'] + '">' : '😭') + '</div><h2>' + esc(p.name) + ' 파산!</h2><p>' + why + ' 낼 돈이 모자라 여행을 마쳐요.' + (to && to !== 'pot' ? '<br>남은 ' + nf(total) + '냥은 ' + pn(to) + '에게 가요.' : '') + '</p>', 2200);
+}
+
+// ---------- 칸에 도착했을 때 ----------
+const aiReserve = p => Math.min(500, 150 + owned(p).length * 40);
+function aiBuild(p, i) { // 비싼 건물부터, 여유 돈을 남기고
+  const out = []; let m = p.money;
+  [2, 1, 0].forEach(k => { if (!(G.bld[i] >> k & 1) && m - bCost(i, k) >= aiReserve(p)) { out.push(k); m -= bCost(i, k); } });
+  return out;
+}
+function askBuild(p, i) { // 지을 건물을 여러 개 골라요
+  const my = gid, t = TILES[i], sel = new Set(), miss = [0, 1, 2].filter(k => !(G.bld[i] >> k & 1));
+  return new Promise((res, rej) => {
+    const draw = () => {
+      const sum = [...sel].reduce((s, k) => s + bCost(i, k), 0);
+      showModal('<div class="big">' + tilePic(t) + '</div><h2>' + t.name + '</h2><p>내 도시예요. 지을 건물을 골라요. 여러 개도 돼요! (가진 돈 ' + nf(p.money) + '냥)</p><div class="choices">' +
+        miss.map(k => '<button class="game-btn ' + (sel.has(k) ? 'btn-mint' : 'btn-secondary') + '" data-k="' + k + '"' + (!sel.has(k) && sum + bCost(i, k) > p.money ? ' disabled' : '') + '><span>' + (sel.has(k) ? '✅ ' : '⬜ ') + B[k].emo + ' ' + B[k].n + ' <small style="color:var(--ink2)">(통행료 +' + nf(r10(t.price * B[k].toll)) + ')</small></span><span>' + nf(bCost(i, k)) + '냥</span></button>').join('') +
+        '</div><div class="btn-row"><button class="game-btn btn-secondary" id="mNo">안 지어요</button><button class="game-btn btn-primary" id="mYes"' + (sel.size ? '' : ' disabled') + '>' + (sel.size ? nf(sum) + '냥으로 짓기' : '건물을 골라요') + '</button></div>');
+      $('modalCard').querySelector('.choices').onclick = e => { const b = e.target.closest('button'); if (!b || b.disabled) return; const k = +b.dataset.k; sel.has(k) ? sel.delete(k) : sel.add(k); draw(); };
+      const done = v => { hideModal(); my === gid ? res(v) : rej(ABORT); };
+      $('mNo').onclick = () => done([]); $('mYes').onclick = () => done([...sel].sort());
+    };
+    draw();
+  });
+}
+async function buildAt(p, i) { // 내 땅에서 건물이나 랜드마크 짓기
+  const t = TILES[i];
+  if (t.type === 'mark' || G.lm[i]) { say(pn(p) + ' 내 ' + (t.type === 'mark' ? '명소' : '도시') + ' ' + t.name + '에서 쉬어 가요.'); await wait(800); return; }
+  if (G.bld[i] === 7) { // 건물 3개가 다 있으면 랜드마크
+    const c = lmCost(i); let yes = false;
+    if (p.money >= c) {
+      if (p.ai) { await wait(700); yes = p.money - c >= aiReserve(p); }
+      else yes = await ask('<div class="big">' + lmPic(t) + '</div><h2>' + t.name + ' 랜드마크</h2><p>건물 3개를 다 지었어요! <b>랜드마크</b>를 세우면 통행료가 ' + nf(tollOf(i, 7, true)) + '냥이 되고, 아무도 인수할 수 없어요. (가진 돈 ' + nf(p.money) + '냥)</p>',
+        [{ label:'🏰 랜드마크 세우기', right:nf(c) + '냥', cls:'btn-mint', v:true }, { label:'다음에 할래요', v:false }]);
+    } else { say(pn(p) + ' ' + t.name + ' 랜드마크를 세울 돈(' + nf(c) + '냥)이 모자라요.'); await wait(900); }
+    if (yes) { money(p, -c); G.lm[i] = true; beep('win'); say(pn(p) + ' ' + t.name + '에 <b>랜드마크</b>를 세웠어요!'); refresh(); landFx(i); toast('🏰 ' + t.name + ' 랜드마크 완성! 이제 아무도 인수할 수 없어요'); await wait(900); }
+    return;
+  }
+  let list;
+  if (p.ai) { await wait(700); list = aiBuild(p, i); }
+  else if ([0, 1, 2].some(k => !(G.bld[i] >> k & 1) && bCost(i, k) <= p.money)) list = await askBuild(p, i);
+  else { list = []; say(pn(p) + ' 건물을 지을 돈이 모자라요.'); await wait(700); }
+  if (list.length) { list.forEach(k => { money(p, -bCost(i, k)); G.bld[i] |= 1 << k; }); beep('buy'); say(pn(p) + ' ' + t.name + '에 <b>' + list.map(k => B[k].n).join(', ') + '</b>을(를) 지었어요!'); refresh(); landFx(i); if (G.bld[i] === 7) toast(t.name + ' 건물 3개 완성! 다음에 오면 랜드마크를 세울 수 있어요'); await wait(700); }
+  else { say(pn(p) + ' 내 도시 ' + t.name + '에서 쉬어 가요.'); await wait(500); }
+}
+async function land(p) {
+  const i = p.pos, t = TILES[i];
+  if (t.type === 'city' || t.type === 'mark') {
+    const o = G.owner[i];
+    if (o == null) {
+      if (p.money < t.price) { say(pn(p) + ' ' + t.name + ' 도착. 살 돈이 모자라요.'); await wait(900); return; }
+      let yes;
+      if (p.ai) { say(pn(p) + ' ' + t.name + ' 도착. 살까 말까…', true); await wait(900); yes = p.money - t.price >= Math.min(aiReserve(p), 80 + t.price / 4); }
+      else yes = await ask('<div class="big">' + tilePic(t) + '</div><h2>' + t.name + '</h2><p>주인이 없어요. 살까요? (가진 돈 ' + nf(p.money) + '냥)' + (t.type === 'city' ? '<br><small style="color:var(--ink2)">건물은 다음에 내 땅에 다시 도착하면 지을 수 있어요.</small>' : '') + '</p>',
+        [{ label:'🚩 ' + (t.type === 'mark' ? '명소 사기' : '땅 사기'), right:nf(t.price) + '냥', cls:'btn-info', v:true }, { label:'안 살래요', v:false }]);
+      if (yes) { money(p, -t.price); G.owner[i] = p.id; beep('buy'); say(pn(p) + ' <b>' + t.name + '</b>을(를) 샀어요!'); refresh(); await wait(700); }
+      else { say(pn(p) + ' ' + t.name + '을(를) 그냥 지나가요.'); await wait(500); }
+    } else if (o === p.id) {
+      await buildAt(p, i);
+    } else {
+      const own = G.players[o], v = toll(i);
+      say(pn(p) + ' ' + pn(own) + '의 ' + t.name + ' 도착! 통행료 <b>' + nf(v) + '냥</b>');
+      await wait(900);
+      let skip = false;
+      if (p.free) skip = p.ai ? v >= 150 : await ask('<div class="big">🎟️</div><h2>통행료 면제권</h2><p>' + t.name + ' 통행료 <b>' + nf(v) + '냥</b>이에요. 면제권을 쓸까요? (' + p.free + '장 있음)</p>', [{ label:'🎟️ 면제권 쓰기', cls:'btn-mint', v:true }, { label:'아껴 두고 통행료 내기', v:false }]);
+      if (skip) { p.free--; beep('coin'); say(pn(p) + ' 통행료 면제권을 썼어요!'); refresh(); }
+      else await pay(p, v, own, t.name + ' 통행료');
+      await wait(500);
+      if (p.alive && t.type === 'city' && G.owner[i] === o && !G.lm[i]) {
+        const c = p.half ? Math.round(takeCost(i) / 2) : takeCost(i); let yes = false;
+        if (p.money >= c) {
+          if (p.ai) { yes = p.money - c >= 300 && (G.bld[i] > 0 || t.price >= 400); if (yes) await wait(600); }
+          else yes = await ask('<div class="big">' + tilePic(t) + '</div><h2>' + t.name + ' 인수</h2><p>' + pn(own) + '의 도시예요. ' + (G.bld[i] ? '건물까지 통째로 ' : '') + '인수할까요?' + (p.half ? ' <b>반값 인수권 사용!</b>' : '') + '<br>인수하면 ' + pn(own) + '에게 돈을 주고 내 도시가 돼요. (가진 돈 ' + nf(p.money) + '냥)</p>',
+            [{ label:'🤝 인수하기', right:nf(c) + '냥', cls:'btn-mint', v:true }, { label:'안 할래요', v:false }]);
+        }
+        if (yes) { if (p.half) p.half--; money(p, -c); money(own, c); G.owner[i] = p.id; beep('buy'); say(pn(p) + ' ' + pn(own) + '의 <b>' + t.name + '</b>을(를) ' + nf(c) + '냥에 인수했어요!'); refresh(); await wait(800);await buildAt(p, i); }
+      }
+    }
+  } else if (t.type === 'card') await drawCard(p);
+  else if (t.type === 'give') { say(pn(p) + ' 기부 천사! 저금통에 <b>' + GIVE + '냥</b>을 넣어요.'); await wait(700); await pay(p, GIVE, 'pot', '기부금'); await wait(400); }
+  else if (t.type === 'fund') { if (G.pot > 0) { const v = G.pot; G.pot = 0; money(p, v); beep('coin'); say(pn(p) + ' 꼬비 저금통에서 <b>' + nf(v) + '냥</b>을 받았어요!'); refresh(); } else say(pn(p) + ' 저금통이 비어 있어요.'); await wait(1000); }
+  else if (t.type === 'island') { p.island = 3; beep('bad'); say(pn(p) + ' 도깨비섬에 도착! 3번 쉬어요.'); refresh(); await wait(1000); }
+  else if (t.type === 'balloon') { p.balloon = true; say(pn(p) + ' 열기구 탑승! 다음 차례에 원하는 칸으로 날아가요.'); refresh(); await wait(1000); }
+  else { // 꼬비 마을에 딱 도착하면 내 도시 한 곳에 건물을 지어요
+    const can = j => TILES[j].type === 'city' && G.owner[j] === p.id && !G.lm[j] && (G.bld[j] === 7 ? p.money >= lmCost(j) : [0, 1, 2].some(k => !(G.bld[j] >> k & 1) && bCost(j, k) <= p.money));
+    const list = TILES.map((t, j) => j).filter(can);
+    if (!list.length) { say(pn(p) + ' 꼬비 마을에 도착!'); await wait(600); return; }
+    let i;
+    if (p.ai) { await wait(600); i = list.filter(j => G.bld[j] === 7 ? p.money - lmCost(j) >= aiReserve(p) : aiBuild(p, j).length).sort((a, b) => (G.bld[b] === 7) - (G.bld[a] === 7) || TILES[b].price - TILES[a].price)[0]; if (i == null) { say(pn(p) + ' 꼬비 마을에서 쉬어 가요.'); await wait(600); return; } }
+    else { toast('🏡 꼬비 마을 도착 선물! 내 도시 한 곳에 건물을 지을 수 있어요'); say(pn(p) + ' 🏡 건물을 지을 내 도시를 눌러요!', true); i = list.length === 1 ? list[0] : await pickTile(can); }
+    await buildAt(p, i);
+  }
+}
+async function drawCard(p) {
+  if (!G.deck.length) { G.deck = CARDS.map((c, k) => k); for (let k = G.deck.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [G.deck[k], G.deck[j]] = [G.deck[j], G.deck[k]]; } }
+  const ck = window.__card != null ? window.__card : G.deck.pop(), c = CARDS[ck], ci = IMG['card-' + String(ck + 1).padStart(2, '0')];
+  beep('card'); say(pn(p) + ' 도깨비 주머니를 열어요…', true);
+  if (IMG['card-back']) { showModal('<h2>🎁 도깨비 주머니</h2><img class="cardback" src="' + IMG['card-back'] + '" alt="">'); try { await wait(750); } finally { hideModal(); } }
+  say(pn(p) + ' 도깨비 주머니: ' + c.t);
+  await notice(p, '<h2>🎁 도깨비 주머니</h2><div class="cardface">' + (ci ? '<img class="cardimg" src="' + ci + '" alt="">' : '<div class="big">' + c.emo + '</div>') + '<div>' + c.t + '</div></div>', 2600);
+  if (c.f === 'gain') { money(p, c.v); beep('coin'); }
+  else if (c.f === 'lose') await pay(p, c.v, 'pot', '카드 값');
+  else if (c.f === 'goto') { await fly(p, c.v, true); await land(p); }
+  else if (c.f === 'island') { await fly(p, ISLAND, false); p.island = 3; refresh(); }
+  else if (c.f === 'ticket') { p.ticket++; refresh(); }
+  else if (c.f === 'each') { for (const q of alive()) { if (q === p || !p.alive) continue; if (c.v > 0) await pay(q, c.v, p, '생일 선물'); else await pay(p, -c.v, q, '간식값'); } }
+  else if (c.f === 'repair') { const cost = owned(p).reduce((s, i) => s + (TILES[i].type === 'city' ? bList(i).reduce((x, k) => x + B[k].fix, 0) + (G.lm[i] ? 150 : 0) : 0), 0); if (cost) await pay(p, cost, 'pot', '수리비'); else { say(pn(p) + ' 고칠 건물이 없어요.'); } }
+  else if (c.f === 'step') { await walk(p, c.v); await land(p); }
+  else if (c.f === 'free') { p.free++; refresh(); }
+  else if (c.f === 'half') { p.half++; refresh(); }
+  else if (c.f === 'again') { G.again = true; }
+  else if (c.f === 'fest') { const n = owned(p).length; if (n) { money(p, n * c.v); beep('coin'); say(pn(p) + ' 도시 ' + n + '곳 축제! <b>' + nf(n * c.v) + '냥</b>을 받았어요.'); } else say(pn(p) + ' 아직 도시가 없어요.'); }
+  else if (c.f === 'rich') { const r = alive().filter(q => q !== p).sort((a, b) => b.money - a.money)[0]; if (r) { say(pn(r) + ' ' + pn(p) + '에게 ' + c.v + '냥을 줘요.'); await pay(r, c.v, p, '안내비'); } }
+  else if (c.f === 'mybest') { const list = owned(p).filter(i => TILES[i].type === 'city').sort((a, b) => TILES[b].price - TILES[a].price); const d = list.length ? list[0] : 0; if (d !== p.pos) await fly(p, d, true); await land(p); }
+  else if (c.f === 'freebuild') {
+    const list = owned(p).filter(i => TILES[i].type === 'city' && G.bld[i] !== 7 && !G.lm[i]);
+    if (!list.length) say(pn(p) + ' 건물을 지을 수 있는 내 도시가 없어요.');
+    else {
+      let i;
+      if (p.ai) i = list.sort((a, b) => TILES[b].price - TILES[a].price)[0];
+      else if (list.length === 1) i = list[0];
+      else { say(pn(p) + ' 🪄 공짜로 건물을 지을 내 도시를 눌러요!', true); i = await pickTile(j => list.includes(j)); }
+      const k = [0, 1, 2].find(x => !(G.bld[i] >> x & 1)); G.bld[i] |= 1 << k; beep('buy'); say(pn(p) + ' ' + TILES[i].name + '에 <b>' + B[k].n + '</b>을(를) 공짜로 지었어요!'); refresh(); landFx(i);
+    }
+  }
+  await wait(400);
+}
+
+// ---------- 열기구 ----------
+function aiBalloon(p) {
+  let best = 0, score = 0;
+  TILES.forEach((t, i) => {
+    if (i === BALLOON) return; let s = 0;
+    if (t.type === 'city' && G.owner[i] === p.id && !G.lm[i] && (G.bld[i] === 7 ? p.money - lmCost(i) > 300 : aiBuild(p, i).length > 0)) s = 50 + t.price / 10;
+    else if ((t.type === 'city' || t.type === 'mark') && G.owner[i] == null && p.money - t.price > 300) s = 30 + t.price / 12;
+    else if (i === FUND && G.pot >= 300) s = 20 + G.pot / 10;
+    if (s > score) { score = s; best = i; }
+  });
+  return best;
+}
+async function pickTile(ok) {
+  const my = gid; $('rollBtn').disabled = true; $('rollBtn').textContent = '칸을 골라요';
+  tileEls.forEach((d, i) => d.classList.add(ok(i) ? 'pick' : 'nopick'));
+  try { return await new Promise((res, rej) => { picking = { ok, res:i => my === gid ? res(i) : rej(ABORT) }; }); }
+  finally { tileEls.forEach(d => d.classList.remove('pick', 'nopick')); }
+}
+async function balloonTurn(p) {
+  p.balloon = false; let dest;
+  if (p.ai) { say(pn(p) + ' 열기구로 어디로 갈까…', true); await wait(1000); dest = aiBalloon(p); }
+  else {
+    say(pn(p) + ' 🎈 가고 싶은 칸을 눌러요!', true);
+    dest = await pickTile(i => i !== BALLOON);
+  }
+  say(pn(p) + ' 열기구를 타고 <b>' + TILES[dest].name + '</b>(으)로!');
+  await sail(p, dest);
+  await land(p);
+}
+
+// ---------- 차례 ----------
+async function turn(p) {
+  G.turn = p.id; G.again = false; refresh();
+  if (p.balloon) { await balloonTurn(p); return; }
+  let doubles = 0;
+  for (;;) {
+    if (p.island) {
+      let act = 'roll';
+      if (p.ai) { if (p.ticket) act = 'ticket'; else if (p.money > 900 && G.owner.filter((o, i) => o == null && (TILES[i].type === 'city')).length > 8) act = 'pay'; }
+      else act = await ask('<div class="big">' + tilePic(TILES[ISLAND]) + '</div><h2>도깨비섬</h2><p>' + pn(p) + ' 앞으로 ' + p.island + '번 쉬어야 해요. 어떻게 할까요?</p>', [
+        { label:'🎲 주사위 굴리기 (같은 숫자면 탈출)', cls:'btn-info', v:'roll' },
+        { label:'💰 돈 내고 탈출', right:ISLAND_FEE + '냥', cls:'btn-mint', v:'pay', disabled:p.money < ISLAND_FEE },
+        { label:'🎫 탈출권 쓰기', right:p.ticket + '장', cls:'btn-mint', v:'ticket', disabled:!p.ticket }]);
+      if (act === 'ticket') { p.ticket--; p.island = 0; say(pn(p) + ' 탈출권으로 도깨비섬을 나왔어요!'); refresh(); }
+      else if (act === 'pay') { p.island = 0; money(p, -ISLAND_FEE); G.pot += ISLAND_FEE; beep('pay'); say(pn(p) + ' ' + ISLAND_FEE + '냥을 내고 도깨비섬을 나왔어요!'); refresh(); }
+      else {
+        say(pn(p) + ' 차례! 같은 숫자가 나오면 탈출해요.', true);
+        await waitRoll(p, '탈출 주사위');
+        const [a, b] = await rollDice();
+        if (a === b) { p.island = 0; beep('double'); say(pn(p) + ' <b>' + a + ', ' + b + '</b> 같은 숫자! 도깨비섬 탈출!'); refresh(); await walk(p, a + b); await land(p); }
+        else { p.island--; say(pn(p) + ' ' + a + ', ' + b + '. ' + (p.island ? '탈출 실패! ' + p.island + '번 더 쉬어요.' : '다음 차례에는 나갈 수 있어요.')); refresh(); await wait(900); }
+        return;
+      }
+    }
+    say(pn(p) + ' 차례! 주사위를 굴려요.', true);
+    await waitRoll(p);
+    const [a, b] = await rollDice();
+    if (a === b) {
+      doubles++;
+      if (doubles === 3) { beep('bad'); say(pn(p) + ' 같은 숫자가 세 번 연속! 도깨비섬으로 가요.'); await wait(700); await fly(p, ISLAND, false); p.island = 3; refresh(); await wait(700); return; }
+      beep('double');
+    }
+    say(pn(p) + ' <b>' + a + ' + ' + b + ' = ' + (a + b) + '</b>' + (a === b ? ' 같은 숫자! 한 번 더!' : ''));
+    await wait(300);
+    await walk(p, a + b);
+    await land(p);
+    const again = G.again; G.again = false;
+    if (!((a === b || again) && p.alive && !p.island && !p.balloon) || G.over || alive().length < 2) return;
+  }
+}
+async function loop(my) {
+  let k = 0;
+  for (;;) {
+    const p = G.players[k % G.players.length];
+    if (p.alive) {
+      await turn(p);
+      if (my !== gid) return;
+      refresh();
+      if (alive().length < 2 || G.endFlag) break;
+      await wait(350);
+    }
+    k++;
+  }
+  finish();
+}
+function finish() {
+  G.over = true; refresh(); $('rollBtn').disabled = true; $('rollBtn').classList.remove('pulse');
+  const rank = G.players.slice().sort((a, b) => (b.alive - a.alive) || (assets(b) - assets(a))), w = rank[0];
+  beep('win'); if (!w.ai || G.players.every(p => p.ai)) KBGM.jingle(); else KBGM.calm();
+  say('🏆 ' + pn(w) + ' 우승!');
+  showModal((IMG['ggobi-win'] ? '<img class="res-img" src="' + IMG['ggobi-win'] + '" alt="">' : '<div class="big">🏆</div>') + '<h2>' + esc(w.name) + ' 우승!</h2><p>' +
+    (alive().length < 2 ? '마지막까지 남은 여행왕이에요.' : G.mode === 'time' ? '시간이 다 됐어요. 재산이 가장 많아요.' : '정한 바퀴를 다 돌았어요. 재산이 가장 많아요.') + '</p>' +
+    '<div class="rank">' + rank.map((p, k) => '<div><span>' + (k + 1) + '등</span><span class="chip" style="' + chipBg(p.ci) + '"></span><span>' + esc(p.name) + '</span><span>' + (p.alive ? '재산 ' + nf(assets(p)) + '냥' : '파산') + '</span></div>').join('') + '</div>' +
+    '<div class="btn-row"><button class="game-btn btn-secondary" id="mBack">처음으로</button><button class="game-btn btn-primary" id="mAgain">한 판 더!</button></div>');
+  $('mBack').onclick = toStart; $('mAgain').onclick = () => { hideModal(); newGame(); };
+}
+layout();
+</script>
+</body>
+</html>
