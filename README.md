@@ -4,7 +4,7 @@
 
 | 폴더 | 게임 | 랭킹 (Firebase Firestore 컬렉션) |
 |---|---|---|
-| `tetris/` | 냥냥 테트리스 | `tetris-scores` |
+| `tetris/` | 꼬비의 블록 쌓기 | `tetris-scores` |
 | `spelling/` | 꼬비의 한글 맞춤법 대소동 | `spelling-scores` |
 
 ## 구조

@@ -15,9 +15,10 @@
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--cream:#fff6e4;--line:#3a2b33;--ink:#2c2950;--coral:#f2685f;--yellow:#ffd75e;--night:#2a2860}
 html{background:var(--night)}
-body{font-family:'Jua',sans-serif;color:var(--ink);min-height:100vh;padding:28px 20px 48px;position:relative;overflow-x:hidden;
-  background:#2a2860 url(img/bg.jpg) center top/cover no-repeat fixed}
-body::before{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(30,26,80,.15),rgba(30,26,80,0) 40%,rgba(30,26,80,.25))}
+body{font-family:'Jua',sans-serif;color:var(--ink);min-height:100vh;padding:28px 20px 48px;position:relative;overflow-x:hidden;background:transparent}
+/* 배경은 화면에 고정된 층으로 (아이패드·아이폰은 background-attachment:fixed를 지원하지 않아 배경이 크게 확대·잘림) */
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(180deg,rgba(30,26,80,.15),rgba(30,26,80,0) 40%,rgba(30,26,80,.25)),url(img/bg.jpg) center top/cover no-repeat}
 .page{max-width:1500px;margin:0 auto;display:grid;grid-template-columns:230px minmax(0,1fr) 230px;grid-template-areas:"head head head" "char cards .";column-gap:12px;align-items:end;position:relative}
 header{grid-area:head;text-align:center;position:relative;padding:40px 0 30px}
 .logo{display:block;width:min(720px,92%);height:auto;margin:0 auto;filter:drop-shadow(0 6px 0 rgba(20,16,60,.35))}
@@ -49,13 +50,15 @@ h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .topbar a,.topbar button{pointer-events:auto;display:inline-flex;align-items:center;gap:6px;border:3px solid var(--line);border-radius:999px;padding:6px 16px;
   font-family:'Jua',sans-serif;font-size:17px;color:var(--ink);background:var(--yellow);box-shadow:none;text-decoration:none;cursor:pointer}
 .topbar a:hover,.topbar button:hover{filter:brightness(1.05)}
+.topbar .kbgm-btn{margin-right:8px}
 .topbar svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
 /* 태블릿: 캐릭터 조금 작게 */
 @media (max-width:1300px){.page{grid-template-columns:180px minmax(0,1fr) 120px}}
 @media (max-width:1000px){.page{grid-template-columns:160px minmax(0,1fr) 0}}
 /* 휴대폰: 캐릭터는 제목 옆, 카드는 한 줄씩 */
 @media (max-width:760px){
-  body{padding:16px 16px 36px;background-attachment:scroll;background-size:auto 100vh;background-position:30% top}
+  body{padding:16px 16px 36px}
+  body::before{background-position:center,30% top}
   .page{grid-template-columns:96px 1fr;grid-template-areas:"char head" "cards cards";column-gap:6px;align-items:center}
   header{padding:30px 0 18px}
   .logo{width:100%}
@@ -72,6 +75,7 @@ h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
   .topbar{top:6px;left:6px;right:6px}
   .topbar a,.topbar button{font-size:13px;padding:5px 10px;gap:4px;border-width:2px}
   .topbar svg{width:16px;height:16px}
+  .topbar .t{display:none}
 }
 .info{display:flex;justify-content:center;align-items:center;gap:18px;margin-top:40px;font-size:15px;color:rgba(255,246,228,.85);text-shadow:0 1px 3px rgba(10,8,40,.8)}
 .info a{display:inline-flex;align-items:center;gap:6px;color:#fff6e4;text-decoration:none;background:rgba(30,26,80,.55);border-radius:999px;padding:5px 12px 5px 6px}
@@ -117,8 +121,8 @@ h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
   <img class="char" src="img/ggobi-wave.png" alt="손을 흔드는 꼬비" width="382" height="640">
   <div class="grid">
     <a class="game" href="tetris/">
-      <img src="tetris/thumb.jpg" alt="꼬비꼬비 테트리스 게임 화면">
-      <div class="title"><b>꼬비꼬비 테트리스</b></div>
+      <img src="tetris/thumb.jpg" alt="꼬비의 블록 쌓기 게임 화면">
+      <div class="title"><b>꼬비의 블록 쌓기</b></div>
       <p>10단계까지 완주하고 랭킹 TOP 50에 도전!</p>
     </a>
     <a class="game" href="spelling/">
@@ -142,9 +146,19 @@ h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
       <p>방 코드로 친구와 만나 한 수씩! 다섯 개를 먼저 이어요.</p>
     </a>
     <a class="game" href="alkkagi/">
-      <img src="alkkagi/thumb.jpg" alt="꼬비의 알까기 게임 화면">
+      <img src="alkkagi/thumb.jpg?v=2" alt="꼬비의 알까기 게임 화면">
       <div class="title"><b>꼬비의 알까기</b></div>
-      <p>힘 게이지와 "딱!" 타이밍으로 톡! 친구 알을 판 밖으로.</p>
+      <p>바둑알·장기알을 톡! 힘 게이지와 "딱!" 타이밍으로 판 밖으로.</p>
+    </a>
+    <a class="game" href="survivor/">
+      <img src="survivor/thumb.jpg" alt="꼬비의 도깨비숲 생존기 게임 화면">
+      <div class="title"><b>꼬비의 도깨비숲 생존기</b></div>
+      <p>몰려오는 숲속 요괴를 피해 20분! 무기를 키우고 조합해요.</p>
+    </a>
+    <a class="game" href="worldtour/">
+      <img src="worldtour/thumb.jpg" alt="꼬비의 세계 여행 게임 화면">
+      <div class="title"><b>꼬비의 세계 여행</b></div>
+      <p>주사위를 굴려 세계 도시를 사고 건물을 지어요. 친구나 꼬비 AI와 함께!</p>
     </a>
     <div class="soon">
       <span>새 게임 준비 중</span>
@@ -156,5 +170,11 @@ h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
   <span>© 꼬비샘</span>
   <a href="https://www.instagram.com/ggobilog/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="ig" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#feda75"/><stop offset=".35" stop-color="#fa7e1e"/><stop offset=".6" stop-color="#d62976"/><stop offset="1" stop-color="#4f5bd5"/></linearGradient></defs><rect x="1" y="1" width="22" height="22" rx="6.5" fill="url(#ig)"/><rect x="5.5" y="5.5" width="13" height="13" rx="4" fill="none" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="#fff" stroke-width="2"/><circle cx="16.6" cy="7.4" r="1.1" fill="#fff"/></svg>ggobilog</a>
 </footer>
+<script src="audio/bgm.js"></script>
+<script>
+// 첫 화면 음악: 다른 사이트 안에 들어가 있으므로 처음에는 꺼 둠 (켜면 기억)
+KBGM.init({ key:'home', tracks:{ play:'audio/home-bgm.mp3' }, defaultOn:false, vol:.25, calm:1 });
+(function(){ var fs=document.getElementById('fs-btn'); var b=KBGM.button({ className:'', parent:fs.parentNode, long:true }); fs.parentNode.insertBefore(b, fs); })();
+</script>
 </body>
 </html>

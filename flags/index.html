@@ -72,6 +72,7 @@
   .topbar svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
   #bgmToggle{padding:7px 10px;font-size:16px}
   #bgmToggle.muted{opacity:.7}
+  .topbar .kbgm-btn{padding:7px 10px;font-size:16px}
 
   /* ===== 게임 중 점수판 ===== */
   #hud { position:fixed; top:58px; left:12px; right:12px; display:flex; justify-content:space-between; align-items:flex-start; pointer-events:none; z-index:10; }
@@ -210,6 +211,7 @@
   @media (max-width:760px), (pointer:coarse){
     .topbar{top:6px;left:6px;right:6px}
     .topbar a,.topbar button{font-size:13px;padding:6px 10px;gap:4px}
+    .topbar .t{display:none}
     #hud { top:44px; left:6px; right:6px; }
     .panel { padding:5px 9px 7px; border-radius:16px; border-width:2.5px; box-shadow:0 3px 0 var(--ink); }
     .label { font-size:12px; margin-bottom:2px; }
@@ -392,6 +394,7 @@
   </div>
 </div>
 
+<script src="../audio/bgm.js"></script>
 <script type="module">
 // ============================================================
 //  FIREBASE SETUP
@@ -1232,6 +1235,7 @@ function endGame() {
   countdownEl.classList.add('hidden');
   if (pointerLocked) document.exitPointerLock?.();
   stopBgm();
+  KBGM.jingle();
   sfxVictory();
 
   finalElapsedMs = elapsedMs;
@@ -1761,6 +1765,11 @@ function stopBgm() {
 // ============================================================
 //  SOUND TOGGLE (controls procedurally generated SFX only)
 // ============================================================
+// 배경 음악: 음악 파일 사용 (🔊 버튼은 효과음, 🎵 버튼은 배경 음악)
+KBGM.init({ key:'flags', tracks:{ play:'audio/bgm-play.mp3' } });
+startBgm = function () { KBGM.full(); };
+stopBgm = function () { KBGM.calm(); };
+KBGM.button({ after: document.getElementById('bgmToggle') });
 const bgmToggleEl = document.getElementById('bgmToggle');
 let bgmMuted = localStorage.getItem('bgmMuted') === '1';   // variable kept for compatibility — now means "all sound muted"
 
@@ -1775,11 +1784,6 @@ bgmToggleEl.addEventListener('click', () => {
   bgmMuted = !bgmMuted;
   localStorage.setItem('bgmMuted', bgmMuted ? '1' : '0');
   refreshBgmIcon();
-  if (bgmMuted) {
-    stopBgm();
-  } else if (gameState === 'playing' || gameState === 'failing') {
-    startBgm();
-  }
 });
 
 // ============================================================

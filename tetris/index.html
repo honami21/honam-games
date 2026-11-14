@@ -8,7 +8,7 @@
 <link rel="manifest" href="/manifest.webmanifest"/>
 <meta name="apple-mobile-web-app-title" content="꼬비샘과 쉬는 시간"/>
 <meta name="theme-color" content="#2a2860"/>
-<title>꼬비꼬비 테트리스 - 꼬비샘과 쉬는 시간</title>
+<title>꼬비의 블록 쌓기 - 꼬비샘과 쉬는 시간</title>
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet"/>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -228,6 +228,8 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
   .tab{left:50%;transform:translateX(-50%);top:-2px;font-size:12px;padding:2px 8px;border-radius:10px;white-space:nowrap;box-shadow:none}
   .tab svg,.tab .lg{display:none}
   .panel>#sound-btn{white-space:nowrap;font-size:13px !important}
+  .panel>.btn.btn-gr,.panel>.btn#sound-btn,.panel>.btn.kbgm-btn{grid-column:span 2;white-space:nowrap;font-size:20px !important;letter-spacing:0}
+  .panel>.btn .bl{display:none}
   .mini-wrap canvas{width:100%;max-width:64px;height:auto;aspect-ratio:1}
   .pad{display:grid;grid-row:3;grid-column:1 / -1;grid-template-columns:repeat(6,1fr);gap:6px}
   .pad button{touch-action:none;border:none;border-radius:16px;height:58px;font-family:'Jua',sans-serif;font-size:24px;color:var(--ink);
@@ -315,12 +317,12 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
 @media (prefers-reduced-motion:reduce){.ggobi,.wisp,.logo .wisp-i{animation:none}}
 
 /* 받은 그림 (로고, 상황별 꼬비) */
-.logo-img{display:block;width:min(470px,36vw);height:auto;filter:drop-shadow(0 6px 0 rgba(20,16,60,.35))}
+.logo-img{display:block;width:min(420px,32vw);height:auto;filter:drop-shadow(0 6px 0 rgba(20,16,60,.35))}
 .ggobi.block{right:1.2vw;bottom:-4px;width:clamp(110px,11vw,180px);animation:wave 3.6s ease-in-out infinite;animation-delay:-1.4s}
 #pause-overlay .pause-cat{display:block;width:150px;height:auto;margin:0 auto 6px}
 .modal-pic{display:block;width:130px;height:auto;margin:-4px auto 4px;max-height:18vh;object-fit:contain}
-@media (max-height:820px){.logo-img{width:min(400px,32vw)}}
-@media (max-width:760px), (pointer:coarse){.logo-img{width:min(330px,78vw)}#pause-overlay .pause-cat{width:110px}.modal-pic{width:110px}}
+@media (max-height:820px){.logo-img{width:min(360px,29vw)}}
+@media (max-width:760px), (pointer:coarse){.logo-img{width:min(300px,72vw)}#pause-overlay .pause-cat{width:110px}.modal-pic{width:110px}}
   /* 버튼 아래 두꺼운 그림자를 없애 테두리 두께를 위아래 같게 */
   .game-btn, .diff-btn, .btn, .btn-s, .btn-r, .btn-p, .tbtn, .pad button, .topbar a, .topbar button { box-shadow:none !important; }
   .game-btn:active, .diff-btn:active, .btn:active, .pad button:active { transform:translateY(2px) scale(.97) !important; }
@@ -398,7 +400,7 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
   <div class="logo">
     <img class="peek" src="img/ggobi-peek.png" alt="">
     <img class="wisp-i" src="img/wisp.png" alt="">
-    <h1 class="game-title"><img class="logo-img" src="img/logo.png" alt="꼬비꼬비 테트리스"></h1>
+    <h1 class="game-title"><img class="logo-img" src="img/logo.png" alt="꼬비의 블록 쌓기"></h1>
     <img class="wisp-i r" src="img/wisp.png" alt="">
   </div>
   <div id="layout">
@@ -409,8 +411,8 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
       <div class="card stat"><div class="card-lbl"><span class="emo">🔥</span>콤보</div><div class="card-val" id="combo">0</div></div>
       <button class="btn btn-s" id="start-btn">▶ 시작</button>
       <button class="btn btn-p" id="pause-btn"><span class="pz"></span>쉬기</button>
-      <button class="btn btn-gr" id="rank-btn">🏆 랭킹</button>
-      <button class="btn btn-g" id="sound-btn">🔊 소리 ON</button>
+      <button class="btn btn-gr" id="rank-btn" aria-label="랭킹">🏆<span class="bl"> 랭킹</span></button>
+      <button class="btn btn-g" id="sound-btn" aria-label="효과음">🔊<span class="bl"> 소리 ON</span></button>
     </div>
     <div id="board-col">
       <div id="board-wrap">
@@ -466,7 +468,7 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
 <div id="start-modal" class="modal show">
   <div class="modal-box">
     <div class="modal-hero"><img src="img/ggobi-wave.png" alt="" style="width:46%;margin:0 auto"><svg class="hs a"><use href="#i-spark"/></svg><svg class="hs b"><use href="#i-spark"/></svg></div>
-    <div class="modal-title">꼬비꼬비 테트리스</div>
+    <div class="modal-title">꼬비의 블록 쌓기</div>
     <div class="modal-sub">10단계까지 완주해 보세요!</div>
     <div class="result-card rules">
       <div class="rt">🎯 게임 규칙</div>
@@ -537,6 +539,7 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
 </div>
 
 
+<script src="../audio/bgm.js"></script>
 <script type="module">
 // ============================================================
 //  FIREBASE SETUP
@@ -868,6 +871,12 @@ const audio = {
 
 // 스테이지 → BGM 템포 변환 (1단계 120 BPM → 10단계 210 BPM)
 function getStageTempo(s){ return 120 + (s - 1) * 10; }
+// 배경 음악: 직접 만든 음악 파일 사용 (6단계부터 빠른 곡)
+KBGM.init({ key:'tetris', tracks:{ play:'audio/bgm-play.mp3', fast:'audio/bgm-fast.mp3' } });
+const bgmName=()=>stage>=6?'fast':'play';
+audio.startBGM=function(){ KBGM.track(bgmName()); KBGM.full(); };
+audio.stopBGM=function(){ KBGM.calm(); };
+audio.setBGMTempo=function(){ KBGM.track(bgmName()); };
 
 // ============================================================
 //  CANVAS
@@ -1205,6 +1214,7 @@ function finishGame(cleared){
   started=false;paused=false;
   cancelAnimationFrame(animId);
   audio.stopBGM();
+  if(cleared) KBGM.jingle();
   if(cleared) audio.gameClear();
   else audio.gameOver();
   showGameOverModal();
@@ -1504,13 +1514,14 @@ document.getElementById('rank-btn').addEventListener('click',openRanking);
 function updateSoundBtn(){
   const btn = document.getElementById('sound-btn');
   if(audio.enabled){
-    btn.textContent = '🔊 소리 ON';
+    btn.innerHTML = '🔊<span class="bl"> 소리 ON</span>';
     btn.classList.remove('btn-gr');btn.classList.add('btn-g');
   }else{
-    btn.textContent = '🔇 소리 OFF';
+    btn.innerHTML = '🔇<span class="bl"> 소리 OFF</span>';
     btn.classList.remove('btn-g');btn.classList.add('btn-gr');
   }
 }
+KBGM.button({ after: document.getElementById('sound-btn'), long: true });
 document.getElementById('sound-btn').addEventListener('click',()=>{
   audio.init();
   audio.setEnabled(!audio.enabled);
