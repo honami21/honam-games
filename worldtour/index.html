@@ -97,6 +97,7 @@
   #log { flex:1; min-height:60px; background:rgba(255,248,238,.92); border:3px solid var(--ink); border-radius:16px; padding:8px 10px; overflow-y:auto; font-size:14px; line-height:1.45; word-break:keep-all; }
   #log div { padding:2px 0; border-bottom:1px dashed var(--cream2); }
   #log div:first-child { color:var(--ink); font-size:15px; } #log div { color:var(--ink2); }
+  i { font-style:normal; }
   #log i { font-style:normal; }
   #sideBtns { display:flex; gap:6px; }
   #sideBtns button { flex:1; border:2.5px solid var(--ink); border-radius:16px; background:var(--cream); color:var(--ink); font-size:14px; padding:6px 4px; cursor:pointer; white-space:nowrap; }
@@ -132,8 +133,8 @@
   .tile.own .nm { background:var(--oc); color:var(--otx, #fff); }
   .tile.own .bstrip { background:rgba(255,255,255,.45); }
   /* 랜드마크: 카드 전체가 주인 색, 금테와 반짝임 */
-  .tile.lm { background:var(--oc); box-shadow:inset 0 0 0 calc(var(--u) * .45) var(--sun); }
-  .tile.lm .pic img { left:3%; top:3%; width:94%; height:96%; filter:drop-shadow(0 0 calc(var(--u) * .6) #fff6c0); }
+  .tile.lm { background:var(--oc); }
+  .tile.lm .pic img { left:3%; top:3%; width:94%; height:96%; filter:drop-shadow(0 0 calc(var(--u) * .6) #fff); }
   .tile.lm .shine { position:absolute; inset:0; pointer-events:none; background:linear-gradient(115deg, transparent 35%, rgba(255,255,255,.75) 50%, transparent 65%); background-size:300% 100%; animation:shine 2.6s linear infinite; }
   @keyframes shine { from{ background-position:150% 0 } to{ background-position:-50% 0 } }
   .tile.corner { background:#fff1c9; }
@@ -358,7 +359,7 @@ const TILES = [
   C('서울', 700, 10, 'seoul')
 ];
 const N = TILES.length, ISLAND = 10, FUND = 20, BALLOON = 30, SEOUL = 39;
-const START_MONEY = 3000, SALARY = 300, GIVE = 150, ISLAND_FEE = 200;
+const START_MONEY = 3000, SALARY = 1000, GIVE = 150, ISLAND_FEE = 200;
 const B = [{ n:'텐트', emo:'⛺', key:'bld-tent', cost:.5, toll:.4, fix:30 }, { n:'게스트하우스', emo:'🏠', key:'bld-house', cost:1, toll:1, fix:60 }, { n:'호텔', emo:'🏨', key:'bld-hotel', cost:1.5, toll:2, fix:100 }];
 const LAND_TOLL = .1, LM_COST = 2, LM_TOLL = 6, TAKE = 2, MARK_TOLL = [0, 80, 200, 400, 700];
 const r10 = v => Math.round(v / 10) * 10;
@@ -393,7 +394,7 @@ const CARDS = [
   { t:'길거리 음식을 너무 많이 먹어 배탈이 났어요. 병원비 200냥을 저금통에 넣어요.', emo:'🤒', f:'lose', v:200 },
   { t:'귤 따기 체험 초대장! 제주도로 가요.', emo:'🍊', f:'goto', v:6 },
   { t:'훌라춤 축제 초대장! 하와이로 가요.', emo:'🌺', f:'goto', v:26 },
-  { t:'꼬비 마을에서 응원 용돈이 왔어요. 용돈 ' + SALARY + '냥을 한 번 더 받아요.', emo:'💌', f:'gain', v:SALARY },
+  { t:'꼬비 마을에서 응원 용돈이 왔어요. 300냥을 받아요.', emo:'💌', f:'gain', v:300 },
   { t:'여행 안내 아르바이트! 돈이 가장 많은 친구에게 100냥을 받아요.', emo:'🧢', f:'rich', v:100 },
   { t:'내 도시에서 축제가 열렸어요! 가진 도시 한 곳마다 30냥씩 받아요.', emo:'🎪', f:'fest', v:30 },
   { t:'도깨비 바람이 등을 밀어 줘요. 주사위를 한 번 더 굴려요!', emo:'🎲', f:'again' }
@@ -491,14 +492,14 @@ updEnd(); drawSlots();
 
 const HOW = '<h2>놀이 방법</h2>' +
   '<p style="text-align:left">🎲 주사위 2개를 굴려 나온 만큼 가요. <b>같은 숫자</b>가 나오면 한 번 더! (세 번 연속이면 도깨비섬)<br>' +
-  '🏡 <b>꼬비 마을</b>을 지날 때마다 용돈 ' + SALARY + '냥.<br>' +
+  '🏡 <b>꼬비 마을</b>을 지날 때마다 용돈 ' + SALARY.toLocaleString('ko-KR') + '냥. 주사위로 <b>딱 도착하면</b> 내 도시 한 곳을 골라 건물을 지을 수 있어요.<br>' +
   '🏙️ 주인 없는 도시에 서면 땅을 살 수 있어요. <b>내 땅에 다시 도착하면</b> 건물을 지어요. <b>텐트, 게스트하우스, 호텔</b>은 함께 설 수 있고 통행료가 더해져요.<br>' +
   '💸 남의 도시에 서면 통행료를 내요. 건물이 많을수록 비싸요.<br>' +
   '🤝 통행료를 낸 뒤, 그 도시에 들어간 값의 <b>2배</b>를 주인에게 주면 <b>인수</b>할 수 있어요.<br>' +
   '🏰 건물 3개를 다 지은 내 도시에 또 도착하면 <b>랜드마크</b>를 세워요. 랜드마크 도시는 아무도 인수할 수 없어요!<br>' +
   '⭐ 제주도, 사하라, 하와이, 남극은 건물을 못 짓지만 많이 가질수록 통행료가 올라요.<br>' +
   '🏝️ <b>도깨비섬</b>: 3번 쉬어요. 같은 숫자가 나오거나 ' + ISLAND_FEE + '냥을 내면 탈출.<br>' +
-  '🐷 <b>꼬비 저금통</b>: 모인 돈을 몽땅 받아요. 🎈 <b>열기구</b>: 다음 차례에 원하는 칸으로!<br>' +
+  '🐷 <b>꼬비 저금통</b>: 모인 돈을 몽땅 받아요. 🎈 <b>열기구</b>: 다음 차례에 원하는 칸으로! (앞으로 날아가서, 꼬비 마을을 지나면 용돈도 받아요)<br>' +
   '😢 돈이 모자라면 도시를 반값에 팔아요. 그래도 못 내면 파산이에요.<br>' +
   '👆 보드의 칸을 누르면 값과 통행료를 볼 수 있어요.</p>';
 $('howBtn').onclick = $('helpBtn').onclick = () => { showModal(HOW + '<div class="btn-row"><button class="game-btn btn-primary" id="mOk">알겠어요</button></div>'); $('mOk').onclick = hideModal; };
@@ -664,8 +665,8 @@ function tileInfo(i) {
       (o != null ? '<p style="font-size:15px">' + (G.lm[i] ? '🏰 랜드마크가 있어 아무도 인수할 수 없어요.' : '인수하는 값 <b>' + nf(takeCost(i)) + '냥</b>') + '</p>' : '');
   } else if (t.type === 'mark') {
     h += '<p>' + (o != null ? pn(G.players[o]) + '의 명소' : '주인 없는 명소') + ' · 값 ' + nf(t.price) + '냥</p><p>건물은 못 지어요. 명소를 많이 가질수록 통행료가 올라요.</p><table class="toll">' + [1, 2, 3, 4].map(n => '<tr><td>명소 ' + n + '곳</td><td>통행료 ' + nf(MARK_TOLL[n]) + '</td></tr>').join('') + '</table>';
-  } else h += '<p>' + ({ start:'지나갈 때마다 용돈 ' + SALARY + '냥을 받아요.', card:'도깨비 주머니에서 행운 카드를 한 장 뽑아요.', give:GIVE + '냥을 꼬비 저금통에 넣어요.',
-    island:'3번 쉬어요. 같은 숫자가 나오거나 ' + ISLAND_FEE + '냥을 내면 나올 수 있어요.', fund:'지금까지 모인 ' + nf(G.pot) + '냥을 몽땅 받아요.', balloon:'다음 차례에 원하는 칸으로 날아가요.' }[t.type]) + '</p>';
+  } else h += '<p>' + ({ start:'지나갈 때마다 용돈 ' + nf(SALARY) + '냥을 받아요. 주사위로 딱 도착하면 내 도시 한 곳에 건물을 지을 수 있어요.', card:'도깨비 주머니에서 행운 카드를 한 장 뽑아요.', give:GIVE + '냥을 꼬비 저금통에 넣어요.',
+    island:'3번 쉬어요. 같은 숫자가 나오거나 ' + ISLAND_FEE + '냥을 내면 나올 수 있어요.', fund:'지금까지 모인 ' + nf(G.pot) + '냥을 몽땅 받아요.', balloon:'다음 차례에 원하는 칸으로 날아가요. 앞으로만 날아가서, 꼬비 마을을 지나면 용돈도 받아요.' }[t.type]) + '</p>';
   return h;
 }
 let picking = null;
@@ -700,7 +701,7 @@ function waitRoll(p, label) {
 }
 
 // ---------- 이동 ----------
-function passStart(p) { p.laps++; money(p, SALARY); beep('coin'); say(pn(p) + ' 꼬비 마을을 지나 용돈 <b>' + SALARY + '냥</b>!'); if (G.mode === 'laps' && p.laps >= G.laps) G.endFlag = true; }
+function passStart(p) { p.laps++; money(p, SALARY); beep('coin'); say(pn(p) + ' 꼬비 마을을 지나 용돈 <b>' + nf(SALARY) + '냥</b>!'); if (G.mode === 'laps' && p.laps >= G.laps) G.endFlag = true; }
 async function walk(p, steps) {
   const dir = steps > 0 ? 1 : -1, el = pieceEls[p.id];
   el.style.transitionDuration = sp(170) + 'ms';
@@ -712,6 +713,13 @@ async function walk(p, steps) {
   }
   el.style.transitionDuration = '';
   landFx(p.pos);
+}
+async function sail(p, dest) { // 열기구: 앞으로만 날아가요 (꼬비 마을을 지나면 용돈)
+  const el = pieceEls[p.id]; el.classList.add('fly'); beep('fly');
+  el.style.transitionDuration = sp(90) + 'ms';
+  do { p.pos = (p.pos + 1) % N; drawPieces(); await wait(95); if (p.pos === 0) passStart(p); } while (p.pos !== dest);
+  el.style.transitionDuration = ''; await wait(250); el.classList.remove('fly');
+  landFx(dest);
 }
 async function fly(p, dest, salary) {
   const el = pieceEls[p.id]; el.classList.add('fly'); beep('fly');
@@ -772,6 +780,26 @@ function askBuild(p, i) { // 지을 건물을 여러 개 골라요
     draw();
   });
 }
+async function buildAt(p, i) { // 내 땅에서 건물이나 랜드마크 짓기
+  const t = TILES[i];
+  if (t.type === 'mark' || G.lm[i]) { say(pn(p) + ' 내 ' + (t.type === 'mark' ? '명소' : '도시') + ' ' + t.name + '에서 쉬어 가요.'); await wait(800); return; }
+  if (G.bld[i] === 7) { // 건물 3개가 다 있으면 랜드마크
+    const c = lmCost(i); let yes = false;
+    if (p.money >= c) {
+      if (p.ai) { await wait(700); yes = p.money - c >= aiReserve(p); }
+      else yes = await ask('<div class="big">' + lmPic(t) + '</div><h2>' + t.name + ' 랜드마크</h2><p>건물 3개를 다 지었어요! <b>랜드마크</b>를 세우면 통행료가 ' + nf(tollOf(i, 7, true)) + '냥이 되고, 아무도 인수할 수 없어요. (가진 돈 ' + nf(p.money) + '냥)</p>',
+        [{ label:'🏰 랜드마크 세우기', right:nf(c) + '냥', cls:'btn-mint', v:true }, { label:'다음에 할래요', v:false }]);
+    } else { say(pn(p) + ' ' + t.name + ' 랜드마크를 세울 돈(' + nf(c) + '냥)이 모자라요.'); await wait(900); }
+    if (yes) { money(p, -c); G.lm[i] = true; beep('win'); say(pn(p) + ' ' + t.name + '에 <b>랜드마크</b>를 세웠어요!'); refresh(); landFx(i); toast('🏰 ' + t.name + ' 랜드마크 완성! 이제 아무도 인수할 수 없어요'); await wait(900); }
+    return;
+  }
+  let list;
+  if (p.ai) { await wait(700); list = aiBuild(p, i); }
+  else if ([0, 1, 2].some(k => !(G.bld[i] >> k & 1) && bCost(i, k) <= p.money)) list = await askBuild(p, i);
+  else { list = []; say(pn(p) + ' 건물을 지을 돈이 모자라요.'); await wait(700); }
+  if (list.length) { list.forEach(k => { money(p, -bCost(i, k)); G.bld[i] |= 1 << k; }); beep('buy'); say(pn(p) + ' ' + t.name + '에 <b>' + list.map(k => B[k].n).join(', ') + '</b>을(를) 지었어요!'); refresh(); landFx(i); if (G.bld[i] === 7) toast(t.name + ' 건물 3개 완성! 다음에 오면 랜드마크를 세울 수 있어요'); await wait(700); }
+  else { say(pn(p) + ' 내 도시 ' + t.name + '에서 쉬어 가요.'); await wait(500); }
+}
 async function land(p) {
   const i = p.pos, t = TILES[i];
   if (t.type === 'city' || t.type === 'mark') {
@@ -785,23 +813,7 @@ async function land(p) {
       if (yes) { money(p, -t.price); G.owner[i] = p.id; beep('buy'); say(pn(p) + ' <b>' + t.name + '</b>을(를) 샀어요!'); refresh(); await wait(700); }
       else { say(pn(p) + ' ' + t.name + '을(를) 그냥 지나가요.'); await wait(500); }
     } else if (o === p.id) {
-      if (t.type === 'mark' || G.lm[i]) { say(pn(p) + ' 내 ' + (t.type === 'mark' ? '명소' : '도시') + ' ' + t.name + '에서 쉬어 가요.'); await wait(800); return; }
-      if (G.bld[i] === 7) { // 건물 3개가 다 있으면 랜드마크
-        const c = lmCost(i); let yes = false;
-        if (p.money >= c) {
-          if (p.ai) { await wait(700); yes = p.money - c >= aiReserve(p); }
-          else yes = await ask('<div class="big">' + lmPic(t) + '</div><h2>' + t.name + ' 랜드마크</h2><p>건물 3개를 다 지었어요! <b>랜드마크</b>를 세우면 통행료가 ' + nf(tollOf(i, 7, true)) + '냥이 되고, 아무도 인수할 수 없어요. (가진 돈 ' + nf(p.money) + '냥)</p>',
-            [{ label:'🏰 랜드마크 세우기', right:nf(c) + '냥', cls:'btn-mint', v:true }, { label:'다음에 할래요', v:false }]);
-        } else { say(pn(p) + ' ' + t.name + ' 랜드마크를 세울 돈(' + nf(c) + '냥)이 모자라요.'); await wait(900); }
-        if (yes) { money(p, -c); G.lm[i] = true; beep('win'); say(pn(p) + ' ' + t.name + '에 <b>랜드마크</b>를 세웠어요!'); refresh(); landFx(i); toast('🏰 ' + t.name + ' 랜드마크 완성! 이제 아무도 인수할 수 없어요'); await wait(900); }
-        return;
-      }
-      let list;
-      if (p.ai) { await wait(700); list = aiBuild(p, i); }
-      else if ([0, 1, 2].some(k => !(G.bld[i] >> k & 1) && bCost(i, k) <= p.money)) list = await askBuild(p, i);
-      else { list = []; say(pn(p) + ' 건물을 지을 돈이 모자라요.'); await wait(700); }
-      if (list.length) { list.forEach(k => { money(p, -bCost(i, k)); G.bld[i] |= 1 << k; }); beep('buy'); say(pn(p) + ' ' + t.name + '에 <b>' + list.map(k => B[k].n).join(', ') + '</b>을(를) 지었어요!'); refresh(); landFx(i); if (G.bld[i] === 7) toast(t.name + ' 건물 3개 완성! 다음에 오면 랜드마크를 세울 수 있어요'); await wait(700); }
-      else { say(pn(p) + ' 내 도시 ' + t.name + '에서 쉬어 가요.'); await wait(500); }
+      await buildAt(p, i);
     } else {
       const own = G.players[o], v = toll(i);
       say(pn(p) + ' ' + pn(own) + '의 ' + t.name + ' 도착! 통행료 <b>' + nf(v) + '냥</b>');
@@ -826,7 +838,15 @@ async function land(p) {
   else if (t.type === 'fund') { if (G.pot > 0) { const v = G.pot; G.pot = 0; money(p, v); beep('coin'); say(pn(p) + ' 꼬비 저금통에서 <b>' + nf(v) + '냥</b>을 받았어요!'); refresh(); } else say(pn(p) + ' 저금통이 비어 있어요.'); await wait(1000); }
   else if (t.type === 'island') { p.island = 3; beep('bad'); say(pn(p) + ' 도깨비섬에 도착! 3번 쉬어요.'); refresh(); await wait(1000); }
   else if (t.type === 'balloon') { p.balloon = true; say(pn(p) + ' 열기구 탑승! 다음 차례에 원하는 칸으로 날아가요.'); refresh(); await wait(1000); }
-  else { say(pn(p) + ' 꼬비 마을에 도착!'); await wait(600); }
+  else { // 꼬비 마을에 딱 도착하면 내 도시 한 곳에 건물을 지어요
+    const can = j => TILES[j].type === 'city' && G.owner[j] === p.id && !G.lm[j] && (G.bld[j] === 7 ? p.money >= lmCost(j) : [0, 1, 2].some(k => !(G.bld[j] >> k & 1) && bCost(j, k) <= p.money));
+    const list = TILES.map((t, j) => j).filter(can);
+    if (!list.length) { say(pn(p) + ' 꼬비 마을에 도착!'); await wait(600); return; }
+    let i;
+    if (p.ai) { await wait(600); i = list.filter(j => G.bld[j] === 7 ? p.money - lmCost(j) >= aiReserve(p) : aiBuild(p, j).length).sort((a, b) => (G.bld[b] === 7) - (G.bld[a] === 7) || TILES[b].price - TILES[a].price)[0]; if (i == null) { say(pn(p) + ' 꼬비 마을에서 쉬어 가요.'); await wait(600); return; } }
+    else { toast('🏡 꼬비 마을 도착 선물! 내 도시 한 곳에 건물을 지을 수 있어요'); say(pn(p) + ' 🏡 건물을 지을 내 도시를 눌러요!', true); i = list.length === 1 ? list[0] : await pickTile(can); }
+    await buildAt(p, i);
+  }
 }
 async function drawCard(p) {
   if (!G.deck.length) { G.deck = CARDS.map((c, k) => k); for (let k = G.deck.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [G.deck[k], G.deck[j]] = [G.deck[j], G.deck[k]]; } }
@@ -889,7 +909,7 @@ async function balloonTurn(p) {
     dest = await pickTile(i => i !== BALLOON);
   }
   say(pn(p) + ' 열기구를 타고 <b>' + TILES[dest].name + '</b>(으)로!');
-  await fly(p, dest, true);
+  await sail(p, dest);
   if (dest !== 0) await land(p);
 }
 
