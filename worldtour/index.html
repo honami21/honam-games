@@ -205,7 +205,47 @@
   @keyframes cardflip { 0%{ transform:rotateY(0) scale(.8) } 60%{ transform:rotateY(0) scale(1.05) } 100%{ transform:rotateY(90deg) scale(1.05) } }
   .cardface { animation:cardin .3s ease-out both; }
   @keyframes cardin { from{ transform:rotateY(-90deg) } }
+  ul.how { list-style:none; text-align:left; margin-top:8px; }
+  ul.how li { display:flex; gap:8px; align-items:flex-start; padding:7px 2px; border-bottom:1.5px dashed var(--cream2); font-size:15.5px; line-height:1.45; word-break:keep-all; }
+  ul.how li:last-child { border-bottom:none; }
+  ul.how .e { flex:none; width:26px; text-align:center; font-size:19px; line-height:1.2; }
+  ul.how .t { display:block; color:var(--coral-d); font-weight:normal; font-size:16.5px; }
+  ul.how b { color:var(--coral-d); font-weight:normal; }
+  #log .stkl { display:flex; align-items:center; gap:8px; }
+  #log .stkl img { width:64px; height:64px; object-fit:contain; flex:none; animation:pop .3s ease-out; }
+  body.tall #log .stkl img { width:40px; height:40px; }
   .rank { text-align:left; margin-top:10px; }
+
+  /* ===== 첫 화면 ===== */
+  #title { position:fixed; inset:0; z-index:25; display:flex; flex-direction:column; align-items:center; justify-content:space-between; padding:54px 0 14px; overflow:hidden;
+    background:radial-gradient(ellipse at 50% 45%, rgba(255,230,160,.22), rgba(20,12,60,0) 60%), linear-gradient(rgba(20,12,60,.05), rgba(20,12,60,.4)); }
+  .tl-row { width:100%; overflow:hidden; padding:6px 0 10px; flex:none; }
+  .tl-track { display:flex; gap:clamp(10px,1.6vw,20px); width:max-content; animation:tlScroll 70s linear infinite; }
+  .tl-row.r2 .tl-track { animation-duration:80s; animation-direction:reverse; }
+  @keyframes tlScroll { from{ transform:translateX(0) } to{ transform:translateX(-50%) } }
+  .tl-card { flex:none; background:var(--cream); border:3px solid var(--ink); border-radius:16px; padding:6px 8px 3px; text-align:center; box-shadow:0 5px 0 rgba(20,10,50,.35); }
+  .tl-card:nth-child(odd) { transform:rotate(-3deg); } .tl-card:nth-child(even) { transform:rotate(2.5deg) translateY(4px); }
+  .tl-card img { display:block; height:clamp(52px,10.5vh,104px); width:auto; margin:0 auto; }
+  .tl-card span { display:block; font-size:clamp(12px,1.7vh,16px); color:var(--ink); white-space:nowrap; margin-top:1px; }
+  .tl-main { flex:1; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:clamp(4px,1.4vh,14px); width:100%; padding:0 14px; }
+  #tlLogo { width:min(640px,88vw); max-height:24vh; object-fit:contain; filter:drop-shadow(0 6px 10px rgba(20,10,50,.55)); animation:tlFloat 3.2s ease-in-out infinite; }
+  .tl-logo-txt { font-size:clamp(40px,9vw,84px); color:#fff; text-shadow:0 4px 0 rgba(20,10,50,.9); line-height:1.05; text-align:center; }
+  .tl-logo-txt small { display:block; font-size:.45em; }
+  @keyframes tlFloat { 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-8px) } }
+  .tl-cast { display:flex; align-items:flex-end; justify-content:center; gap:clamp(4px,1vw,12px); height:clamp(96px,20vh,200px); }
+  .tl-cast .gg { height:100%; width:auto; filter:drop-shadow(0 5px 0 rgba(20,10,50,.35)); animation:tlWave 2.4s ease-in-out infinite; transform-origin:50% 100%; }
+  .tl-cast .pc { height:46%; width:auto; filter:drop-shadow(0 4px 0 rgba(20,10,50,.35)); animation:tlHop 1.2s ease-in-out infinite; }
+  .tl-cast .pc:nth-child(2) { animation-delay:-.9s } .tl-cast .pc:nth-child(3) { animation-delay:-.6s } .tl-cast .pc:nth-child(4) { animation-delay:-.3s }
+  @keyframes tlHop { 0%,100%{ transform:translateY(0) } 40%{ transform:translateY(-22%) } 60%{ transform:translateY(-18%) } }
+  @keyframes tlWave { 0%,100%{ transform:rotate(-2deg) } 50%{ transform:rotate(2deg) } }
+  #tlGo { font-size:clamp(22px,3.6vw,32px); padding:12px 46px; animation:tlPulse 1.4s ease-in-out infinite; }
+  @keyframes tlPulse { 0%,100%{ transform:scale(1) } 50%{ transform:scale(1.06) } }
+  .tl-tip { color:#fff; font-size:clamp(14px,2vw,18px); text-align:center; text-shadow:0 2px 0 rgba(20,10,50,.9), 0 0 8px rgba(20,10,50,.9); word-break:keep-all; line-height:1.5; }
+  .tl-tip span { white-space:nowrap; }
+  .tl-balloon { position:absolute; width:clamp(54px,7vw,96px); pointer-events:none; opacity:.95; filter:drop-shadow(0 6px 8px rgba(20,10,50,.35)); animation:tlDrift 9s ease-in-out infinite; z-index:-1; }
+  .tl-balloon.b1 { left:5%; top:30%; } .tl-balloon.b2 { right:6%; top:44%; width:clamp(40px,5vw,70px); animation-duration:11s; animation-delay:-4s; }
+  @keyframes tlDrift { 0%,100%{ transform:translate(0,0) rotate(-3deg) } 50%{ transform:translate(14px,-26px) rotate(3deg) } }
+  @media (max-width:600px){ .tl-balloon.b1 { top:25%; left:2% } .tl-balloon.b2 { top:52%; right:2% } }
   .rank div { display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:12px; font-size:17px; }
   .rank div:first-child { background:#fff1c9; }
   .rank .chip { width:28px; height:28px; border-radius:50%; border:2.5px solid var(--ink); flex:none; background-size:cover; background-position:center top; }
@@ -298,8 +338,22 @@
 })();
 </script>
 
+<!-- 첫 화면 -->
+<div id="title">
+  <div class="tl-row r1"><div class="tl-track" id="tlRow1"></div></div>
+  <div class="tl-main">
+    <img class="tl-balloon b1" src="img/corner-balloon.png" alt="" onerror="this.remove()">
+    <img class="tl-balloon b2" src="img/corner-balloon.png" alt="" onerror="this.remove()">
+    <img id="tlLogo" src="img/logo.png" alt="꼬비의 세계 여행" onerror="this.outerHTML='<div class=&quot;tl-logo-txt&quot;><small>꼬비의</small>세계 여행</div>'">
+    <div class="tl-cast"><img class="gg" src="img/ggobi-travel.png" alt="" onerror="this.src='../img/ggobi-wave.png'"><img class="pc" src="img/piece-red.png" alt="" onerror="this.remove()"><img class="pc" src="img/piece-blue.png" alt="" onerror="this.remove()"><img class="pc" src="img/piece-green.png" alt="" onerror="this.remove()"><img class="pc" src="img/piece-yellow.png" alt="" onerror="this.remove()"></div>
+    <button class="game-btn btn-primary" id="tlGo" type="button">▶ 여행 떠나기</button>
+    <p class="tl-tip"><span>세계 40곳을 여행해요 ·</span> <span>도시를 사고 건물을 지어요 ·</span> <span>친구들과 방을 만들어 함께해요</span></p>
+  </div>
+  <div class="tl-row r2"><div class="tl-track" id="tlRow2"></div></div>
+</div>
+
 <!-- 시작 화면 -->
-<div class="screen" id="start">
+<div class="screen hidden" id="start">
   <div class="section">
     <div class="start-wrap">
       <div class="card">
@@ -582,19 +636,32 @@ segInit('timeSeg', endTime, v => { endTime = +v; });
 segInit('lapSeg', endLaps, v => { endLaps = +v; });
 updEnd(); drawSlots();
 
-const HOW = '<h2>놀이 방법</h2>' +
-  '<p style="text-align:left">🎲 주사위 2개를 굴려 나온 만큼 가요. <b>같은 숫자</b>가 나오면 한 번 더! (세 번 연속이면 도깨비섬)<br>' +
-  '🏡 <b>꼬비 마을</b>을 지날 때마다 용돈 ' + SALARY.toLocaleString('ko-KR') + '냥. 주사위로 <b>딱 도착하면</b> 내 도시 한 곳을 골라 건물을 지을 수 있어요.<br>' +
-  '🏙️ 주인 없는 도시에 서면 땅을 살 수 있어요. <b>내 땅에 다시 도착하면</b> 건물을 지어요. <b>텐트, 게스트하우스, 호텔</b>은 함께 설 수 있고 통행료가 더해져요.<br>' +
-  '💸 남의 도시에 서면 통행료를 내요. 건물이 많을수록 비싸요.<br>' +
-  '🤝 통행료를 낸 뒤, 그 도시에 들어간 값의 <b>2배</b>를 주인에게 주면 <b>인수</b>할 수 있어요.<br>' +
-  '🏰 건물 3개를 다 지은 내 도시에 또 도착하면 <b>랜드마크</b>를 세워요. 랜드마크 도시는 아무도 인수할 수 없어요!<br>' +
-  '⭐ 제주도, 사하라, 하와이, 남극은 건물을 못 짓지만 많이 가질수록 통행료가 올라요.<br>' +
-  '🏝️ <b>도깨비섬</b>: 3번 쉬어요. 같은 숫자가 나오거나 ' + ISLAND_FEE + '냥을 내면 탈출.<br>' +
-  '🐷 <b>꼬비 저금통</b>: 모인 돈을 몽땅 받아요. 🎈 <b>열기구</b>: 다음 차례에 원하는 칸으로! (앞으로 날아가서, 꼬비 마을을 지나면 용돈도 받아요)<br>' +
-  '😢 돈이 모자라면 도시를 반값에 팔아요. 그래도 못 내면 파산이에요.<br>' +
-  '👆 보드의 칸을 누르면 값과 통행료를 볼 수 있어요.</p>';
+const HOW = '<h2>놀이 방법</h2><ul class="how">' + [
+  ['🎲', '주사위', '2개를 굴려 나온 만큼 가요 · <b>같은 숫자</b>가 나오면 한 번 더 · 세 번 연속이면 도깨비섬으로'],
+  ['🏡', '꼬비 마을', '지나가거나 도착하면 용돈 <b>' + SALARY.toLocaleString('ko-KR') + '냥</b> · 딱 도착하면 내 도시 한 곳을 골라 건물이나 랜드마크를 지어요'],
+  ['🏙️', '도시 사기', '주인 없는 도시에 서면 땅을 사요 · <b>내 땅에 다시 도착하면</b> 건물을 지어요'],
+  ['⛺', '건물', '<b>텐트, 게스트하우스, 호텔</b>은 함께 설 수 있어요 · 지을수록 통행료가 더해져요'],
+  ['💸', '통행료', '남의 도시에 서면 통행료를 내요 · 건물이 많을수록 비싸요'],
+  ['🤝', '인수', '통행료를 낸 뒤 그 도시에 들어간 값의 <b>2배</b>를 주인에게 주면 내 도시가 돼요 · 인수하고 바로 건물도 지을 수 있어요'],
+  ['🏰', '랜드마크', '건물 3개를 다 지은 내 도시에 또 오면 세워요 · 랜드마크 도시는 <b>아무도 인수할 수 없어요</b>'],
+  ['⭐', '관광지', '제주도, 사하라, 하와이, 남극 · 건물은 못 짓지만 많이 가질수록 통행료가 올라요'],
+  ['🏝️', '도깨비섬', '3번 쉬어요 · 같은 숫자가 나오거나 ' + ISLAND_FEE + '냥을 내면 탈출'],
+  ['🐷', '꼬비 저금통', '기부금과 벌금이 모여요 · 도착하면 몽땅 받아요'],
+  ['🎈', '열기구', '다음 차례에 원하는 칸으로 날아가요 · 앞으로만 날아가서 꼬비 마을을 지나면 용돈도 받아요'],
+  ['🎁', '도깨비 주머니', '행운 카드를 한 장 뽑아요'],
+  ['😢', '돈이 모자라면', '도시를 반값에 팔아요 · 그래도 못 내면 파산'],
+  ['👆', '칸 정보', '보드의 칸을 누르면 값과 통행료를 볼 수 있어요']
+].map(([e, t, d]) => '<li><span class="e">' + e + '</span><div><b class="t">' + t + '</b><span>' + d.replace(/ · /g, '&nbsp;· ') + '</span></div></li>').join('') + '</ul>';
 $('howBtn').onclick = $('helpBtn').onclick = () => { showModal(HOW + '<div class="btn-row"><button class="game-btn btn-primary" id="mOk">알겠어요</button></div>'); $('mOk').onclick = hideModal; };
+
+// ---------- 첫 화면 ----------
+(() => {
+  const cities = TILES.filter(t => t.type === 'city'), marks = TILES.filter(t => t.type === 'city' || t.type === 'mark');
+  const card = (src, name) => '<div class="tl-card"><img src="' + src + '" alt="" onerror="this.parentNode.remove()"><span>' + name + '</span></div>';
+  const r1 = cities.slice().reverse().map(t => card('img/lm-' + t.key + '.png', t.name)).join(''), r2 = marks.map(t => card('img/city-' + t.key + '.png', t.short || t.name)).join('');
+  $('tlRow1').innerHTML = r1 + r1; $('tlRow2').innerHTML = r2 + r2;
+})();
+$('tlGo').onclick = () => { $('title').classList.add('hidden'); $('start').classList.remove('hidden'); KBGM.calm(); };
 
 // ---------- 게임 상태 ----------
 let G = null, gid = 0, fast = store('worldtour-fast') === 'on';
@@ -1487,6 +1554,12 @@ async function sendSticker(n) {
 }
 function showSticker(st) {
   if (!STICKERS.includes(st.s)) return;
+  if (!$('game').classList.contains('hidden') && $('log').offsetParent) { // 게임 중에는 오른쪽 아래 기록 칸에
+    const d = document.createElement('div'); d.className = 'stkl';
+    d.innerHTML = '<img src="../omok/img/sticker-' + st.s + '.png" alt=""><span>' + (st.w ? '👀 ' : '') + esc(st.by || '') + '의 응원!</span>';
+    $('log').prepend(d); while ($('log').children.length > 40) $('log').lastChild.remove();
+    $('log').scrollTop = 0; beep('card'); return;
+  }
   const el = $('stkShow'), box = $('game').classList.contains('hidden') ? $('lobby').querySelector('.card') : $('boardWrap');
   const r = box.getBoundingClientRect(), size = Math.min(190, Math.max(110, r.width * .3));
   el.style.width = size + 'px';
