@@ -832,12 +832,12 @@ function tileInfo(i) {
       '<tr class="' + (o != null ? 'now' : '') + '"><td>🚩 땅</td><td>땅값 ' + nf(t.price) + '</td><td>통행료 ' + nf(r10(t.price * LAND_TOLL)) + '</td></tr>' +
       [0, 1, 2].map(k => '<tr class="' + (G.bld[i] >> k & 1 ? 'now' : '') + '"><td>' + B[k].emo + ' ' + B[k].n + '</td><td>짓는 값 ' + nf(bCost(i, k)) + '</td><td>통행료 +' + nf(r10(t.price * B[k].toll)) + '</td></tr>').join('') +
       '<tr class="' + (G.lm[i] ? 'now' : '') + '"><td>🏰 랜드마크</td><td>짓는 값 ' + nf(lmCost(i)) + '</td><td>통행료 ' + nf(r10(t.price * LM_TOLL)) + '</td></tr></table>' +
-      '<p style="font-size:14px;color:var(--ink2)">건물 3개는 함께 서고 통행료가 더해져요. 3개를 다 지은 뒤 다시 도착하면 랜드마크!</p>' + (o != null ? '<p>지금 통행료 <b>' + nf(toll(i)) + '냥</b></p>' : '') +
+      '<p style="font-size:14px;color:var(--ink2)">건물 3개는 함께 서고 통행료가 더해져요.<br>3개를 다 지은 뒤 다시 도착하면 랜드마크!</p>' + (o != null ? '<p>지금 통행료 <b>' + nf(toll(i)) + '냥</b></p>' : '') +
       (o != null ? '<p style="font-size:15px">' + (G.lm[i] ? '🏰 랜드마크가 있어 아무도 인수할 수 없어요.' : '인수하는 값 <b>' + nf(takeCost(i)) + '냥</b>') + '</p>' : '');
   } else if (t.type === 'mark') {
-    h += '<p>' + (o != null ? pn(G.players[o]) + '의 명소' : '주인 없는 명소') + ' · 값 ' + nf(t.price) + '냥</p><p>건물은 못 지어요. 명소를 많이 가질수록 통행료가 올라요.</p><table class="toll">' + [1, 2, 3, 4].map(n => '<tr><td>명소 ' + n + '곳</td><td>통행료 ' + nf(MARK_TOLL[n]) + '</td></tr>').join('') + '</table>';
-  } else h += '<p>' + ({ start:'지나갈 때마다 용돈 ' + nf(SALARY) + '냥을 받아요. 주사위로 딱 도착하면 내 도시 한 곳에 건물을 지을 수 있어요.', card:'도깨비 주머니에서 행운 카드를 한 장 뽑아요.', give:GIVE + '냥을 꼬비 저금통에 넣어요.',
-    island:'3번 쉬어요. 같은 숫자가 나오거나 ' + ISLAND_FEE + '냥을 내면 나올 수 있어요.', fund:'지금까지 모인 ' + nf(G.pot) + '냥을 몽땅 받아요.', balloon:'다음 차례에 원하는 칸으로 날아가요. 앞으로만 날아가서, 꼬비 마을을 지나면 용돈도 받아요.' }[t.type]) + '</p>';
+    h += '<p>' + (o != null ? pn(G.players[o]) + '의 명소' : '주인 없는 명소') + ' · 값 ' + nf(t.price) + '냥</p><p>건물은 못 지어요.<br>명소를 많이 가질수록 통행료가 올라요.</p><table class="toll">' + [1, 2, 3, 4].map(n => '<tr><td>명소 ' + n + '곳</td><td>통행료 ' + nf(MARK_TOLL[n]) + '</td></tr>').join('') + '</table>';
+  } else h += '<p>' + ({ start:'지나가거나 도착하면 용돈 ' + nf(SALARY) + '냥을 받아요.<br>딱 도착하면 내 도시 한 곳에 건물을 지을 수 있어요.', card:'도깨비 주머니에서 행운 카드를 한 장 뽑아요.', give:GIVE + '냥을 꼬비 저금통에 넣어요.',
+    island:'3번 쉬어요.<br>같은 숫자가 나오거나 ' + ISLAND_FEE + '냥을 내면 나올 수 있어요.', fund:'지금까지 모인 ' + nf(G.pot) + '냥을 몽땅 받아요.', balloon:'다음 차례에 원하는 칸으로 날아가요.<br>앞으로만 날아가서, 꼬비 마을을 지나면 용돈도 받아요.' }[t.type]) + '</p>';
   return h;
 }
 let picking = null;
