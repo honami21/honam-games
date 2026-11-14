@@ -218,6 +218,8 @@
     #title { padding-bottom:calc(58px + env(safe-area-inset-bottom)); }
     .topbar{top:6px;left:6px;right:6px}
     .topbar a,.topbar button{font-size:13px;padding:6px 10px}
+    .topbar .t{display:none}
+    #pause-btn .t2{display:none}
     #timer { top:8px; font-size:24px; }
     #slots { top:44px; left:6px; }
     .slot { width:40px; height:40px; font-size:23px; border-radius:9px; }
@@ -282,7 +284,7 @@
     <div class="chip" id="lvl">Lv 1</div>
     <div class="chip">👻 <span id="kills">0</span></div>
     <div class="chip">🪙 <span id="coins">0</span></div>
-    <button class="chip" id="pause-btn" type="button">⏸ 멈춤</button>
+    <button class="chip" id="pause-btn" type="button" aria-label="멈춤">⏸<span class="t2"> 멈춤</span></button>
   </div>
   <div id="bossbar" class="hidden"><span id="bossname">보스</span><div class="bar"><div id="bossfill"></div></div></div>
 </div>

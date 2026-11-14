@@ -228,7 +228,8 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
   .tab{left:50%;transform:translateX(-50%);top:-2px;font-size:12px;padding:2px 8px;border-radius:10px;white-space:nowrap;box-shadow:none}
   .tab svg,.tab .lg{display:none}
   .panel>#sound-btn{white-space:nowrap;font-size:13px !important}
-  .panel>.btn.btn-gr,.panel>.btn#sound-btn,.panel>.btn.kbgm-btn{grid-column:span 2;white-space:nowrap;font-size:12px !important;letter-spacing:-.5px}
+  .panel>.btn.btn-gr,.panel>.btn#sound-btn,.panel>.btn.kbgm-btn{grid-column:span 2;white-space:nowrap;font-size:20px !important;letter-spacing:0}
+  .panel>.btn .bl{display:none}
   .mini-wrap canvas{width:100%;max-width:64px;height:auto;aspect-ratio:1}
   .pad{display:grid;grid-row:3;grid-column:1 / -1;grid-template-columns:repeat(6,1fr);gap:6px}
   .pad button{touch-action:none;border:none;border-radius:16px;height:58px;font-family:'Jua',sans-serif;font-size:24px;color:var(--ink);
@@ -410,8 +411,8 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
       <div class="card stat"><div class="card-lbl"><span class="emo">🔥</span>콤보</div><div class="card-val" id="combo">0</div></div>
       <button class="btn btn-s" id="start-btn">▶ 시작</button>
       <button class="btn btn-p" id="pause-btn"><span class="pz"></span>쉬기</button>
-      <button class="btn btn-gr" id="rank-btn">🏆 랭킹</button>
-      <button class="btn btn-g" id="sound-btn">🔊 소리 ON</button>
+      <button class="btn btn-gr" id="rank-btn" aria-label="랭킹">🏆<span class="bl"> 랭킹</span></button>
+      <button class="btn btn-g" id="sound-btn" aria-label="효과음">🔊<span class="bl"> 소리 ON</span></button>
     </div>
     <div id="board-col">
       <div id="board-wrap">
@@ -1513,10 +1514,10 @@ document.getElementById('rank-btn').addEventListener('click',openRanking);
 function updateSoundBtn(){
   const btn = document.getElementById('sound-btn');
   if(audio.enabled){
-    btn.textContent = '🔊 소리 ON';
+    btn.innerHTML = '🔊<span class="bl"> 소리 ON</span>';
     btn.classList.remove('btn-gr');btn.classList.add('btn-g');
   }else{
-    btn.textContent = '🔇 소리 OFF';
+    btn.innerHTML = '🔇<span class="bl"> 소리 OFF</span>';
     btn.classList.remove('btn-g');btn.classList.add('btn-gr');
   }
 }
