@@ -55,6 +55,7 @@
   @keyframes pairGlow { 0%,100% { box-shadow:0 0 3px var(--pc); } 50% { box-shadow:0 0 14px 3px var(--pc), inset 0 0 8px var(--pc); } }
   .slot.ready::after { content:''; position:absolute; inset:-4px; border-radius:11px; border:2px dashed var(--sun); animation:spin 4s linear infinite; }
   #stats { position:absolute; top:58px; right:12px; display:flex; flex-direction:column; align-items:flex-end; gap:5px; }
+  .chip-ic { height:1.25em; width:auto; vertical-align:-.25em; }
   .chip { background:rgba(10,14,30,.6); color:#fff; border-radius:14px; padding:3px 12px; font-size:clamp(16px,1.3vw,21px); }
   #pause-btn { pointer-events:auto; cursor:pointer; border:2px solid rgba(255,255,255,.35); font-family:'Jua',sans-serif; }
   #bossbar { position:absolute; left:50%; top:78px; transform:translateX(-50%); width:min(520px,70vw); text-align:center; color:#fff; font-size:16px; text-shadow:0 2px 0 #000; }
@@ -152,6 +153,8 @@
   .cards { display:flex; flex-direction:column; gap:9px; margin-top:8px; }
   .card { display:flex; align-items:center; gap:12px; text-align:left; background:#fff; border:3px solid var(--edge); border-radius:18px; padding:10px 12px; cursor:pointer;
     font-family:'Jua',sans-serif; color:var(--ink); width:100%; transition:transform .08s, border-color .1s; position:relative; }
+  .padf { outline:4px solid var(--sun) !important; outline-offset:3px; box-shadow:0 0 0 7px rgba(255,216,74,.35) !important; }
+  #pad-toast { position:fixed; left:50%; bottom:calc(18px + env(safe-area-inset-bottom)); transform:translateX(-50%); z-index:90; background:rgba(10,14,30,.85); color:#fff; border:2px solid rgba(255,255,255,.4); border-radius:20px; padding:6px 16px; font-size:16px; pointer-events:none; transition:opacity .4s; }
   .card:hover, .card:focus { border-color:var(--ink); transform:translateY(-1px); outline:none; }
   .card .t { font-size:19px; }
   .card .t em { font-style:normal; font-size:13px; color:#fff; background:var(--wpn); border-radius:8px; padding:1px 7px; margin-left:6px; vertical-align:2px; }
@@ -288,8 +291,8 @@
   <div id="slots"><div class="row" id="slots-w"></div><div class="row" id="slots-p"></div></div>
   <div id="stats">
     <div class="chip" id="lvl">Lv 1</div>
-    <div class="chip">👻 <span id="kills">0</span></div>
-    <div class="chip">🪙 <span id="coins">0</span></div>
+    <div class="chip"><img class="chip-ic" src="img/m-egg.png" alt="잡은 요괴" onerror="this.replaceWith('👻')"> <span id="kills">0</span></div>
+    <div class="chip"><img class="chip-ic" src="img/coin.png" alt="엽전" onerror="this.replaceWith('🪙')"> <span id="coins">0</span></div>
     <button class="chip" id="pause-btn" type="button" aria-label="멈춤">⏸<span class="t2"> 멈춤</span></button>
   </div>
   <div id="bossbar" class="hidden"><span id="bossname">보스</span><div class="bar"><div id="bossfill"></div></div></div>
@@ -336,6 +339,7 @@
       <button class="game-btn white small" type="button" data-b="imugi">이무기 부르기</button>
     </div>
     <div id="dev-msg"></div>
+    <div id="dev-pad" style="font-size:12px;color:var(--ink2);word-break:break-all;margin-top:4px"></div>
     <div class="btns">
       <button class="game-btn" id="dev-go" type="button">▶ 시험 시작</button>
       <button class="game-btn white small" id="dev-max" type="button">고른 것 모두 최고로</button>
@@ -357,7 +361,7 @@
       <button class="game-btn sun" id="rank-btn" type="button">🏆 랭킹</button>
       <button class="game-btn white" id="help-btn" type="button">📖 조합표</button>
     </div>
-    <p class="howto" id="howto-pc">움직이기 <span class="kbd">←↑↓→</span> 또는 <span class="kbd">W A S D</span> · 멈춤 <span class="kbd">Esc</span> · 공격은 저절로 해요</p>
+    <p class="howto" id="howto-pc">움직이기 <span class="kbd">←↑↓→</span> 또는 <span class="kbd">W A S D</span> · 멈춤 <span class="kbd">Esc</span> · 🎮 컨트롤러도 돼요 · 공격은 저절로 해요</p>
     <p class="howto hidden" id="howto-touch">화면을 누른 채로 끌면 움직여요 · 공격은 저절로 해요</p>
   </div>
 </div>
@@ -592,7 +596,7 @@ const IMG_NAMES = [
   'p-tooth','p-lamp','p-beans','p-straw','p-cloth','p-sundial','p-book','p-feather','p-pouch','p-yeot','p-ginseng','p-lid',
   'm-dust','m-bat','m-egg','m-broom','m-fox','m-scare','m-toad','m-cloud','m-jang',
   'b-gumiho','b-eodum','b-imugi-head','b-imugi-body',
-  'gem-blue','gem-green','gem-red','coin','ricecake','bokjori','chest','lantern',
+  'gem-blue','gem-green','gem-red','coin','coin-bundle','ricecake','bokjori','chest','lantern',
   'ggobi-run2','ggobi-run3','ggobi-run4','ggobi-down1','ggobi-down2','ggobi-idle-down','ggobi-up1','ggobi-up2','ggobi-idle-up','ggobi-idle','ggobi-hurt','fx-slash','fx-ring','fx-bolt','fx-gust','fx-vortex','fx-crack','fx-poof','fx-sparkle','chest-open',
   'fx-wisp','fx-ewisp','fx-ink','fx-straw','fx-foxfire','fx-dark','fx-tornado','fx-magpie','fx-dart','fx-fireball',
   'd-tree','d-pine','d-rock','d-jar','d-tower','d-grass','d-flower','d-mush',
@@ -755,6 +759,7 @@ function inputDir() {
   if (keys['arrowup'] || keys['w']) y -= 1;
   if (keys['arrowdown'] || keys['s']) y += 1;
   if (x || y) { const d = Math.hypot(x, y); return [x / d, y / d]; }
+  if (PAD.mag > .2) return [PAD.x / Math.max(1, PAD.mag), PAD.y / Math.max(1, PAD.mag)];
   if (joy.on) { const m = Math.hypot(joy.dx, joy.dy); if (m > .15) return [joy.dx / Math.max(1, m), joy.dy / Math.max(1, m)]; }
   return [0, 0];
 }
@@ -1957,8 +1962,8 @@ function cardHTML(o, i, forChest) {
     const W = WEAPONS[o.id];
     icon = iconHTML('e', o.id); title = W.evoName; tag = '<em class="e">조합!</em>'; desc = W.evoDesc;
     pair = `${W.name} + ${PASSIVES[W.pair].name}`;
-  } else if (o.k === 'heal') { icon = '<div class="ic p">🍡</div>'; title = '쑥떡'; tag = ''; desc = '체력을 50 채워요.'; }
-  else { icon = '<div class="ic p">🪙</div>'; title = '엽전 꾸러미'; tag = ''; desc = '엽전 30개를 얻어요.'; }
+  } else if (o.k === 'heal') { icon = `<div class="ic p">${IMG.ricecake ? '<img src="img/ricecake.png" alt="">' : '🍡'}</div>`; title = '쑥떡'; tag = ''; desc = '체력을 50 채워요.'; }
+  else { const ck = IMG['coin-bundle'] ? 'coin-bundle' : IMG.coin ? 'coin' : ''; icon = `<div class="ic p">${ck ? `<img src="img/${ck}.png" alt="">` : '🪙'}</div>`; title = '엽전 꾸러미'; tag = ''; desc = '엽전 30개를 얻어요.'; }
   return `<button class="card ${o.k === 'evo' ? 'evo' : ''} ${link ? 'linked' : ''}" type="button" data-i="${i}">${icon}<div><div class="t">${title}${tag}</div><div class="d">${desc}</div>${link ? `<div class="link">${link}</div>` : pair ? `<div class="pair">${pair}</div>` : ''}</div>${forChest ? '' : `<span class="key">${i + 1}</span>`}</button>`;
 }
 function openLevelUp() {
@@ -2266,10 +2271,117 @@ $('end-rank-btn').addEventListener('click', () => showRanking());
 $('rank-close').addEventListener('click', () => { hide('ranking'); });
 if (isTouch) { hide('howto-pc'); show('howto-touch'); }
 
+/* ---------- 게임 컨트롤러 ---------- */
+// 왼쪽 스틱·십자키: 움직이기와 메뉴 고르기, A: 누르기, B: 닫기, START: 멈춤과 시작
+const PAD = { x: 0, y: 0, mag: 0, prev: [], rep: 0, dir: '', on: false };
+function padToast(t) {
+  let el = $('pad-toast'); if (!el) { el = document.createElement('div'); el.id = 'pad-toast'; document.body.appendChild(el); }
+  el.textContent = t; el.style.opacity = 1; clearTimeout(PAD.tt); PAD.tt = setTimeout(() => { el.style.opacity = 0; }, 2500);
+}
+addEventListener('gamepadconnected', () => padToast('🎮 컨트롤러가 연결됐어요'));
+addEventListener('gamepaddisconnected', () => padToast('🎮 컨트롤러 연결이 끊겼어요'));
+function padOverlay() {
+  let best = null, bz = -1;
+  for (const el of document.querySelectorAll('.ov')) {
+    if (el.classList.contains('hidden') || el.offsetParent === null && getComputedStyle(el).position !== 'fixed') continue;
+    const z = +getComputedStyle(el).zIndex || 0; if (z >= bz) { bz = z; best = el; }
+  }
+  return best;
+}
+function padItems(ov) {
+  return [...ov.querySelectorAll('button, select, input, [tabindex="0"]')].filter(el => !el.disabled && el.getClientRects().length && !el.closest('.hidden'));
+}
+function padFocus(el) {
+  const old = document.querySelector('.padf'); if (old && old !== el) old.classList.remove('padf');
+  if (!el) return; el.classList.add('padf'); el.focus({ preventScroll: true }); el.scrollIntoView({ block: 'nearest' });
+}
+const PAD_FIRST = { title: '#title-start', start: '.wp.on', levelup: '.card', chest: '#chest-ok', pause: '#resume-btn', end: '#again-btn', ranking: '#rank-close', dev: '#dev-go', devpw: '#devpw-ok' };
+function padCurrent(ov) {
+  const f = document.querySelector('.padf');
+  if (f && ov.contains(f) && f.getClientRects().length && !f.disabled) return f;
+  const first = PAD_FIRST[ov.id] && ov.querySelector(PAD_FIRST[ov.id]);
+  const el = first && !first.disabled && first.getClientRects().length ? first : padItems(ov)[0];
+  padFocus(el); return el ? Object.assign(el, { _padNew: true }) : null;
+}
+function padMove(ov, dx, dy) {
+  const cur = padCurrent(ov); if (!cur || cur._padNew) { if (cur) cur._padNew = false; return; }
+  const r = cur.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  let best = null, bs = 1e9;
+  for (const el of padItems(ov)) {
+    if (el === cur) continue;
+    const q = el.getBoundingClientRect(), vx = q.left + q.width / 2 - cx, vy = q.top + q.height / 2 - cy;
+    const along = vx * dx + vy * dy, perp = Math.abs(vx * dy - vy * dx);
+    if (along <= 4) continue;
+    const sc = along + perp * 2.2; if (sc < bs) { bs = sc; best = el; }
+  }
+  if (best) padFocus(best);
+}
+function padBack(ov) {
+  const id = ov.id;
+  if (id === 'pause') $('resume-btn').click();
+  else if (id === 'ranking') $('rank-close').click();
+  else if (id === 'dev') $('dev-close').click();
+  else if (id === 'devpw') $('devpw-close').click();
+  else if (id === 'chest' && !$('chest-ok').disabled) $('chest-ok').click();
+}
+function padDebug(gp, std) {
+  const el = $('dev-pad'); if (!el || $('dev').classList.contains('hidden')) return;
+  const on = gp.buttons.map((o, i) => o.pressed ? i : -1).filter(i => i >= 0);
+  el.textContent = `🎮 ${gp.id.slice(0, 40)} · ${std ? '표준 배치' : '날것 배치'} · 누른 버튼: ${on.join(', ') || '없음'} · 축: ${gp.axes.map(v => v.toFixed(1)).join(' ')}`;
+}
+function padTick(dt) {
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  let gp = null; for (const g of pads) if (g && g.connected) { gp = g; break; }
+  if (!gp) { PAD.x = PAD.y = PAD.mag = 0; return; }
+  const b = i => i !== undefined && !!(gp.buttons[i] && gp.buttons[i].pressed);
+  // 버튼 번호 배치: 표준 배치(엑스박스식)와, 안드로이드 등에서 오는 날것 배치(L2·R2가 8·9번, SELECT·START가 10·11번, L3·R3가 13·14번)
+  const std = gp.mapping === 'standard' || gp.buttons.length < 12;
+  const M = std ? { a: 0, b: 1, sel: 8, start: 9, up: 12, down: 13, left: 14, right: 15 } : { a: 0, b: 1, sel: 10, start: 11 };
+  padDebug(gp, std);
+  let x = gp.axes[0] || 0, y = gp.axes[1] || 0;
+  if (Math.hypot(x, y) < .22) { x = 0; y = 0; }
+  // 십자키: 표준 배치는 버튼 12~15, 그 밖의 컨트롤러는 축(6·7번) 또는 방향 모자(9번 축)로 와요
+  let hx = 0, hy = 0;
+  if (b(M.left)) hx = -1; if (b(M.right)) hx = 1; if (b(M.up)) hy = -1; if (b(M.down)) hy = 1;
+  if (!hx && !hy && gp.mapping !== 'standard') {
+    const ax = gp.axes, hat = ax[9];
+    if (ax.length > 9 && hat !== undefined && Math.abs(hat) <= 1.05) {
+      const k = Math.round((hat + 1) / (2 / 7)) % 8;   // 0 위, 1 오른쪽 위, 2 오른쪽 ... 7 왼쪽 위
+      hx = [0, 1, 1, 1, 0, -1, -1, -1][k]; hy = [-1, -1, 0, 1, 1, 1, 0, -1][k];
+    } else if (ax.length >= 8) {
+      if (Math.abs(ax[6]) > .5) hx = Math.sign(ax[6]); if (Math.abs(ax[7]) > .5) hy = Math.sign(ax[7]);
+    }
+  }
+  if (hx || hy) { x = hx; y = hy; }
+  PAD.x = x; PAD.y = y; PAD.mag = Math.hypot(x, y);
+  const down = i => i !== undefined && b(i) && !PAD.prev[i];
+  const ov = (modal && modal !== 'x') || !G || G.ended ? padOverlay() : null;
+  if (ov) {
+    // 메뉴: 방향은 처음 한 번, 오래 누르면 천천히 반복해요
+    const dir = PAD.mag < .5 ? '' : Math.abs(x) > Math.abs(y) ? (x > 0 ? 'r' : 'l') : (y > 0 ? 'd' : 'u');
+    if (dir && dir !== PAD.dir) { PAD.rep = .35; padMove(ov, dir === 'r' ? 1 : dir === 'l' ? -1 : 0, dir === 'd' ? 1 : dir === 'u' ? -1 : 0); }
+    else if (dir) { PAD.rep -= dt; if (PAD.rep <= 0) { PAD.rep = .14; padMove(ov, dir === 'r' ? 1 : dir === 'l' ? -1 : 0, dir === 'd' ? 1 : dir === 'u' ? -1 : 0); } }
+    PAD.dir = dir;
+    if (down(M.a)) { const cur = padCurrent(ov); if (cur) { cur._padNew = false; ensureAudio(); cur.click(); } }
+    if (down(M.b)) padBack(ov);
+    if (down(M.start)) {
+      if (ov.id === 'title') $('title-start').click();
+      else if (ov.id === 'start') $('start-btn').click();
+      else if (ov.id === 'pause') $('resume-btn').click();
+    }
+  } else {
+    PAD.dir = '';
+    const f = document.querySelector('.padf'); if (f) { f.classList.remove('padf'); f.blur(); }
+    if (G && !G.over && !modal && (down(M.start) || down(M.sel))) openPause();
+  }
+  PAD.prev = gp.buttons.map(o => o.pressed);
+}
+
 /* ---------- 반복 ---------- */
 let last = performance.now();
 function loop(now) {
   const dt = clamp((now - last) / 1000, 0, .05); last = now;
+  try { padTick(dt); } catch (e) {}
   if (G && !modal && !G.ended) {
     if (!G.over) update(dt);
     else { G.t += 0; for (const f of G.fx) f.t += dt; G.fx = G.fx.filter(f => f.t < f.life); }
