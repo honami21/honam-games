@@ -1944,7 +1944,7 @@ function cardHTML(o, i, forChest) {
     tag = w ? `<em>Lv ${next}</em>` : '<em class="new-w">새 무기</em>';
     desc = W.desc[next] + (next === 8 ? ' · 최고 레벨!' : '');
     pair = `짝꿍: ${PASSIVES[W.pair].emoji} ${PASSIVES[W.pair].name} → ${W.evoName}`;
-    if (!forChest && G.passives[W.pair]) link = `✅ 짝꿍 ${PASSIVES[W.pair].name} 완성!`;
+    if (!forChest && G.passives[W.pair]) link = w ? `✅ 짝꿍 ${PASSIVES[W.pair].name} 완성!` : `🔗 고르면 ${PASSIVES[W.pair].name} 짝꿍 완성! → ${W.evoName}`;
   } else if (o.k === 'p') {
     const P = PASSIVES[o.id], lv = (G.passives[o.id] || 0) + 1;
     icon = iconHTML('p', o.id); title = P.name;
