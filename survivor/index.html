@@ -47,6 +47,12 @@
   .slot img { width:82%; height:82%; object-fit:contain; }
   .slot.w { border-color:rgba(226,70,63,.85); } .slot.p { border-color:rgba(122,79,224,.9); } .slot.e { border-color:var(--evo); box-shadow:0 0 8px var(--evo); }
   .slot i { position:absolute; right:-4px; bottom:-6px; font-style:normal; font-family:'Fredoka',sans-serif; font-size:clamp(14px,1.2vw,20px); color:#fff; background:#0b1224; border-radius:6px; padding:0 3px; line-height:1.3; }
+  /* 짝꿍(무기 + 강화)끼리 같은 색으로 반짝여요 */
+  .slot.pair { border-color:var(--pc); animation:pairGlow 1.6s ease-in-out infinite; }
+  .slot.pair::before { content:'🔗'; position:absolute; left:-6px; top:-7px; font-size:clamp(12px,1vw,16px); line-height:1; background:var(--pc); border-radius:50%; padding:2px; box-shadow:0 0 0 2px #0b1224; }
+  .slot.pair.done { animation:none; box-shadow:0 0 8px var(--pc); }
+  .slot.pair.done::before { content:'★'; color:#fff; font-family:'Fredoka',sans-serif; padding:1px 4px; }
+  @keyframes pairGlow { 0%,100% { box-shadow:0 0 3px var(--pc); } 50% { box-shadow:0 0 14px 3px var(--pc), inset 0 0 8px var(--pc); } }
   .slot.ready::after { content:''; position:absolute; inset:-4px; border-radius:11px; border:2px dashed var(--sun); animation:spin 4s linear infinite; }
   #stats { position:absolute; top:58px; right:12px; display:flex; flex-direction:column; align-items:flex-end; gap:5px; }
   .chip { background:rgba(10,14,30,.6); color:#fff; border-radius:14px; padding:3px 12px; font-size:clamp(16px,1.3vw,21px); }
@@ -1877,14 +1883,19 @@ function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<'
 /* ---------- 칸 표시 ---------- */
 function refreshSlots() {
   let h = '';
+  // 짝꿍이 맞춰진 무기와 강화에 같은 색을 줘요
+  const PAIR_COL = ['#ffd84a', '#4fe0d0', '#ff8fd0', '#8fe36b', '#ffa04a', '#9fb4ff'], pc = {};
+  let ci = 0;
+  for (const w of G.weapons) { const pp = WEAPONS[w.id].pair; if (G.passives[pp]) pc[w.id] = pc[pp] = { c: w.evo ? 'var(--evo)' : PAIR_COL[ci++ % PAIR_COL.length], done: w.evo }; }
+  const pcls = id => pc[id] ? ` pair${pc[id].done ? ' done' : ''}" style="--pc:${pc[id].c}` : '';
   for (const w of G.weapons) {
     const key = iconKey(w.evo ? 'e' : 'w', w.id), em = w.evo ? WEAPONS[w.id].evoEmoji : WEAPONS[w.id].emoji;
-    h += `<div class="slot ${w.evo ? 'e' : 'w'} ${canEvolve(w) ? 'ready' : ''}" title="${esc(w.evo ? WEAPONS[w.id].evoName : WEAPONS[w.id].name)}">${IMG[key] ? `<img src="img/${key}.png" alt="">` : em}<i>${w.evo ? '★' : w.lv}</i></div>`;
+    h += `<div class="slot ${w.evo ? 'e' : 'w'} ${canEvolve(w) ? 'ready' : ''}${pcls(w.id)}" title="${esc(w.evo ? WEAPONS[w.id].evoName : WEAPONS[w.id].name)}">${IMG[key] ? `<img src="img/${key}.png" alt="">` : em}<i>${w.evo ? '★' : w.lv}</i></div>`;
   }
   $('slots-w').innerHTML = h; h = '';
   for (const id of G.passiveOrder) {
     const key = 'p-' + id;
-    h += `<div class="slot p" title="${esc(PASSIVES[id].name)}">${IMG[key] ? `<img src="img/${key}.png" alt="">` : PASSIVES[id].emoji}<i>${G.passives[id]}</i></div>`;
+    h += `<div class="slot p${pcls(id)}" title="${esc(PASSIVES[id].name)}">${IMG[key] ? `<img src="img/${key}.png" alt="">` : PASSIVES[id].emoji}<i>${G.passives[id]}</i></div>`;
   }
   $('slots-p').innerHTML = h;
 }
