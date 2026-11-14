@@ -666,7 +666,7 @@ $('tlGo').onclick = () => { $('title').classList.add('hidden'); $('start').class
 // ---------- 게임 상태 ----------
 let G = null, gid = 0, fast = store('worldtour-fast') === 'on';
 const ABORT = { abort:true };
-const sp = ms => fast ? ms * .45 : ms;
+const sp = ms => fast && !NET.on ? ms * .45 : ms;   // 방 만들기에서는 빠르게를 쓰지 않아요
 function wait(ms) { const my = gid; return new Promise((res, rej) => setTimeout(() => my === gid ? res() : rej(ABORT), sp(ms))); }
 const alive = () => G.players.filter(p => p.alive);
 const owned = p => TILES.map((t, i) => i).filter(i => G.owner[i] === p.id);
@@ -1262,7 +1262,7 @@ function enterRoom(c, role) {
   clearInterval(NET.hbT); clearInterval(NET.wdT);
   NET.hbT = setInterval(heartbeat, HB_MS);
   NET.wdT = setInterval(watchdog, 3000);
-  $('stkBtn').classList.remove('hidden');
+  $('stkBtn').classList.remove('hidden'); $('speedBtn').classList.add('hidden');
   $('start').classList.add('hidden');
 }
 function heartbeat() {
@@ -1297,7 +1297,7 @@ function closeRoomLocal() {
   if (NET.unsub) NET.unsub();
   clearInterval(NET.hbT); clearInterval(NET.wdT);
   resetNet(); Object.assign(NET, { on:false, unsub:null, room:null, ref:null, code:null, role:null });
-  $('stkBtn').classList.add('hidden'); $('stkTray').classList.add('hidden'); $('lobby').classList.add('hidden');
+  $('stkBtn').classList.add('hidden'); $('speedBtn').classList.remove('hidden'); $('stkTray').classList.add('hidden'); $('lobby').classList.add('hidden');
   toStart();
 }
 
