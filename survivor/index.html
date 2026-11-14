@@ -1598,7 +1598,7 @@ function drawMonster(e) {
   const p = G.p, M = MONSTERS[e.type];
   const bob = Math.sin(G.t * 8 + e.ph) * 1.5;
   const flip = e.type === 'seg' ? false : e.face < 0;
-  const key = e.type === 'imugi' ? 'b-imugi-head' : e.type === 'seg' ? 'b-imugi-body' : (M.boss ? 'b-' : 'm-') + (e.type === 'mini' ? 'cloud' : e.type);
+  const key = e.type === 'imugi' ? 'b-imugi-head' : e.type === 'seg' ? 'b-imugi-body' : e.type === 'lantern' ? 'lantern' : (M.boss ? 'b-' : 'm-') + (e.type === 'mini' ? 'cloud' : e.type);
   // 그림자
   ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.beginPath(); ctx.ellipse(e.x, e.y + e.r * .85, e.r * .85, e.r * .3, 0, 0, TAU); ctx.fill();
   if (e.type === 'fox' && e.st === 1 || e.type === 'gumiho' && e.st === 1) {
@@ -1608,6 +1608,7 @@ function drawMonster(e) {
   if (e.type === 'lantern') { const gr = ctx.createRadialGradient(e.x, e.y, 4, e.x, e.y, 70); gr.addColorStop(0, 'rgba(255,190,90,.45)'); gr.addColorStop(1, 'rgba(255,190,90,0)'); ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(e.x, e.y, 70, 0, TAU); ctx.fill(); }
   let h = e.r * (e.type === 'imugi' ? 2.6 : M.boss ? 3.1 : e.type === 'seg' ? 2.2 : 2.7);
   if (e.type === 'mini') h = e.r * 2.6;
+  if (e.type === 'lantern') h = e.r * 3.6;
   const y = e.y + bob - (e.type === 'toad' && e.st === 1 ? Math.sin((1 - e.stT / .55) * Math.PI) * 26 : 0);
   if (e.type === 'seg' && IMG[key]) {
     ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(Math.atan2(e.prev.y - e.y, e.prev.x - e.x)); const im = IMG[key]; const w = h * im.width / im.height; ctx.drawImage(im, -w / 2, -h / 2, w, h); ctx.restore();
