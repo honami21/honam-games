@@ -163,6 +163,7 @@
   .die .f1 { transform:translateZ(calc(var(--d) / 2)); } .die .f6 { transform:rotateY(180deg) translateZ(calc(var(--d) / 2)); }
   .die .f3 { transform:rotateY(90deg) translateZ(calc(var(--d) / 2)); } .die .f4 { transform:rotateY(-90deg) translateZ(calc(var(--d) / 2)); }
   .die .f2 { transform:rotateX(90deg) translateZ(calc(var(--d) / 2)); } .die .f5 { transform:rotateX(-90deg) translateZ(calc(var(--d) / 2)); }
+  #diceRow.one #die1 { display:none; }
   #diceRow.jump .die { animation:djump .9s ease-out; }
   @keyframes djump { 0%{ top:0 } 30%{ top:calc(var(--u) * -6) } 60%{ top:0 } 75%{ top:calc(var(--u) * -1.6) } 100%{ top:0 } }
   #rollBtn { font-size:calc(var(--u) * 3.2); padding:calc(var(--u) * 1.4) calc(var(--u) * 4.5); min-width:0; }
@@ -637,7 +638,7 @@ segInit('lapSeg', endLaps, v => { endLaps = +v; });
 updEnd(); drawSlots();
 
 const HOW = '<h2>놀이 방법</h2><ul class="how">' + [
-  ['🎲', '주사위', '2개를 굴려 나온 만큼 가요 · <b>같은 숫자</b>가 나오면 한 번 더 · 세 번 연속이면 도깨비섬으로'],
+  ['🎲', '주사위', '처음에 하나씩 굴려 <b>큰 숫자부터</b> 순서를 정해요 · 2개를 굴려 나온 만큼 가요 · <b>같은 숫자</b>가 나오면 한 번 더 · 세 번 연속이면 도깨비섬으로'],
   ['🏡', '꼬비 마을', '지나가거나 도착하면 용돈 <b>' + SALARY.toLocaleString('ko-KR') + '냥</b> · 딱 도착하면 내 도시 한 곳을 골라 건물이나 랜드마크를 지어요'],
   ['🏙️', '도시 사기', '주인 없는 도시에 서면 땅을 사요 · <b>내 땅에 다시 도착하면</b> 건물을 지어요'],
   [ic('bld-tent', '텐트'), '건물', '<b>텐트, 게스트하우스, 호텔</b>은 함께 설 수 있어요 · 지을수록 통행료가 더해져요'],
@@ -812,7 +813,7 @@ function drawPieces(reset) {
   });
 }
 function drawPlayers() {
-  $('players').innerHTML = G.players.map(p => {
+  $('players').innerHTML = (G.order || G.players.map(q => q.id)).map(id => G.players[id]).map(p => {
     const lmN = owned(p).filter(i => G.lm[i]).length, n = owned(p).length - lmN, sub = !p.alive ? '파산' : (p.island ? '🏝️ ' + p.island + '번 쉬기 ' : '') + (p.balloon ? '🎈 ' : '') + (p.ticket ? '<span title="도깨비섬 탈출권">' + I_TICKET + p.ticket + '</span> ' : '') + (p.free ? '<span title="통행료 면제권">' + I_FREE + p.free + '</span> ' : '') + (p.half ? '<span title="반값 인수권">' + I_HALF + p.half + '</span> ' : '') + '<span title="도시">' + I_CITY + n + '곳</span>' + (lmN ? ' <span title="랜드마크">' + I_LM + lmN + '곳</span>' : '') + (G.mode === 'laps' ? ' · ' + p.laps + '바퀴' : '');
     return '<div class="pcard' + (G.turn === p.id && !G.over ? ' turn' : '') + (p.alive ? '' : ' out') + '" id="pc' + p.id + '"><div class="chip" style="' + chipBg(p.ci) + '"></div>' +
       '<div style="min-width:0"><div class="nm">' + esc(p.name) + (p.ai ? ' <span class="aitag">AI</span>' : '') + (NET.on && p.uid === myId ? ' <small style="color:var(--coral-d)">(나)</small>' : '') + (NET.on && NET.room && !p.ai && (NET.room.away || {})[p.uid] && p.alive ? ' 💤' : '') + '</div><div class="sub">' + sub + '</div></div>' +
@@ -906,6 +907,35 @@ function waitRoll(p, label) {
   b.textContent = label || '주사위 굴리기';
   if (bot(p)) { b.disabled = true; b.classList.remove('pulse'); return wait(700); }
   return new Promise((res, rej) => { b.disabled = false; b.classList.add('pulse'); b.onclick = () => { b.disabled = true; b.classList.remove('pulse'); b.onclick = null; my === gid ? res() : rej(ABORT); }; });
+}
+
+// ---------- 순서 정하기: 주사위 하나씩, 큰 숫자부터 ----------
+async function decideOrder() {
+  G.turn = -1; refresh();
+  $('diceRow').classList.add('one');
+  say('주사위를 하나씩 굴려 <b>순서</b>를 정해요. 큰 숫자가 먼저예요!');
+  async function rank(ids) {
+    const v = {};
+    for (const id of ids) {
+      const p = G.players[id];
+      if (!NET.on) { say(pn(p) + ' 순서 주사위를 굴려요.', true); await waitRoll(p, '순서 정하기 주사위'); } else await wait(500);
+      const d = 1 + Math.floor(Math.random() * 6);
+      emit({ k:'odice', v:d }); await showDice([d, d]);
+      v[id] = d; say(pn(p) + ' <b>' + d + '</b>!');
+    }
+    const out = [];
+    for (const x of [...new Set(ids.map(i => v[i]))].sort((a, b) => b - a)) {
+      const same = ids.filter(i => v[i] === x);
+      if (same.length > 1) { say(same.map(i => pn(G.players[i])).join(', ') + ' 같은 숫자! 다시 굴려요.'); await wait(600); out.push(...await rank(same)); }
+      else out.push(same[0]);
+    }
+    return out;
+  }
+  G.order = await rank(G.players.map(p => p.id));
+  emit({ k:'order', o:G.order });
+  $('diceRow').classList.remove('one'); $('rollBtn').textContent = '주사위 굴리기';
+  say('여행 순서: ' + G.order.map((id, k) => (k + 1) + '. ' + pn(G.players[id])).join('&nbsp; '));
+  drawPlayers(); await wait(1200);
 }
 
 // ---------- 이동 ----------
@@ -1168,9 +1198,11 @@ async function turn(p) {
   }
 }
 async function loop(my) {
+  await decideOrder();
+  if (my !== gid) return;
   let k = 0;
   for (;;) {
-    const p = G.players[k % G.players.length];
+    const p = G.players[G.order[k % G.order.length]];
     if (p.alive) {
       await turn(p);
       if (my !== gid) return;
@@ -1423,7 +1455,7 @@ async function roomAgain() {
 }
 
 // ---------- 게임 상태 주고받기 ----------
-const packG = g => JSON.stringify({ players:g.players, owner:g.owner, bld:g.bld, lm:g.lm, pot:g.pot, turn:g.turn, deck:g.deck, mode:g.mode, laps:g.laps, endAt:g.endAt, over:g.over, endFlag:g.endFlag });
+const packG = g => JSON.stringify({ order:g.order, players:g.players, owner:g.owner, bld:g.bld, lm:g.lm, pot:g.pot, turn:g.turn, deck:g.deck, mode:g.mode, laps:g.laps, endAt:g.endAt, over:g.over, endFlag:g.endFlag });
 function unpackG(st) { const o = JSON.parse(st); o.again = false; o.timeLeft = o.mode === 'time' ? Math.max(0, Math.ceil((o.endAt - Date.now()) / 1000)) : 0; return o; }
 function enterGame(r) {
   gid++; hideModal();
@@ -1474,6 +1506,14 @@ async function startDrive() {
   gid++; const my = gid;
   G = unpackG(r.st); NET.applied = r.seq; refresh();
   try {
+    if (!G.order) {   // 첫 차례 전에 순서부터 정해요
+      await decideOrder();
+      if (my !== gid) return;
+      G.turn = G.order[0]; emit({ k:'turn', p:G.turn });
+      await flush({ drv:ownerUid(G.players[G.turn]), epoch:NET.epoch + 1 });
+      if (my !== gid) return;
+      NET.driving = false; NET.lastSeen = NET.seq; NET.applied = NET.seq; updRoll(); pump(); return;
+    }
     const p = G.players[G.turn];
     if (p && p.alive && !G.over) await turn(p);
     if (my !== gid) return;
@@ -1485,7 +1525,8 @@ async function startDrive() {
       if (my !== gid) return;
       NET.driving = false; NET.lastSeen = NET.seq; finish(); return;
     }
-    let k = G.turn; do { k = (k + 1) % G.players.length; } while (!G.players[k].alive);
+    const ord = G.order || G.players.map(q => q.id); let j = ord.indexOf(G.turn), k;
+    do { j = (j + 1) % ord.length; k = ord[j]; } while (!G.players[k].alive);
     await wait(350);
     G.turn = k; emit({ k:'turn', p:k });
     await flush({ drv:ownerUid(G.players[k]), epoch:NET.epoch + 1 });
@@ -1558,6 +1599,8 @@ async function replay(e) {
     case 'turn': G.turn = e.p; drawPlayers(); drawPieces(); updRoll(); break;
     case 'think': if (P(e.p)) say(pn(P(e.p)) + ' 🤔 ' + esc(e.t || '고르는 중') + '…', true); break;
     case 'dice': await showDice(e.v); break;
+    case 'odice': $('diceRow').classList.add('one'); await showDice([e.v, e.v]); break;
+    case 'order': G.order = e.o; $('diceRow').classList.remove('one'); drawPlayers(); break;
     case 'walk': await walk(P(e.p), e.s, true); break;
     case 'sail': await sail(P(e.p), e.d, true); break;
     case 'fly': await fly(P(e.p), e.d, false); break;
