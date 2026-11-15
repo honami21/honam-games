@@ -83,6 +83,7 @@
   .pcard { display:flex; align-items:center; gap:8px; background:var(--cream); border:3px solid var(--ink); border-radius:16px; padding:5px 10px; position:relative; transition:transform .2s, background .2s; min-width:0; }
   .pcard .chip { flex:none; width:38px; height:38px; border-radius:50%; border:3px solid var(--ink); background-size:cover; background-position:center top; }
   .pcard .nm { font-size:17px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .aitag { display:inline-block; font-size:.72em; line-height:1; padding:.18em .45em .12em; border-radius:999px; background:#7b61d9; color:#fff; vertical-align:.15em; letter-spacing:.03em; }
   .pcard .sub { font-size:12.5px; color:var(--ink2); white-space:normal; word-break:keep-all; line-height:1.25; } .pcard .sub span { white-space:nowrap; } img.ic { height:1.35em; width:auto; vertical-align:-.3em; margin:0 .08em; } .big img.ic { height:1.1em; vertical-align:middle; }
   .pcard .mn { margin-left:auto; flex:none; font-size:19px; color:var(--coral-d); text-align:right; white-space:nowrap; }
   .pcard .mn small { display:block; font-size:11.5px; color:var(--ink2); }
@@ -814,7 +815,7 @@ function drawPlayers() {
   $('players').innerHTML = G.players.map(p => {
     const lmN = owned(p).filter(i => G.lm[i]).length, n = owned(p).length - lmN, sub = !p.alive ? '파산' : (p.island ? '🏝️ ' + p.island + '번 쉬기 ' : '') + (p.balloon ? '🎈 ' : '') + (p.ticket ? '<span title="도깨비섬 탈출권">' + I_TICKET + p.ticket + '</span> ' : '') + (p.free ? '<span title="통행료 면제권">' + I_FREE + p.free + '</span> ' : '') + (p.half ? '<span title="반값 인수권">' + I_HALF + p.half + '</span> ' : '') + '<span title="도시">' + I_CITY + n + '곳</span>' + (lmN ? ' <span title="랜드마크">' + I_LM + lmN + '곳</span>' : '') + (G.mode === 'laps' ? ' · ' + p.laps + '바퀴' : '');
     return '<div class="pcard' + (G.turn === p.id && !G.over ? ' turn' : '') + (p.alive ? '' : ' out') + '" id="pc' + p.id + '"><div class="chip" style="' + chipBg(p.ci) + '"></div>' +
-      '<div style="min-width:0"><div class="nm">' + esc(p.name) + (p.ai ? ' 🤖' : '') + (NET.on && p.uid === myId ? ' <small style="color:var(--coral-d)">(나)</small>' : '') + (NET.on && NET.room && !p.ai && (NET.room.away || {})[p.uid] && p.alive ? ' 💤' : '') + '</div><div class="sub">' + sub + '</div></div>' +
+      '<div style="min-width:0"><div class="nm">' + esc(p.name) + (p.ai ? ' <span class="aitag">AI</span>' : '') + (NET.on && p.uid === myId ? ' <small style="color:var(--coral-d)">(나)</small>' : '') + (NET.on && NET.room && !p.ai && (NET.room.away || {})[p.uid] && p.alive ? ' 💤' : '') + '</div><div class="sub">' + sub + '</div></div>' +
       '<div class="mn">' + nf(p.money) + '냥<small>재산 ' + nf(assets(p)) + '</small></div></div>';
   }).join('');
 }
@@ -1363,8 +1364,8 @@ function showLobby(r) {
   $('lbCount').textContent = '(' + seats.length + '/4)';
   $('lbSeats').innerHTML = [0, 1, 2, 3].map(i => {
     const x = seats[i];
-    if (!x) return '<div class="lseat empty"><div class="chip" style="' + chipBg(i) + ';opacity:.35"></div><div class="nm">빈 자리</div>' + (host ? '<button class="add" data-add="' + i + '">🤖 꼬비 AI 넣기</button>' : '') + '</div>';
-    return '<div class="lseat"><div class="chip" style="' + chipBg(i) + '"></div><div class="nm">' + esc(x.name) + (x.ai ? ' 🤖' : '') + (x.uid === r.hostId ? ' 👑' : '') + (x.uid === myId ? ' <small style="color:var(--coral-d)">(나)</small>' : '') + '</div>' +
+    if (!x) return '<div class="lseat empty"><div class="chip" style="' + chipBg(i) + ';opacity:.35"></div><div class="nm">빈 자리</div>' + (host ? '<button class="add" data-add="' + i + '">+ 꼬비 AI 넣기</button>' : '') + '</div>';
+    return '<div class="lseat"><div class="chip" style="' + chipBg(i) + '"></div><div class="nm">' + esc(x.name) + (x.ai ? ' <span class="aitag">AI</span>' : '') + (x.uid === r.hostId ? ' 👑' : '') + (x.uid === myId ? ' <small style="color:var(--coral-d)">(나)</small>' : '') + '</div>' +
       (host && x.ai ? '<button data-del="' + x.uid + '">빼기</button>' : '') + '</div>';
   }).join('');
   const endTxt = r.mode === 'time' ? r.time + '분 동안 하고 재산이 가장 많은 사람 승리' : r.mode === 'laps' ? r.laps + '바퀴 돌면 끝, 재산이 가장 많은 사람 승리' : '한 명만 남을 때까지 (파산)';
