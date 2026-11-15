@@ -220,11 +220,9 @@
   #title { position:fixed; inset:0; z-index:25; display:flex; flex-direction:column; align-items:center; justify-content:space-between; padding:54px 0 14px; overflow:hidden;
     background:radial-gradient(ellipse at 50% 45%, rgba(255,230,160,.22), rgba(20,12,60,0) 60%), linear-gradient(rgba(20,12,60,.05), rgba(20,12,60,.4)); }
   .tl-row { width:100%; overflow:hidden; padding:6px 0 10px; flex:none; }
-  .tl-track { display:flex; gap:clamp(10px,1.6vw,20px); width:max-content; animation:tlScroll 70s linear infinite; }
-  .tl-row.r2 .tl-track { animation-duration:80s; animation-direction:reverse; }
-  @keyframes tlScroll { from{ transform:translateX(0) } to{ transform:translateX(-50%) } }
+  .tl-track { display:flex; gap:clamp(10px,1.6vw,20px); width:max-content; will-change:transform; }
   .tl-card { flex:none; background:var(--cream); border:3px solid var(--ink); border-radius:16px; padding:6px 8px 3px; text-align:center; box-shadow:0 5px 0 rgba(20,10,50,.35); }
-  .tl-card:nth-child(odd) { transform:rotate(-3deg); } .tl-card:nth-child(even) { transform:rotate(2.5deg) translateY(4px); }
+  .tl-card.ta { transform:rotate(-3deg); } .tl-card.tb { transform:rotate(2.5deg) translateY(4px); }
   .tl-card img { display:block; height:clamp(52px,10.5vh,104px); width:auto; margin:0 auto; }
   .tl-card span { display:block; font-size:clamp(12px,1.7vh,16px); color:var(--ink); white-space:nowrap; margin-top:1px; }
   .tl-main { flex:1; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:clamp(4px,1.4vh,14px); width:100%; padding:0 14px; }
@@ -657,9 +655,41 @@ $('howBtn').onclick = $('helpBtn').onclick = () => { showModal(HOW + '<div class
 // ---------- 첫 화면 ----------
 (() => {
   const cities = TILES.filter(t => t.type === 'city'), marks = TILES.filter(t => t.type === 'city' || t.type === 'mark');
-  const card = (src, name) => '<div class="tl-card"><img src="' + src + '" alt="" onerror="this.parentNode.remove()"><span>' + name + '</span></div>';
-  const r1 = cities.slice().reverse().map(t => card('img/lm-' + t.key + '.png', t.name)).join(''), r2 = marks.map(t => card('img/city-' + t.key + '.png', t.short || t.name)).join('');
-  $('tlRow1').innerHTML = r1 + r1; $('tlRow2').innerHTML = r2 + r2;
+  // 화면에 보이는 만큼의 카드만 두고, 밖으로 나간 카드는 반대쪽 끝으로 옮겨요.
+  // (아주 긴 줄을 통째로 움직이면 아이폰 사파리가 일부를 못 그려 빈칸이 생겨요)
+  const card = (src, name, k) => { const d = document.createElement('div'); d.className = 'tl-card ' + (k % 2 ? 'tb' : 'ta'); d.innerHTML = '<img src="' + src + '" alt=""><span>' + name + '</span>'; d.querySelector('img').onerror = () => d.remove(); return d; };
+  const rows = [
+    { el:$('tlRow1'), speed:-55, list:cities.slice().reverse().map((t, k) => card('img/lm-' + t.key + '.png', t.name, k)) },
+    { el:$('tlRow2'), speed:60, list:marks.map((t, k) => card('img/city-' + t.key + '.png', t.short || t.name, k + 1)) }
+  ];
+  const gap = el => parseFloat(getComputedStyle(el).columnGap) || 0;
+  rows.forEach(r => { r.x = 0; r.n = 0; r.el.textContent = ''; });
+  function fill(r) {   // 줄이 화면보다 넉넉히 길어질 때까지 다음 카드를 붙여요
+    const W = r.el.parentNode.clientWidth;
+    let guard = 0;
+    while (r.list.length && r.el.scrollWidth < W + 360 && guard++ < 60) {
+      const c = r.list.filter(x => !x.isConnected)[0]; if (!c) break;
+      r.el.appendChild(c);
+    }
+  }
+  function step(r, dx) {
+    r.x += dx; const g = gap(r.el);
+    if (r.speed < 0) { let f = r.el.firstElementChild; while (f && r.x + f.offsetWidth + g < 0) { r.x += f.offsetWidth + g; r.el.appendChild(f); f = r.el.firstElementChild; } }
+    else { const W = r.el.parentNode.clientWidth; let l = r.el.lastElementChild; while (l && r.x + r.el.scrollWidth - l.offsetWidth - g > W) { r.el.prepend(l); r.x -= l.offsetWidth + g; l = r.el.lastElementChild; } }
+    // 카드 수가 화면보다 적으면 앞뒤 카드를 바꿔 끼워 끊김 없이 이어요
+    if (r.speed > 0 && r.x > 0) { const s = r.list.find(x => !x.isConnected); if (s) { r.el.prepend(s); r.x -= s.offsetWidth + g; } }
+    r.el.style.transform = 'translate3d(' + r.x.toFixed(1) + 'px,0,0)';
+  }
+  let last = 0;
+  function tick(t) {
+    if (!$('title').classList.contains('hidden')) {
+      const dt = last ? Math.min(.1, (t - last) / 1000) : 0;
+      rows.forEach(r => { fill(r); step(r, r.speed * dt); });
+      last = t;
+    } else last = 0;
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
 })();
 $('tlGo').onclick = () => { $('title').classList.add('hidden'); $('start').classList.remove('hidden'); KBGM.calm(); };
 
@@ -748,8 +778,9 @@ function drawTiles() {
     const d = tileEls[i], o = G.owner[i], city = t.type === 'city', lmk = city && G.lm[i];
     d.classList.toggle('own', o != null); d.classList.toggle('lm', !!lmk);
     if (o != null) { const c = COLORS[G.players[o].ci]; d.style.setProperty('--oc', c.c); d.style.setProperty('--ot', c.t); d.style.setProperty('--otx', c.key === 'yellow' ? '#2c2950' : '#fff'); }
-    d.innerHTML = (city && !lmk ? '<div class="bstrip">' + [0, 1, 2].map(k => '<span class="' + (G.bld[i] >> k & 1 ? 'on' : '') + '">' + (G.bld[i] >> k & 1 ? bIcon(k) : '') + '</span>').join('') + '</div>' : '') +
+    const h = (city && !lmk ? '<div class="bstrip">' + [0, 1, 2].map(k => '<span class="' + (G.bld[i] >> k & 1 ? 'on' : '') + '">' + (G.bld[i] >> k & 1 ? bIcon(k) : '') + '</span>').join('') + '</div>' : '') +
       '<div class="col"><div class="pic">' + (lmk ? lmPic(t) : tilePic(t)) + '</div>' + (t.type === 'fund' ? '<div class="nm l4">🪙 ' + nf(G.pot) + '</div>' : nameHtml(t)) + '</div>' + (lmk ? '<i class="shine"></i>' : '');
+    if (d._h !== h) { d._h = h; d.innerHTML = h; }   // 바뀐 칸만 다시 그려요 (그림을 새로 만들면 화면이 반짝여요)
   });
 }
 let boardSize = 600, pieceEls = [];
