@@ -376,7 +376,7 @@
           <div class="segrow">
             <div class="seg" id="endSeg"><button data-v="bank" class="on">파산할 때까지</button><button data-v="time">시간 정하기</button><button data-v="laps">바퀴 수 정하기</button></div>
             <div class="seg hidden" id="timeSeg"><button data-v="10">10분</button><button data-v="20" class="on">20분</button><button data-v="30">30분</button><button data-v="40">40분</button></div>
-            <div class="seg hidden" id="lapSeg"><button data-v="3">3바퀴</button><button data-v="5" class="on">5바퀴</button><button data-v="7">7바퀴</button><button data-v="10">10바퀴</button></div>
+            <div class="seg hidden" id="lapSeg"><button data-v="10" class="on">10바퀴</button><button data-v="20">20바퀴</button><button data-v="30">30바퀴</button></div>
           </div>
           <div class="hint" id="endHint"></div>
         </div>
@@ -427,7 +427,7 @@
     <div id="players"></div>
     <div id="info"></div>
     <div id="log"></div>
-    <div id="sideBtns"><button id="stkBtn" type="button" class="hidden">😊 응원</button><button id="speedBtn" type="button">⏩ 빠르게</button><button id="helpBtn" type="button">❓ 놀이 방법</button><button id="quitBtn" type="button">🚪 그만하기</button></div>
+    <div id="sideBtns"><button id="stkBtn" type="button" class="hidden">😊 응원</button><button id="speedBtn" type="button">⏩ 빠르게</button><button id="helpBtn" type="button">❓ 놀이 방법</button><button id="bankBtn" type="button">파산하기</button><button id="quitBtn" type="button">🚪 그만하기</button></div>
   </div>
 </div>
 <div class="modal hidden" id="modal"><div class="card" id="modalCard"></div></div>
@@ -529,7 +529,7 @@ const CARDS = [
   { t:'꼬비 저금통 당첨! 저금통 칸으로 가서 모인 돈을 받아요.', emo:'🐷', f:'goto', v:FUND },
   { t:'통행료 면제권! 가지고 있다가 남의 도시에서 통행료를 한 번 안 내요.', emo:'🎟️', f:'free' },
   { t:'내 도시가 보고 싶어요. 가장 비싼 내 도시로 가요. (없으면 꼬비 마을로)', emo:'🏠', f:'mybest' },
-  { t:'도깨비 방망이 뚝딱! 내 도시 한 곳에 건물 하나를 공짜로 지어요.', emo:'🪄', f:'freebuild' },
+  { t:'도깨비 방망이 뚝딱! 내 도시 한 곳에 건물 하나를 공짜로 지어요. 건물이 다 있으면 랜드마크를 세워요.', emo:'🪄', f:'freebuild' },
   { t:'반값 인수권! 가지고 있다가 남의 도시를 인수할 때 반값만 내요.', emo:'🤝', f:'half' },
   { t:'여행 복권 당첨! 300냥을 받아요.', emo:'🎉', f:'gain', v:300 },
   { t:'여행 영상이 조회수 대박! 250냥을 받아요.', emo:'🎬', f:'gain', v:250 },
@@ -607,7 +607,7 @@ KBGM.calm();
 // ---------- 시작 화면 ----------
 let slots = [{ kind:'human', name:'' }, { kind:'ai', name:'' }, { kind:'off', name:'' }, { kind:'off', name:'' }];
 try { const s = JSON.parse(store('worldtour-slots')); if (Array.isArray(s) && s.length === 4) slots = s; } catch (e) {}
-let endMode = store('worldtour-end') || 'bank', endTime = +(store('worldtour-time') || 20), endLaps = +(store('worldtour-laps') || 5);
+let endMode = store('worldtour-end') || 'bank', endTime = +(store('worldtour-time') || 20), endLaps = [10, 20, 30].includes(+store('worldtour-laps')) ? +store('worldtour-laps') : 10;
 const defName = (i, kind) => kind === 'ai' ? COLORS[i].name + ' 꼬비' : (i + 1) + '번 여행자';
 function drawSlots() {
   $('slots').innerHTML = slots.map((s, i) =>
@@ -650,7 +650,8 @@ const HOW = '<h2>놀이 방법</h2><ul class="how">' + [
   ['🐷', '꼬비 저금통', '기부금과 벌금이 모여요 · 도착하면 몽땅 받아요'],
   ['🎈', '열기구', '다음 차례에 원하는 칸으로 날아가요 · 앞으로만 날아가서 꼬비 마을을 지나면 용돈도 받아요'],
   ['🎁', '도깨비 주머니', '행운 카드를 한 장 뽑아요 · 카드로 이동할 때는 앞으로 가서 꼬비 마을을 지나면 용돈도 받아요 (뒤로 가기 카드는 빼고)'],
-  ['😢', '돈이 모자라면', '도시를 반값에 팔아요 · 그래도 못 내면 파산'],
+  ['😢', '돈이 모자라면', '도시를 반값에 팔아요 · 그래도 못 내면 파산 · 내 차례에 <b>파산하기</b>를 눌러 스스로 마칠 수도 있어요'],
+  ['⏱️', '파산할 때까지', '<b>20분</b>이 지나면 통행료, 상금, 벌금이 <b>2배</b> · <b>30분</b>이 지나면 <b>3배</b>'],
   ['👆', '칸 정보', '보드의 칸을 누르면 값과 통행료를 볼 수 있어요']
 ].map(([e, t, d]) => '<li><span class="e">' + e + '</span><div><b class="t">' + t + '</b><span>' + d.replace(/ · /g, '&nbsp;· ') + '</span></div></li>').join('') + '</ul>';
 $('howBtn').onclick = $('helpBtn').onclick = () => { showModal(HOW + '<div class="btn-row"><button class="game-btn btn-primary" id="mOk">알겠어요</button></div>'); $('mOk').onclick = hideModal; };
@@ -703,7 +704,9 @@ const sp = ms => fast && !NET.on ? ms * .45 : ms;   // 방 만들기에서는 �
 function wait(ms) { const my = gid; return new Promise((res, rej) => setTimeout(() => my === gid ? res() : rej(ABORT), sp(ms))); }
 const alive = () => G.players.filter(p => p.alive);
 const owned = p => TILES.map((t, i) => i).filter(i => G.owner[i] === p.id);
-function toll(i, lv) {
+const mult = () => G && G.mode === 'bank' && G.startAt ? (Date.now() - G.startAt >= 30 * 60000 ? 3 : Date.now() - G.startAt >= 20 * 60000 ? 2 : 1) : 1;   // 파산 모드: 20분 2배, 30분 3배
+function toll(i, lv) { return baseToll(i) * mult(); }
+function baseToll(i) {
   const t = TILES[i], o = G.owner[i];
   if (t.type === 'mark') { const n = o == null ? 1 : TILES.filter((x, j) => x.type === 'mark' && G.owner[j] === o).length; return MARK_TOLL[n]; }
   return tollOf(i, G.bld[i], G.lm[i]);
@@ -718,7 +721,7 @@ const pn = p => '<i style="color:' + COLORS[p.ci].c + '">' + esc(p.name) + '</i>
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
 
 const newPlayer = (id, ci, ai, name, uid) => ({ id, ci, ai, name, uid: uid || '', money:START_MONEY, pos:0, island:0, ticket:0, free:0, half:0, balloon:false, alive:true, laps:0 });
-const makeG = (ps, mode, laps, mins) => ({ players:ps, owner:TILES.map(() => null), bld:TILES.map(() => 0), lm:TILES.map(() => false), pot:0, turn:0, deck:[], mode, laps, timeLeft:mins * 60, endAt:0, over:false, endFlag:false });
+const makeG = (ps, mode, laps, mins) => ({ startAt:Date.now(), multShown:1, players:ps, owner:TILES.map(() => null), bld:TILES.map(() => 0), lm:TILES.map(() => false), pot:0, turn:0, deck:[], mode, laps, timeLeft:mins * 60, endAt:0, over:false, endFlag:false });
 function newGame() {
   if (NET.on) return;
   const ps = [];
@@ -750,6 +753,7 @@ function updSpeed() { $('speedBtn').classList.toggle('on', fast); }
 $('speedBtn').onclick = () => { fast = !fast; store('worldtour-fast', fast ? 'on' : 'off'); updSpeed(); };
 updSpeed();
 setInterval(() => {
+  if (G && !G.over && G.mode === 'bank' && !document.hidden) { if (mult() !== (window.__lastM || 1)) { window.__lastM = mult(); drawInfo(); } }
   if (!G || G.over || G.mode !== 'time') return;
   if (NET.on) { const t = Math.max(0, Math.ceil((G.endAt - Date.now()) / 1000)); if (t === 0 && G.timeLeft > 0) toast('시간이 다 됐어요! 이번 차례까지만 해요.'); G.timeLeft = t; drawInfo(); return; }
   if (document.hidden) return;
@@ -824,10 +828,18 @@ function drawInfo() {
   if (!G) return;
   const m = Math.floor(G.timeLeft / 60), s = G.timeLeft % 60;
   $('info').innerHTML = '<span>🐷 저금통 <b>' + nf(G.pot) + '냥</b></span>' +
-    (NET.on && NET.room && NET.room.watch && Object.keys(NET.room.watch).length ? '<span>👀 구경 <b>' + Object.keys(NET.room.watch).length + '명</b></span>' : '') + (G.mode === 'time' ? '<span>⏰ 남은 시간 <b>' + m + ':' + String(s).padStart(2, '0') + '</b></span>' : G.mode === 'laps' ? '<span>🏁 <b>' + G.laps + '바퀴</b> 돌면 끝</span>' : '<span>🏁 파산할 때까지</span>');
+    (NET.on && NET.room && NET.room.watch && Object.keys(NET.room.watch).length ? '<span>👀 구경 <b>' + Object.keys(NET.room.watch).length + '명</b></span>' : '') + (G.mode === 'time' ? '<span>⏰ 남은 시간 <b>' + m + ':' + String(s).padStart(2, '0') + '</b></span>' : G.mode === 'laps' ? '<span>🏁 <b>' + G.laps + '바퀴</b> 돌면 끝</span>' : '<span>🏁 파산할 때까지' + (mult() > 1 ? ' · <b style="color:var(--coral-d)">' + mult() + '배</b>' : '') + '</span>');
 }
 function refresh() { drawTiles(); drawPieces(); drawPlayers(); drawInfo(); mood(); }
-function mood() { if (!G || G.over) return; KBGM.track(G.lm.some(x => x) || alive().length < G.players.length || G.endFlag || (G.mode === 'time' && G.timeLeft <= 120) ? 'tense' : 'play', false); }
+let moodG = null, moodKey = 0, tenseUntil = 0;
+function mood() {   // 극적인 음악은 랜드마크, 파산, 2배 같은 순간부터 1분만
+  if (!G || G.over) return;
+  const key = G.lm.filter(x => x).length * 100 + (G.players.length - alive().length) * 10 + (G.endFlag ? 5 : 0) + mult();
+  if (moodG !== G) { moodG = G; moodKey = key; tenseUntil = 0; }
+  else if (key > moodKey) { moodKey = key; tenseUntil = Date.now() + 60000; }
+  KBGM.track(Date.now() < tenseUntil || (G.mode === 'time' && G.timeLeft <= 120) ? 'tense' : 'play', false);
+}
+setInterval(() => { if (G && !G.over && tenseUntil && Date.now() >= tenseUntil) { tenseUntil = 0; mood(); } }, 2000);
 function say(html, quiet) { emit({ k:'say', h:html, q:quiet ? 1 : 0 }); $('status').innerHTML = '<span>' + html + '</span>'; if (!quiet) { const d = document.createElement('div'); d.innerHTML = html; $('log').prepend(d); while ($('log').children.length > 40) $('log').lastChild.remove(); } }
 let toastT = 0;
 function toast(t) { emit({ k:'toast', t }); $('toast').textContent = t; $('toast').classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => $('toast').classList.remove('show'), 2200); }
@@ -906,8 +918,28 @@ function waitRoll(p, label) {
   const my = gid, b = $('rollBtn');
   b.textContent = label || '주사위 굴리기';
   if (bot(p)) { b.disabled = true; b.classList.remove('pulse'); return wait(700); }
-  return new Promise((res, rej) => { b.disabled = false; b.classList.add('pulse'); b.onclick = () => { b.disabled = true; b.classList.remove('pulse'); b.onclick = null; my === gid ? res() : rej(ABORT); }; });
+  return new Promise((res, rej) => {
+    b.disabled = false; b.classList.add('pulse');
+    const done = v => { b.disabled = true; b.classList.remove('pulse'); b.onclick = null; rollWait = null; my === gid ? res(v) : rej(ABORT); };
+    b.onclick = () => done();
+    if (!label || label === '탈출 주사위') rollWait = { p, done };   // 이때 파산하기를 누를 수 있어요
+  });
 }
+let rollWait = null;
+async function resign(p) {   // 스스로 파산: 가진 도시와 건물은 주인이 없어져요
+  beep('bad');
+  owned(p).forEach(i => { G.owner[i] = null; G.bld[i] = 0; G.lm[i] = false; });
+  p.money = 0; p.alive = false; p.balloon = false; p.island = 0;
+  say(pn(p) + ' 파산하고 여행을 마쳤어요.'); refresh();
+  await notice({ ai:false, uid:myId }, '<div class="big">' + (IMG['ggobi-sad'] ? '<img src="' + IMG['ggobi-sad'] + '">' : '') + '</div><h2>' + esc(p.name) + ' 파산!</h2><p>가진 도시와 건물은 이제 주인이 없어요.</p>', 2200);
+}
+$('bankBtn').onclick = async () => {
+  if (!G || G.over) return;
+  const w = rollWait;
+  if (!w || bot(w.p)) { toast('내 차례에 주사위를 굴리기 전에 누를 수 있어요'); return; }
+  showModal('<h2>' + esc(w.p.name) + ', 파산할까요?</h2><p>여행을 마치고, 가진 돈과 도시, 건물은 모두 주인이 없어져요.</p><div class="btn-row"><button class="game-btn btn-info" id="mNo">계속할래요</button><button class="game-btn btn-primary" id="mYes">파산하기</button></div>');
+  $('mNo').onclick = hideModal; $('mYes').onclick = () => { hideModal(); if (rollWait === w) w.done('quit'); };
+};
 
 // ---------- 순서 정하기: 주사위 하나씩, 큰 숫자부터 ----------
 async function decideOrder() {
@@ -982,7 +1014,11 @@ async function pay(p, amount, to, why) { // to: 다른 사람, 'pot', null(은�
     else while (p.money < amount) {
       const list = owned(p);
       const i = await ask('<div class="big">' + (IMG['ggobi-sad'] ? '<img src="' + IMG['ggobi-sad'] + '">' : '😢') + '</div><h2>돈이 모자라요</h2><p>' + why + ' <b>' + nf(amount) + '냥</b>을 내야 해요.<br>지금 ' + nf(p.money) + '냥, <b>' + nf(amount - p.money) + '냥</b>이 더 필요해요. 팔 곳을 골라요.</p>',
-        list.map(i => ({ label:'🚩' + bIcons(i) + ' ' + TILES[i].name, right:'+' + nf(sellValue(i)) + '냥', v:i })));
+        list.map(i => ({ label:'🚩' + bIcons(i) + ' ' + TILES[i].name, right:'+' + nf(sellValue(i)) + '냥', v:i })).concat([{ label:'파산하고 여행 마치기', cls:'btn-secondary', v:'quit' }]));
+      if (i === 'quit') {
+        if (await ask('<h2>정말 파산할까요?</h2><p>가진 도시를 모두 팔아 ' + nf(amount) + '냥을 내고, 여행을 마쳐요.<br>남은 돈과 도시는 모두 사라져요.</p>', [{ label:'계속할래요', cls:'btn-info', v:false }, { label:'파산하기', cls:'btn-primary', v:true }])) { await bankrupt(p, to, why, amount); return false; }
+        continue;
+      }
       sell(p, i);
     }
   }
@@ -990,9 +1026,10 @@ async function pay(p, amount, to, why) { // to: 다른 사람, 'pot', null(은�
   if (to === 'pot') G.pot += amount; else if (to) money(to, amount);
   refresh(); return true;
 }
-async function bankrupt(p, to, why) {
+async function bankrupt(p, to, why, cap) {   // cap: 스스로 파산하면 낼 돈만 내요
   beep('bad');
   let total = p.money; owned(p).forEach(i => { total += sellValue(i); G.owner[i] = null; G.bld[i] = 0; G.lm[i] = false; });
+  if (cap != null) total = Math.min(total, cap);
   p.money = 0; p.alive = false; p.balloon = false; p.island = 0;
   if (to === 'pot') G.pot += total; else if (to) money(to, total);
   say(pn(p) + ' 파산했어요!'); refresh();
@@ -1076,7 +1113,7 @@ async function land(p) {
       }
     }
   } else if (t.type === 'card') await drawCard(p);
-  else if (t.type === 'give') { say(pn(p) + ' 기부 천사! 저금통에 <b>' + GIVE + '냥</b>을 넣어요.'); await wait(700); await pay(p, GIVE, 'pot', '기부금'); await wait(400); }
+  else if (t.type === 'give') { const gv = GIVE * mult(); say(pn(p) + ' 기부 천사! 저금통에 <b>' + gv + '냥</b>을 넣어요.'); await wait(700); await pay(p, gv, 'pot', '기부금'); await wait(400); }
   else if (t.type === 'fund') { if (G.pot > 0) { const v = G.pot; G.pot = 0; money(p, v); beep('coin'); say(pn(p) + ' 꼬비 저금통에서 <b>' + nf(v) + '냥</b>을 받았어요!'); refresh(); } else say(pn(p) + ' 저금통이 비어 있어요.'); await wait(1000); }
   else if (t.type === 'island') { p.island = 3; beep('bad'); say(pn(p) + ' 도깨비섬에 도착! 3번 쉬어요.'); refresh(); await wait(1000); }
   else if (t.type === 'balloon') { p.balloon = true; say(pn(p) + ' 열기구 탑승! 다음 차례에 원하는 칸으로 날아가요.'); refresh(); await wait(1000); }
@@ -1092,19 +1129,19 @@ async function land(p) {
 }
 async function drawCard(p) {
   if (!G.deck.length) { G.deck = CARDS.map((c, k) => k); for (let k = G.deck.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [G.deck[k], G.deck[j]] = [G.deck[j], G.deck[k]]; } }
-  const ck = window.__card != null ? window.__card : G.deck.pop(), c = CARDS[ck], ci = IMG['card-' + String(ck + 1).padStart(2, '0')];
+  const ck = window.__card != null ? window.__card : G.deck.pop(), M = mult(), mc = ['gain', 'lose', 'each', 'rich', 'fest'].includes(CARDS[ck].f), c = mc && M > 1 ? Object.assign({}, CARDS[ck], { v:CARDS[ck].v * M }) : CARDS[ck], ci = IMG['card-' + String(ck + 1).padStart(2, '0')];
   beep('card'); say(pn(p) + ' 도깨비 주머니를 열어요…', true);
   emit({ k:'cardback' });
   if (IMG['card-back']) { showModal('<h2>🎁 도깨비 주머니</h2><img class="cardback" src="' + IMG['card-back'] + '" alt="">'); try { await wait(750); } finally { hideModal(); } }
   say(pn(p) + ' 도깨비 주머니: ' + c.t);
-  await notice(p, '<h2>🎁 도깨비 주머니</h2><div class="cardface">' + (ci ? '<img class="cardimg" src="' + ci + '" alt="">' : '<div class="big">' + c.emo + '</div>') + '<div>' + c.t + '</div></div>', 2600);
+  await notice(p, '<h2>🎁 도깨비 주머니</h2><div class="cardface">' + (ci ? '<img class="cardimg" src="' + ci + '" alt="">' : '<div class="big">' + c.emo + '</div>') + '<div>' + c.t + ((mc || c.f === 'repair') && M > 1 ? ' <b style="color:var(--coral-d)">(지금은 ' + M + '배!)</b>' : '') + '</div></div>', 2600);
   if (c.f === 'gain') { money(p, c.v); beep('coin'); }
   else if (c.f === 'lose') await pay(p, c.v, 'pot', '카드 값');
   else if (c.f === 'goto') { await sail(p, c.v); await land(p); }   // 카드 이동은 앞으로 (꼬비 마을을 지나면 용돈)
   else if (c.f === 'island') { await sail(p, ISLAND); p.island = 3; refresh(); }
   else if (c.f === 'ticket') { p.ticket++; refresh(); }
   else if (c.f === 'each') { for (const q of alive()) { if (q === p || !p.alive) continue; if (c.v > 0) await pay(q, c.v, p, '생일 선물'); else await pay(p, -c.v, q, '간식값'); } }
-  else if (c.f === 'repair') { const cost = owned(p).reduce((s, i) => s + (TILES[i].type === 'city' ? bList(i).reduce((x, k) => x + B[k].fix, 0) + (G.lm[i] ? 150 : 0) : 0), 0); if (cost) await pay(p, cost, 'pot', '수리비'); else { say(pn(p) + ' 고칠 건물이 없어요.'); } }
+  else if (c.f === 'repair') { const cost = owned(p).reduce((s, i) => s + (TILES[i].type === 'city' ? bList(i).reduce((x, k) => x + B[k].fix, 0) + (G.lm[i] ? 150 : 0) : 0), 0) * M; if (cost) await pay(p, cost, 'pot', '수리비'); else { say(pn(p) + ' 고칠 건물이 없어요.'); } }
   else if (c.f === 'step') { await walk(p, c.v); await land(p); }
   else if (c.f === 'free') { p.free++; refresh(); }
   else if (c.f === 'half') { p.half++; refresh(); }
@@ -1113,14 +1150,15 @@ async function drawCard(p) {
   else if (c.f === 'rich') { const r = alive().filter(q => q !== p).sort((a, b) => b.money - a.money)[0]; if (r) { say(pn(r) + ' ' + pn(p) + '에게 ' + c.v + '냥을 줘요.'); await pay(r, c.v, p, '안내비'); } }
   else if (c.f === 'mybest') { const list = owned(p).filter(i => TILES[i].type === 'city').sort((a, b) => TILES[b].price - TILES[a].price); const d = list.length ? list[0] : 0; if (d !== p.pos) await sail(p, d); await land(p); }
   else if (c.f === 'freebuild') {
-    const list = owned(p).filter(i => TILES[i].type === 'city' && G.bld[i] !== 7 && !G.lm[i]);
-    if (!list.length) say(pn(p) + ' 건물을 지을 수 있는 내 도시가 없어요.');
+    const list = owned(p).filter(i => TILES[i].type === 'city' && !G.lm[i]);   // 건물이 다 있으면 랜드마크를 세워요
+    if (!list.length) say(pn(p) + ' 건물이나 랜드마크를 지을 수 있는 내 도시가 없어요.');
     else {
       let i;
-      if (bot(p)) i = list.sort((a, b) => TILES[b].price - TILES[a].price)[0];
+      if (bot(p)) i = list.sort((a, b) => (G.bld[b] === 7) - (G.bld[a] === 7) || TILES[b].price - TILES[a].price)[0];
       else if (list.length === 1) i = list[0];
-      else { say(pn(p) + ' 🪄 공짜로 건물을 지을 내 도시를 눌러요!', true); i = await pickTile(j => list.includes(j)); }
-      const k = [0, 1, 2].find(x => !(G.bld[i] >> x & 1)); G.bld[i] |= 1 << k; beep('buy'); say(pn(p) + ' ' + TILES[i].name + '에 <b>' + B[k].n + '</b>을(를) 공짜로 지었어요!'); refresh(); landFx(i);
+      else { say(pn(p) + ' 🪄 공짜로 지을 내 도시를 눌러요! (건물이 다 있으면 랜드마크)', true); i = await pickTile(j => list.includes(j)); }
+      if (G.bld[i] === 7) { G.lm[i] = true; beep('win'); say(pn(p) + ' ' + TILES[i].name + '에 <b>랜드마크</b>를 공짜로 세웠어요!'); refresh(); landFx(i); }
+      else { const k = [0, 1, 2].find(x => !(G.bld[i] >> x & 1)); G.bld[i] |= 1 << k; beep('buy'); say(pn(p) + ' ' + TILES[i].name + '에 <b>' + B[k].n + '</b>을(를) 공짜로 지었어요!'); refresh(); landFx(i); }
     }
   }
   await wait(400);
@@ -1160,6 +1198,11 @@ async function balloonTurn(p) {
 // ---------- 차례 ----------
 async function turn(p) {
   G.turn = p.id; G.again = false; emit({ k:'turn', p:p.id }); refresh();
+  const M = mult();
+  if (M > (G.multShown || 1)) {   // 파산 모드가 길어지면 판을 키워요
+    G.multShown = M; beep('win'); say('<b>' + (M === 2 ? 20 : 30) + '분</b>이 지났어요! 이제 통행료, 상금, 벌금이 모두 <b>' + M + '배</b>!'); refresh();
+    await notice(p, '<div class="big">' + (IMG['ggobi-happy'] ? '<img src="' + IMG['ggobi-happy'] + '">' : '') + '</div><h2>판이 커져요! ' + M + '배!</h2><p>여행을 시작한 지 <b>' + (M === 2 ? 20 : 30) + '분</b>이 지났어요.<br>이제부터 <b>통행료, 상금, 벌금</b>이 모두 <b>' + M + '배</b>예요.' + (M === 2 ? '<br><small style="color:var(--ink2)">30분이 지나면 3배가 돼요.</small>' : '') + '</p>', 3200);
+  }
   if (p.balloon) { await balloonTurn(p); return; }
   let doubles = 0;
   for (;;) {
@@ -1174,7 +1217,7 @@ async function turn(p) {
       else if (act === 'pay') { p.island = 0; money(p, -ISLAND_FEE); G.pot += ISLAND_FEE; beep('pay'); say(pn(p) + ' ' + ISLAND_FEE + '냥을 내고 도깨비섬을 나왔어요!'); refresh(); }
       else {
         say(pn(p) + ' 차례! 같은 숫자가 나오면 탈출해요.', true);
-        await waitRoll(p, '탈출 주사위');
+        if (await waitRoll(p, '탈출 주사위') === 'quit') { await resign(p); return; }
         const [a, b] = await rollDice();
         if (a === b) { p.island = 0; beep('double'); say(pn(p) + ' <b>' + a + ', ' + b + '</b> 같은 숫자! 도깨비섬 탈출!'); refresh(); await walk(p, a + b); await land(p); }
         else { p.island--; say(pn(p) + ' ' + a + ', ' + b + '. ' + (p.island ? '탈출 실패! ' + p.island + '번 더 쉬어요.' : '다음 차례에는 나갈 수 있어요.')); refresh(); await wait(900); }
@@ -1182,7 +1225,7 @@ async function turn(p) {
       }
     }
     say(pn(p) + ' 차례! 주사위를 굴려요.', true);
-    await waitRoll(p);
+    if (await waitRoll(p) === 'quit') { await resign(p); return; }
     const [a, b] = await rollDice();
     if (a === b) {
       doubles++;
@@ -1403,7 +1446,7 @@ function showLobby(r) {
   const endTxt = r.mode === 'time' ? r.time + '분 동안 하고 재산이 가장 많은 사람 승리' : r.mode === 'laps' ? r.laps + '바퀴 돌면 끝, 재산이 가장 많은 사람 승리' : '한 명만 남을 때까지 (파산)';
   const seg = (k, list, cur) => '<div class="seg" data-k="' + k + '">' + list.map(([v, l]) => '<button data-v="' + v + '" class="' + (String(cur) === String(v) ? 'on' : '') + '">' + l + '</button>').join('') + '</div>';
   $('lbEnd').innerHTML = host ? '<div class="segrow" style="margin-top:4px">' + seg('mode', [['bank', '파산할 때까지'], ['time', '시간 정하기'], ['laps', '바퀴 수 정하기']], r.mode) +
-    (r.mode === 'time' ? seg('time', [[10, '10분'], [20, '20분'], [30, '30분'], [40, '40분']], r.time) : r.mode === 'laps' ? seg('laps', [[3, '3바퀴'], [5, '5바퀴'], [7, '7바퀴'], [10, '10바퀴']], r.laps) : '') + '</div><div style="margin-top:6px">' + endTxt + '</div>'
+    (r.mode === 'time' ? seg('time', [[10, '10분'], [20, '20분'], [30, '30분'], [40, '40분']], r.time) : r.mode === 'laps' ? seg('laps', [[10, '10바퀴'], [20, '20바퀴'], [30, '30바퀴']], r.laps) : '') + '</div><div style="margin-top:6px">' + endTxt + '</div>'
     : '끝내기: ' + endTxt;
   $('lbWatch').textContent = nw ? '👀 구경하는 친구 ' + nw + '명' : '';
   $('lbStart').classList.toggle('hidden', !host); $('lbStart').disabled = seats.length < 2;
@@ -1455,7 +1498,7 @@ async function roomAgain() {
 }
 
 // ---------- 게임 상태 주고받기 ----------
-const packG = g => JSON.stringify({ order:g.order, players:g.players, owner:g.owner, bld:g.bld, lm:g.lm, pot:g.pot, turn:g.turn, deck:g.deck, mode:g.mode, laps:g.laps, endAt:g.endAt, over:g.over, endFlag:g.endFlag });
+const packG = g => JSON.stringify({ startAt:g.startAt, multShown:g.multShown, order:g.order, players:g.players, owner:g.owner, bld:g.bld, lm:g.lm, pot:g.pot, turn:g.turn, deck:g.deck, mode:g.mode, laps:g.laps, endAt:g.endAt, over:g.over, endFlag:g.endFlag });
 function unpackG(st) { const o = JSON.parse(st); o.again = false; o.timeLeft = o.mode === 'time' ? Math.max(0, Math.ceil((o.endAt - Date.now()) / 1000)) : 0; return o; }
 function enterGame(r) {
   gid++; hideModal();
