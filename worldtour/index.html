@@ -471,35 +471,33 @@ function think(t) { if (NET.driving && G) emit({ k:'think', p:G.turn, t }); }
 
 // ---------- 보드 자료 ----------
 const C = (name, price, g, key, short) => ({ type:'city', name, price, g, key, short: short || name });
-const TILES = [
+const CARD = { type:'card', name:'도깨비 주머니', short:'주머니', emo:'🎁' };
+const TILES = [   // 순서: 사용자가 정한 판 (2026-11-15)
   { type:'start', name:'꼬비 마을', key:'start', emo:'🏡' },
-  C('타이베이', 100, 0, 'taipei'), C('마닐라', 120, 0, 'manila'),
-  { type:'card', name:'도깨비 주머니', short:'주머니', emo:'🎁' },
-  C('방콕', 140, 1, 'bangkok'), C('싱가포르', 160, 1, 'singapore'),
+  C('베른', 100, 0, 'bern'), Object.assign({}, CARD),
+  C('오타와', 120, 0, 'ottawa'), C('아테네', 140, 0, 'athens'),
   { type:'mark', name:'제주도', price:300, key:'jeju', emo:'🌋' },
-  C('뉴델리', 180, 1, 'newdelhi'), C('베이징', 200, 2, 'beijing'), C('도쿄', 220, 2, 'tokyo'),
+  C('리스본', 160, 1, 'lisbon'), Object.assign({}, CARD),
+  C('뉴델리', 180, 1, 'newdelhi'), C('카이로', 200, 1, 'cairo'),
   { type:'island', name:'도깨비섬', key:'island', emo:'🏝️' },
-  C('카이로', 240, 3, 'cairo'),
+  C('코펜하겐', 220, 2, 'copenhagen'), Object.assign({}, CARD),
+  C('스톡홀름', 240, 2, 'stockholm'), C('로마', 260, 2, 'rome'),
   { type:'mark', name:'사하라 사막', short:'사하라', price:300, key:'sahara', emo:'🐪' },
-  C('이스탄불', 260, 3, 'istanbul'),
-  { type:'card', name:'도깨비 주머니', short:'주머니', emo:'🎁' },
-  C('아테네', 280, 3, 'athens'), C('코펜하겐', 300, 4, 'copenhagen'), C('스톡홀름', 320, 4, 'stockholm'),
-  { type:'give', name:'기부 천사', short:'기부', emo:'💝' },
-  C('베를린', 340, 4, 'berlin'),
+  C('방콕', 280, 3, 'bangkok'), Object.assign({}, CARD),
+  C('마닐라', 300, 3, 'manila'), C('상파울루', 320, 3, 'saopaulo'),
   { type:'fund', name:'꼬비 저금통', key:'fund', emo:'🐷' },
-  C('부에노스아이레스', 360, 5, 'buenosaires', '부에노스'), C('상파울루', 380, 5, 'saopaulo'),
-  { type:'card', name:'도깨비 주머니', short:'주머니', emo:'🎁' },
-  C('멕시코시티', 400, 5, 'mexicocity', '멕시코'), C('오타와', 420, 6, 'ottawa'),
+  C('마드리드', 340, 4, 'madrid'), Object.assign({}, CARD),
+  C('베를린', 360, 4, 'berlin'), C('시드니', 380, 4, 'sydney'),
   { type:'mark', name:'하와이', price:300, key:'hawaii', emo:'🌺' },
-  C('시드니', 440, 6, 'sydney'), C('리스본', 460, 7, 'lisbon'), C('마드리드', 480, 7, 'madrid'),
+  C('이스탄불', 400, 5, 'istanbul'), C('타이베이', 420, 5, 'taipei'), Object.assign({}, CARD),
+  C('싱가포르', 440, 5, 'singapore'),
   { type:'balloon', name:'열기구 여행', key:'balloon', emo:'🎈' },
-  C('베른', 500, 8, 'bern'), C('로마', 520, 8, 'rome'),
-  { type:'card', name:'도깨비 주머니', short:'주머니', emo:'🎁' },
-  C('파리', 560, 9, 'paris'), C('런던', 580, 9, 'london'),
+  C('베이징', 480, 6, 'beijing'), Object.assign({}, CARD),
+  C('파리', 520, 6, 'paris'), C('런던', 560, 6, 'london'),
   { type:'mark', name:'남극 기지', short:'남극', price:300, key:'antarctica', emo:'🐧' },
-  C('뉴욕', 640, 10, 'newyork'),
+  C('도쿄', 600, 7, 'tokyo'), C('뉴욕', 640, 7, 'newyork'),
   { type:'give', name:'기부 천사', short:'기부', emo:'💝' },
-  C('서울', 700, 10, 'seoul')
+  C('서울', 700, 7, 'seoul')
 ];
 const N = TILES.length, ISLAND = 10, FUND = 20, BALLOON = 30, SEOUL = 39;
 const START_MONEY = 3000, SALARY = 1000, GIVE = 150, ISLAND_FEE = 200;
@@ -646,7 +644,7 @@ const HOW = '<h2>놀이 방법</h2><ul class="how">' + [
   ['🏝️', '도깨비섬', '3번 쉬어요 · 같은 숫자가 나오거나 ' + ISLAND_FEE + '냥을 내면 탈출'],
   ['🐷', '꼬비 저금통', '기부금과 벌금이 모여요 · 도착하면 몽땅 받아요'],
   ['🎈', '열기구', '다음 차례에 원하는 칸으로 날아가요 · 앞으로만 날아가서 꼬비 마을을 지나면 용돈도 받아요'],
-  ['🎁', '도깨비 주머니', '행운 카드를 한 장 뽑아요'],
+  ['🎁', '도깨비 주머니', '행운 카드를 한 장 뽑아요 · 카드로 이동할 때는 앞으로 가서 꼬비 마을을 지나면 용돈도 받아요 (뒤로 가기 카드는 빼고)'],
   ['😢', '돈이 모자라면', '도시를 반값에 팔아요 · 그래도 못 내면 파산'],
   ['👆', '칸 정보', '보드의 칸을 누르면 값과 통행료를 볼 수 있어요']
 ].map(([e, t, d]) => '<li><span class="e">' + e + '</span><div><b class="t">' + t + '</b><span>' + d.replace(/ · /g, '&nbsp;· ') + '</span></div></li>').join('') + '</ul>';
@@ -1068,8 +1066,8 @@ async function drawCard(p) {
   await notice(p, '<h2>🎁 도깨비 주머니</h2><div class="cardface">' + (ci ? '<img class="cardimg" src="' + ci + '" alt="">' : '<div class="big">' + c.emo + '</div>') + '<div>' + c.t + '</div></div>', 2600);
   if (c.f === 'gain') { money(p, c.v); beep('coin'); }
   else if (c.f === 'lose') await pay(p, c.v, 'pot', '카드 값');
-  else if (c.f === 'goto') { await fly(p, c.v, true); await land(p); }
-  else if (c.f === 'island') { await fly(p, ISLAND, false); p.island = 3; refresh(); }
+  else if (c.f === 'goto') { await sail(p, c.v); await land(p); }   // 카드 이동은 앞으로 (꼬비 마을을 지나면 용돈)
+  else if (c.f === 'island') { await sail(p, ISLAND); p.island = 3; refresh(); }
   else if (c.f === 'ticket') { p.ticket++; refresh(); }
   else if (c.f === 'each') { for (const q of alive()) { if (q === p || !p.alive) continue; if (c.v > 0) await pay(q, c.v, p, '생일 선물'); else await pay(p, -c.v, q, '간식값'); } }
   else if (c.f === 'repair') { const cost = owned(p).reduce((s, i) => s + (TILES[i].type === 'city' ? bList(i).reduce((x, k) => x + B[k].fix, 0) + (G.lm[i] ? 150 : 0) : 0), 0); if (cost) await pay(p, cost, 'pot', '수리비'); else { say(pn(p) + ' 고칠 건물이 없어요.'); } }
@@ -1079,7 +1077,7 @@ async function drawCard(p) {
   else if (c.f === 'again') { G.again = true; }
   else if (c.f === 'fest') { const n = owned(p).length; if (n) { money(p, n * c.v); beep('coin'); say(pn(p) + ' 도시 ' + n + '곳 축제! <b>' + nf(n * c.v) + '냥</b>을 받았어요.'); } else say(pn(p) + ' 아직 도시가 없어요.'); }
   else if (c.f === 'rich') { const r = alive().filter(q => q !== p).sort((a, b) => b.money - a.money)[0]; if (r) { say(pn(r) + ' ' + pn(p) + '에게 ' + c.v + '냥을 줘요.'); await pay(r, c.v, p, '안내비'); } }
-  else if (c.f === 'mybest') { const list = owned(p).filter(i => TILES[i].type === 'city').sort((a, b) => TILES[b].price - TILES[a].price); const d = list.length ? list[0] : 0; if (d !== p.pos) await fly(p, d, true); await land(p); }
+  else if (c.f === 'mybest') { const list = owned(p).filter(i => TILES[i].type === 'city').sort((a, b) => TILES[b].price - TILES[a].price); const d = list.length ? list[0] : 0; if (d !== p.pos) await sail(p, d); await land(p); }
   else if (c.f === 'freebuild') {
     const list = owned(p).filter(i => TILES[i].type === 'city' && G.bld[i] !== 7 && !G.lm[i]);
     if (!list.length) say(pn(p) + ' 건물을 지을 수 있는 내 도시가 없어요.');
