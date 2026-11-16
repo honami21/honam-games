@@ -562,7 +562,7 @@ const IMG = {};
 const IMG_NAMES = ['logo', 'ggobi-travel', 'ggobi-happy', 'ggobi-sad', 'ggobi-win', 'card-back', 'bld-tent', 'bld-house', 'bld-hotel', 'bld-landmark',
   'piece-red', 'piece-blue', 'piece-green', 'piece-yellow', 'corner-start', 'corner-island', 'corner-fund', 'corner-balloon', 'tile-card', 'tile-give']
   .concat(TILES.filter(t => t.type === 'mark').map(t => 'city-' + t.key)).concat(TILES.filter(t => t.type === 'city').map(t => 'flag-' + t.key)).concat(TILES.filter(t => t.type === 'city').map(t => 'lm-' + t.key)).concat(CARDS.map((c, k) => 'card-' + String(k + 1).padStart(2, '0')));
-const IMG_V = 3;
+const IMG_V = 4;
 IMG_NAMES.forEach(n => { const im = new Image(); im.onload = () => { IMG[n] = 'img/' + n + '.png?v=' + IMG_V; imgReady(); }; im.src = 'img/' + n + '.png?v=' + IMG_V; });
 [['bg.jpg', () => document.body.classList.add('hasbg')], ['board-center.jpg', () => $('center').classList.add('art')]].forEach(([f, cb]) => { const im = new Image(); im.onload = cb; im.src = 'img/' + f; });
 let imgTimer = 0;
