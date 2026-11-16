@@ -83,7 +83,7 @@ h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .info svg{width:20px;height:20px}
 </style>
 </head>
-<body>
+<body data-keynav>
 <div class="topbar">
   <button id="fs-btn" type="button" title="전체화면"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="t" id="fs-txt">전체화면</span></button>
 </div>
@@ -181,5 +181,6 @@ h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 KBGM.init({ key:'home', tracks:{ play:'audio/home-bgm.mp3' }, defaultOn:false, vol:.25, calm:1 });
 (function(){ var fs=document.getElementById('fs-btn'); var b=KBGM.button({ className:'', parent:fs.parentNode, long:true }); fs.parentNode.insertBefore(b, fs); })();
 </script>
+<script src="keynav.js"></script>
 </body>
 </html>
