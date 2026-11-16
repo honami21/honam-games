@@ -202,6 +202,7 @@
   .modal .big { font-size:54px; line-height:1.1; }
   .modal .big img { width:150px; height:140px; object-fit:contain; }
   .modal .res-img { width:140px; display:block; margin:0 auto; }
+  .have { display:inline-block; margin-top:2px; font-size:.92em; color:var(--ink2); }
   .choices { display:flex; flex-direction:column; gap:8px; margin-top:12px; }
   .choices .game-btn { width:100%; white-space:normal; word-break:keep-all; padding:9px 14px; font-size:17px; display:flex; justify-content:space-between; gap:10px; align-items:center; text-align:left; }
   .choices .game-btn > span:first-of-type { flex:1; }
@@ -846,11 +847,11 @@ function drawInfo() {
 }
 function refresh() { drawTiles(); drawPieces(); drawPlayers(); drawInfo(); mood(); }
 let moodG = null, moodKey = 0, tenseUntil = 0;
-function mood() {   // 극적인 음악은 랜드마크, 파산, 2배 같은 순간부터 1분만
+function mood() {   // 극적인 음악은 랜드마크, 파산, 2배 같은 순간부터 10초만
   if (!G || G.over) return;
   const key = G.lm.filter(x => x).length * 100 + (G.players.length - alive().length) * 10 + (G.endFlag ? 5 : 0) + mult();
   if (moodG !== G) { moodG = G; moodKey = key; tenseUntil = 0; }
-  else if (key > moodKey) { moodKey = key; tenseUntil = Date.now() + 60000; }
+  else if (key > moodKey) { moodKey = key; tenseUntil = Date.now() + 10000; }
   KBGM.track(Date.now() < tenseUntil || (G.mode === 'time' && G.timeLeft <= 120) ? 'tense' : 'play', false);
 }
 setInterval(() => { if (G && !G.over && tenseUntil && Date.now() >= tenseUntil) { tenseUntil = 0; mood(); } }, 2000);
@@ -1093,7 +1094,7 @@ function askBuild(p, i) { // 지을 건물을 여러 개 골라요
   return new Promise((res, rej) => {
     const draw = () => {
       const sum = [...sel].reduce((s, k) => s + bCost(i, k), 0);
-      showModal('<div class="big">' + tilePic(t) + '</div><h2>' + t.name + '</h2><p>내 도시예요. 지을 건물을 골라요. 여러 개도 돼요! (가진 돈 ' + nf(p.money) + '냥)</p><div class="choices">' +
+      showModal('<div class="big">' + tilePic(t) + '</div><h2>' + t.name + '</h2><p>내 도시예요. 지을 건물을 골라요. 여러 개도 돼요!<br><span class="have">가진 돈 ' + nf(p.money) + '냥</span></p><div class="choices">' +
         miss.map(k => '<button class="game-btn ' + (sel.has(k) ? 'btn-mint' : 'btn-secondary') + '" data-k="' + k + '"' + (!sel.has(k) && sum + bCost(i, k) > p.money ? ' disabled' : '') + '><span>' + '<i class="cbox' + (sel.has(k) ? ' on' : '') + '"></i>' + bIc(k) + ' ' + B[k].n + ' <small style="color:var(--ink2)">(통행료 +' + nf(r10(t.price * B[k].toll)) + ')</small></span><span>' + nf(bCost(i, k)) + '냥</span></button>').join('') +
         '</div><div class="btn-row"><button class="game-btn btn-secondary" id="mNo">안 지어요</button><button class="game-btn btn-primary" id="mYes"' + (sel.size ? '' : ' disabled') + '>' + (sel.size ? nf(sum) + '냥으로 짓기' : '건물을 골라요') + '</button></div>');
       $('modalCard').querySelector('.choices').onclick = e => { const b = e.target.closest('button'); if (!b || b.disabled) return; const k = +b.dataset.k; sel.has(k) ? sel.delete(k) : sel.add(k); draw(); };
@@ -1110,7 +1111,7 @@ async function buildAt(p, i) { // 내 땅에서 건물이나 랜드마크 짓기
     const c = lmCost(i); let yes = false;
     if (p.money >= c) {
       if (bot(p)) { await wait(700); yes = p.money - c >= aiReserve(p); }
-      else yes = await ask('<div class="big">' + lmPic(t) + '</div><h2>' + t.name + ' 랜드마크</h2><p>건물 3개를 다 지었어요! <b>랜드마크</b>를 세우면 통행료가 ' + nf(tollOf(i, 7, true)) + '냥이 되고, 랜드마크 인수권이 없으면 아무도 인수할 수 없어요. (가진 돈 ' + nf(p.money) + '냥)</p>',
+      else yes = await ask('<div class="big">' + lmPic(t) + '</div><h2>' + t.name + ' 랜드마크</h2><p>건물 3개를 다 지었어요! <b>랜드마크</b>를 세우면 통행료가 ' + nf(tollOf(i, 7, true)) + '냥이 되고, 랜드마크 인수권이 없으면 아무도 인수할 수 없어요.<br><span class="have">가진 돈 ' + nf(p.money) + '냥</span></p>',
         [{ label:I_LM + ' 랜드마크 세우기', right:nf(c) + '냥', cls:'btn-mint', v:true }, { label:'다음에 할래요', v:false }]);
     } else { say(pn(p) + ' ' + t.name + ' 랜드마크를 세울 돈(' + nf(c) + '냥)이 모자라요.'); await wait(900); }
     if (yes) { money(p, -c); G.lm[i] = true; beep('win'); say(pn(p) + ' ' + t.name + '에 <b>랜드마크</b>를 세웠어요!'); refresh(); landFx(i); toast('🏰 ' + t.name + ' 랜드마크 완성! 이제 랜드마크 인수권으로만 인수할 수 있어요'); await wait(900); }
@@ -1131,7 +1132,7 @@ async function land(p) {
       if (p.money < t.price) { say(pn(p) + ' ' + t.name + ' 도착. 살 돈이 모자라요.'); await wait(900); return; }
       let yes;
       if (bot(p)) { say(pn(p) + ' ' + t.name + ' 도착. 살까 말까…', true); await wait(900); yes = p.money - t.price >= Math.min(aiReserve(p), 80 + t.price / 4); }
-      else yes = await ask('<div class="big">' + tilePic(t) + '</div><h2>' + t.name + '</h2><p>주인이 없어요. 살까요? (가진 돈 ' + nf(p.money) + '냥)' + (t.type === 'city' ? '<br><small style="color:var(--ink2)">건물은 다음에 내 땅에 다시 도착하면 지을 수 있어요.</small>' : '') + '</p>',
+      else yes = await ask('<div class="big">' + tilePic(t) + '</div><h2>' + t.name + '</h2><p>주인이 없어요. 살까요?<br><span class="have">가진 돈 ' + nf(p.money) + '냥</span>' + (t.type === 'city' ? '<br><small style="color:var(--ink2)">건물은 다음에 내 땅에 다시 도착하면 지을 수 있어요.</small>' : '') + '</p>',
         [{ label:'🚩 ' + (t.type === 'mark' ? '휴양지 사기' : '땅 사기'), right:nf(t.price) + '냥', cls:'btn-info', v:true }, { label:'안 살래요', v:false }]);
       if (yes) { money(p, -t.price); G.owner[i] = p.id; beep('buy'); say(pn(p) + ' <b>' + t.name + '</b>을(를) 샀어요!'); refresh(); await wait(700); }
       else { say(pn(p) + ' ' + t.name + '을(를) 그냥 지나가요.'); await wait(500); }
@@ -1151,7 +1152,7 @@ async function land(p) {
         const c = p.half ? Math.round(takeCost(i) / 2) : takeCost(i); let yes = false;
         if (p.money >= c) {
           if (bot(p)) { yes = p.money - c >= 300 && (isLm || G.bld[i] > 0 || t.price >= 400); if (yes) await wait(600); }
-          else yes = await ask('<div class="big">' + (isLm ? lmPic(t) : tilePic(t)) + '</div><h2>' + t.name + ' 인수</h2><p>' + pn(own) + '의 ' + (isLm ? '랜드마크 도시예요. <b>랜드마크 인수권</b>으로 랜드마크까지 통째로 ' : '도시예요. ' + (G.bld[i] ? '건물까지 통째로 ' : '')) + '인수할까요?' + (p.half ? ' <b>반값 인수권 사용!</b>' : '') + '<br>인수하면 ' + pn(own) + '에게 돈을 주고 내 도시가 돼요. (가진 돈 ' + nf(p.money) + '냥)</p>',
+          else yes = await ask('<div class="big">' + (isLm ? lmPic(t) : tilePic(t)) + '</div><h2>' + t.name + ' 인수</h2><p>' + pn(own) + '의 ' + (isLm ? '랜드마크 도시예요. <b>랜드마크 인수권</b>으로 랜드마크까지 통째로 ' : '도시예요. ' + (G.bld[i] ? '건물까지 통째로 ' : '')) + '인수할까요?' + (p.half ? ' <b>반값 인수권 사용!</b>' : '') + '<br>인수하면 ' + pn(own) + '에게 돈을 주고 내 도시가 돼요.<br><span class="have">가진 돈 ' + nf(p.money) + '냥</span></p>',
             [{ label:(isLm ? I_LMTAKE : I_HALF) + ' 인수하기', right:nf(c) + '냥', cls:'btn-mint', v:true }, { label:'안 할래요', v:false }]);
         }
         if (yes) { if (p.half) p.half--; if (isLm) p.lmtake--; money(p, -c); money(own, c); G.owner[i] = p.id; beep('buy'); say(pn(p) + ' ' + pn(own) + '의 <b>' + t.name + '</b>을(를) ' + nf(c) + '냥에 인수했어요!'); refresh(); await wait(800); if (!isLm) await buildAt(p, i); }
