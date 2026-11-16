@@ -870,10 +870,11 @@ function hideModal() { savedModal = null; $('modal').classList.add('hidden'); }
 // ---------- 키보드: 엔터·스페이스, 1~0·q~p 단축키, 방향키 ----------
 const KEYS = '1234567890qwertyuiop';
 let kSel = 0;
-const modalBtns = () => [...$('modalCard').querySelectorAll('button')].filter(b => !b.disabled && b.offsetParent);
+const allBtns = () => [...$('modalCard').querySelectorAll('button')].filter(b => b.offsetParent);   // 번호는 못 누르는 버튼까지 차례대로 붙여요
+const modalBtns = () => allBtns().filter(b => !b.disabled);
 function markKeys() {   // 창이 열리면 버튼마다 단축키 표시
   const bs = modalBtns(); kSel = 0;
-  bs.forEach((b, k) => { b.classList.remove('ksel'); if (k < KEYS.length && !b.querySelector('.kbd')) b.insertAdjacentHTML('afterbegin', '<b class="kbd">' + KEYS[k].toUpperCase() + '</b>'); });
+  allBtns().forEach((b, k) => { b.classList.remove('ksel'); if (k < KEYS.length && !b.querySelector('.kbd')) b.insertAdjacentHTML('afterbegin', '<b class="kbd">' + KEYS[k].toUpperCase() + '</b>'); });
   if (bs.length > 1) bs[0].classList.add('ksel');
 }
 new MutationObserver(() => { if (!$('modal').classList.contains('hidden')) markKeys(); }).observe($('modalCard'), { childList:true, subtree:true });
@@ -889,7 +890,7 @@ addEventListener('keydown', e => {
       bs.forEach((b, j) => b.classList.toggle('ksel', j === kSel)); bs[kSel].scrollIntoView({ block:'nearest' }); return;
     }
     if (k === 'enter' || k === ' ') { e.preventDefault(); (bs[kSel] || bs[0]).click(); return; }
-    const n = KEYS.indexOf(k); if (n >= 0 && bs[n]) { e.preventDefault(); bs[n].click(); }
+    const n = KEYS.indexOf(k), ab = allBtns(); if (n >= 0 && ab[n]) { e.preventDefault(); if (!ab[n].disabled) ab[n].click(); }   // 못 누르는 버튼의 번호는 아무 일도 없어요
     return;
   }
   if ((k === 'enter' || k === ' ') && !$('game').classList.contains('hidden') && !$('rollBtn').disabled) { e.preventDefault(); $('rollBtn').click(); }
