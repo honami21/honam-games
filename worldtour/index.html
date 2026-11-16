@@ -661,7 +661,7 @@ const HOW = '<h2>놀이 방법</h2><ul class="how">' + [
   ['🎈', '열기구', '다음 차례에 원하는 칸으로 날아가요 · 앞으로만 날아가서 꼬비 마을을 지나면 용돈도 받아요'],
   ['🎁', '도깨비 주머니', '행운 카드를 한 장 뽑아요 · 카드로 이동할 때는 앞으로 가서 꼬비 마을을 지나면 용돈도 받아요 (뒤로 가기 카드는 빼고)'],
   ['😢', '돈이 모자라면', '도시를 반값에 팔아요 · 그래도 못 내면 파산 · 내 차례에 <b>파산하기</b>를 눌러 스스로 마칠 수도 있어요'],
-  ['⏱️', '파산할 때까지', '<b>20분</b>이 지나면 통행료, 상금, 벌금이 <b>2배</b> · <b>30분</b>이 지나면 <b>3배</b>'],
+  ['⏱️', '파산할 때까지', '누군가 <b>20바퀴</b>를 돌면 통행료, 상금, 벌금이 <b>2배</b> · <b>30바퀴</b>를 돌면 <b>3배</b>'],
   ['👆', '칸 정보', '보드의 칸을 누르면 값과 통행료를 볼 수 있어요']
 ].map(([e, t, d]) => '<li><span class="e">' + e + '</span><div><b class="t">' + t + '</b><span>' + d.replace(/ · /g, '&nbsp;· ') + '</span></div></li>').join('') + '</ul>';
 $('howBtn').onclick = $('helpBtn').onclick = () => { showModal(HOW + '<div class="btn-row"><button class="game-btn btn-primary" id="mOk">알겠어요</button></div>'); $('mOk').onclick = hideModal; };
@@ -714,7 +714,8 @@ const sp = ms => fast && !NET.on ? ms * .45 : ms;   // 방 만들기에서는 �
 function wait(ms) { const my = gid; return new Promise((res, rej) => setTimeout(() => my === gid ? res() : rej(ABORT), sp(ms))); }
 const alive = () => G.players.filter(p => p.alive);
 const owned = p => TILES.map((t, i) => i).filter(i => G.owner[i] === p.id);
-const mult = () => G && G.mode === 'bank' && G.startAt ? (Date.now() - G.startAt >= 30 * 60000 ? 3 : Date.now() - G.startAt >= 20 * 60000 ? 2 : 1) : 1;   // 파산 모드: 20분 2배, 30분 3배
+const topLaps = () => G ? Math.max(0, ...G.players.filter(q => q.alive).map(q => q.laps || 0)) : 0;   // 가장 많이 돈 사람의 바퀴 수
+const mult = () => G && G.mode === 'bank' ? (topLaps() >= 30 ? 3 : topLaps() >= 20 ? 2 : 1) : 1;   // 파산 모드: 누군가 20바퀴를 돌면 2배, 30바퀴면 3배 (시간 끌기 막기)
 function toll(i, lv) { return baseToll(i) * mult(); }
 function baseToll(i) {
   const t = TILES[i], o = G.owner[i];
@@ -838,9 +839,9 @@ function drawInfo() {
   if (!G) return;
   const m = Math.floor(G.timeLeft / 60), s = G.timeLeft % 60;
   const el = Math.max(0, Math.floor((Date.now() - (G.startAt || Date.now())) / 1000)), clk = t => Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
-  const nextM = G.mode === 'bank' && mult() < 3 ? (mult() === 1 ? 1200 : 1800) - el : 0;
+  const nextM = G.mode === 'bank' && mult() < 3 ? (mult() === 1 ? 20 : 30) - topLaps() : 0;
   $('info').innerHTML = '<span>' + ic('icon-pot') + ' 저금통 <b>' + nf(G.pot) + '냥</b></span>' +
-    (NET.on && NET.room && NET.room.watch && Object.keys(NET.room.watch).length ? '<span>' + ic('icon-watch') + ' 구경 <b>' + Object.keys(NET.room.watch).length + '명</b></span>' : '') + (G.mode === 'time' ? '<span>' + ic('icon-time') + ' 남은 시간 <b>' + m + ':' + String(s).padStart(2, '0') + '</b></span>' : G.mode === 'laps' ? '<span>' + ic('icon-laps') + ' <b>' + G.laps + '바퀴</b> 돌면 끝</span><span>' + ic('icon-time') + ' <b>' + clk(el) + '</b></span>' : '<span>' + ic('icon-bankmode') + ' 파산할 때까지' + (mult() > 1 ? ' · <b>' + mult() + '배</b>' : '') + '</span><span>' + ic('icon-time') + ' <b>' + clk(el) + '</b>' + (nextM > 0 ? ' · ' + (mult() + 1) + '배까지 ' + clk(nextM) : '') + '</span>');
+    (NET.on && NET.room && NET.room.watch && Object.keys(NET.room.watch).length ? '<span>' + ic('icon-watch') + ' 구경 <b>' + Object.keys(NET.room.watch).length + '명</b></span>' : '') + (G.mode === 'time' ? '<span>' + ic('icon-time') + ' 남은 시간 <b>' + m + ':' + String(s).padStart(2, '0') + '</b></span>' : G.mode === 'laps' ? '<span>' + ic('icon-laps') + ' <b>' + G.laps + '바퀴</b> 돌면 끝</span><span>' + ic('icon-time') + ' <b>' + clk(el) + '</b></span>' : '<span>' + ic('icon-bankmode') + ' 파산할 때까지' + (mult() > 1 ? ' · <b>' + mult() + '배</b>' : '') + '</span><span>' + ic('icon-time') + ' <b>' + clk(el) + '</b>' + (nextM > 0 ? ' · ' + (mult() + 1) + '배까지 ' + nextM + '바퀴 남음' : '') + '</span>');
 }
 function refresh() { drawTiles(); drawPieces(); drawPlayers(); drawInfo(); mood(); }
 let moodG = null, moodKey = 0, tenseUntil = 0;
@@ -1241,8 +1242,8 @@ async function turn(p) {
   G.turn = p.id; G.again = false; emit({ k:'turn', p:p.id }); refresh();
   const M = mult();
   if (M > (G.multShown || 1)) {   // 파산 모드가 길어지면 판을 키워요
-    G.multShown = M; beep('win'); say('<b>' + (M === 2 ? 20 : 30) + '분</b>이 지났어요! 이제 통행료, 상금, 벌금이 모두 <b>' + M + '배</b>!'); refresh();
-    await notice(p, '<div class="big">' + (IMG['ggobi-happy'] ? '<img src="' + IMG['ggobi-happy'] + '">' : '') + '</div><h2>판이 커져요! ' + M + '배!</h2><p>여행을 시작한 지 <b>' + (M === 2 ? 20 : 30) + '분</b>이 지났어요.<br>이제부터 <b>통행료, 상금, 벌금</b>이 모두 <b>' + M + '배</b>예요.' + (M === 2 ? '<br><small style="color:var(--ink2)">30분이 지나면 3배가 돼요.</small>' : '') + '</p>', 3200);
+    G.multShown = M; beep('win'); say('누군가 <b>' + (M === 2 ? 20 : 30) + '바퀴</b>를 돌았어요! 이제 통행료, 상금, 벌금이 모두 <b>' + M + '배</b>!'); refresh();
+    await notice(p, '<div class="big">' + (IMG['ggobi-happy'] ? '<img src="' + IMG['ggobi-happy'] + '">' : '') + '</div><h2>판이 커져요! ' + M + '배!</h2><p>가장 앞선 여행자가 <b>' + (M === 2 ? 20 : 30) + '바퀴</b>를 돌았어요.<br>이제부터 <b>통행료, 상금, 벌금</b>이 모두 <b>' + M + '배</b>예요.' + (M === 2 ? '<br><small style="color:var(--ink2)">누군가 30바퀴를 돌면 3배가 돼요.</small>' : '') + '</p>', 3200);
   }
   if (p.balloon) { await balloonTurn(p); return; }
   let doubles = 0;
