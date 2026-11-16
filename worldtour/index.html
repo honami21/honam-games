@@ -357,7 +357,7 @@
   <div class="tl-main">
     <img class="tl-balloon b1" src="img/corner-balloon.png" alt="" onerror="this.remove()">
     <img class="tl-balloon b2" src="img/corner-balloon.png" alt="" onerror="this.remove()">
-    <img id="tlLogo" src="img/logo.png?v=2" alt="깨비샘의 세계 여행" onerror="this.outerHTML='<div class=&quot;tl-logo-txt&quot;><small>깨비샘의</small>세계 여행</div>'">
+    <img id="tlLogo" src="img/logo.png?v=5" alt="깨비샘의 세계 여행" onerror="this.outerHTML='<div class=&quot;tl-logo-txt&quot;><small>깨비샘의</small>세계 여행</div>'">
     <div class="tl-cast"><img class="gg" src="img/ggobi-travel.png" alt="" onerror="this.src='../img/ggobi-wave.png'"><img class="pc" src="img/piece-red.png" alt="" onerror="this.remove()"><img class="pc" src="img/piece-blue.png" alt="" onerror="this.remove()"><img class="pc" src="img/piece-green.png" alt="" onerror="this.remove()"><img class="pc" src="img/piece-yellow.png" alt="" onerror="this.remove()"></div>
     <button class="game-btn btn-primary" id="tlGo" type="button">▶ 여행 떠나기</button>
     <p class="tl-tip"><span>세계 40곳을 여행해요 ·</span> <span>도시를 사고 건물을 지어요 ·</span> <span>친구들과 방을 만들어 함께해요</span></p>
@@ -562,7 +562,7 @@ const IMG = {};
 const IMG_NAMES = ['logo', 'ggobi-travel', 'ggobi-happy', 'ggobi-sad', 'ggobi-win', 'card-back', 'bld-tent', 'bld-house', 'bld-hotel', 'bld-landmark',
   'piece-red', 'piece-blue', 'piece-green', 'piece-yellow', 'corner-start', 'corner-island', 'corner-fund', 'corner-balloon', 'tile-card', 'tile-give']
   .concat(TILES.filter(t => t.type === 'mark').map(t => 'city-' + t.key)).concat(TILES.filter(t => t.type === 'city').map(t => 'flag-' + t.key)).concat(TILES.filter(t => t.type === 'city').map(t => 'lm-' + t.key)).concat(CARDS.map((c, k) => 'card-' + String(k + 1).padStart(2, '0')));
-const IMG_V = 4;
+const IMG_V = 5;
 IMG_NAMES.forEach(n => { const im = new Image(); im.onload = () => { IMG[n] = 'img/' + n + '.png?v=' + IMG_V; imgReady(); }; im.src = 'img/' + n + '.png?v=' + IMG_V; });
 [['bg.jpg', () => document.body.classList.add('hasbg')], ['board-center.jpg', () => $('center').classList.add('art')]].forEach(([f, cb]) => { const im = new Image(); im.onload = cb; im.src = 'img/' + f; });
 let imgTimer = 0;
