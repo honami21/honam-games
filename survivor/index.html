@@ -55,6 +55,7 @@
   @keyframes pairGlow { 0%,100% { box-shadow:0 0 3px var(--pc); } 50% { box-shadow:0 0 14px 3px var(--pc), inset 0 0 8px var(--pc); } }
   .slot.ready::after { content:''; position:absolute; inset:-4px; border-radius:11px; border:2px dashed var(--sun); animation:spin 4s linear infinite; }
   #stats { position:absolute; top:58px; right:12px; display:flex; flex-direction:column; align-items:flex-end; gap:5px; }
+  img.mini { height:1.45em; width:auto; vertical-align:-.4em; margin:0 1px; }
   .chip-ic { height:1.25em; width:auto; vertical-align:-.25em; }
   .chip { background:rgba(10,14,30,.6); color:#fff; border-radius:14px; padding:3px 12px; font-size:clamp(16px,1.3vw,21px); }
   #pause-btn { pointer-events:auto; cursor:pointer; border:2px solid rgba(255,255,255,.35); font-family:'Jua',sans-serif; }
@@ -625,6 +626,11 @@ IMG_NAMES.forEach(n => loadImg(n, 'img/' + n + (n === 'ground' ? '.jpg' : '.png'
 loadImg('_ggobi', '../img/ggobi-wave.png');   // 꼬비 그림이 오기 전 임시
 
 function iconKey(kind, id) { return (kind === 'p' ? 'p-' : kind === 'e' ? 'e-' : 'w-') + id; }
+// 글 사이에 들어가는 작은 그림 (그림이 없으면 이모지)
+function mini(kind, id) {
+  const key = iconKey(kind, id), em = kind === 'p' ? PASSIVES[id].emoji : kind === 'e' ? WEAPONS[id].evoEmoji : WEAPONS[id].emoji;
+  return IMG[key] ? `<img class="mini" src="img/${key}.png" alt="">` : em;
+}
 function iconHTML(kind, id, small) {
   const key = iconKey(kind, id);
   const em = kind === 'p' ? PASSIVES[id].emoji : kind === 'e' ? WEAPONS[id].evoEmoji : WEAPONS[id].emoji;
@@ -1948,14 +1954,14 @@ function cardHTML(o, i, forChest) {
     icon = iconHTML('w', o.id); title = W.name;
     tag = w ? `<em>Lv ${next}</em>` : '<em class="new-w">새 무기</em>';
     desc = W.desc[next] + (next === 8 ? ' · 최고 레벨!' : '');
-    pair = `짝꿍: ${PASSIVES[W.pair].emoji} ${PASSIVES[W.pair].name} → ${W.evoName}`;
+    pair = `짝꿍: ${mini('p', W.pair)} ${PASSIVES[W.pair].name} → ${mini('e', o.id)} ${W.evoName}`;
     if (!forChest && G.passives[W.pair]) link = w ? `✅ 짝꿍 ${PASSIVES[W.pair].name} 완성!` : `🔗 고르면 ${PASSIVES[W.pair].name} 짝꿍 완성! → ${W.evoName}`;
   } else if (o.k === 'p') {
     const P = PASSIVES[o.id], lv = (G.passives[o.id] || 0) + 1;
     icon = iconHTML('p', o.id); title = P.name;
     tag = G.passives[o.id] ? `<em class="p">Lv ${lv}</em>` : '<em class="new-p">새 강화</em>';
     desc = P.each;
-    const pw = PAIR_OF[o.id], pwo = pw && weaponById(pw); if (pw) pair = pwo && pwo.evo ? `✅ 이미 조합 완료: ${WEAPONS[pw].evoEmoji} ${WEAPONS[pw].evoName}` : `짝꿍 무기: ${WEAPONS[pw].emoji} ${WEAPONS[pw].name} → ${WEAPONS[pw].evoName}`;
+    const pw = PAIR_OF[o.id], pwo = pw && weaponById(pw); if (pw) pair = pwo && pwo.evo ? `✅ 이미 조합 완료: ${mini('e', pw)} ${WEAPONS[pw].evoName}` : `짝꿍 무기: ${mini('w', pw)} ${WEAPONS[pw].name} → ${mini('e', pw)} ${WEAPONS[pw].evoName}`;
     const ow = pw && weaponById(pw);
     if (!forChest && ow && !ow.evo && !G.passives[o.id]) link = `🔗 고르면 ${WEAPONS[pw].name} 짝꿍 완성! → ${WEAPONS[pw].evoName}`;
   } else if (o.k === 'evo') {
@@ -2059,17 +2065,17 @@ function bagHTML() {
 function tipHTML(k, id) {
   if (k === 'w' || k === 'e') {
     const W = WEAPONS[id], w = G && weaponById(id), P = PASSIVES[W.pair];
-    if (k === 'e') return `<b>${W.evoEmoji} ${W.evoName}</b> (조합 무기)<br>${W.evoDesc}<br><span class="pr">${W.name} 8레벨 + ${P.name}</span>`;
+    if (k === 'e') return `<b>${mini('e', id)} ${W.evoName}</b> (조합 무기)<br>${W.evoDesc}<br><span class="pr">${mini('w', id)} ${W.name} 8레벨 + ${mini('p', W.pair)} ${P.name}</span>`;
     const lv = w ? w.lv : 0;
-    let t = `<b>${W.emoji} ${W.name}</b>${lv ? ` Lv ${lv} / 8` : ''}<br>${W.desc[1]}`;
+    let t = `<b>${mini('w', id)} ${W.name}</b>${lv ? ` Lv ${lv} / 8` : ''}<br>${W.desc[1]}`;
     if (lv && lv < 8) t += `<br>다음 레벨: ${W.desc[lv + 1]}`;
     if (lv >= 8) t += '<br>최고 레벨이에요!';
-    t += `<br><span class="pr">짝꿍 강화: ${P.emoji} ${P.name} → ${W.evoName}${w && canEvolve(w) ? ' (조합 준비 완료! 보물상자를 열어요)' : ''}</span>`;
+    t += `<br><span class="pr">짝꿍 강화: ${mini('p', W.pair)} ${P.name} → ${mini('e', id)} ${W.evoName}${w && canEvolve(w) ? ' (조합 준비 완료! 보물상자를 열어요)' : ''}</span>`;
     return t;
   }
   const P = PASSIVES[id], lv = G ? (G.passives[id] || 0) : 0, pw = PAIR_OF[id];
-  let t = `<b>${P.emoji} ${P.name}</b>${lv ? ` Lv ${lv} / ${P.max}` : ''}<br>레벨마다: ${P.each}`;
-  t += `<br><span class="pr">짝꿍 무기: ${WEAPONS[pw].emoji} ${WEAPONS[pw].name} → ${WEAPONS[pw].evoName}</span>`;
+  let t = `<b>${mini('p', id)} ${P.name}</b>${lv ? ` Lv ${lv} / ${P.max}` : ''}<br>레벨마다: ${P.each}`;
+  t += `<br><span class="pr">짝꿍 무기: ${mini('w', pw)} ${WEAPONS[pw].name} → ${mini('e', pw)} ${WEAPONS[pw].evoName}</span>`;
   return t;
 }
 function bindTips(root, tipId) {
