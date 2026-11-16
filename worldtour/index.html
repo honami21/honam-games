@@ -8,7 +8,7 @@
 <link rel="manifest" href="/manifest.webmanifest"/>
 <meta name="apple-mobile-web-app-title" content="꼬비샘과 쉬는 시간"/>
 <meta name="theme-color" content="#2a2860"/>
-<title>꼬비의 세계 여행 - 꼬비샘과 쉬는 시간</title>
+<title>깨비샘의 세계 여행 - 깨비샘과 쉬는 시간</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
 <style>
@@ -357,7 +357,7 @@
   <div class="tl-main">
     <img class="tl-balloon b1" src="img/corner-balloon.png" alt="" onerror="this.remove()">
     <img class="tl-balloon b2" src="img/corner-balloon.png" alt="" onerror="this.remove()">
-    <img id="tlLogo" src="img/logo.png" alt="꼬비의 세계 여행" onerror="this.outerHTML='<div class=&quot;tl-logo-txt&quot;><small>꼬비의</small>세계 여행</div>'">
+    <img id="tlLogo" src="img/logo.png?v=2" alt="깨비샘의 세계 여행" onerror="this.outerHTML='<div class=&quot;tl-logo-txt&quot;><small>깨비샘의</small>세계 여행</div>'">
     <div class="tl-cast"><img class="gg" src="img/ggobi-travel.png" alt="" onerror="this.src='../img/ggobi-wave.png'"><img class="pc" src="img/piece-red.png" alt="" onerror="this.remove()"><img class="pc" src="img/piece-blue.png" alt="" onerror="this.remove()"><img class="pc" src="img/piece-green.png" alt="" onerror="this.remove()"><img class="pc" src="img/piece-yellow.png" alt="" onerror="this.remove()"></div>
     <button class="game-btn btn-primary" id="tlGo" type="button">▶ 여행 떠나기</button>
     <p class="tl-tip"><span>세계 40곳을 여행해요 ·</span> <span>도시를 사고 건물을 지어요 ·</span> <span>친구들과 방을 만들어 함께해요</span></p>
@@ -370,7 +370,7 @@
   <div class="section">
     <div class="start-wrap">
       <div class="card">
-        <div id="logoBox"><div class="logo-txt"><small>꼬비의</small>세계 여행</div></div>
+        <div id="logoBox"><div class="logo-txt"><small>깨비샘의</small>세계 여행</div></div>
         <p class="lead">주사위를 굴려 세계 도시를 여행해요. <b>도시를 사고 건물을 지어</b> 통행료를 받아요!</p>
         <div class="segrow" style="margin-top:10px"><div class="seg" id="playSeg"><button data-v="local" class="on">🏠 한 기기에서 하기</button><button data-v="online">🌐 방 만들어 하기</button></div></div>
         <div class="box" id="localBox">
@@ -428,7 +428,7 @@
   <div id="boardWrap">
     <div id="board">
       <div id="center">
-        <div id="cTitle"><small>꼬비의</small>세계 여행</div>
+        <div id="cTitle"><small>깨비샘의</small>세계 여행</div>
         <div id="status"></div>
         <div id="diceRow"><div class="die" id="die0"></div><div class="die" id="die1"></div></div>
         <button class="game-btn btn-primary" id="rollBtn" disabled>주사위 굴리기</button>
@@ -562,12 +562,13 @@ const IMG = {};
 const IMG_NAMES = ['logo', 'ggobi-travel', 'ggobi-happy', 'ggobi-sad', 'ggobi-win', 'card-back', 'bld-tent', 'bld-house', 'bld-hotel', 'bld-landmark',
   'piece-red', 'piece-blue', 'piece-green', 'piece-yellow', 'corner-start', 'corner-island', 'corner-fund', 'corner-balloon', 'tile-card', 'tile-give']
   .concat(TILES.filter(t => t.type === 'mark').map(t => 'city-' + t.key)).concat(TILES.filter(t => t.type === 'city').map(t => 'flag-' + t.key)).concat(TILES.filter(t => t.type === 'city').map(t => 'lm-' + t.key)).concat(CARDS.map((c, k) => 'card-' + String(k + 1).padStart(2, '0')));
-IMG_NAMES.forEach(n => { const im = new Image(); im.onload = () => { IMG[n] = 'img/' + n + '.png'; imgReady(); }; im.src = 'img/' + n + '.png'; });
+const IMG_V = 2;
+IMG_NAMES.forEach(n => { const im = new Image(); im.onload = () => { IMG[n] = 'img/' + n + '.png?v=' + IMG_V; imgReady(); }; im.src = 'img/' + n + '.png?v=' + IMG_V; });
 [['bg.jpg', () => document.body.classList.add('hasbg')], ['board-center.jpg', () => $('center').classList.add('art')]].forEach(([f, cb]) => { const im = new Image(); im.onload = cb; im.src = 'img/' + f; });
 let imgTimer = 0;
 function imgReady() { clearTimeout(imgTimer); imgTimer = setTimeout(() => { applyStatic(); if (G) { drawTiles(); drawPieces(true); drawPlayers(); } }, 120); }
 function applyStatic() {
-  if (IMG.logo) { $('logoBox').innerHTML = '<img class="logo" src="' + IMG.logo + '" alt="꼬비의 세계 여행">'; if (!$('cLogo')) { $('cTitle').outerHTML = '<img id="cLogo" src="' + IMG.logo + '" alt="">'; } }
+  if (IMG.logo) { $('logoBox').innerHTML = '<img class="logo" src="' + IMG.logo + '" alt="깨비샘의 세계 여행">'; if (!$('cLogo')) { $('cTitle').outerHTML = '<img id="cLogo" src="' + IMG.logo + '" alt="">'; } }
   if (IMG['ggobi-travel']) $('startGgobi').src = IMG['ggobi-travel'];
   drawSlots();
 }
