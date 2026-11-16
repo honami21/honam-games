@@ -552,7 +552,7 @@ const CARDS = [
   { t:'여행 안내 아르바이트! 돈이 가장 많은 친구에게 100냥을 받아요.', emo:'🧢', f:'rich', v:100 },
   { t:'내 도시에서 축제가 열렸어요! 가진 도시 한 곳마다 30냥씩 받아요.', emo:'🎪', f:'fest', v:30 },
   { t:'도깨비 바람이 등을 밀어 줘요. 주사위를 한 번 더 굴려요!', emo:'🎲', f:'again' },
-  { t:'랜드마크 인수권! 가지고 있다가 남의 랜드마크 도시도 인수할 수 있어요.', emo:'🏰', pic:'icon-lmtake', f:'lmtake' }
+  { t:'랜드마크 반값 인수권! 가지고 있다가 남의 랜드마크 도시를 반값에 인수할 수 있어요.', emo:'🏰', pic:'icon-lmtake', f:'lmtake' }
 ];
 
 // ---------- 그림 (있으면 쓰고, 없으면 그림 문자) ----------
@@ -575,7 +575,7 @@ const tilePic = t => {
   return IMG[k] ? '<img src="' + IMG[k] + '" alt="">' : (t.emo || '');
 };
 const ic = (n, alt) => '<img class="ic" src="img/' + n + '.png" alt="' + (alt || '') + '">';   // 작은 아이콘 그림
-const I_TICKET = ic('icon-ticket', '탈출권'), I_FREE = ic('icon-free', '면제권'), I_HALF = ic('icon-half', '반값 인수권'), I_CITY = ic('icon-city', '도시'), I_LM = ic('icon-lm', '랜드마크'), I_RESORT = ic('icon-resort', '휴양지'), I_LMTAKE = ic('icon-lmtake', '랜드마크 인수권');
+const I_TICKET = ic('icon-ticket', '탈출권'), I_FREE = ic('icon-free', '면제권'), I_HALF = ic('icon-half', '반값 인수권'), I_CITY = ic('icon-city', '도시'), I_LM = ic('icon-lm', '랜드마크'), I_RESORT = ic('icon-resort', '휴양지'), I_LMTAKE = ic('icon-lmtake', '랜드마크 반값 인수권');
 const bIc = k => ic(B[k].key, B[k].n);
 const bIcon = k => IMG[B[k].key] ? '<img src="' + IMG[B[k].key] + '" alt="">' : B[k].emo;
 const lmPic = t => { const k = IMG['lm-' + t.key] ? 'lm-' + t.key : 'bld-landmark'; return IMG[k] ? '<img src="' + IMG[k] + '" alt="">' : '🏰'; };
@@ -656,7 +656,7 @@ const HOW = '<h2>놀이 방법</h2><ul class="how">' + [
   [ic('bld-tent', '텐트'), '건물', '<b>텐트, 게스트하우스, 호텔</b>은 함께 설 수 있어요 · 지을수록 통행료가 더해져요'],
   ['💸', '통행료', '남의 도시에 서면 통행료를 내요 · 건물이 많을수록 비싸요'],
   [I_HALF, '인수', '통행료를 낸 뒤 그 도시에 들어간 값의 <b>2배</b>를 주인에게 주면 내 도시가 돼요 · 인수하고 바로 건물도 지을 수 있어요'],
-  [I_LM, '랜드마크', '건물 3개를 다 지은 내 도시에 또 오면 세워요 · 랜드마크 도시는 <b>랜드마크 인수권</b>이 있어야만 인수할 수 있어요'],
+  [I_LM, '랜드마크', '건물 3개를 다 지은 내 도시에 또 오면 세워요 · 랜드마크 도시는 <b>랜드마크 반값 인수권</b>이 있어야만 인수할 수 있어요'],
   [ic('icon-resort', '휴양지'), '휴양지', '보라카이, 발리, 하와이, 푸켓 · 건물은 못 짓지만 많이 가질수록 통행료가 올라요'],
   ['🏝️', '도깨비섬', '3번 쉬어요 · 같은 숫자가 나오거나 ' + ISLAND_FEE + '냥을 내면 탈출'],
   ['🐷', '꼬비 저금통', '기부금과 벌금이 모여요 · 도착하면 몽땅 받아요'],
@@ -831,7 +831,7 @@ function drawPieces(reset) {
 }
 function drawPlayers() {
   $('players').innerHTML = (G.order || G.players.map(q => q.id)).map(id => G.players[id]).map(p => {
-    const lmN = owned(p).filter(i => G.lm[i]).length, rN = owned(p).filter(i => TILES[i].type === 'mark').length, n = owned(p).length - lmN - rN, sub = !p.alive ? '파산' : (p.island ? '🏝️ ' + p.island + '번 쉬기 ' : '') + (p.balloon ? '🎈 ' : '') + (p.ticket ? '<span title="도깨비섬 탈출권">' + I_TICKET + p.ticket + '</span> ' : '') + (p.free ? '<span title="통행료 면제권">' + I_FREE + p.free + '</span> ' : '') + (p.half ? '<span title="반값 인수권">' + I_HALF + p.half + '</span> ' : '') + (p.lmtake ? '<span title="랜드마크 인수권">' + I_LMTAKE + p.lmtake + '</span> ' : '') + '<span title="도시">' + I_CITY + n + '곳</span>' + (lmN ? ' <span title="랜드마크">' + I_LM + lmN + '곳</span>' : '') + (rN ? ' <span title="휴양지">' + I_RESORT + rN + '곳</span>' : '') + (G.mode === 'laps' ? ' · ' + p.laps + '바퀴' : '');
+    const lmN = owned(p).filter(i => G.lm[i]).length, rN = owned(p).filter(i => TILES[i].type === 'mark').length, n = owned(p).length - lmN - rN, sub = !p.alive ? '파산' : (p.island ? '🏝️ ' + p.island + '번 쉬기 ' : '') + (p.balloon ? '🎈 ' : '') + (p.ticket ? '<span title="도깨비섬 탈출권">' + I_TICKET + p.ticket + '</span> ' : '') + (p.free ? '<span title="통행료 면제권">' + I_FREE + p.free + '</span> ' : '') + (p.half ? '<span title="반값 인수권">' + I_HALF + p.half + '</span> ' : '') + (p.lmtake ? '<span title="랜드마크 반값 인수권">' + I_LMTAKE + p.lmtake + '</span> ' : '') + '<span title="도시">' + I_CITY + n + '곳</span>' + (lmN ? ' <span title="랜드마크">' + I_LM + lmN + '곳</span>' : '') + (rN ? ' <span title="휴양지">' + I_RESORT + rN + '곳</span>' : '') + (G.mode === 'laps' ? ' · ' + p.laps + '바퀴' : '');
     return '<div class="pcard' + (G.turn === p.id && !G.over ? ' turn' : '') + (p.alive ? '' : ' out') + '" id="pc' + p.id + '"><div class="chip" style="' + chipBg(p.ci) + '"></div>' +
       '<div style="min-width:0"><div class="nm">' + esc(p.name) + (p.ai ? ' <span class="aitag">AI</span>' : '') + (NET.on && p.uid === myId ? ' <small style="color:var(--coral-d)">(나)</small>' : '') + (NET.on && NET.room && !p.ai && (NET.room.away || {})[p.uid] && p.alive ? ' 💤' : '') + '</div><div class="sub">' + sub + '</div></div>' +
       '<div class="mn">' + nf(p.money) + '냥<small>재산 ' + nf(assets(p)) + '</small></div></div>';
@@ -923,7 +923,7 @@ function tileInfo(i) {
       [0, 1, 2].map(k => '<tr class="' + (G.bld[i] >> k & 1 ? 'now' : '') + '"><td>' + bIc(k) + ' ' + B[k].n + '</td><td>짓는 값 ' + nf(bCost(i, k)) + '</td><td>통행료 +' + nf(r10(t.price * B[k].toll)) + '</td></tr>').join('') +
       '<tr class="' + (G.lm[i] ? 'now' : '') + '"><td>' + I_LM + ' 랜드마크</td><td>짓는 값 ' + nf(lmCost(i)) + '</td><td>통행료 ' + nf(r10(t.price * LM_TOLL)) + '</td></tr></table>' +
       '<p style="font-size:14px;color:var(--ink2)">건물 3개는 함께 서고 통행료가 더해져요.<br>3개를 다 지은 뒤 다시 도착하면 랜드마크!</p>' + (o != null ? '<p>지금 통행료 <b>' + nf(toll(i)) + '냥</b></p>' : '') +
-      (o != null ? '<p style="font-size:15px">' + (G.lm[i] ? I_LM + ' 랜드마크 도시는 랜드마크 인수권이 있어야 인수할 수 있어요. (인수하는 값 ' + nf(takeCost(i)) + '냥)' : '인수하는 값 <b>' + nf(takeCost(i)) + '냥</b>') + '</p>' : '');
+      (o != null ? '<p style="font-size:15px">' + (G.lm[i] ? I_LM + ' 랜드마크 도시는 랜드마크 반값 인수권이 있어야 인수할 수 있어요. (인수하는 값 ' + nf(Math.round(takeCost(i) / 2)) + '냥)' : '인수하는 값 <b>' + nf(takeCost(i)) + '냥</b>') + '</p>' : '');
   } else if (t.type === 'mark') {
     h += '<p>' + (o != null ? pn(G.players[o]) + '의 휴양지' : '주인 없는 휴양지') + ' · 값 ' + nf(t.price) + '냥</p><p>건물은 못 지어요.<br>휴양지를 많이 가질수록 통행료가 올라요.</p><table class="toll">' + [1, 2, 3, 4].map(n => '<tr><td>휴양지 ' + n + '곳</td><td>통행료 ' + nf(MARK_TOLL[n]) + '</td></tr>').join('') + '</table>';
   } else h += '<p>' + ({ start:'지나가거나 도착하면 용돈 ' + nf(SALARY) + '냥을 받아요.<br>딱 도착하면 내 도시 한 곳에 건물을 지을 수 있어요.', card:'도깨비 주머니에서 행운 카드를 한 장 뽑아요.', give:GIVE + '냥을 꼬비 저금통에 넣어요.',
@@ -1111,10 +1111,10 @@ async function buildAt(p, i) { // 내 땅에서 건물이나 랜드마크 짓기
     const c = lmCost(i); let yes = false;
     if (p.money >= c) {
       if (bot(p)) { await wait(700); yes = p.money - c >= aiReserve(p); }
-      else yes = await ask('<div class="big">' + lmPic(t) + '</div><h2>' + t.name + ' 랜드마크</h2><p>건물 3개를 다 지었어요! <b>랜드마크</b>를 세우면 통행료가 ' + nf(tollOf(i, 7, true)) + '냥이 되고, 랜드마크 인수권이 없으면 아무도 인수할 수 없어요.<br><span class="have">가진 돈 ' + nf(p.money) + '냥</span></p>',
+      else yes = await ask('<div class="big">' + lmPic(t) + '</div><h2>' + t.name + ' 랜드마크</h2><p>건물 3개를 다 지었어요! <b>랜드마크</b>를 세우면 통행료가 ' + nf(tollOf(i, 7, true)) + '냥이 되고, 랜드마크 반값 인수권이 없으면 아무도 인수할 수 없어요.<br><span class="have">가진 돈 ' + nf(p.money) + '냥</span></p>',
         [{ label:I_LM + ' 랜드마크 세우기', right:nf(c) + '냥', cls:'btn-mint', v:true }, { label:'다음에 할래요', v:false }]);
     } else { say(pn(p) + ' ' + t.name + ' 랜드마크를 세울 돈(' + nf(c) + '냥)이 모자라요.'); await wait(900); }
-    if (yes) { money(p, -c); G.lm[i] = true; beep('win'); say(pn(p) + ' ' + t.name + '에 <b>랜드마크</b>를 세웠어요!'); refresh(); landFx(i); toast('🏰 ' + t.name + ' 랜드마크 완성! 이제 랜드마크 인수권으로만 인수할 수 있어요'); await wait(900); }
+    if (yes) { money(p, -c); G.lm[i] = true; beep('win'); say(pn(p) + ' ' + t.name + '에 <b>랜드마크</b>를 세웠어요!'); refresh(); landFx(i); toast('🏰 ' + t.name + ' 랜드마크 완성! 이제 랜드마크 반값 인수권으로만 인수할 수 있어요'); await wait(900); }
     return;
   }
   let list;
@@ -1147,15 +1147,16 @@ async function land(p) {
       if (skip) { p.free--; beep('coin'); say(pn(p) + ' 통행료 면제권을 썼어요!'); refresh(); }
       else await pay(p, v, own, t.name + ' 통행료');
       await wait(500);
-      const isLm = G.lm[i];   // 랜드마크 도시는 랜드마크 인수권이 있어야 인수할 수 있어요
+      const isLm = G.lm[i];   // 랜드마크 도시는 랜드마크 반값 인수권이 있어야 인수할 수 있어요
       if (p.alive && t.type === 'city' && G.owner[i] === o && (!isLm || p.lmtake)) {
-        const c = p.half ? Math.round(takeCost(i) / 2) : takeCost(i); let yes = false;
+        const useHalf = !isLm && p.half, c = isLm || useHalf ? Math.round(takeCost(i) / 2) : takeCost(i); let yes = false;   // 랜드마크는 랜드마크 반값 인수권으로 반값
+        if (p.money < c && isLm && !bot(p)) { say(pn(p) + ' 랜드마크 반값 인수권이 있지만 돈이 모자라요. (필요 <b>' + nf(c) + '냥</b>)'); toast('랜드마크 반값 인수권이 있지만 돈이 모자라요 (필요 ' + nf(c) + '냥)'); await wait(1200); }
         if (p.money >= c) {
           if (bot(p)) { yes = p.money - c >= 300 && (isLm || G.bld[i] > 0 || t.price >= 400); if (yes) await wait(600); }
-          else yes = await ask('<div class="big">' + (isLm ? lmPic(t) : tilePic(t)) + '</div><h2>' + t.name + ' 인수</h2><p>' + pn(own) + '의 ' + (isLm ? '랜드마크 도시예요. <b>랜드마크 인수권</b>으로 랜드마크까지 통째로 ' : '도시예요. ' + (G.bld[i] ? '건물까지 통째로 ' : '')) + '인수할까요?' + (p.half ? ' <b>반값 인수권 사용!</b>' : '') + '<br>인수하면 ' + pn(own) + '에게 돈을 주고 내 도시가 돼요.<br><span class="have">가진 돈 ' + nf(p.money) + '냥</span></p>',
+          else yes = await ask('<div class="big">' + (isLm ? lmPic(t) : tilePic(t)) + '</div><h2>' + t.name + ' 인수</h2><p>' + pn(own) + '의 ' + (isLm ? '랜드마크 도시예요. <b>랜드마크 반값 인수권</b>으로 랜드마크까지 통째로 반값에 ' : '도시예요. ' + (G.bld[i] ? '건물까지 통째로 ' : '')) + '인수할까요?' + (useHalf ? ' <b>반값 인수권 사용!</b>' : '') + '<br>인수하면 ' + pn(own) + '에게 돈을 주고 내 도시가 돼요.<br><span class="have">가진 돈 ' + nf(p.money) + '냥</span></p>',
             [{ label:(isLm ? I_LMTAKE : I_HALF) + ' 인수하기', right:nf(c) + '냥', cls:'btn-mint', v:true }, { label:'안 할래요', v:false }]);
         }
-        if (yes) { if (p.half) p.half--; if (isLm) p.lmtake--; money(p, -c); money(own, c); G.owner[i] = p.id; beep('buy'); say(pn(p) + ' ' + pn(own) + '의 <b>' + t.name + '</b>을(를) ' + nf(c) + '냥에 인수했어요!'); refresh(); await wait(800); if (!isLm) await buildAt(p, i); }
+        if (yes) { if (useHalf) p.half--; if (isLm) p.lmtake--; money(p, -c); money(own, c); G.owner[i] = p.id; beep('buy'); say(pn(p) + ' ' + pn(own) + '의 <b>' + t.name + '</b>을(를) ' + nf(c) + '냥에 인수했어요!'); refresh(); await wait(800); if (!isLm) await buildAt(p, i); }
       }
     }
   } else if (t.type === 'card') await drawCard(p);
