@@ -1,4 +1,4 @@
-// 꼬비샘과 쉬는 시간 · 저작권 표시 (모든 게임 공용)
+// 깨비샘과 쉬는 시간 · 저작권 표시 (모든 게임 공용)
 // 메뉴가 보이면 맨 아래 가운데에, 게임 중에는 버튼·보드와 겹치지 않는 빈자리(쉬는 시간 버튼 옆, 아래 가운데, 아래 양쪽 끝, 위 가운데 순)를 찾아 작게 보여요.
 // 메뉴가 길어서 스크롤되면 화면에 고정하지 않고 메뉴 맨 끝에 붙여요. 밝은 안내 화면에는 data-credit="light"를 붙이면 글자색이 어두워져요.
 (() => {
@@ -10,7 +10,7 @@
     + '#kcredit.play{right:auto;bottom:auto;text-align:left;white-space:nowrap;font-size:10px;color:rgba(255,248,232,.6)}#kcredit.light{color:rgba(60,50,90,.55);text-shadow:none}@media print{#kcredit{display:none!important}}';
   document.head.appendChild(css);
   const el = document.createElement('div');
-  el.id = 'kcredit'; el.setAttribute('aria-hidden', 'true'); el.textContent = '© 꼬비샘';
+  el.id = 'kcredit'; el.setAttribute('aria-hidden', 'true'); el.textContent = '© 깨비샘';
   const shown = n => {
     if (n.checkVisibility) { if (!n.checkVisibility({ checkOpacity:true, checkVisibilityCSS:true })) return false; }
     else if (getComputedStyle(n).display === 'none') return false;

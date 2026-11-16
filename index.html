@@ -6,9 +6,9 @@
 <link rel="apple-touch-icon" href="/icons/icon-180.png"/>
 <link rel="icon" type="image/png" href="/icons/icon-192.png"/>
 <link rel="manifest" href="/manifest.webmanifest"/>
-<meta name="apple-mobile-web-app-title" content="꼬비샘과 쉬는 시간"/>
+<meta name="apple-mobile-web-app-title" content="깨비샘과 쉬는 시간"/>
 <meta name="theme-color" content="#2a2860"/>
-<title>꼬비샘과 쉬는 시간</title>
+<title>깨비샘과 쉬는 시간</title>
 <link rel="preload" as="image" href="img/bg.jpg"/>
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet"/>
 <style>
@@ -21,7 +21,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   background:linear-gradient(180deg,rgba(30,26,80,.15),rgba(30,26,80,0) 40%,rgba(30,26,80,.25)),url(img/bg.jpg) center top/cover no-repeat}
 .page{max-width:1500px;margin:0 auto;display:grid;grid-template-columns:230px minmax(0,1fr) 230px;grid-template-areas:"head head head" "char cards .";column-gap:12px;align-items:end;position:relative}
 header{grid-area:head;text-align:center;position:relative;padding:40px 0 30px}
-.logo{display:block;width:min(720px,92%);height:auto;margin:0 auto;filter:drop-shadow(0 6px 0 rgba(20,16,60,.35))}
+.logo{display:block;width:min(600px,92%);height:auto;margin:0 auto;filter:drop-shadow(0 6px 0 rgba(20,16,60,.35))}
 h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .sub{color:#fff;font-size:22px;margin-top:10px;text-shadow:0 2px 0 rgba(20,16,60,.6),0 0 12px rgba(20,16,60,.6);letter-spacing:.5px}
 .char{grid-area:char;align-self:end;width:100%;height:auto;margin-bottom:-6px;transform-origin:50% 100%;animation:wave 3.2s ease-in-out infinite;filter:drop-shadow(0 8px 10px rgba(10,8,40,.45))}
@@ -150,11 +150,11 @@ body.adm-edit .adm-num{display:flex}
     <img class="wisp w2" src="img/wisp.png" alt="">
     <img class="wisp w3" src="img/wisp.png" alt="">
     <img class="wisp w4" src="img/wisp.png" alt="">
-    <h1>꼬비샘과 쉬는 시간</h1>
-    <img class="logo" src="img/logo.png" alt="꼬비샘과 쉬는 시간" width="1100" height="186">
+    <h1>깨비샘과 쉬는 시간</h1>
+    <img class="logo" src="img/logo.png" alt="깨비샘과 쉬는 시간" width="1100" height="338">
     <p class="sub">쉬는 시간에 친구들과 즐겨 보세요!</p>
   </header>
-  <img class="char" src="img/ggobi-wave.png" alt="손을 흔드는 꼬비" width="382" height="640">
+  <img class="char" src="img/ggobi-wave.png" alt="손을 흔드는 깨비샘" width="400" height="642">
   <div class="grid">
     <a class="game" href="tetris/">
       <span class="adm-num"></span>
@@ -212,7 +212,7 @@ body.adm-edit .adm-num{display:flex}
     </a>
     <div class="soon">
       <span>새 게임 준비 중</span>
-      <img src="img/ggobi-peek.png" alt="" width="440" height="411">
+      <img src="img/ggobi-peek.png" alt="" width="440" height="335">
     </div>
   </div>
 </div>
@@ -244,7 +244,7 @@ body.adm-edit .adm-num{display:flex}
 })();
 </script>
 <footer class="info">
-  <span>© 꼬비샘</span>
+  <span>© 깨비샘</span>
   <a href="https://www.instagram.com/ggobilog/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="ig" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#feda75"/><stop offset=".35" stop-color="#fa7e1e"/><stop offset=".6" stop-color="#d62976"/><stop offset="1" stop-color="#4f5bd5"/></linearGradient></defs><rect x="1" y="1" width="22" height="22" rx="6.5" fill="url(#ig)"/><rect x="5.5" y="5.5" width="13" height="13" rx="4" fill="none" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="#fff" stroke-width="2"/><circle cx="16.6" cy="7.4" r="1.1" fill="#fff"/></svg>ggobilog</a>
 </footer>
 <script src="audio/bgm.js"></script>
