@@ -668,13 +668,13 @@ $('howBtn').onclick = $('helpBtn').onclick = () => { showModal(HOW + '<div class
 
 // ---------- 첫 화면 ----------
 (() => {
-  const cities = TILES.filter(t => t.type === 'city'), marks = TILES.filter(t => t.type === 'city' || t.type === 'mark');
+  const cities = TILES.filter(t => t.type === 'city');
   // 화면에 보이는 만큼의 카드만 두고, 밖으로 나간 카드는 반대쪽 끝으로 옮겨요.
   // (아주 긴 줄을 통째로 움직이면 아이폰 사파리가 일부를 못 그려 빈칸이 생겨요)
   const card = (src, name, k) => { const d = document.createElement('div'); d.className = 'tl-card ' + (k % 2 ? 'tb' : 'ta'); d.innerHTML = '<img src="' + src + '" alt=""><span>' + name + '</span>'; d.querySelector('img').onerror = () => d.remove(); return d; };
   const rows = [
-    { el:$('tlRow1'), speed:-55, list:cities.slice().reverse().map((t, k) => card('img/lm-' + t.key + '.png', t.city, k)) },
-    { el:$('tlRow2'), speed:60, list:marks.map((t, k) => card('img/city-' + t.key + '.png', t.city || t.short || t.name, k + 1)) }
+    { el:$('tlRow1'), speed:-55, list:cities.slice().reverse().map((t, k) => card('img/lm-' + t.key + '.png', t.name, k)) },
+    { el:$('tlRow2'), speed:60, list:cities.map((t, k) => card('img/flag-' + t.key + '.png', t.name, k + 1)) }
   ];
   const gap = el => parseFloat(getComputedStyle(el).columnGap) || 0;
   rows.forEach(r => { r.x = 0; r.n = 0; r.el.textContent = ''; });
