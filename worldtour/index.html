@@ -93,6 +93,11 @@
   .delta.plus { color:var(--mint-d); } .delta.minus { color:var(--coral-d); }
   @keyframes delta { 0%{ opacity:0; transform:translateY(8px) } 15%{ opacity:1; transform:translateY(0) } 75%{ opacity:1 } 100%{ opacity:0; transform:translateY(-16px) } }
   #info { display:flex; gap:6px; flex-wrap:wrap; }
+  .kbd { display:none; min-width:1.5em; padding:0 .3em; margin-right:.4em; border-radius:6px; background:rgba(44,41,80,.12); color:inherit; font-size:.8em; line-height:1.5em; text-align:center; }
+  @media (hover:hover) and (pointer:fine) { .kbd { display:inline-block; } }
+  #modal button.ksel { outline:3px solid var(--coral); outline-offset:2px; filter:brightness(1.06); }
+  #info span img.ic { height:1.25em; vertical-align:-.25em; margin:0 .1em 0 0; }
+  #sideBtns button img.ic { height:1.3em; vertical-align:-.3em; margin:0; }
   #info span { background:rgba(255,248,238,.94); border-radius:14px; padding:3px 10px; font-size:14px; white-space:nowrap; }
   #info b { color:var(--coral-d); font-weight:normal; }
   #log { flex:1; min-height:60px; background:rgba(255,248,238,.92); border:3px solid var(--ink); border-radius:16px; padding:8px 10px; overflow-y:auto; font-size:14px; line-height:1.45; word-break:keep-all; }
@@ -427,7 +432,7 @@
     <div id="players"></div>
     <div id="info"></div>
     <div id="log"></div>
-    <div id="sideBtns"><button id="stkBtn" type="button" class="hidden">😊 응원</button><button id="speedBtn" type="button">⏩ 빠르게</button><button id="helpBtn" type="button">❓ 놀이 방법</button><button id="bankBtn" type="button">파산하기</button><button id="quitBtn" type="button">🚪 그만하기</button></div>
+    <div id="sideBtns"><button id="stkBtn" type="button" class="hidden"><img class="ic" src="img/icon-cheer.png" alt=""> 응원</button><button id="speedBtn" type="button"><img class="ic" src="img/icon-speed.png" alt=""> 빠르게</button><button id="helpBtn" type="button"><img class="ic" src="img/icon-help.png" alt=""> 놀이 방법</button><button id="bankBtn" type="button">파산하기</button><button id="quitBtn" type="button" class="hidden">그만하기</button></div>
   </div>
 </div>
 <div class="modal hidden" id="modal"><div class="card" id="modalCard"></div></div>
@@ -753,7 +758,7 @@ function updSpeed() { $('speedBtn').classList.toggle('on', fast); }
 $('speedBtn').onclick = () => { fast = !fast; store('worldtour-fast', fast ? 'on' : 'off'); updSpeed(); };
 updSpeed();
 setInterval(() => {
-  if (G && !G.over && G.mode === 'bank' && !document.hidden) { if (mult() !== (window.__lastM || 1)) { window.__lastM = mult(); drawInfo(); } }
+  if (G && !G.over && G.mode !== 'time' && !document.hidden) drawInfo();   // 흐른 시간 시계
   if (!G || G.over || G.mode !== 'time') return;
   if (NET.on) { const t = Math.max(0, Math.ceil((G.endAt - Date.now()) / 1000)); if (t === 0 && G.timeLeft > 0) toast('시간이 다 됐어요! 이번 차례까지만 해요.'); G.timeLeft = t; drawInfo(); return; }
   if (document.hidden) return;
@@ -786,7 +791,7 @@ function drawTiles() {
     d.classList.toggle('own', o != null); d.classList.toggle('lm', !!lmk);
     if (o != null) { const c = COLORS[G.players[o].ci]; d.style.setProperty('--oc', c.c); d.style.setProperty('--ot', c.t); d.style.setProperty('--otx', c.key === 'yellow' ? '#2c2950' : '#fff'); }
     const h = (city && !lmk ? '<div class="bstrip">' + [0, 1, 2].map(k => '<span class="' + (G.bld[i] >> k & 1 ? 'on' : '') + '">' + (G.bld[i] >> k & 1 ? bIcon(k) : '') + '</span>').join('') + '</div>' : '') +
-      '<div class="col"><div class="pic">' + (lmk ? lmPic(t) : tilePic(t)) + '</div>' + (t.type === 'fund' ? '<div class="nm l4">🪙 ' + nf(G.pot) + '</div>' : nameHtml(t)) + '</div>' + (lmk ? '<i class="shine"></i>' : '');
+      '<div class="col"><div class="pic">' + (lmk ? lmPic(t) : tilePic(t)) + '</div>' + (t.type === 'fund' ? '<div class="nm l4">' + nf(G.pot) + '냥' + '' + '</div>' : nameHtml(t)) + '</div>' + (lmk ? '<i class="shine"></i>' : '');
     if (d._h !== h) { d._h = h; d.innerHTML = h; }   // 바뀐 칸만 다시 그려요 (그림을 새로 만들면 화면이 반짝여요)
   });
 }
@@ -827,8 +832,10 @@ function drawPlayers() {
 function drawInfo() {
   if (!G) return;
   const m = Math.floor(G.timeLeft / 60), s = G.timeLeft % 60;
-  $('info').innerHTML = '<span>🐷 저금통 <b>' + nf(G.pot) + '냥</b></span>' +
-    (NET.on && NET.room && NET.room.watch && Object.keys(NET.room.watch).length ? '<span>👀 구경 <b>' + Object.keys(NET.room.watch).length + '명</b></span>' : '') + (G.mode === 'time' ? '<span>⏰ 남은 시간 <b>' + m + ':' + String(s).padStart(2, '0') + '</b></span>' : G.mode === 'laps' ? '<span>🏁 <b>' + G.laps + '바퀴</b> 돌면 끝</span>' : '<span>🏁 파산할 때까지' + (mult() > 1 ? ' · <b style="color:var(--coral-d)">' + mult() + '배</b>' : '') + '</span>');
+  const el = Math.max(0, Math.floor((Date.now() - (G.startAt || Date.now())) / 1000)), clk = t => Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
+  const nextM = G.mode === 'bank' && mult() < 3 ? (mult() === 1 ? 1200 : 1800) - el : 0;
+  $('info').innerHTML = '<span>' + ic('icon-pot') + ' 저금통 <b>' + nf(G.pot) + '냥</b></span>' +
+    (NET.on && NET.room && NET.room.watch && Object.keys(NET.room.watch).length ? '<span>' + ic('icon-watch') + ' 구경 <b>' + Object.keys(NET.room.watch).length + '명</b></span>' : '') + (G.mode === 'time' ? '<span>' + ic('icon-time') + ' 남은 시간 <b>' + m + ':' + String(s).padStart(2, '0') + '</b></span>' : G.mode === 'laps' ? '<span>' + ic('icon-laps') + ' <b>' + G.laps + '바퀴</b> 돌면 끝</span><span>' + ic('icon-time') + ' <b>' + clk(el) + '</b></span>' : '<span>' + ic('icon-bankmode') + ' 파산할 때까지' + (mult() > 1 ? ' · <b>' + mult() + '배</b>' : '') + '</span><span>' + ic('icon-time') + ' <b>' + clk(el) + '</b>' + (nextM > 0 ? ' · ' + (mult() + 1) + '배까지 ' + clk(nextM) : '') + '</span>');
 }
 function refresh() { drawTiles(); drawPieces(); drawPlayers(); drawInfo(); mood(); }
 let moodG = null, moodKey = 0, tenseUntil = 0;
@@ -853,6 +860,34 @@ let savedModal = null;
 function showModal(html, keep) { const m = $('modal'); if (keep && !m.classList.contains('hidden') && !savedModal) { savedModal = [...$('modalCard').childNodes]; savedModal.forEach(n => n.remove()); const tmp = document.createElement('div'); tmp.id = 'mTmp'; tmp.innerHTML = html; $('modalCard').appendChild(tmp); } else { if (!keep) savedModal = null; $('modalCard').innerHTML = html; } m.classList.remove('hidden'); }
 function restoreModal() { if (savedModal) { $('modalCard').innerHTML = ''; savedModal.forEach(n => $('modalCard').appendChild(n)); savedModal = null; } else hideModal(); }
 function hideModal() { savedModal = null; $('modal').classList.add('hidden'); }
+
+// ---------- 키보드: 엔터·스페이스, 1~0·q~p 단축키, 방향키 ----------
+const KEYS = '1234567890qwertyuiop';
+let kSel = 0;
+const modalBtns = () => [...$('modalCard').querySelectorAll('button')].filter(b => !b.disabled && b.offsetParent);
+function markKeys() {   // 창이 열리면 버튼마다 단축키 표시
+  const bs = modalBtns(); kSel = 0;
+  bs.forEach((b, k) => { b.classList.remove('ksel'); if (k < KEYS.length && !b.querySelector('.kbd')) b.insertAdjacentHTML('afterbegin', '<span class="kbd">' + KEYS[k].toUpperCase() + '</span>'); });
+  if (bs.length > 1) bs[0].classList.add('ksel');
+}
+new MutationObserver(() => { if (!$('modal').classList.contains('hidden')) markKeys(); }).observe($('modalCard'), { childList:true, subtree:true });
+new MutationObserver(() => { if (!$('modal').classList.contains('hidden')) markKeys(); }).observe($('modal'), { attributes:true, attributeFilter:['class'] });
+addEventListener('keydown', e => {
+  const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+  if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+  const k = e.key.toLowerCase();
+  if (!$('modal').classList.contains('hidden')) {
+    const bs = modalBtns(); if (!bs.length) return;
+    if (['arrowdown', 'arrowright', 'arrowup', 'arrowleft'].includes(k)) {
+      e.preventDefault(); kSel = (kSel + (k === 'arrowdown' || k === 'arrowright' ? 1 : -1) + bs.length) % bs.length;
+      bs.forEach((b, j) => b.classList.toggle('ksel', j === kSel)); bs[kSel].scrollIntoView({ block:'nearest' }); return;
+    }
+    if (k === 'enter' || k === ' ') { e.preventDefault(); (bs[kSel] || bs[0]).click(); return; }
+    const n = KEYS.indexOf(k); if (n >= 0 && bs[n]) { e.preventDefault(); bs[n].click(); }
+    return;
+  }
+  if ((k === 'enter' || k === ' ') && !$('game').classList.contains('hidden') && !$('rollBtn').disabled) { e.preventDefault(); $('rollBtn').click(); }
+});
 // 고르기 창: choices = [{ label, right, cls, v, disabled }]
 function ask(head, choices) {
   const my = gid, m = head.match(/<h2>(.*?)<\/h2>/);
@@ -1014,7 +1049,7 @@ async function pay(p, amount, to, why) { // to: 다른 사람, 'pot', null(은�
     else while (p.money < amount) {
       const list = owned(p);
       const i = await ask('<div class="big">' + (IMG['ggobi-sad'] ? '<img src="' + IMG['ggobi-sad'] + '">' : '😢') + '</div><h2>돈이 모자라요</h2><p>' + why + ' <b>' + nf(amount) + '냥</b>을 내야 해요.<br>지금 ' + nf(p.money) + '냥, <b>' + nf(amount - p.money) + '냥</b>이 더 필요해요. 팔 곳을 골라요.</p>',
-        list.map(i => ({ label:'🚩' + bIcons(i) + ' ' + TILES[i].name, right:'+' + nf(sellValue(i)) + '냥', v:i })).concat([{ label:'파산하고 여행 마치기', cls:'btn-secondary', v:'quit' }]));
+        list.map(i => ({ label:bIcons(i) + ' ' + TILES[i].name, right:'+' + nf(sellValue(i)) + '냥', v:i })).concat([{ label:'파산하고 여행 마치기', cls:'btn-secondary', v:'quit' }]));
       if (i === 'quit') {
         if (await ask('<h2>정말 파산할까요?</h2><p>가진 도시를 모두 팔아 ' + nf(amount) + '냥을 내고, 여행을 마쳐요.<br>남은 돈과 도시는 모두 사라져요.</p>', [{ label:'계속할래요', cls:'btn-info', v:false }, { label:'파산하기', cls:'btn-primary', v:true }])) { await bankrupt(p, to, why, amount); return false; }
         continue;
