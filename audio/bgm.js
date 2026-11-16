@@ -4,7 +4,7 @@
 //   KBGM.calm()   시작 화면, 일시정지, 결과 화면 (작게)
 //   KBGM.track(n) 다른 곡으로 바꾸기 (천천히 넘어감)
 //   KBGM.jingle() 게임이 끝났을 때 짧은 축하 음악
-//   KBGM.button({ after: 원래 소리 버튼, long: true/false })  누르면 음악 켜기/끄기
+//   KBGM.button({ after: 원래 소리 버튼, long: true/false, icon: '<svg…>' })  누르면 음악 켜기/끄기 (icon을 주면 그 그림을 씀)
 (function () {
   'use strict';
   var get = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } };
@@ -117,8 +117,9 @@
   function refresh() {
     var shown = B.on && B.vol > 0;
     B.buttons.forEach(function (b) {
-      if (b.long) b.el.innerHTML = '🎵<span class="kbgm-l">' + (shown ? ' 음악 ON' : ' 음악 OFF') + '</span>';
-      else b.el.textContent = '🎵';
+      var ic = b.icon || '🎵';
+      if (b.long) b.el.innerHTML = ic + '<span class="kbgm-l">' + (shown ? ' 음악 ON' : ' 음악 OFF') + '</span>';
+      else b.el.innerHTML = ic;
       b.el.classList.toggle('muted', !shown);
       b.el.title = shown ? '배경 음악 켜짐 (누르면 꺼요)' : '배경 음악 꺼짐 (누르면 켜요)';
       b.el.setAttribute('aria-pressed', shown ? 'true' : 'false');
@@ -132,7 +133,7 @@
     if (o.id) b.id = o.id;
     if (o.after) o.after.parentNode.insertBefore(b, o.after.nextSibling);
     else if (o.parent) o.parent.appendChild(b);
-    B.buttons.push({ el: b, long: !!o.long });
+    B.buttons.push({ el: b, long: !!o.long, icon: o.icon || '' });
     ['pointerdown', 'mousedown', 'touchstart'].forEach(function (t) { b.addEventListener(t, function (e) { e.stopPropagation(); }); });
     b.addEventListener('click', function (e) {
       e.stopPropagation(); e.preventDefault();
