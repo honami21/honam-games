@@ -440,7 +440,7 @@
     <div id="sideBtns"><button id="stkBtn" type="button" class="hidden"><img class="ic" src="img/icon-cheer.png" alt=""> 응원</button><button id="speedBtn" type="button"><img class="ic" src="img/icon-speed.png" alt=""> 빠르게</button><button id="helpBtn" type="button"><img class="ic" src="img/icon-help.png" alt=""> 놀이 방법</button><button id="bankBtn" type="button">파산하기</button><button id="quitBtn" type="button" class="hidden">그만하기</button></div>
   </div>
 </div>
-<div class="modal hidden" id="modal"><div class="card" id="modalCard"></div></div>
+<div class="modal hidden" id="modal" data-keynav="off"><div class="card" id="modalCard"></div></div>
 <div id="toast"></div>
 <div id="stkTray" class="hidden"></div>
 <div id="stkShow" class="hidden"><img id="stkImg" src="" alt=""><span id="stkWho"></span></div>
@@ -1737,5 +1737,6 @@ function showSticker(st) {
 }
 layout();
 </script>
+<script src="../keynav.js"></script>
 </body>
 </html>
