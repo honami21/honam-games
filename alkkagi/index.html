@@ -6,9 +6,9 @@
 <link rel="apple-touch-icon" href="/icons/icon-180.png"/>
 <link rel="icon" type="image/png" href="/icons/icon-192.png"/>
 <link rel="manifest" href="/manifest.webmanifest"/>
-<meta name="apple-mobile-web-app-title" content="꼬비샘과 쉬는 시간"/>
+<meta name="apple-mobile-web-app-title" content="깨비샘과 쉬는 시간"/>
 <meta name="theme-color" content="#2a2860"/>
-<title>꼬비의 알까기 - 꼬비샘과 쉬는 시간</title>
+<title>깨비샘의 알까기 - 깨비샘과 쉬는 시간</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
 <style>
@@ -187,7 +187,7 @@
 </head>
 <body>
 <div class="topbar">
-  <a href="../" id="home-link" title="꼬비샘과 쉬는 시간으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">쉬는 시간</span></a>
+  <a href="../" id="home-link" title="깨비샘과 쉬는 시간으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">쉬는 시간</span></a>
   <div class="right">
     <button id="sndToggle" type="button" title="소리 켜기/끄기" aria-label="소리 켜기/끄기">🔊</button>
     <button id="fs-btn" type="button" title="전체화면"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="t" id="fs-txt">전체화면</span></button>
@@ -233,7 +233,7 @@
   <div class="section">
     <div class="start-wrap">
       <div class="card">
-        <img class="logo" src="img/logo.png" alt="꼬비의 알까기" width="900" height="291">
+        <img class="logo" src="img/logo.png" alt="깨비샘의 알까기" width="900" height="307">
         <p class="lead">내 알을 <b>톡!</b> 튕겨서 친구 알을 판 밖으로 떨어뜨려요.<br>상대 알을 <b>모두</b> 떨어뜨리면 이겨요!</p>
         <div class="how">
           <div><i>👆</i><b>1. 조준</b>새총처럼 쏠 방향의 반대쪽으로 당겨요</div>
@@ -257,7 +257,7 @@
           <div class="mode-row">
             <button class="game-btn btn-primary" id="createBtn">방 만들기</button>
             <button class="game-btn btn-info" id="localBtn">한 화면에서<br>둘이 하기</button>
-            <button class="game-btn btn-mint" id="cpuBtn">꼬비와 연습하기</button>
+            <button class="game-btn btn-mint" id="cpuBtn">깨비샘과 연습하기</button>
           </div>
           <p style="font-size:14px;color:var(--ink2);margin-top:8px;text-align:center;word-break:keep-all">방 만들기는 첫 판은 방장이, 다음 판부터는 진 사람이 먼저 해요.<br>한 화면과 연습은 판마다 누가 먼저 할지 골라요.</p>
         </div>
@@ -490,7 +490,7 @@ const judgeOf = a => Math.abs(a) <= PERFECT ? 'perfect' : Math.abs(a) <= GOOD ? 
 const tri = u => 1 - Math.abs(((u % 1) + 1) % 1 * 2 - 1);   // 0→1→0
 
 // ============================================================
-//  꼬비(컴퓨터)의 수 고르기
+//  깨비샘(컴퓨터)의 수 고르기
 // ============================================================
 function aiPlan(pos, c) {
   const mine = [], opp = [];
@@ -858,7 +858,7 @@ function renderStatus() {
     if (aim.stage === 'power') return setStatus('💪 <b>힘 게이지!</b> 원하는 힘에서 ' + (isTouch() ? '톡!' : '클릭 또는 스페이스!') + fastTxt);
     return setStatus('🎯 바늘이 <b>가운데 초록</b>에 올 때 ' + (isTouch() ? '딱!' : '클릭 또는 스페이스!') + fastTxt);
   }
-  if (role === 'cpu' && room.turn === cpuColor()) return setStatus('꼬비가 조준하는 중<span class="dots"></span>');
+  if (role === 'cpu' && room.turn === cpuColor()) return setStatus('깨비샘이 조준하는 중<span class="dots"></span>');
   if (role === 'watch') return setStatus(`👀 구경 중 · <b>${esc(nameOf(room.turn))}</b> 차례예요`);
   return setStatus(`${esc(nameOf(room.turn))} 차례예요<span class="dots"></span>`);
 }
@@ -1378,7 +1378,7 @@ cv.addEventListener('pointerdown', e => {
   if (!canControl()) {
     if (room && room.status === 'playing' && !animBusy() && room.phase === 'aim') {
       if (role === 'watch') toast('구경 중에는 튕길 수 없어요');
-      else if (myColor() && room.turn !== myColor()) toast(role === 'cpu' ? '꼬비 차례예요. 조금만 기다려요!' : '친구 차례예요. 조금만 기다려요!');
+      else if (myColor() && room.turn !== myColor()) toast(role === 'cpu' ? '깨비샘 차례예요. 조금만 기다려요!' : '친구 차례예요. 조금만 기다려요!');
     }
     return;
   }
@@ -1463,7 +1463,7 @@ async function shoot(i, ang, power, a, c) {
   busy = false; render();
 }
 
-// ---------- 꼬비(컴퓨터) 차례 ----------
+// ---------- 깨비샘(컴퓨터) 차례 ----------
 setInterval(() => {
   if (role !== 'cpu' || !room || room.status !== 'playing' || room.phase !== 'aim' || animBusy() || cpuBusy) return;
   if (room.turn !== cpuColor()) return;
@@ -1473,7 +1473,7 @@ setInterval(() => {
     if (!room || tickKey !== key) { cpuBusy = false; return; }
     const plan = aiPlan(room.pos, cpuColor());
     if (!plan) { cpuBusy = false; return; }
-    if (isFast(room.pos, cpuColor())) plan.a = Math.max(-1, Math.min(1, plan.a * 1.6 + (Math.random() * 2 - 1) * .15));   // 꼬비도 빨라진 바늘에 흔들려요
+    if (isFast(room.pos, cpuColor())) plan.a = Math.max(-1, Math.min(1, plan.a * 1.6 + (Math.random() * 2 - 1) * .15));   // 깨비샘도 빨라진 바늘에 흔들려요
     const startAng = defaultAng(plan.i), t0 = performance.now();
     let d = plan.ang - startAng; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI;
     cpuShow = { i: plan.i, ang: startAng, stage: 'aim', cpu: true };
@@ -1543,7 +1543,7 @@ $('cpuBtn').onclick = () => {
   $('startMsg').textContent = '';
   const n = $('nameInput').value.trim().replace(/\s+/g, ' ').slice(0, 8);
   if (n) store('alkkagi-name', n);
-  startOffline('cpu', n || '나', '꼬비');
+  startOffline('cpu', n || '나', '깨비샘');
 };
 
 // ---------- 시간 제한 ----------
@@ -1594,8 +1594,8 @@ function showResult() {
   if (w === 'draw') { title = '비겼어요!'; text = '마지막 알이 함께 떨어졌어요. 둘 다 정말 잘했어요!'; img = 'ggobi-cheer'; }
   else if (role === 'local') { title = `${nameOf(w)} 승리!`; text = reason + leftTxt + ' 한 판 더 하면 누가 먼저 할지 다시 골라요.'; img = 'ggobi-cheer'; if (first) beep('win'); }
   else if (role === 'cpu') {
-    if (w === mine) { title = '꼬비를 이겼어요!'; text = reason + leftTxt + ' 이제 친구와 방을 만들어 겨뤄 봐요!'; img = 'ggobi-trophy'; if (first) beep('win'); }
-    else { title = '꼬비가 이겼어요'; text = '알 둘레 게이지와 "딱!" 타이밍을 연습해서 다시 도전해요!'; img = 'ggobi-cry'; if (first) beep('lose'); }
+    if (w === mine) { title = '깨비샘을 이겼어요!'; text = reason + leftTxt + ' 이제 친구와 방을 만들어 겨뤄 봐요!'; img = 'ggobi-trophy'; if (first) beep('win'); }
+    else { title = '깨비샘이 이겼어요'; text = '알 둘레 게이지와 "딱!" 타이밍을 연습해서 다시 도전해요!'; img = 'ggobi-cry'; if (first) beep('lose'); }
   }
   else if (!mine) { title = `${nameOf(w)} 승리!`; text = reason; }
   else if (w === mine) { title = '이겼어요!'; text = reason + leftTxt + ' 다음 판은 친구가 먼저 해요.'; img = 'ggobi-cheer'; if (first) beep('win'); }
