@@ -4,7 +4,7 @@
 //   KBGM.calm()   시작 화면, 일시정지, 결과 화면 (작게)
 //   KBGM.track(n) 다른 곡으로 바꾸기 (천천히 넘어감)
 //   KBGM.jingle() 게임이 끝났을 때 짧은 축하 음악
-//   KBGM.button({ after: 원래 소리 버튼, long: true/false })
+//   KBGM.button({ after: 원래 소리 버튼, long: true/false })  누르면 음악 켜기/끄기
 (function () {
   'use strict';
   var get = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } };
@@ -107,70 +107,28 @@
   B.setOn = function (v) { B.on = !!v; if (B.on && B.vol <= 0) B.vol = 0.35; save(); refresh(); B.kick(); };
   B.setVol = function (v) { B.vol = clamp(v, 0, 1); B.on = B.vol > 0; save(); refresh(); B.kick(); };
 
-  // ── 음악 버튼 + 작은 창 ──
+  // ── 음악 버튼: 누를 때마다 켜기/끄기 ──
   var css = document.createElement('style');
   css.textContent =
     '.kbgm-btn.muted{opacity:.6}' +
-    '@media (max-width:760px),(pointer:coarse){.kbgm-l{display:none}}' +
-    '.kbgm-pop{position:fixed;z-index:9999;background:#fffaf2;border:3px solid #6b4a3a;border-radius:16px;padding:12px 14px;' +
-    'font:600 15px/1.3 "Jua","Gowun Dodum",system-ui,sans-serif;color:#4a3328;box-shadow:0 6px 18px rgba(60,30,20,.22);' +
-    'display:none;width:230px;max-width:calc(100vw - 24px);box-sizing:border-box;text-align:center}' +
-    '.kbgm-pop.show{display:block}' +
-    '.kbgm-pop .kbgm-t{font-size:16px;margin-bottom:8px}' +
-    '.kbgm-pop .kbgm-row{display:flex;align-items:center;gap:8px;justify-content:center}' +
-    '.kbgm-pop input{flex:1;min-width:0;accent-color:#ff7a59}' +
-    '.kbgm-pop .kbgm-v{min-width:3em;text-align:right;font-size:14px;color:#8a6a5a}' +
-    '.kbgm-pop .kbgm-on{margin-top:10px;font:inherit;font-size:14px;cursor:pointer;padding:6px 14px;border-radius:999px;' +
-    'border:3px solid #6b4a3a;background:#ffe3a3;color:#4a3328}' +
-    '.kbgm-pop .kbgm-on.off{background:#fff}';
+    '@media (max-width:760px),(pointer:coarse){.kbgm-l{display:none}}';
   document.head.appendChild(css);
 
-  var pop = null, slider, val, onBtn, openFor = null;
-  function makePop() {
-    pop = document.createElement('div');
-    pop.className = 'kbgm-pop';
-    pop.innerHTML = '<div class="kbgm-t">🎵 배경 음악</div>' +
-      '<div class="kbgm-row"><span>🔈</span><input type="range" min="0" max="100" step="5" aria-label="음악 크기"><span class="kbgm-v"></span></div>' +
-      '<button type="button" class="kbgm-on"></button>';
-    document.body.appendChild(pop);
-    slider = pop.querySelector('input'); val = pop.querySelector('.kbgm-v'); onBtn = pop.querySelector('.kbgm-on');
-    slider.addEventListener('input', function () { B.setVol(+slider.value / 100); });
-    onBtn.addEventListener('click', function () { B.setOn(!B.on); });
-    ['pointerdown', 'mousedown', 'touchstart', 'click', 'keydown'].forEach(function (t) {
-      pop.addEventListener(t, function (e) { e.stopPropagation(); });
-    });
-    document.addEventListener('pointerdown', function (e) {
-      if (openFor && e.target !== openFor && !openFor.contains(e.target)) close();
-    }, true);
-    window.addEventListener('resize', close);
-  }
-  function close() { if (pop) pop.classList.remove('show'); openFor = null; }
-  function place(btn) {
-    var r = btn.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
-    var x = clamp(r.left + r.width / 2 - w / 2, 12, innerWidth - w - 12);
-    var y = r.bottom + 8; if (y + h > innerHeight - 8) y = Math.max(8, r.top - h - 8);
-    pop.style.left = x + 'px'; pop.style.top = y + 'px';
-  }
   function refresh() {
     var shown = B.on && B.vol > 0;
     B.buttons.forEach(function (b) {
       if (b.long) b.el.innerHTML = '🎵<span class="kbgm-l">' + (shown ? ' 음악 ON' : ' 음악 OFF') + '</span>';
       else b.el.textContent = '🎵';
       b.el.classList.toggle('muted', !shown);
-      b.el.title = shown ? '배경 음악 (켜짐)' : '배경 음악 (꺼짐)';
+      b.el.title = shown ? '배경 음악 켜짐 (누르면 꺼요)' : '배경 음악 꺼짐 (누르면 켜요)';
+      b.el.setAttribute('aria-pressed', shown ? 'true' : 'false');
     });
-    if (pop) {
-      slider.value = Math.round(B.vol * 100);
-      val.textContent = shown ? Math.round(B.vol * 100) + '%' : '끔';
-      onBtn.textContent = shown ? '음악 끄기' : '음악 켜기';
-      onBtn.classList.toggle('off', !shown);
-    }
   }
   B.button = function (o) {
     var b = document.createElement('button');
     b.type = 'button';
     b.className = (o.className != null ? o.className : (o.after ? o.after.className.replace(/\bmuted\b/g, '') : '')) + ' kbgm-btn';
-    b.setAttribute('aria-label', '배경 음악 크기');
+    b.setAttribute('aria-label', '배경 음악 켜기/끄기');
     if (o.id) b.id = o.id;
     if (o.after) o.after.parentNode.insertBefore(b, o.after.nextSibling);
     else if (o.parent) o.parent.appendChild(b);
@@ -178,9 +136,7 @@
     ['pointerdown', 'mousedown', 'touchstart'].forEach(function (t) { b.addEventListener(t, function (e) { e.stopPropagation(); }); });
     b.addEventListener('click', function (e) {
       e.stopPropagation(); e.preventDefault();
-      if (!pop) makePop();
-      if (openFor === b) { close(); return; }
-      refresh(); pop.classList.add('show'); openFor = b; place(b);
+      B.setOn(!(B.on && B.vol > 0));
       b.blur();
     });
     refresh();

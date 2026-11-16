@@ -8,7 +8,7 @@
 <link rel="manifest" href="/manifest.webmanifest"/>
 <meta name="apple-mobile-web-app-title" content="꼬비샘과 쉬는 시간"/>
 <meta name="theme-color" content="#2a2860"/>
-<title>꼬비꼬비 테트리스 - 꼬비샘과 쉬는 시간</title>
+<title>꼬비의 블록 쌓기 - 꼬비샘과 쉬는 시간</title>
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet"/>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -219,7 +219,7 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
   #board-col{grid-row:2;grid-column:3 / span 8;align-self:start}
   #board-wrap{padding:6px;border-radius:18px}
   #board-wrap::before,#board-wrap::after{display:none}
-  #tetris{height:min(calc(100svh - 330px),calc((min(520px,100vw - 16px) * 0.62 - 12px) * 2));min-height:0;border-radius:12px}
+  #tetris{height:min(calc(100svh - 390px),calc((min(520px,100vw - 16px) * 0.62 - 12px) * 2));min-height:0;border-radius:12px}
   #pause-overlay{inset:6px}
   .side>.tab-card{grid-row:2;align-self:start;margin-top:0;padding:22px 2px 6px;border-radius:14px}
   .side>.tab-card:nth-child(1){grid-column:11 / span 2}
@@ -231,13 +231,21 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
   .panel>.btn.btn-gr,.panel>.btn#sound-btn,.panel>.btn.kbgm-btn{grid-column:span 2;white-space:nowrap;font-size:20px !important;letter-spacing:0}
   .panel>.btn .bl{display:none}
   .mini-wrap canvas{width:100%;max-width:64px;height:auto;aspect-ratio:1}
-  .pad{display:grid;grid-row:3;grid-column:1 / -1;grid-template-columns:repeat(6,1fr);gap:6px}
-  .pad button{touch-action:none;border:none;border-radius:16px;height:58px;font-family:'Jua',sans-serif;font-size:24px;color:var(--ink);
-    background:var(--cream);box-shadow:0 4px 0 var(--cream-edge);-webkit-tap-highlight-color:transparent}
-  .pad button small{display:block;font-size:11px;margin-top:-2px}
-  .pad button.on{transform:translateY(4px);box-shadow:0 0 0 var(--cream-edge)}
+  /* 두 손 배치 (사용자 스케치): 왼손 = 좌·우, 그 아래 빨리 / 오른손 = 위 확 내리기·보관(작게), 아래 왼쪽 회전·오른쪽 회전 */
+  .pad{display:grid;grid-row:3;grid-column:1 / -1;grid-template-columns:repeat(4,1fr) 18px 2fr 2fr;grid-template-rows:60px 60px;gap:7px;
+    grid-template-areas:"l l r r . dd h" ". d d . . rl rr"}
+  .pad .p-dd,.pad .p-h{align-self:end;height:48px}
+  .pad .p-rl{grid-area:rl}.pad .p-l{grid-area:l}.pad .p-r{grid-area:r}
+  .pad .p-dd{grid-area:dd}.pad .p-h{grid-area:h}.pad .p-d{grid-area:d}.pad .p-rr{grid-area:rr}
+  .pad button{touch-action:none;border:none;border-radius:16px;height:100%;min-height:0;font-family:'Jua',sans-serif;font-size:24px;color:var(--ink);
+    background:var(--cream);box-shadow:0 4px 0 var(--cream-edge);-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;padding:0}
+  .pad button svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+  .pad button svg .f{fill:currentColor;stroke-width:1.5}
+  .pad .p-rr svg,.pad .p-rl svg{width:34px;height:34px}
+  .pad button.on{transform:translateY(2px) scale(.96) !important;filter:brightness(.93)}
   .pad .drop{background:linear-gradient(180deg,#ff8d90,#ec5168);color:#fff;box-shadow:0 4px 0 var(--coral-dark)}
   .pad .rot{background:linear-gradient(180deg,#ffe27e,#ffc94a);box-shadow:0 4px 0 var(--sun-dark)}
+  .pad .rot2{background:linear-gradient(180deg,#fff1b8,#ffe08a)}
   .panel>.btn{grid-row:4;grid-column:span 3;margin:0;width:auto;font-size:15px !important;padding:9px 2px !important;box-shadow:0 3px 0 var(--cream-edge)}
   .panel>.btn-s{box-shadow:0 3px 0 var(--coral-dark)}.panel>.btn-p{box-shadow:0 3px 0 var(--sun-dark)}
   .pz{width:11px;height:12px;margin-right:5px}
@@ -317,12 +325,12 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
 @media (prefers-reduced-motion:reduce){.ggobi,.wisp,.logo .wisp-i{animation:none}}
 
 /* 받은 그림 (로고, 상황별 꼬비) */
-.logo-img{display:block;width:min(470px,36vw);height:auto;filter:drop-shadow(0 6px 0 rgba(20,16,60,.35))}
+.logo-img{display:block;width:min(420px,32vw);height:auto;filter:drop-shadow(0 6px 0 rgba(20,16,60,.35))}
 .ggobi.block{right:1.2vw;bottom:-4px;width:clamp(110px,11vw,180px);animation:wave 3.6s ease-in-out infinite;animation-delay:-1.4s}
 #pause-overlay .pause-cat{display:block;width:150px;height:auto;margin:0 auto 6px}
 .modal-pic{display:block;width:130px;height:auto;margin:-4px auto 4px;max-height:18vh;object-fit:contain}
-@media (max-height:820px){.logo-img{width:min(400px,32vw)}}
-@media (max-width:760px), (pointer:coarse){.logo-img{width:min(330px,78vw)}#pause-overlay .pause-cat{width:110px}.modal-pic{width:110px}}
+@media (max-height:820px){.logo-img{width:min(360px,29vw)}}
+@media (max-width:760px), (pointer:coarse){.logo-img{width:min(300px,72vw)}#pause-overlay .pause-cat{width:110px}.modal-pic{width:110px}}
   /* 버튼 아래 두꺼운 그림자를 없애 테두리 두께를 위아래 같게 */
   .game-btn, .diff-btn, .btn, .btn-s, .btn-r, .btn-p, .tbtn, .pad button, .topbar a, .topbar button { box-shadow:none !important; }
   .game-btn:active, .diff-btn:active, .btn:active, .pad button:active { transform:translateY(2px) scale(.97) !important; }
@@ -400,7 +408,7 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
   <div class="logo">
     <img class="peek" src="img/ggobi-peek.png" alt="">
     <img class="wisp-i" src="img/wisp.png" alt="">
-    <h1 class="game-title"><img class="logo-img" src="img/logo.png" alt="꼬비꼬비 테트리스"></h1>
+    <h1 class="game-title"><img class="logo-img" src="img/logo.png" alt="꼬비의 블록 쌓기"></h1>
     <img class="wisp-i r" src="img/wisp.png" alt="">
   </div>
   <div id="layout">
@@ -454,12 +462,13 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
       </div>
     </div>
     <div class="pad" id="touch-pad" aria-label="터치 조작">
-      <button data-act="left" aria-label="왼쪽">◀</button>
-      <button data-act="right" aria-label="오른쪽">▶</button>
-      <button data-act="rotate" class="rot" aria-label="회전">⟳</button>
-      <button data-act="down" aria-label="빠르게">▼</button>
-      <button data-act="drop" class="drop" aria-label="바로 떨어뜨리기">⤓</button>
-      <button data-act="hold" aria-label="보관"><small>보관</small>⇄</button>
+      <button data-act="rotl" class="rot2 p-rl" aria-label="왼쪽으로 회전"><svg viewBox="0 0 24 24"><path d="M4 4v6h6"/><path d="M4.6 10A8 8 0 1 1 6 16.5"/></svg></button>
+      <button data-act="left" class="p-l" aria-label="왼쪽"><svg viewBox="0 0 24 24"><path class="f" d="M16 4L6 12l10 8z"/></svg></button>
+      <button data-act="right" class="p-r" aria-label="오른쪽"><svg viewBox="0 0 24 24"><path class="f" d="M8 4l10 8-10 8z"/></svg></button>
+      <button data-act="hold" class="p-h" aria-label="보관"><svg viewBox="0 0 24 24"><path d="M4 8h14l-3-3M20 16H6l3 3"/></svg></button>
+      <button data-act="rotate" class="rot p-rr" aria-label="오른쪽으로 회전"><svg viewBox="0 0 24 24"><path d="M20 4v6h-6"/><path d="M19.4 10A8 8 0 1 0 18 16.5"/></svg></button>
+      <button data-act="down" class="p-d" aria-label="빨리 내리기"><svg viewBox="0 0 24 24"><path class="f" d="M4 7h16l-8 11z"/></svg></button>
+      <button data-act="drop" class="drop p-dd" aria-label="확 내리기"><svg viewBox="0 0 24 24"><path d="M6 4l6 6 6-6M6 11l6 6 6-6M5 21h14"/></svg></button>
     </div>
   </div>
 </div>
@@ -468,7 +477,7 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
 <div id="start-modal" class="modal show">
   <div class="modal-box">
     <div class="modal-hero"><img src="img/ggobi-wave.png" alt="" style="width:46%;margin:0 auto"><svg class="hs a"><use href="#i-spark"/></svg><svg class="hs b"><use href="#i-spark"/></svg></div>
-    <div class="modal-title">꼬비꼬비 테트리스</div>
+    <div class="modal-title">꼬비의 블록 쌓기</div>
     <div class="modal-sub">10단계까지 완주해 보세요!</div>
     <div class="result-card rules">
       <div class="rt">🎯 게임 규칙</div>
@@ -1638,19 +1647,25 @@ draw();
   const pad=document.getElementById('touch-pad');
   const canPlay=()=>started&&!paused&&!countdownActive;
   const ACT={left:()=>tryMoveHorizontal(-1),right:()=>tryMoveHorizontal(1),down:()=>softDrop(),
-    rotate:()=>tryRotate(1),drop:()=>hardDrop(),hold:()=>holdPiece()};
+    rotate:()=>tryRotate(1),rotl:()=>tryRotate(-1),drop:()=>hardDrop(),hold:()=>holdPiece()};
   const REPEAT={left:1,right:1,down:1};
-  let timer=null;
-  const stop=()=>{clearTimeout(timer);clearInterval(timer);timer=null;pad.querySelectorAll('.on').forEach(b=>b.classList.remove('on'));};
+  // 두 손으로 동시에 누를 수 있게 손가락마다 따로 관리
+  const held=new Map();
+  const stop=id=>{const h=held.get(id);if(!h)return;clearTimeout(h.t);clearInterval(h.t);h.b.classList.remove('on');held.delete(id);};
   pad.addEventListener('pointerdown',e=>{
     const b=e.target.closest('button');if(!b)return;
-    e.preventDefault();stop();b.classList.add('on');
+    e.preventDefault();stop(e.pointerId);
+    try{b.setPointerCapture(e.pointerId);}catch(_){}
+    const a=b.dataset.act;
+    // 좌우는 반대쪽을 누르면 먼저 누르던 쪽 반복을 멈춤
+    if(a==='left'||a==='right')held.forEach((h,id)=>{if(h.a==='left'||h.a==='right')stop(id);});
+    const h={b,a,t:null};held.set(e.pointerId,h);b.classList.add('on');
     if(typeof audio!=='undefined'&&audio.resume)audio.resume();
-    const a=b.dataset.act;if(!canPlay())return;
+    if(!canPlay())return;
     ACT[a]();
-    if(REPEAT[a])timer=setTimeout(()=>{timer=setInterval(()=>{if(canPlay())ACT[a]();else stop();},a==='down'?45:60);},170);
+    if(REPEAT[a])h.t=setTimeout(()=>{h.t=setInterval(()=>{if(canPlay())ACT[a]();else stop(e.pointerId);},a==='down'?45:60);},170);
   });
-  ['pointerup','pointercancel','pointerleave'].forEach(t=>pad.addEventListener(t,stop));
+  ['pointerup','pointercancel','lostpointercapture'].forEach(t=>pad.addEventListener(t,e=>stop(e.pointerId)));
   pad.addEventListener('contextmenu',e=>e.preventDefault());
   // 게임판을 톡 치면 회전
   document.getElementById('board-wrap').addEventListener('pointerdown',e=>{
@@ -1658,5 +1673,7 @@ draw();
   });
 })();
 </script>
+<script src="../keynav.js"></script>
+<script src="../credit.js"></script>
 </body>
 </html>

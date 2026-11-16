@@ -83,7 +83,7 @@ h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .info svg{width:20px;height:20px}
 </style>
 </head>
-<body>
+<body data-keynav>
 <div class="topbar">
   <button id="fs-btn" type="button" title="전체화면"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="t" id="fs-txt">전체화면</span></button>
 </div>
@@ -121,8 +121,8 @@ h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
   <img class="char" src="img/ggobi-wave.png" alt="손을 흔드는 꼬비" width="382" height="640">
   <div class="grid">
     <a class="game" href="tetris/">
-      <img src="tetris/thumb.jpg" alt="꼬비꼬비 테트리스 게임 화면">
-      <div class="title"><b>꼬비꼬비 테트리스</b></div>
+      <img src="tetris/thumb.jpg" alt="꼬비의 블록 쌓기 게임 화면">
+      <div class="title"><b>꼬비의 블록 쌓기</b></div>
       <p>10단계까지 완주하고 랭킹 TOP 50에 도전!</p>
     </a>
     <a class="game" href="spelling/">
@@ -151,9 +151,19 @@ h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
       <p>바둑알·장기알을 톡! 힘 게이지와 "딱!" 타이밍으로 판 밖으로.</p>
     </a>
     <a class="game" href="survivor/">
-      <img src="survivor/thumb.jpg" alt="꼬비의 도깨비숲 생존기 게임 화면">
+      <img src="survivor/thumb.jpg?v=2" alt="꼬비의 도깨비숲 생존기 게임 화면">
       <div class="title"><b>꼬비의 도깨비숲 생존기</b></div>
       <p>몰려오는 숲속 요괴를 피해 20분! 무기를 키우고 조합해요.</p>
+    </a>
+    <a class="game" href="worldtour/">
+      <img src="worldtour/thumb.jpg" alt="꼬비의 세계 여행 게임 화면">
+      <div class="title"><b>꼬비의 세계 여행</b></div>
+      <p>주사위를 굴려 세계 도시를 사고 건물을 지어요. 친구나 꼬비 AI와 함께!</p>
+    </a>
+    <a class="game" href="chess/">
+      <img src="chess/thumb.jpg?v=2" alt="꼬비와 체스 한판 게임 화면">
+      <div class="title"><b>꼬비와 체스 한판</b></div>
+      <p>방 코드로 친구와 한 판! 꼬비와 겨루면 아주 쉬움부터 최강까지.</p>
     </a>
     <div class="soon">
       <span>새 게임 준비 중</span>
@@ -171,5 +181,6 @@ h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 KBGM.init({ key:'home', tracks:{ play:'audio/home-bgm.mp3' }, defaultOn:false, vol:.25, calm:1 });
 (function(){ var fs=document.getElementById('fs-btn'); var b=KBGM.button({ className:'', parent:fs.parentNode, long:true }); fs.parentNode.insertBefore(b, fs); })();
 </script>
+<script src="keynav.js"></script>
 </body>
 </html>
