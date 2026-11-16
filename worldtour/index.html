@@ -93,8 +93,12 @@
   .delta.plus { color:var(--mint-d); } .delta.minus { color:var(--coral-d); }
   @keyframes delta { 0%{ opacity:0; transform:translateY(8px) } 15%{ opacity:1; transform:translateY(0) } 75%{ opacity:1 } 100%{ opacity:0; transform:translateY(-16px) } }
   #info { display:flex; gap:6px; flex-wrap:wrap; }
-  .kbd { display:none; min-width:1.5em; padding:0 .3em; margin-right:.4em; border-radius:6px; background:rgba(44,41,80,.12); color:inherit; font-size:.8em; line-height:1.5em; text-align:center; }
-  @media (hover:hover) and (pointer:fine) { .kbd { display:inline-block; } }
+  .kbd { display:none; position:absolute; left:16px; top:50%; transform:translateY(-50%); color:inherit; opacity:.55; font-size:.85em; font-weight:700; line-height:1; pointer-events:none; }
+  #modal button { position:relative; }
+  @media (hover:hover) and (pointer:fine) { .kbd { display:block; } #modal button:has(> .kbd) { padding-left:40px; } }
+  .cbox { display:inline-block; width:1.05em; height:1.05em; margin-right:.4em; vertical-align:-.12em; border:2.5px solid var(--ink); border-radius:5px; background:#fff; position:relative; flex:none; }
+  .cbox.on { background:var(--ink); }
+  .cbox.on::after { content:''; position:absolute; left:28%; top:6%; width:28%; height:55%; border:solid #fff; border-width:0 3px 3px 0; transform:rotate(45deg); }
   #modal button.ksel { outline:3px solid var(--coral); outline-offset:2px; filter:brightness(1.06); }
   #info span img.ic { height:1.25em; vertical-align:-.25em; margin:0 .1em 0 0; }
   #sideBtns button img.ic { height:1.3em; vertical-align:-.3em; margin:0; }
@@ -200,6 +204,7 @@
   .modal .res-img { width:140px; display:block; margin:0 auto; }
   .choices { display:flex; flex-direction:column; gap:8px; margin-top:12px; }
   .choices .game-btn { width:100%; white-space:normal; word-break:keep-all; padding:9px 14px; font-size:17px; display:flex; justify-content:space-between; gap:10px; align-items:center; text-align:left; }
+  .choices .game-btn > span:first-of-type { flex:1; }
   .choices .game-btn span:last-child { flex:none; }
   .choices .game-btn:only-child { justify-content:center; }
   table.toll { width:100%; border-collapse:collapse; margin-top:10px; font-size:15px; }
@@ -867,7 +872,7 @@ let kSel = 0;
 const modalBtns = () => [...$('modalCard').querySelectorAll('button')].filter(b => !b.disabled && b.offsetParent);
 function markKeys() {   // 창이 열리면 버튼마다 단축키 표시
   const bs = modalBtns(); kSel = 0;
-  bs.forEach((b, k) => { b.classList.remove('ksel'); if (k < KEYS.length && !b.querySelector('.kbd')) b.insertAdjacentHTML('afterbegin', '<span class="kbd">' + KEYS[k].toUpperCase() + '</span>'); });
+  bs.forEach((b, k) => { b.classList.remove('ksel'); if (k < KEYS.length && !b.querySelector('.kbd')) b.insertAdjacentHTML('afterbegin', '<b class="kbd">' + KEYS[k].toUpperCase() + '</b>'); });
   if (bs.length > 1) bs[0].classList.add('ksel');
 }
 new MutationObserver(() => { if (!$('modal').classList.contains('hidden')) markKeys(); }).observe($('modalCard'), { childList:true, subtree:true });
@@ -1085,7 +1090,7 @@ function askBuild(p, i) { // 지을 건물을 여러 개 골라요
     const draw = () => {
       const sum = [...sel].reduce((s, k) => s + bCost(i, k), 0);
       showModal('<div class="big">' + tilePic(t) + '</div><h2>' + t.name + '</h2><p>내 도시예요. 지을 건물을 골라요. 여러 개도 돼요! (가진 돈 ' + nf(p.money) + '냥)</p><div class="choices">' +
-        miss.map(k => '<button class="game-btn ' + (sel.has(k) ? 'btn-mint' : 'btn-secondary') + '" data-k="' + k + '"' + (!sel.has(k) && sum + bCost(i, k) > p.money ? ' disabled' : '') + '><span>' + (sel.has(k) ? '✅ ' : '⬜ ') + bIc(k) + ' ' + B[k].n + ' <small style="color:var(--ink2)">(통행료 +' + nf(r10(t.price * B[k].toll)) + ')</small></span><span>' + nf(bCost(i, k)) + '냥</span></button>').join('') +
+        miss.map(k => '<button class="game-btn ' + (sel.has(k) ? 'btn-mint' : 'btn-secondary') + '" data-k="' + k + '"' + (!sel.has(k) && sum + bCost(i, k) > p.money ? ' disabled' : '') + '><span>' + '<i class="cbox' + (sel.has(k) ? ' on' : '') + '"></i>' + bIc(k) + ' ' + B[k].n + ' <small style="color:var(--ink2)">(통행료 +' + nf(r10(t.price * B[k].toll)) + ')</small></span><span>' + nf(bCost(i, k)) + '냥</span></button>').join('') +
         '</div><div class="btn-row"><button class="game-btn btn-secondary" id="mNo">안 지어요</button><button class="game-btn btn-primary" id="mYes"' + (sel.size ? '' : ' disabled') + '>' + (sel.size ? nf(sum) + '냥으로 짓기' : '건물을 골라요') + '</button></div>');
       $('modalCard').querySelector('.choices').onclick = e => { const b = e.target.closest('button'); if (!b || b.disabled) return; const k = +b.dataset.k; sel.has(k) ? sel.delete(k) : sel.add(k); draw(); };
       const done = v => { hideModal(); my === gid ? res(v) : rej(ABORT); };
