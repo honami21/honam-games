@@ -901,12 +901,17 @@ addEventListener('keydown', e => {
   if ((k === 'enter' || k === ' ') && !$('game').classList.contains('hidden') && !$('rollBtn').disabled) { e.preventDefault(); $('rollBtn').click(); }
 });
 // 고르기 창: choices = [{ label, right, cls, v, disabled }]
+const BACK = { back:true }; let backOk = false; // 마을 선물: 다른 도시를 다시 고를 수 있어요
+const BACK_BTN = '<button class="game-btn btn-secondary" data-back="1"><span>← 다른 도시 고르기</span><span></span></button>';
+function backHook(done) { const m = $('modal'); m.onclick = backOk ? e => { if (e.target === m) done(BACK); } : null; }
 function ask(head, choices) {
   const my = gid, m = head.match(/<h2>(.*?)<\/h2>/);
   think(m ? m[1].replace(/<[^>]+>/g, '') : '');
   return new Promise((res, rej) => {
-    showModal(head + '<div class="choices">' + choices.map((c, k) => '<button class="game-btn ' + (c.cls || 'btn-secondary') + '" data-k="' + k + '"' + (c.disabled ? ' disabled' : '') + '><span>' + c.label + '</span><span>' + (c.right || '') + '</span></button>').join('') + '</div>');
-    $('modalCard').querySelector('.choices').onclick = e => { const b = e.target.closest('button'); if (!b || b.disabled) return; hideModal(); my === gid ? res(choices[+b.dataset.k].v) : rej(ABORT); };
+    const fin = v => { $('modal').onclick = null; hideModal(); my === gid ? res(v) : rej(ABORT); };
+    showModal(head + '<div class="choices">' + choices.map((c, k) => '<button class="game-btn ' + (c.cls || 'btn-secondary') + '" data-k="' + k + '"' + (c.disabled ? ' disabled' : '') + '><span>' + c.label + '</span><span>' + (c.right || '') + '</span></button>').join('') + (backOk ? BACK_BTN : '') + '</div>');
+    $('modalCard').querySelector('.choices').onclick = e => { const b = e.target.closest('button'); if (!b || b.disabled) return; fin(b.dataset.back ? BACK : choices[+b.dataset.k].v); };
+    backHook(fin);
   });
 }
 const okBtn = (label) => [{ label: label || '알겠어요', cls:'btn-primary', v:true }];
@@ -1099,9 +1104,10 @@ function askBuild(p, i) { // 지을 건물을 여러 개 골라요
       const sum = [...sel].reduce((s, k) => s + bCost(i, k), 0);
       showModal('<div class="big">' + tilePic(t) + '</div><h2>' + t.name + '</h2><p>내 도시예요. 지을 건물을 골라요. 여러 개도 돼요!<br><span class="have">가진 돈 ' + nf(p.money) + '냥</span></p><div class="choices">' +
         miss.map(k => '<button class="game-btn ' + (sel.has(k) ? 'btn-mint' : 'btn-secondary') + '" data-k="' + k + '"' + (!sel.has(k) && sum + bCost(i, k) > p.money ? ' disabled' : '') + '><span>' + '<i class="cbox' + (sel.has(k) ? ' on' : '') + '"></i>' + bIc(k) + ' ' + B[k].n + ' <small style="color:var(--ink2)">(통행료 +' + nf(r10(t.price * B[k].toll)) + ')</small></span><span>' + nf(bCost(i, k)) + '냥</span></button>').join('') +
-        '</div><div class="btn-row"><button class="game-btn btn-secondary" id="mNo">안 지어요</button><button class="game-btn btn-primary" id="mYes"' + (sel.size ? '' : ' disabled') + '>' + (sel.size ? nf(sum) + '냥으로 짓기' : '건물을 골라요') + '</button></div>');
-      $('modalCard').querySelector('.choices').onclick = e => { const b = e.target.closest('button'); if (!b || b.disabled) return; const k = +b.dataset.k; sel.has(k) ? sel.delete(k) : sel.add(k); draw(); };
-      const done = v => { hideModal(); my === gid ? res(v) : rej(ABORT); };
+        (backOk ? BACK_BTN : '') + '</div><div class="btn-row"><button class="game-btn btn-secondary" id="mNo">안 지어요</button><button class="game-btn btn-primary" id="mYes"' + (sel.size ? '' : ' disabled') + '>' + (sel.size ? nf(sum) + '냥으로 짓기' : '건물을 골라요') + '</button></div>');
+      const done = v => { $('modal').onclick = null; hideModal(); my === gid ? res(v) : rej(ABORT); };
+      $('modalCard').querySelector('.choices').onclick = e => { const b = e.target.closest('button'); if (!b || b.disabled) return; if (b.dataset.back) return done(BACK); const k = +b.dataset.k; sel.has(k) ? sel.delete(k) : sel.add(k); draw(); };
+      backHook(done);
       $('mNo').onclick = () => done([]); $('mYes').onclick = () => done([...sel].sort());
     };
     draw();
@@ -1117,6 +1123,7 @@ async function buildAt(p, i) { // 내 땅에서 건물이나 랜드마크 짓기
       else yes = await ask('<div class="big">' + lmPic(t) + '</div><h2>' + t.name + ' 랜드마크</h2><p>건물 3개를 다 지었어요! <b>랜드마크</b>를 세우면 통행료가 ' + nf(tollOf(i, 7, true)) + '냥이 되고, 랜드마크 반값 인수권이 없으면 아무도 인수할 수 없어요.<br><span class="have">가진 돈 ' + nf(p.money) + '냥</span></p>',
         [{ label:I_LM + ' 랜드마크 세우기', right:nf(c) + '냥', cls:'btn-mint', v:true }, { label:'다음에 할래요', v:false }]);
     } else { say(pn(p) + ' ' + t.name + ' 랜드마크를 세울 돈(' + nf(c) + '냥)이 모자라요.'); await wait(900); }
+    if (yes === BACK) return BACK;
     if (yes) { money(p, -c); G.lm[i] = true; beep('win'); say(pn(p) + ' ' + t.name + '에 <b>랜드마크</b>를 세웠어요!'); refresh(); landFx(i); toast('🏰 ' + t.name + ' 랜드마크 완성! 이제 랜드마크 반값 인수권으로만 인수할 수 있어요'); await wait(900); }
     return;
   }
@@ -1124,6 +1131,7 @@ async function buildAt(p, i) { // 내 땅에서 건물이나 랜드마크 짓기
   if (bot(p)) { await wait(700); list = aiBuild(p, i); }
   else if ([0, 1, 2].some(k => !(G.bld[i] >> k & 1) && bCost(i, k) <= p.money)) list = await askBuild(p, i);
   else { list = []; say(pn(p) + ' 건물을 지을 돈이 모자라요.'); await wait(700); }
+  if (list === BACK) return BACK;
   if (list.length) { list.forEach(k => { money(p, -bCost(i, k)); G.bld[i] |= 1 << k; }); beep('buy'); say(pn(p) + ' ' + t.name + '에 <b>' + list.map(k => B[k].n).join(', ') + '</b>을(를) 지었어요!'); refresh(); landFx(i); if (G.bld[i] === 7) toast(t.name + ' 건물 3개 완성! 다음에 오면 랜드마크를 세울 수 있어요'); await wait(700); }
   else { say(pn(p) + ' 내 도시 ' + t.name + '에서 쉬어 가요.'); await wait(500); }
 }
@@ -1173,7 +1181,9 @@ async function land(p) {
     if (!list.length) { say(pn(p) + ' 깨비샘 마을에 도착!'); await wait(600); return; }
     let i;
     if (bot(p)) { await wait(600); i = list.filter(j => G.bld[j] === 7 ? p.money - lmCost(j) >= aiReserve(p) : aiBuild(p, j).length).sort((a, b) => (G.bld[b] === 7) - (G.bld[a] === 7) || TILES[b].price - TILES[a].price)[0]; if (i == null) { say(pn(p) + ' 깨비샘 마을에서 쉬어 가요.'); await wait(600); return; } }
-    else { toast('🏡 깨비샘 마을 도착 선물! 내 도시 한 곳에 건물을 지을 수 있어요'); say(pn(p) + ' 🏡 건물을 지을 내 도시를 눌러요!', true); i = list.length === 1 ? list[0] : await pickTile(can); }
+    else { toast('🏡 깨비샘 마을 도착 선물! 내 도시 한 곳에 건물을 지을 수 있어요'); say(pn(p) + ' 🏡 건물을 지을 내 도시를 눌러요!', true);
+      if (list.length > 1) { backOk = true; try { for (;;) { i = await pickTile(can); if (await buildAt(p, i) !== BACK) return; say(pn(p) + ' 🏡 건물을 지을 내 도시를 다시 눌러요!', true); } } finally { backOk = false; } }
+      i = list[0]; }
     await buildAt(p, i);
   }
 }
