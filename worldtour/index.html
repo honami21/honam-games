@@ -1055,7 +1055,7 @@ async function pay(p, amount, to, why) { // to: 다른 사람, 'pot', null(은�
     if (p.money + all < amount) { await bankrupt(p, to, why); return false; }
     if (bot(p)) { const list = owned(p).sort((a, b) => sellValue(a) - sellValue(b)); while (p.money < amount) { sell(p, list.shift()); await wait(500); } }
     else while (p.money < amount) {
-      const list = owned(p);
+      const list = owned(p).sort((a, b) => sellValue(a) - sellValue(b) || a - b);   // 받는 돈이 적은 곳부터
       const i = await ask('<div class="big">' + (IMG['ggobi-sad'] ? '<img src="' + IMG['ggobi-sad'] + '">' : '😢') + '</div><h2>돈이 모자라요</h2><p>' + why + ' <b>' + nf(amount) + '냥</b>을 내야 해요.<br>지금 ' + nf(p.money) + '냥, <b>' + nf(amount - p.money) + '냥</b>이 더 필요해요. 팔 곳을 골라요.</p>',
         list.map(i => ({ label:bIcons(i) + ' ' + TILES[i].name, right:'+' + nf(sellValue(i)) + '냥', v:i })).concat([{ label:'파산하고 여행 마치기', cls:'btn-secondary', v:'quit' }]));
       if (i === 'quit') {
