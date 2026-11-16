@@ -6,7 +6,7 @@
 <link rel="apple-touch-icon" href="/icons/icon-180.png"/>
 <link rel="icon" type="image/png" href="/icons/icon-192.png"/>
 <link rel="manifest" href="/manifest.webmanifest"/>
-<meta name="apple-mobile-web-app-title" content="꼬비샘과 쉬는 시간"/>
+<meta name="apple-mobile-web-app-title" content="깨비샘과 쉬는 시간"/>
 <meta name="theme-color" content="#2a2860"/>
 <title>깨비샘의 세계 여행 - 깨비샘과 쉬는 시간</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -324,7 +324,7 @@
 </head>
 <body>
 <div class="topbar">
-  <a href="../" id="home-link" title="꼬비샘과 쉬는 시간으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">쉬는 시간</span></a>
+  <a href="../" id="home-link" title="깨비샘과 쉬는 시간으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">쉬는 시간</span></a>
   <div class="right">
     <button id="sndToggle" type="button" title="소리 켜기/끄기" aria-label="소리 켜기/끄기">🔊</button>
     <button id="fs-btn" type="button" title="전체화면"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="t" id="fs-txt">전체화면</span></button>
@@ -488,7 +488,7 @@ function think(t) { if (NET.driving && G) emit({ k:'think', p:G.turn, t }); }
 const C = (city, price, g, key, name) => ({ type:'city', name, city, price, g, key, short:name });   // name: 나라 이름(칸에 보여요), city: 랜드마크 도시
 const CARD = { type:'card', name:'도깨비 주머니', short:'주머니', emo:'🎁' };
 const TILES = [   // 순서: 사용자가 정한 판 (2026-11-15)
-  { type:'start', name:'꼬비 마을', key:'start', emo:'🏡' },
+  { type:'start', name:'깨비샘 마을', key:'start', emo:'🏡' },
   C('베른', 100, 0, 'bern', '스위스'), Object.assign({}, CARD),
   C('오타와', 120, 0, 'ottawa', '캐나다'), C('아테네', 140, 0, 'athens', '그리스'),
   { type:'mark', name:'보라카이', price:300, key:'boracay', emo:'🏝️' },
@@ -500,7 +500,7 @@ const TILES = [   // 순서: 사용자가 정한 판 (2026-11-15)
   { type:'mark', name:'발리', price:300, key:'bali', emo:'🌺' },
   C('방콕', 280, 3, 'bangkok', '태국'), Object.assign({}, CARD),
   C('마닐라', 300, 3, 'manila', '필리핀'), C('상파울루', 320, 3, 'saopaulo', '브라질'),
-  { type:'fund', name:'꼬비 저금통', key:'fund', emo:'🐷' },
+  { type:'fund', name:'깨비샘 저금통', key:'fund', emo:'🐷' },
   C('마드리드', 340, 4, 'madrid', '스페인'), Object.assign({}, CARD),
   C('베를린', 360, 4, 'berlin', '독일'), C('시드니', 380, 4, 'sydney', '호주'),
   { type:'mark', name:'하와이', price:300, key:'hawaii', emo:'🏄' },
@@ -529,7 +529,7 @@ const CARDS = [
   { t:'내가 소개한 맛집이 인기 폭발! 150냥을 받아요.', emo:'🍜', f:'gain', v:150 },
   { t:'기념품을 너무 많이 샀어요. 100냥을 저금통에 넣어요.', emo:'🛍️', f:'lose', v:100 },
   { t:'여권을 잃어버렸어요. 다시 만드는 값 150냥을 저금통에 넣어요.', emo:'📕', f:'lose', v:150 },
-  { t:'비행기가 꼬비 마을로 돌아가요! 출발 칸으로 가서 용돈을 받아요.', emo:'✈️', f:'goto', v:0 },
+  { t:'비행기가 깨비샘 마을로 돌아가요! 출발 칸으로 가서 용돈을 받아요.', emo:'✈️', f:'goto', v:0 },
   { t:'태풍을 만나 도깨비섬에 내렸어요. 도깨비섬으로 가요.', emo:'🌀', f:'island' },
   { t:'도깨비섬 탈출권! 가지고 있다가 섬에 갇혔을 때 써요.', emo:'🎫', f:'ticket' },
   { t:'깜짝 열기구 탑승권! 열기구 여행 칸으로 가요.', emo:'🎈', f:'goto', v:BALLOON },
@@ -539,9 +539,9 @@ const CARDS = [
   { t:'지름길을 찾았어요! 앞으로 3칸 가요.', emo:'🧭', f:'step', v:3 },
   { t:'지도를 거꾸로 봤어요. 뒤로 3칸 가요.', emo:'🗺️', f:'step', v:-3 },
   { t:'서울 구경 가자! 서울로 가요.', emo:'🏙️', f:'goto', v:SEOUL },
-  { t:'꼬비 저금통 당첨! 저금통 칸으로 가서 모인 돈을 받아요.', emo:'🐷', f:'goto', v:FUND },
+  { t:'깨비샘 저금통 당첨! 저금통 칸으로 가서 모인 돈을 받아요.', emo:'🐷', f:'goto', v:FUND },
   { t:'통행료 면제권! 가지고 있다가 남의 도시에서 통행료를 한 번 안 내요.', emo:'🎟️', f:'free' },
-  { t:'내 도시가 보고 싶어요. 가장 비싼 내 도시로 가요. (없으면 꼬비 마을로)', emo:'🏠', f:'mybest' },
+  { t:'내 도시가 보고 싶어요. 가장 비싼 내 도시로 가요. (없으면 깨비샘 마을로)', emo:'🏠', f:'mybest' },
   { t:'도깨비 방망이 뚝딱! 내 도시 한 곳에 건물 하나를 공짜로 지어요. 건물이 다 있으면 랜드마크를 세워요.', emo:'🪄', f:'freebuild' },
   { t:'반값 인수권! 가지고 있다가 남의 도시를 인수할 때 반값만 내요.', emo:'🤝', f:'half' },
   { t:'여행 복권 당첨! 300냥을 받아요.', emo:'🎉', f:'gain', v:300 },
@@ -550,7 +550,7 @@ const CARDS = [
   { t:'길거리 음식을 너무 많이 먹어 배탈이 났어요. 병원비 200냥을 저금통에 넣어요.', emo:'🤒', f:'lose', v:200 },
   { t:'바닷가 여름 방학 초대장! 보라카이로 가요.', emo:'🏖️', f:'goto', v:TILES.findIndex(t => t.key === 'boracay') },
   { t:'훌라춤 축제 초대장! 하와이로 가요.', emo:'🌺', f:'goto', v:TILES.findIndex(t => t.key === 'hawaii') },
-  { t:'꼬비 마을에서 응원 용돈이 왔어요. 300냥을 받아요.', emo:'💌', f:'gain', v:300 },
+  { t:'깨비샘 마을에서 응원 용돈이 왔어요. 300냥을 받아요.', emo:'💌', f:'gain', v:300 },
   { t:'여행 안내 아르바이트! 돈이 가장 많은 친구에게 100냥을 받아요.', emo:'🧢', f:'rich', v:100 },
   { t:'내 도시에서 축제가 열렸어요! 가진 도시 한 곳마다 30냥씩 받아요.', emo:'🎪', f:'fest', v:30 },
   { t:'도깨비 바람이 등을 밀어 줘요. 주사위를 한 번 더 굴려요!', emo:'🎲', f:'again' },
@@ -562,7 +562,7 @@ const IMG = {};
 const IMG_NAMES = ['logo', 'ggobi-travel', 'ggobi-happy', 'ggobi-sad', 'ggobi-win', 'card-back', 'bld-tent', 'bld-house', 'bld-hotel', 'bld-landmark',
   'piece-red', 'piece-blue', 'piece-green', 'piece-yellow', 'corner-start', 'corner-island', 'corner-fund', 'corner-balloon', 'tile-card', 'tile-give']
   .concat(TILES.filter(t => t.type === 'mark').map(t => 'city-' + t.key)).concat(TILES.filter(t => t.type === 'city').map(t => 'flag-' + t.key)).concat(TILES.filter(t => t.type === 'city').map(t => 'lm-' + t.key)).concat(CARDS.map((c, k) => 'card-' + String(k + 1).padStart(2, '0')));
-const IMG_V = 2;
+const IMG_V = 3;
 IMG_NAMES.forEach(n => { const im = new Image(); im.onload = () => { IMG[n] = 'img/' + n + '.png?v=' + IMG_V; imgReady(); }; im.src = 'img/' + n + '.png?v=' + IMG_V; });
 [['bg.jpg', () => document.body.classList.add('hasbg')], ['board-center.jpg', () => $('center').classList.add('art')]].forEach(([f, cb]) => { const im = new Image(); im.onload = cb; im.src = 'img/' + f; });
 let imgTimer = 0;
@@ -623,12 +623,12 @@ KBGM.calm();
 let slots = [{ kind:'human', name:'' }, { kind:'ai', name:'' }, { kind:'off', name:'' }, { kind:'off', name:'' }];
 try { const s = JSON.parse(store('worldtour-slots')); if (Array.isArray(s) && s.length === 4) slots = s; } catch (e) {}
 let endMode = store('worldtour-end') || 'bank', endTime = +(store('worldtour-time') || 20), endLaps = [10, 20, 30].includes(+store('worldtour-laps')) ? +store('worldtour-laps') : 10;
-const defName = (i, kind) => kind === 'ai' ? COLORS[i].name + ' 꼬비' : (i + 1) + '번 여행자';
+const defName = (i, kind) => kind === 'ai' ? COLORS[i].name + ' 깨비샘' : (i + 1) + '번 여행자';
 function drawSlots() {
   $('slots').innerHTML = slots.map((s, i) =>
     '<div class="slot' + (s.kind === 'off' ? ' off' : '') + '"><div class="chip" style="' + chipBg(i) + '"></div>' +
     '<input maxlength="8" data-i="' + i + '" placeholder="' + defName(i, s.kind) + '" value="' + (s.name || '').replace(/"/g, '&quot;') + '">' +
-    '<div class="seg" data-i="' + i + '">' + [['human', '사람'], ['ai', '꼬비 AI'], ['off', '쉬기']].map(([k, l]) => '<button data-k="' + k + '" class="' + (s.kind === k ? 'on' : '') + '">' + l + '</button>').join('') + '</div></div>').join('');
+    '<div class="seg" data-i="' + i + '">' + [['human', '사람'], ['ai', '깨비샘 AI'], ['off', '쉬기']].map(([k, l]) => '<button data-k="' + k + '" class="' + (s.kind === k ? 'on' : '') + '">' + l + '</button>').join('') + '</div></div>').join('');
 }
 $('slots').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
@@ -654,7 +654,7 @@ updEnd(); drawSlots();
 
 const HOW = '<h2>놀이 방법</h2><ul class="how">' + [
   ['<i class="mdie"><i></i><i></i><i></i></i>', '주사위', '처음에 하나씩 굴려 <b>큰 숫자부터</b> 순서를 정해요 · 2개를 굴려 나온 만큼 가요 · <b>같은 숫자</b>가 나오면 한 번 더 · 세 번 연속이면 도깨비섬으로'],
-  [ic('corner-start', '꼬비 마을'), '꼬비 마을', '지나가거나 도착하면 용돈 <b>' + SALARY.toLocaleString('ko-KR') + '냥</b> · 딱 도착하면 내 도시 한 곳을 골라 건물이나 랜드마크를 지어요'],
+  [ic('corner-start', '깨비샘 마을'), '깨비샘 마을', '지나가거나 도착하면 용돈 <b>' + SALARY.toLocaleString('ko-KR') + '냥</b> · 딱 도착하면 내 도시 한 곳을 골라 건물이나 랜드마크를 지어요'],
   [I_CITY, '도시 사기', '주인 없는 도시에 서면 땅을 사요 · <b>내 땅에 다시 도착하면</b> 건물을 지어요'],
   [ic('bld-tent', '텐트'), '건물', '<b>텐트, 게스트하우스, 호텔</b>은 함께 설 수 있어요 · 지을수록 통행료가 더해져요'],
   [ic('icon-free', '통행료'), '통행료', '남의 도시에 서면 통행료를 내요 · 건물이 많을수록 비싸요'],
@@ -662,9 +662,9 @@ const HOW = '<h2>놀이 방법</h2><ul class="how">' + [
   [I_LM, '랜드마크', '건물 3개를 다 지은 내 도시에 또 오면 세워요 · 랜드마크 도시는 <b>랜드마크 반값 인수권</b>이 있어야만 인수할 수 있어요'],
   [ic('icon-resort', '휴양지'), '휴양지', '보라카이, 발리, 하와이, 푸켓 · 건물은 못 짓지만 많이 가질수록 통행료가 올라요'],
   [ic('corner-island', '도깨비섬'), '도깨비섬', '3번 쉬어요 · 같은 숫자가 나오거나 ' + ISLAND_FEE + '냥을 내면 탈출'],
-  [ic('icon-pot', '꼬비 저금통'), '꼬비 저금통', '기부금과 벌금이 모여요 · 도착하면 몽땅 받아요'],
-  [ic('corner-balloon', '열기구'), '열기구', '다음 차례에 원하는 칸으로 날아가요 · 앞으로만 날아가서 꼬비 마을을 지나면 용돈도 받아요'],
-  [ic('tile-card', '도깨비 주머니'), '도깨비 주머니', '행운 카드를 한 장 뽑아요 · 카드로 이동할 때는 앞으로 가서 꼬비 마을을 지나면 용돈도 받아요 (뒤로 가기 카드는 빼고)'],
+  [ic('icon-pot', '깨비샘 저금통'), '깨비샘 저금통', '기부금과 벌금이 모여요 · 도착하면 몽땅 받아요'],
+  [ic('corner-balloon', '열기구'), '열기구', '다음 차례에 원하는 칸으로 날아가요 · 앞으로만 날아가서 깨비샘 마을을 지나면 용돈도 받아요'],
+  [ic('tile-card', '도깨비 주머니'), '도깨비 주머니', '행운 카드를 한 장 뽑아요 · 카드로 이동할 때는 앞으로 가서 깨비샘 마을을 지나면 용돈도 받아요 (뒤로 가기 카드는 빼고)'],
   [ic('ggobi-sad', '돈이 모자라면'), '돈이 모자라면', '도시를 반값에 팔아요 · 그래도 못 내면 파산 · 내 차례에 <b>파산하기</b>를 눌러 스스로 마칠 수도 있어요'],
   [ic('icon-bankmode', '파산할 때까지'), '파산할 때까지', '누군가 <b>20바퀴</b>를 돌면 통행료, 상금, 벌금이 <b>2배</b> · <b>30바퀴</b>를 돌면 <b>3배</b>'],
   [ic('icon-help', '칸 정보'), '칸 정보', '보드의 칸을 누르면 값과 통행료를 볼 수 있어요']
@@ -758,7 +758,7 @@ function toStart() { gid++; G = null; hideModal(); $('game').classList.add('hidd
 $('quitBtn').onclick = async () => {
   const my = gid;
   if (NET.on) {
-    showModal('<h2>방에서 나갈까요?</h2><p>' + (NET.role === 'watch' ? '구경을 그만해요.' : '내 차례는 꼬비가 대신 해 줘요. 같은 방 번호로 다시 들어오면 이어서 할 수 있어요.') + '</p><div class="btn-row"><button class="game-btn btn-secondary" id="mNo">계속하기</button><button class="game-btn btn-primary" id="mYes">나가기</button></div>', true);
+    showModal('<h2>방에서 나갈까요?</h2><p>' + (NET.role === 'watch' ? '구경을 그만해요.' : '내 차례는 깨비샘이 대신 해 줘요. 같은 방 번호로 다시 들어오면 이어서 할 수 있어요.') + '</p><div class="btn-row"><button class="game-btn btn-secondary" id="mNo">계속하기</button><button class="game-btn btn-primary" id="mYes">나가기</button></div>', true);
     $('mNo').onclick = () => restoreModal(); $('mYes').onclick = () => leaveRoom();
     return;
   }
@@ -929,8 +929,8 @@ function tileInfo(i) {
       (o != null ? '<p style="font-size:15px">' + (G.lm[i] ? I_LM + ' 랜드마크 도시는 랜드마크 반값 인수권이 있어야 인수할 수 있어요. (인수하는 값 ' + nf(Math.round(takeCost(i) / 2)) + '냥)' : '인수하는 값 <b>' + nf(takeCost(i)) + '냥</b>') + '</p>' : '');
   } else if (t.type === 'mark') {
     h += '<p>' + (o != null ? pn(G.players[o]) + '의 휴양지' : '주인 없는 휴양지') + ' · 값 ' + nf(t.price) + '냥</p><p>건물은 못 지어요.<br>휴양지를 많이 가질수록 통행료가 올라요.</p><table class="toll">' + [1, 2, 3, 4].map(n => '<tr><td>휴양지 ' + n + '곳</td><td>통행료 ' + nf(MARK_TOLL[n]) + '</td></tr>').join('') + '</table>';
-  } else h += '<p>' + ({ start:'지나가거나 도착하면 용돈 ' + nf(SALARY) + '냥을 받아요.<br>딱 도착하면 내 도시 한 곳에 건물을 지을 수 있어요.', card:'도깨비 주머니에서 행운 카드를 한 장 뽑아요.', give:GIVE + '냥을 꼬비 저금통에 넣어요.',
-    island:'3번 쉬어요.<br>같은 숫자가 나오거나 ' + ISLAND_FEE + '냥을 내면 나올 수 있어요.', fund:'지금까지 모인 ' + nf(G.pot) + '냥을 몽땅 받아요.', balloon:'다음 차례에 원하는 칸으로 날아가요.<br>앞으로만 날아가서, 꼬비 마을을 지나면 용돈도 받아요.' }[t.type]) + '</p>';
+  } else h += '<p>' + ({ start:'지나가거나 도착하면 용돈 ' + nf(SALARY) + '냥을 받아요.<br>딱 도착하면 내 도시 한 곳에 건물을 지을 수 있어요.', card:'도깨비 주머니에서 행운 카드를 한 장 뽑아요.', give:GIVE + '냥을 깨비샘 저금통에 넣어요.',
+    island:'3번 쉬어요.<br>같은 숫자가 나오거나 ' + ISLAND_FEE + '냥을 내면 나올 수 있어요.', fund:'지금까지 모인 ' + nf(G.pot) + '냥을 몽땅 받아요.', balloon:'다음 차례에 원하는 칸으로 날아가요.<br>앞으로만 날아가서, 깨비샘 마을을 지나면 용돈도 받아요.' }[t.type]) + '</p>';
   return h;
 }
 let picking = null;
@@ -1019,7 +1019,7 @@ async function decideOrder() {
 }
 
 // ---------- 이동 ----------
-function passStart(p) { p.laps++; money(p, SALARY); beep('coin'); say(pn(p) + ' 꼬비 마을을 지나 용돈 <b>' + nf(SALARY) + '냥</b>!'); if (G.mode === 'laps' && p.laps >= G.laps) G.endFlag = true; }
+function passStart(p) { p.laps++; money(p, SALARY); beep('coin'); say(pn(p) + ' 깨비샘 마을을 지나 용돈 <b>' + nf(SALARY) + '냥</b>!'); if (G.mode === 'laps' && p.laps >= G.laps) G.endFlag = true; }
 async function walk(p, steps, show) { // show: 다른 기기에서 보여 주기만
   emit({ k:'walk', p:p.id, s:steps });
   const dir = steps > 0 ? 1 : -1, el = pieceEls[p.id];
@@ -1033,7 +1033,7 @@ async function walk(p, steps, show) { // show: 다른 기기에서 보여 주기
   el.style.transitionDuration = '';
   landFx(p.pos);
 }
-async function sail(p, dest, show) { // 열기구: 앞으로만 날아가요 (꼬비 마을을 지나면 용돈)
+async function sail(p, dest, show) { // 열기구: 앞으로만 날아가요 (깨비샘 마을을 지나면 용돈)
   emit({ k:'sail', p:p.id, d:dest });
   const el = pieceEls[p.id]; el.classList.add('fly'); beep('fly');
   el.style.transitionDuration = sp(90) + 'ms';
@@ -1164,16 +1164,16 @@ async function land(p) {
     }
   } else if (t.type === 'card') await drawCard(p);
   else if (t.type === 'give') { const gv = GIVE * mult(); say(pn(p) + ' 기부 천사! 저금통에 <b>' + gv + '냥</b>을 넣어요.'); await wait(700); await pay(p, gv, 'pot', '기부금'); await wait(400); }
-  else if (t.type === 'fund') { if (G.pot > 0) { const v = G.pot; G.pot = 0; money(p, v); beep('coin'); say(pn(p) + ' 꼬비 저금통에서 <b>' + nf(v) + '냥</b>을 받았어요!'); refresh(); } else say(pn(p) + ' 저금통이 비어 있어요.'); await wait(1000); }
+  else if (t.type === 'fund') { if (G.pot > 0) { const v = G.pot; G.pot = 0; money(p, v); beep('coin'); say(pn(p) + ' 깨비샘 저금통에서 <b>' + nf(v) + '냥</b>을 받았어요!'); refresh(); } else say(pn(p) + ' 저금통이 비어 있어요.'); await wait(1000); }
   else if (t.type === 'island') { p.island = 3; beep('bad'); say(pn(p) + ' 도깨비섬에 도착! 3번 쉬어요.'); refresh(); await wait(1000); }
   else if (t.type === 'balloon') { p.balloon = true; say(pn(p) + ' 열기구 탑승! 다음 차례에 원하는 칸으로 날아가요.'); refresh(); await wait(1000); }
-  else { // 꼬비 마을에 딱 도착하면 내 도시 한 곳에 건물을 지어요
+  else { // 깨비샘 마을에 딱 도착하면 내 도시 한 곳에 건물을 지어요
     const can = j => TILES[j].type === 'city' && G.owner[j] === p.id && !G.lm[j] && (G.bld[j] === 7 ? p.money >= lmCost(j) : [0, 1, 2].some(k => !(G.bld[j] >> k & 1) && bCost(j, k) <= p.money));
     const list = TILES.map((t, j) => j).filter(can);
-    if (!list.length) { say(pn(p) + ' 꼬비 마을에 도착!'); await wait(600); return; }
+    if (!list.length) { say(pn(p) + ' 깨비샘 마을에 도착!'); await wait(600); return; }
     let i;
-    if (bot(p)) { await wait(600); i = list.filter(j => G.bld[j] === 7 ? p.money - lmCost(j) >= aiReserve(p) : aiBuild(p, j).length).sort((a, b) => (G.bld[b] === 7) - (G.bld[a] === 7) || TILES[b].price - TILES[a].price)[0]; if (i == null) { say(pn(p) + ' 꼬비 마을에서 쉬어 가요.'); await wait(600); return; } }
-    else { toast('🏡 꼬비 마을 도착 선물! 내 도시 한 곳에 건물을 지을 수 있어요'); say(pn(p) + ' 🏡 건물을 지을 내 도시를 눌러요!', true); i = list.length === 1 ? list[0] : await pickTile(can); }
+    if (bot(p)) { await wait(600); i = list.filter(j => G.bld[j] === 7 ? p.money - lmCost(j) >= aiReserve(p) : aiBuild(p, j).length).sort((a, b) => (G.bld[b] === 7) - (G.bld[a] === 7) || TILES[b].price - TILES[a].price)[0]; if (i == null) { say(pn(p) + ' 깨비샘 마을에서 쉬어 가요.'); await wait(600); return; } }
+    else { toast('🏡 깨비샘 마을 도착 선물! 내 도시 한 곳에 건물을 지을 수 있어요'); say(pn(p) + ' 🏡 건물을 지을 내 도시를 눌러요!', true); i = list.length === 1 ? list[0] : await pickTile(can); }
     await buildAt(p, i);
   }
 }
@@ -1187,7 +1187,7 @@ async function drawCard(p) {
   await notice(p, '<h2>🎁 도깨비 주머니</h2><div class="cardface">' + (ci ? '<img class="cardimg" src="' + ci + '" alt="">' : '<div class="big">' + (c.pic ? '<img src="img/' + c.pic + '.png" alt="">' : c.emo) + '</div>') + '<div>' + c.t + ((mc || c.f === 'repair') && M > 1 ? ' <b style="color:var(--coral-d)">(지금은 ' + M + '배!)</b>' : '') + '</div></div>', 2600);
   if (c.f === 'gain') { money(p, c.v); beep('coin'); }
   else if (c.f === 'lose') await pay(p, c.v, 'pot', '카드 값');
-  else if (c.f === 'goto') { await sail(p, c.v); await land(p); }   // 카드 이동은 앞으로 (꼬비 마을을 지나면 용돈)
+  else if (c.f === 'goto') { await sail(p, c.v); await land(p); }   // 카드 이동은 앞으로 (깨비샘 마을을 지나면 용돈)
   else if (c.f === 'island') { await sail(p, ISLAND); p.island = 3; refresh(); }
   else if (c.f === 'ticket') { p.ticket++; refresh(); }
   else if (c.f === 'each') { for (const q of alive()) { if (q === p || !p.alive) continue; if (c.v > 0) await pay(q, c.v, p, '생일 선물'); else await pay(p, -c.v, q, '간식값'); } }
@@ -1490,7 +1490,7 @@ function showLobby(r) {
   $('lbCount').textContent = '(' + seats.length + '/4)';
   $('lbSeats').innerHTML = [0, 1, 2, 3].map(i => {
     const x = seats[i];
-    if (!x) return '<div class="lseat empty"><div class="chip" style="' + chipBg(i) + ';opacity:.35"></div><div class="nm">빈 자리</div>' + (host ? '<button class="add" data-add="' + i + '">+ 꼬비 AI 넣기</button>' : '') + '</div>';
+    if (!x) return '<div class="lseat empty"><div class="chip" style="' + chipBg(i) + ';opacity:.35"></div><div class="nm">빈 자리</div>' + (host ? '<button class="add" data-add="' + i + '">+ 깨비샘 AI 넣기</button>' : '') + '</div>';
     return '<div class="lseat"><div class="chip" style="' + chipBg(i) + '"></div><div class="nm">' + esc(x.name) + (x.ai ? ' <span class="aitag">AI</span>' : '') + (x.uid === r.hostId ? ' 👑' : '') + (x.uid === myId ? ' <small style="color:var(--coral-d)">(나)</small>' : '') + '</div>' +
       (host && x.ai ? '<button data-del="' + x.uid + '">빼기</button>' : '') + '</div>';
   }).join('');
@@ -1501,7 +1501,7 @@ function showLobby(r) {
     : '끝내기: ' + endTxt;
   $('lbWatch').textContent = nw ? '👀 구경하는 친구 ' + nw + '명' : '';
   $('lbStart').classList.toggle('hidden', !host); $('lbStart').disabled = seats.length < 2;
-  $('lbMsg').textContent = host && seats.length < 2 ? '두 명 이상이면 시작할 수 있어요. 친구를 기다리거나 꼬비 AI를 넣어요.' : '';
+  $('lbMsg').textContent = host && seats.length < 2 ? '두 명 이상이면 시작할 수 있어요. 친구를 기다리거나 깨비샘 AI를 넣어요.' : '';
 }
 $('lbSeats').addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b || !NET.ref) return;
@@ -1510,9 +1510,9 @@ $('lbSeats').addEventListener('click', async e => {
     await FB.runTransaction(FB.db, async tx => {
       const s = await tx.get(NET.ref), d = s.data(); if (d.status !== 'waiting' || d.hostId !== myId) return;
       let seats = (d.seats || []).slice();
-      if (b.dataset.add != null && seats.length < 4) seats.push({ uid:'ai' + Math.random().toString(36).slice(2, 8), name:COLORS[seats.length].name + ' 꼬비', ai:true });
+      if (b.dataset.add != null && seats.length < 4) seats.push({ uid:'ai' + Math.random().toString(36).slice(2, 8), name:COLORS[seats.length].name + ' 깨비샘', ai:true });
       if (b.dataset.del) seats = seats.filter(x => x.uid !== b.dataset.del);
-      seats = seats.map((x, i) => x.ai ? Object.assign({}, x, { name:COLORS[i].name + ' 꼬비' }) : x);
+      seats = seats.map((x, i) => x.ai ? Object.assign({}, x, { name:COLORS[i].name + ' 깨비샘' }) : x);
       tx.update(NET.ref, { seats, updatedAt:ts() });
     });
   } catch (err) { console.error(err); toast('잠시 후 다시 해 주세요.'); }
