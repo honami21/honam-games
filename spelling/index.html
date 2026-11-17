@@ -180,6 +180,10 @@
   .game-btn, .diff-btn, .btn, .btn-s, .btn-r, .btn-p, .tbtn, .pad button, .topbar a, .topbar button { box-shadow:none !important; }
   .game-btn:active, .diff-btn:active, .btn:active, .pad button:active { transform:translateY(2px) scale(.97) !important; }
   .tbtn.on { transform:scale(.94) !important; }
+  /* 큰 화면에서는 카드를 비율대로 키워요 */
+  @media (min-width:1500px) and (min-height:900px){ #overlay .section{ zoom:1.25; } }
+  @media (min-width:1900px) and (min-height:1080px){ #overlay .section{ zoom:1.5; } }
+  @media (min-width:2400px) and (min-height:1300px){ #overlay .section{ zoom:1.8; } }
 </style>
 </head>
 <body class="menu">
