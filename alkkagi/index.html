@@ -62,7 +62,7 @@
   .opt small { display:block; font-size:14px; color:var(--ink2); margin-top:2px; }
   .msg { min-height:20px; font-size:15px; color:var(--coral-d); margin-top:8px; text-align:center; word-break:keep-all; }
 
-  .game-btn { padding:11px 24px; font-size:clamp(17px,2.8vw,20px); border-radius:40px; border:3px solid var(--ink); color:#fff;
+  .game-btn { padding:11px 24px; font-size:clamp(17px,2.8vw,20px); border-radius:40px; border:3px solid var(--ink); color:var(--ink);
     cursor:pointer; min-width:120px; box-shadow:none; transition:transform .08s, box-shadow .08s; white-space:nowrap; }
   .game-btn:active { transform:translateY(2px) scale(.97); }
   .game-btn:disabled { opacity:.55; cursor:not-allowed; }
@@ -182,7 +182,7 @@
   #actions .game-btn.tap { background:var(--coral); font-size:21px !important; padding:9px 34px !important; }
   #actions .game-btn.rot { background:#fff; color:var(--ink); min-width:52px; padding:8px 12px; font-size:20px; touch-action:none; }
   #actions .game-btn.go { background:var(--sun); color:var(--ink); }
-  @media (max-width:560px){ .mode-row{ grid-template-columns:1fr; } .how{ grid-template-columns:1fr; } .how div{ display:flex; gap:8px; align-items:center; text-align:left; } .how i{ font-size:20px; } .how b{ display:inline; margin:0 4px 0 0; white-space:nowrap; } }
+  @media (max-width:560px){ .mode-row{ grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
