@@ -368,7 +368,7 @@
 <!-- 레벨업 -->
 <div class="ov hidden" id="levelup">
   <div class="panel">
-    <img class="ggobi hidden" id="lv-img" src="img/ggobi-levelup.png" alt="">
+    <img class="ggobi hidden" id="lv-img" src="img/ggobi-levelup.png?v=2" alt="">
     <h2>레벨 업! <span id="lv-num"></span></h2>
     <p class="sub">하나를 골라요</p>
     <div class="cards" id="lv-cards"></div>
@@ -620,19 +620,19 @@ function loadImg(name, src) {
   im.onload = () => { IMG[name] = im; if (im.decode) im.decode().catch(() => {}); if (name === 'logo') { $('title-logo').classList.remove('hidden'); $('title-text').classList.add('hidden'); } if (name === 'ground') groundPattern = null; clearTimeout(loadImg.t); loadImg.t = setTimeout(() => { if (typeof modal !== 'undefined' && modal === 'start') buildPick(); }, 120); };
   im.src = src;
 }
-IMG_NAMES.forEach(n => loadImg(n, 'img/' + n + (n === 'ground' ? '.jpg' : '.png')));
+IMG_NAMES.forEach(n => loadImg(n, 'img/' + n + (n === 'ground' ? '.jpg' : '.png') + (n.startsWith('ggobi-') ? '?v=2' : '')));
 loadImg('_ggobi', '../img/ggobi-wave.png');   // 깨비샘 그림이 오기 전 임시
 
 function iconKey(kind, id) { return (kind === 'p' ? 'p-' : kind === 'e' ? 'e-' : 'w-') + id; }
 // 글 사이에 들어가는 작은 그림 (그림이 없으면 이모지)
 function mini(kind, id) {
   const key = iconKey(kind, id), em = kind === 'p' ? PASSIVES[id].emoji : kind === 'e' ? WEAPONS[id].evoEmoji : WEAPONS[id].emoji;
-  return IMG[key] ? `<img class="mini" src="img/${key}.png" alt="">` : em;
+  return IMG[key] ? `<img class="mini" src="img/${key}.png${key.startsWith('ggobi-') ? '?v=2' : ''}" alt="">` : em;
 }
 function iconHTML(kind, id, small) {
   const key = iconKey(kind, id);
   const em = kind === 'p' ? PASSIVES[id].emoji : kind === 'e' ? WEAPONS[id].evoEmoji : WEAPONS[id].emoji;
-  const inner = IMG[key] ? `<img src="img/${key}.png" alt="">` : em;
+  const inner = IMG[key] ? `<img src="img/${key}.png${key.startsWith('ggobi-') ? '?v=2' : ''}" alt="">` : em;
   return `<div class="ic ${kind === 'p' ? 'p' : kind === 'e' ? 'e' : ''} ${small ? 's' : ''}">${inner}</div>`;
 }
 
@@ -1685,8 +1685,8 @@ function drawPlayer() {
   let pick = null;
   if (p.hurtT > 0) pick = ['ggobi-hurt', 70];
   else if (p.moving) {
-    if (vert) pick = ['ggobi-' + vert + (Math.floor(G.t / .14) % 2 + 1), 72];
-    else pick = [['ggobi-run', 70], ['ggobi-run3', 76], ['ggobi-run2', 72], ['ggobi-run4', 76]][Math.floor(G.t / .09) % 4];
+    if (vert) pick = ['ggobi-' + vert + (Math.floor(G.t / .14) % 2 + 1), 74];
+    else pick = [['ggobi-run', 74], ['ggobi-run3', 74], ['ggobi-run2', 74], ['ggobi-run4', 74]][Math.floor(G.t / .09) % 4];
   } else pick = vert ? ['ggobi-idle-' + vert, 74] : ['ggobi-idle', 74];
   if (pick && !IMG[pick[0]] && p.moving && IMG['ggobi-run2'] && Math.floor(G.t / .13) % 2) pick = ['ggobi-run2', 72];
   if (pick && IMG[pick[0]]) { im = pick[0]; ph = pick[1]; }
@@ -1901,12 +1901,12 @@ function refreshSlots() {
   const pcls = id => pc[id] ? ` pair${pc[id].done ? ' done' : ''}" style="--pc:${pc[id].c}` : '';
   for (const w of G.weapons) {
     const key = iconKey(w.evo ? 'e' : 'w', w.id), em = w.evo ? WEAPONS[w.id].evoEmoji : WEAPONS[w.id].emoji;
-    h += `<div class="slot ${w.evo ? 'e' : 'w'} ${canEvolve(w) ? 'ready' : ''}${pcls(w.id)}" title="${esc(w.evo ? WEAPONS[w.id].evoName : WEAPONS[w.id].name)}">${IMG[key] ? `<img src="img/${key}.png" alt="">` : em}<i>${w.evo ? '★' : w.lv}</i></div>`;
+    h += `<div class="slot ${w.evo ? 'e' : 'w'} ${canEvolve(w) ? 'ready' : ''}${pcls(w.id)}" title="${esc(w.evo ? WEAPONS[w.id].evoName : WEAPONS[w.id].name)}">${IMG[key] ? `<img src="img/${key}.png${key.startsWith('ggobi-') ? '?v=2' : ''}" alt="">` : em}<i>${w.evo ? '★' : w.lv}</i></div>`;
   }
   $('slots-w').innerHTML = h; h = '';
   for (const id of G.passiveOrder) {
     const key = 'p-' + id;
-    h += `<div class="slot p${pcls(id)}" title="${esc(PASSIVES[id].name)}">${IMG[key] ? `<img src="img/${key}.png" alt="">` : PASSIVES[id].emoji}<i>${G.passives[id]}</i></div>`;
+    h += `<div class="slot p${pcls(id)}" title="${esc(PASSIVES[id].name)}">${IMG[key] ? `<img src="img/${key}.png${key.startsWith('ggobi-') ? '?v=2' : ''}" alt="">` : PASSIVES[id].emoji}<i>${G.passives[id]}</i></div>`;
   }
   $('slots-p').innerHTML = h;
 }
@@ -2141,7 +2141,7 @@ function endGame(cleared, gaveUp) {
   $('end-title').textContent = cleared ? '🎉 도깨비숲을 지켰어요!' : gaveUp ? '여기까지 했어요' : '쓰러졌어요...';
   $('end-sub').textContent = cleared ? '이무기까지 물리친 진짜 도깨비숲 지킴이!' : sec >= 600 ? '정말 오래 버텼어요! 조합 무기를 노려 봐요.' : '무기를 8레벨까지 키우고 짝꿍 강화를 모아 조합해 봐요!';
   const im = cleared ? 'ggobi-clear' : 'ggobi-gameover';
-  const ei = $('end-img'); if (IMG[im]) { ei.src = 'img/' + im + '.png'; ei.classList.remove('hidden'); } else ei.classList.add('hidden');
+  const ei = $('end-img'); if (IMG[im]) { ei.src = 'img/' + im + '.png?v=2'; ei.classList.remove('hidden'); } else ei.classList.add('hidden');
   $('end-score').textContent = score.toLocaleString();
   $('r-time').textContent = fmtTime(sec); $('r-kills').textContent = G.kills.toLocaleString(); $('r-level').textContent = G.p.lv; $('r-boss').textContent = G.bossBonus.toLocaleString();
   $('save-status').textContent = G.dev ? '개발자 모드라서 랭킹에 저장되지 않아요.' : ''; $('save-status').classList.remove('error'); $('save-btn').disabled = false;
