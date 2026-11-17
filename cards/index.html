@@ -76,7 +76,7 @@
   .btn-secondary { background:#fff; color:var(--ink); }
   .btn-sky { background:var(--sky); color:var(--ink); }
   .btn-mint { background:var(--mint); color:var(--ink); }
-  .seg.ext { margin-top:8px; }
+  .box-sep { border-top:2px dashed #ecd9c6; margin:14px 0 12px; }
   .tg-list { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:12px 0; }
   .tg-list button { display:flex; align-items:center; gap:8px; padding:8px 10px; border:3px solid var(--ink); border-radius:16px; background:#fff; font:inherit; font-size:17px; color:var(--ink); cursor:pointer; text-align:left; }
   .tg-list button .av { width:34px; height:34px; flex:none; border-radius:50%; border:3px solid var(--ink); background:#fff; display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:17px; color:#fff; }
@@ -382,6 +382,8 @@
         <div class="box">
           <div class="box-title">규칙 고르기</div>
           <div class="seg" id="tgSeg"><button data-v="0">한 판만</button><button data-v="200">200점 먼저</button><button data-v="500">500점 먼저</button></div>
+          <div class="box-sep"></div>
+          <div class="box-title">확장팩 고르기</div>
           <div class="seg ext" id="extSeg"><button data-v="rev">리버스 확장</button><button data-v="swp">스왑 확장</button><button data-v="spd">스피드 확장</button><button data-v="stk">스택 확장</button></div>
         </div>
         <div class="box">
