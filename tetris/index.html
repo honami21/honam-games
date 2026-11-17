@@ -131,6 +131,8 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
 @media (max-height:700px){.modal-hero{width:110px}}
 .modal-title{font-size:34px;color:var(--coral);text-shadow:0 3px 0 #fff,0 4px 0 #f3b9b9;margin-bottom:6px;letter-spacing:2px;}
 .modal-sub{font-size:16px;color:#7b6f8c;margin-bottom:16px;}
+.start-logo{display:block;width:min(440px,100%);height:auto;margin:-4px auto 14px}
+@media (max-height:700px){.start-logo{width:min(320px,100%)}}
 .result-card{background:#fff;border:2px solid var(--cream2);border-radius:18px;padding:12px 18px;margin-bottom:14px;}
 .result-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1.5px dashed #f1dccb;font-size:15px;}
 .result-row:last-child{border-bottom:none;}
@@ -475,9 +477,7 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
 <!-- ========= START MODAL ========= -->
 <div id="start-modal" class="modal show">
   <div class="modal-box">
-    <div class="modal-hero"><img src="img/ggobi-wave.png" alt="" style="width:46%;margin:0 auto"><svg class="hs a"><use href="#i-spark"/></svg><svg class="hs b"><use href="#i-spark"/></svg></div>
-    <div class="modal-title">깨비샘의 블록 쌓기</div>
-    <div class="modal-sub">10단계까지 완주해 보세요!</div>
+    <img class="start-logo" src="img/logo.png?v=3" alt="깨비샘의 블록 쌓기">
     <div class="result-card rules">
       <div class="rt">🎯 게임 규칙</div>
       <div class="rb">
