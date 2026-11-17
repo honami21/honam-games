@@ -153,6 +153,9 @@
   .game-btn, .diff-btn, .btn, .btn-s, .btn-r, .btn-p, .tbtn, .pad button, .topbar a, .topbar button { box-shadow:none !important; }
   .game-btn:active, .diff-btn:active, .btn:active, .pad button:active { transform:translateY(2px) scale(.97) !important; }
   .tbtn.on { transform:scale(.94) !important; }
+  .mode-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .mode-row .game-btn { min-width:0; padding:10px 6px; font-size:clamp(15px,2.4vw,18px); white-space:normal; line-height:1.2; word-break:keep-all; }
+  @media (max-width:560px){ .mode-row{ grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
@@ -204,16 +207,16 @@
     <div class="start-wrap">
       <div class="card">
         <img class="logo" src="img/logo.png" alt="깨비샘의 오목 대결" width="900" height="297">
-        <p class="lead">친구와 <b>방 코드</b>로 만나 번갈아 돌을 둬요.<br>가로, 세로, 대각선으로 <b>다섯 개</b>를 먼저 이으면 이겨요!</p>
         <div class="box">
           <div class="field"><input id="nameInput" maxlength="8" placeholder="내 이름 (별명도 좋아요)" autocomplete="off"></div>
         </div>
         <div class="box">
+          <div class="mode-row"><button class="game-btn btn-primary" id="createBtn">방 만들기</button><button class="game-btn btn-info" id="localBtn">한 화면에서 둘이 하기</button><button class="game-btn" id="cpuBtn" style="background:var(--sky);color:var(--ink)">깨비샘과 하기</button></div>
+        </div>
+        <div class="box">
           <div class="box-title">규칙 고르기</div>
-          <label class="opt"><input type="checkbox" id="optTimer" checked><span>한 수에 1분 제한<small>1분 안에 두지 않으면 차례가 친구에게 넘어가요.</small></span></label>
-          <label class="opt"><input type="checkbox" id="optRenju"><span>공식 규칙 (렌주 규칙)<small>먼저 두는 흑은 3·3, 4·4, 여섯 개 이상(장목) 자리에 둘 수 없어요. 어른들의 정식 오목이에요.</small></span></label>
-          <div class="btn-row"><button class="game-btn btn-primary" id="createBtn">방 만들기</button><button class="game-btn btn-info" id="localBtn">한 화면에서 둘이 하기</button><button class="game-btn" id="cpuBtn" style="background:var(--sky);color:var(--ink)">깨비샘과 하기</button></div>
-          <p style="font-size:14px;color:var(--ink2);margin-top:8px;text-align:center;word-break:keep-all">한 화면에서 둘이 하기는 컴퓨터나 휴대폰 하나로 번갈아 둬요.<br>깨비샘과 하기는 혼자서 깨비샘과 겨뤄요. 둘 다 방 코드가 필요 없어요.</p>
+          <label class="opt"><input type="checkbox" id="optTimer" checked><span>한 수에 1분 제한</span></label>
+          <label class="opt"><input type="checkbox" id="optRenju"><span>공식 규칙 (렌주 규칙)</span></label>
         </div>
         <div class="box">
           <div class="box-title">방 코드로 들어가기</div>
@@ -221,7 +224,6 @@
             <input id="codeInput" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="0000" autocomplete="off">
             <button class="game-btn btn-info" id="joinBtn" style="min-width:0">들어가기</button>
           </div>
-          <p style="font-size:14px;color:var(--ink2);margin-top:8px;text-align:center;word-break:keep-all">먼저 들어온 한 명이 대결하고, 그다음부터는 구경할 수 있어요.</p>
         </div>
         <div class="msg" id="startMsg"></div>
       </div>
