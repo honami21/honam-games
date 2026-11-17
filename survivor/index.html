@@ -136,7 +136,7 @@
   .pick-title { margin:14px 0 8px; font-size:18px; }
   #weapon-pick { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
   .wp { border:3px solid var(--edge); background:#fff; border-radius:16px; padding:8px 4px 6px; cursor:pointer; font-family:'Jua',sans-serif; color:var(--ink); font-size:15px; }
-  .wp .ic { margin:0 auto 4px; }
+  .wp .ic { margin:0 auto 4px; border:1.5px solid #222; }
   @media (min-width:760px) { #start .panel { width:min(760px,100%); } }
   #start { flex-direction:column; justify-content:flex-start; gap:6px; }
   #start > * { flex:none; }
@@ -368,8 +368,6 @@
       <button class="game-btn sun" id="rank-btn" type="button"><img class="ico" src="img/icon-rank.png" alt="">랭킹</button>
       <button class="game-btn white" id="help-btn" type="button"><img class="ico" src="img/icon-book.png" alt="">조합표</button>
     </div>
-    <p class="howto" id="howto-pc">움직이기 <span class="kbd">←↑↓→</span> 또는 <span class="kbd">W A S D</span> · 멈춤 <span class="kbd">Esc</span> </p>
-    <p class="howto hidden" id="howto-touch">화면을 누른 채로 끌면 움직여요</p>
   </div>
 </div>
 
@@ -2281,7 +2279,6 @@ $('help-btn').addEventListener('click', openComboFromMenu);
 $('rank-btn').addEventListener('click', () => showRanking());
 $('end-rank-btn').addEventListener('click', () => showRanking());
 $('rank-close').addEventListener('click', () => { hide('ranking'); });
-if (isTouch) { hide('howto-pc'); show('howto-touch'); }
 
 /* ---------- 게임 컨트롤러 ---------- */
 // 왼쪽 스틱·십자키: 움직이기와 메뉴 고르기, A: 누르기, B: 닫기, START: 멈춤과 시작
