@@ -967,7 +967,7 @@ function localRows(n) {
   if (!cur.length) { const me = $('nameInput').value.trim(); if (me) cur[0] = me; }
   box.innerHTML = Array.from({ length: n }, (_, i) => `<div class="field"><span style="background:${PAL[i]}">${i + 1}</span><input maxlength="8" placeholder="${i + 1}번 사람 이름" value="${esc(cur[i] || '')}" autocomplete="off"></div>`).join('');
 }
-$('localBtn').onclick = () => { $('startMsg').textContent = ''; tagsAll(); if (!$('localNames').children.length) localRows(3); $('localModal').classList.remove('hidden'); };
+if ($('localBtn')) $('localBtn').onclick = () => { $('startMsg').textContent = ''; tagsAll(); if (!$('localNames').children.length) localRows(3); $('localModal').classList.remove('hidden'); };
 $('lnPlus').onclick = () => { const n = $('localNames').children.length; if (n < 6) localRows(n + 1); };
 $('lnMinus').onclick = () => { const n = $('localNames').children.length; if (n > 2) localRows(n - 1); };
 $('lnCancel').onclick = () => $('localModal').classList.add('hidden');
