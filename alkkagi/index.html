@@ -1504,7 +1504,7 @@ async function txRun(fn) {
 // 한 화면 / 연습은 판마다 누가 먼저 할지 골라요
 function pickFirst(n1, n2, cb) {
   const m = $('firstModal'), b = $('firstBtns');
-  b.innerHTML = `<button class="game-btn btn-primary" data-f="1">${esc(n1)}</button><button class="game-btn btn-info" data-f="2">${esc(n2)}</button><button class="game-btn btn-secondary" data-f="r">🎲 아무나</button>`;
+  b.innerHTML = `<button class="game-btn" data-f="1" style="background:#bfe3ff;color:var(--ink)">${esc(n1)}</button><button class="game-btn" data-f="2" style="background:#ffc9d6;color:var(--ink)">${esc(n2)}</button><button class="game-btn btn-secondary" data-f="r">아무나</button>`;
   b.onclick = e => {
     const t = e.target.closest('button'); if (!t) return;
     m.classList.add('hidden');
