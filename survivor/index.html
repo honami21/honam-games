@@ -135,7 +135,13 @@
   #weapon-pick { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
   .wp { border:3px solid var(--edge); background:#fff; border-radius:16px; padding:8px 4px 6px; cursor:pointer; font-family:'Jua',sans-serif; color:var(--ink); font-size:15px; }
   .wp .ic { margin:0 auto 4px; }
-  @media (min-width:760px) { #start .panel { width:min(900px,100%); } #weapon-pick { grid-template-columns:repeat(6,1fr); } }
+  @media (min-width:760px) { #start .panel { width:min(760px,100%); } }
+  #start { flex-direction:column; justify-content:flex-start; gap:6px; }
+  #start > * { flex:none; }
+  #start > .panel { margin-bottom:auto; }
+  #start > #title-logo, #start > #title-text { margin-top:auto; }
+  #start #title-logo { width:min(640px,92%); max-width:none; max-height:none; margin:0 auto 6px; }
+  #start .pick-title { margin-top:2px; }
   .wp.on { border-color:var(--wpn); background:#fff1ee; transform:scale(1.03); }
   .wp small { display:block; color:var(--ink2); font-size:12px; margin-top:2px; word-break:keep-all; }
   #wp-desc { min-height:40px; margin-top:10px; font-size:15px; color:var(--ink2); word-break:keep-all; }
@@ -349,10 +355,10 @@
   </div>
 </div>
 <div class="ov hidden" id="start">
+  <img id="title-logo" class="hidden" src="img/logo.png?v=3" alt="깨비샘의 도깨비숲 생존기">
+  <div id="title-text">깨비샘의 <b>도깨비숲</b> 생존기</div>
   <div class="panel">
-    <img id="title-logo" class="hidden" src="img/logo.png?v=3" alt="깨비샘의 도깨비숲 생존기">
-    <div id="title-text">깨비샘의 <b>도깨비숲</b> 생존기</div>
-    <div class="pick-title"><span style="display:inline-block;padding:4px 18px;border-radius:999px;background:rgba(8,12,30,.55);border:2px solid rgba(255,255,255,.6)">무기 선택</span></div>
+    <div class="pick-title"><span style="display:inline-block;padding:6px 26px;border-radius:999px;background:rgba(8,12,30,.55);border:2px solid rgba(255,255,255,.6);font-size:clamp(20px,2.6vw,26px)">무기 선택</span></div>
     <div id="weapon-pick"></div>
     <div id="wp-desc"></div>
     <div class="btns">
