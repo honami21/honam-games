@@ -557,7 +557,7 @@ function onRoom(snap) {
   lastStk = st || { id: '' };
   // 새로 둔 돌 소리
   const mk = `${room.round}-${room.moveNo}`;
-  if (mk !== lastMoveSeen) { if (lastMoveSeen && room.moveNo > 0) beep('stone'); lastMoveSeen = mk; }
+  if (mk !== lastMoveSeen) { if (lastMoveSeen && room.moveNo > 0) setTimeout(() => beep('stone'), 540); lastMoveSeen = mk; }
 
   if (room.status === 'closed') {
     if (role !== 'host') toast('방장이 방을 닫았어요.', 2500);
@@ -783,7 +783,8 @@ function drawArrow(a, mine, hot) {
 function legalDests() { return selected >= 0 ? R.dests(selected) : []; }
 function canMoveNow() { const mine = myColor(); return room && room.status === 'playing' && mine && room.turn === mine && !anim && !busy; }
 function startAnim(prevBoard, from, to, by) {
-  anim = { prev: prevBoard, from, to, by, t0: performance.now(), dur: 460, moving: new Set([from, ...R.shifted(from, to).map(p => p[1])]) };
+  // 1) 집은 큐브가 판 밖으로 들려 나와 반대쪽 끝 바깥까지 이동 → 2) 그 자리에서 밀어 넣으며 줄 전체가 한 칸씩 밀림
+  anim = { prev: prevBoard, from, to, by, t0: performance.now(), dur: 900, moving: new Set([from, to, ...R.shifted(from, to).map(p => p[1])]) };
   const step = () => { if (!anim) return; if (performance.now() - anim.t0 >= anim.dur) { anim = null; draw(); render(); return; } draw(); requestAnimationFrame(step); };
   requestAnimationFrame(step);
 }
@@ -817,9 +818,18 @@ function draw() {
     drawCube(bd[i], CX(i), CY(i), { ring, thin });
   }
   if (anim) {
-    for (const [a, b] of R.shifted(anim.from, anim.to)) drawCube(anim.prev[a], CX(a) + (CX(b) - CX(a)) * e, CY(a) + (CY(b) - CY(a)) * e);
-    const f = anim.from, t = anim.to;
-    drawCube(p < .5 ? anim.prev[f] : anim.by, CX(f) + (CX(t) - CX(f)) * e, CY(f) + (CY(t) - CY(f)) * e, { lift: Math.sin(Math.PI * p) * cell * .45 });
+    const f = anim.from, t = anim.to, SPLIT = .6;
+    const ease = q => q < .5 ? 2 * q * q : 1 - Math.pow(-2 * q + 2, 2) / 2;
+    const q2 = p < SPLIT ? 0 : ease((p - SPLIT) / (1 - SPLIT));     // 밀어 넣기 단계
+    for (const [a, b] of R.shifted(f, t)) drawCube(anim.prev[a], CX(a) + (CX(b) - CX(a)) * q2, CY(a) + (CY(b) - CY(a)) * q2);
+    const out = arrowAt(f, t), k = .78, ox = CX(t) + (out.x - CX(t)) * k, oy = CY(t) + (out.y - CY(t)) * k;   // 반대쪽 끝 바로 바깥
+    let x, y, lift;
+    if (p < SPLIT) {
+      const q = ease(p / SPLIT);
+      x = CX(f) + (ox - CX(f)) * q; y = CY(f) + (oy - CY(f)) * q;
+      lift = Math.min(1, p / .15) * cell * .35 * (1 - Math.max(0, (p - .45) / .15));
+    } else { x = ox + (CX(t) - ox) * q2; y = oy + (CY(t) - oy) * q2; lift = 0; }
+    drawCube(p < SPLIT * .5 ? anim.prev[f] : anim.by, x, y, { lift });
   }
   if (myTurn && selected >= 0) {
     dests.forEach(t => drawArrow(arrowAt(selected, t), mine, hoverArrow === t));
