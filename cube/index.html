@@ -293,8 +293,8 @@
     <h2 style="font-size:28px">누가 먼저 할까요?</h2>
     <p id="chText"></p>
     <div class="btn-row" style="flex-direction:column;align-items:center">
-      <button class="game-btn btn-primary" id="chHost" style="min-width:220px"></button>
-      <button class="game-btn btn-primary" id="chGuest" style="min-width:220px"></button>
+      <button class="game-btn" id="chHost" style="min-width:220px;background:#bfe3ff;color:var(--ink)"></button>
+      <button class="game-btn" id="chGuest" style="min-width:220px;background:#ffc9d6;color:var(--ink)"></button>
       <button class="game-btn btn-info" id="chRandom" style="min-width:220px">아무나 (무작위)</button>
     </div>
   </div>
@@ -584,7 +584,7 @@ function showChoose() {
   const hn = room.hostName || '방장', gn = room.guestName || '친구';
   const local = role === 'local';
   $('chText').textContent = (room.round || 1) > 1 ? `${room.round}번째 판이에요. 먼저 하는 사람이 동그라미예요.` : '먼저 하는 사람이 동그라미예요.';
-  $('chHost').textContent = local ? hn : `나 (${hn})`;
+  $('chHost').textContent = local ? hn : (hn === '나' ? '나' : `나 (${hn})`);
   if (role === 'cpu') $('chText').textContent = (room.round || 1) > 1 ? `${room.round}번째 판이에요. 먼저 하는 쪽이 동그라미예요.` : `깨비샘 실력: ${['', '쉬움', '보통', '어려움'][room.level]}. 먼저 하는 쪽이 동그라미예요.`;
   $('chGuest').textContent = local ? gn : gn;
   $('chooseModal').classList.remove('hidden');
