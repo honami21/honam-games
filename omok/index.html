@@ -6,9 +6,9 @@
 <link rel="apple-touch-icon" href="/icons/icon-180.png"/>
 <link rel="icon" type="image/png" href="/icons/icon-192.png"/>
 <link rel="manifest" href="/manifest.webmanifest"/>
-<meta name="apple-mobile-web-app-title" content="꼬비샘과 쉬는 시간"/>
+<meta name="apple-mobile-web-app-title" content="깨비샘과 쉬는 시간"/>
 <meta name="theme-color" content="#2a2860"/>
-<title>꼬비의 오목 대결 - 꼬비샘과 쉬는 시간</title>
+<title>깨비샘의 오목 대결 - 깨비샘과 쉬는 시간</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
 <style>
@@ -62,7 +62,7 @@
   .opt small { display:block; font-size:14px; color:var(--ink2); margin-top:2px; }
   .msg { min-height:20px; font-size:15px; color:var(--coral-d); margin-top:8px; text-align:center; word-break:keep-all; }
 
-  .game-btn { padding:11px 24px; font-size:clamp(17px,2.8vw,20px); border-radius:40px; border:3px solid var(--ink); color:#fff;
+  .game-btn { padding:11px 24px; font-size:clamp(17px,2.8vw,20px); border-radius:40px; border:3px solid var(--ink); color:var(--ink);
     cursor:pointer; min-width:120px; box-shadow:none; transition:transform .08s, box-shadow .08s; white-space:nowrap; }
   .game-btn:active { transform:translateY(2px) scale(.97); }
   .game-btn:disabled { opacity:.55; cursor:not-allowed; }
@@ -153,11 +153,14 @@
   .game-btn, .diff-btn, .btn, .btn-s, .btn-r, .btn-p, .tbtn, .pad button, .topbar a, .topbar button { box-shadow:none !important; }
   .game-btn:active, .diff-btn:active, .btn:active, .pad button:active { transform:translateY(2px) scale(.97) !important; }
   .tbtn.on { transform:scale(.94) !important; }
+  .mode-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .mode-row .game-btn { min-width:0; padding:10px 6px; font-size:clamp(15px,2.4vw,18px); white-space:normal; line-height:1.2; word-break:keep-all; }
+  @media (max-width:560px){ .mode-row{ grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
 <div class="topbar">
-  <a href="../" id="home-link" title="꼬비샘과 쉬는 시간으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">쉬는 시간</span></a>
+  <a href="../" id="home-link" title="깨비샘과 쉬는 시간으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">쉬는 시간</span></a>
   <div class="right">
     <button id="sndToggle" type="button" title="소리 켜기/끄기" aria-label="소리 켜기/끄기">🔊</button>
     <button id="fs-btn" type="button" title="전체화면"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="t" id="fs-txt">전체화면</span></button>
@@ -203,17 +206,17 @@
   <div class="section">
     <div class="start-wrap">
       <div class="card">
-        <img class="logo" src="img/logo.png" alt="꼬비의 오목 대결" width="900" height="291">
-        <p class="lead">친구와 <b>방 코드</b>로 만나 번갈아 돌을 둬요.<br>가로, 세로, 대각선으로 <b>다섯 개</b>를 먼저 이으면 이겨요!</p>
+        <img class="logo" src="img/logo.png" alt="깨비샘의 오목 대결" width="900" height="297">
         <div class="box">
           <div class="field"><input id="nameInput" maxlength="8" placeholder="내 이름 (별명도 좋아요)" autocomplete="off"></div>
         </div>
         <div class="box">
+          <div class="mode-row"><button class="game-btn btn-primary" id="createBtn">방 만들기</button><button class="game-btn btn-info" id="localBtn">한 화면에서<br>둘이 하기</button><button class="game-btn" id="cpuBtn" style="background:var(--sky);color:var(--ink)">깨비샘과 하기</button></div>
+        </div>
+        <div class="box">
           <div class="box-title">규칙 고르기</div>
-          <label class="opt"><input type="checkbox" id="optTimer" checked><span>한 수에 1분 제한<small>1분 안에 두지 않으면 차례가 친구에게 넘어가요.</small></span></label>
-          <label class="opt"><input type="checkbox" id="optRenju"><span>공식 규칙 (렌주 규칙)<small>먼저 두는 흑은 3·3, 4·4, 여섯 개 이상(장목) 자리에 둘 수 없어요. 어른들의 정식 오목이에요.</small></span></label>
-          <div class="btn-row"><button class="game-btn btn-primary" id="createBtn">방 만들기</button><button class="game-btn btn-info" id="localBtn">한 화면에서 둘이 하기</button><button class="game-btn" id="cpuBtn" style="background:var(--sky);color:var(--ink)">꼬비와 하기</button></div>
-          <p style="font-size:14px;color:var(--ink2);margin-top:8px;text-align:center;word-break:keep-all">한 화면에서 둘이 하기는 컴퓨터나 휴대폰 하나로 번갈아 둬요.<br>꼬비와 하기는 혼자서 꼬비와 겨뤄요. 둘 다 방 코드가 필요 없어요.</p>
+          <label class="opt"><input type="checkbox" id="optTimer" checked><span>한 수에 1분 제한</span></label>
+          <label class="opt"><input type="checkbox" id="optRenju"><span>공식 규칙 (렌주 규칙)</span></label>
         </div>
         <div class="box">
           <div class="box-title">방 코드로 들어가기</div>
@@ -221,7 +224,6 @@
             <input id="codeInput" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="0000" autocomplete="off">
             <button class="game-btn btn-info" id="joinBtn" style="min-width:0">들어가기</button>
           </div>
-          <p style="font-size:14px;color:var(--ink2);margin-top:8px;text-align:center;word-break:keep-all">먼저 들어온 한 명이 대결하고, 그다음부터는 구경할 수 있어요.</p>
         </div>
         <div class="msg" id="startMsg"></div>
       </div>
@@ -268,12 +270,12 @@
   </div>
 </div>
 
-<!-- 꼬비와 하기 -->
+<!-- 깨비샘과 하기 -->
 <div id="cpuModal" class="modal hidden">
   <div class="card">
     <img class="res-img" src="img/ggobi-think.png" alt="">
-    <h2 style="font-size:28px">꼬비와 하기</h2>
-    <p>꼬비 실력을 골라요.</p>
+    <h2 style="font-size:28px">깨비샘과 하기</h2>
+    <p>깨비샘 실력을 골라요.</p>
     <div class="btn-row" style="flex-direction:column;align-items:center">
       <button class="game-btn btn-info lv" data-lv="1" style="min-width:240px">쉬움 <small style="font-size:14px">· 처음 배우는 친구</small></button>
       <button class="game-btn btn-primary lv" data-lv="2" style="min-width:240px">보통 <small style="font-size:14px">· 오목을 아는 친구</small></button>
@@ -671,7 +673,7 @@ function showChoose() {
   const local = role === 'local';
   $('chText').textContent = (room.round || 1) > 1 ? `${room.round}번째 판이에요. 먼저 두는 사람이 흑이에요.` : '먼저 두는 사람이 흑이에요.';
   $('chHost').textContent = local ? hn : `나 (${hn})`;
-  if (role === 'cpu') $('chText').textContent = (room.round || 1) > 1 ? `${room.round}번째 판이에요. 먼저 두는 쪽이 흑이에요.` : `꼬비 실력: ${['', '쉬움', '보통', '어려움'][room.level]}. 먼저 두는 쪽이 흑이에요.`;
+  if (role === 'cpu') $('chText').textContent = (room.round || 1) > 1 ? `${room.round}번째 판이에요. 먼저 두는 쪽이 흑이에요.` : `깨비샘 실력: ${['', '쉬움', '보통', '어려움'][room.level]}. 먼저 두는 쪽이 흑이에요.`;
   $('chGuest').textContent = local ? gn : gn;
   $('chooseModal').classList.remove('hidden');
 }
@@ -753,7 +755,7 @@ function renderStatus() {
     const touch = matchMedia('(pointer:coarse)').matches;
     st.innerHTML = selected >= 0 ? '이 자리가 맞으면 <b>여기에 두기</b>를 눌러요'
       : `<b>내 차례예요!</b> ${touch ? '둘 곳을 눌러요' : '둘 곳을 클릭해요'}`;
-  } else st.innerHTML = role === 'cpu' ? `꼬비가 생각하고 있어요<span class="dots"></span>` : `${esc(nameOf(room.turn))} 차례예요<span class="dots"></span>`;
+  } else st.innerHTML = role === 'cpu' ? `깨비샘이 생각하고 있어요<span class="dots"></span>` : `${esc(nameOf(room.turn))} 차례예요<span class="dots"></span>`;
 }
 function renderActions() {
   const a = $('actions'), mine = myColor();
@@ -925,7 +927,7 @@ cv.addEventListener('pointerup', e => {
 });
 
 // ============================================================
-//  꼬비 (컴퓨터) 실력
+//  깨비샘 (컴퓨터) 실력
 // ============================================================
 const AI_PAT = [
   ['XXXXX', 1e7],
@@ -1054,7 +1056,7 @@ function startCpu(level) {
   room = null; tickKey = ''; passSent = ''; selected = -1; shownResultFor = ''; lastMoveSeen = ''; lastStk = null;
   onRoom({ exists: () => true, data: () => ({
     code: '', status: 'choosing', rule: $('optRenju').checked ? 'renju' : 'free', timer: $('optTimer').checked, level,
-    hostId: 'ME', hostName: n, guestId: 'CPU', guestName: '꼬비', hostColor: 'b',
+    hostId: 'ME', hostName: n, guestId: 'CPU', guestName: '깨비샘', hostColor: 'b',
     board: EMPTY_BOARD, turn: 'b', tick: 1, round: 1, moveNo: 0, last: -1,
     winner: '', winLine: [], endReason: '', lastEvent: 'start', left: '', again: { host: false, guest: false }
   }) });
@@ -1168,8 +1170,8 @@ function showResult() {
   if (w === 'draw') { title = '비겼어요!'; text = '판이 꽉 찼어요. 둘 다 정말 잘했어요!'; img = 'ggobi-cheer'; }
   else if (role === 'local') { title = `${nameOf(w)} 승리!`; text = reason + ' 한 판 더 하면 먼저 둘 사람을 다시 골라요.'; img = 'ggobi-cheer'; if (first) beep('win'); }
   else if (!mine) { title = `${nameOf(w)} 승리!`; text = reason; }
-  else if (w === mine) { title = role === 'cpu' ? '꼬비를 이겼어요!' : '이겼어요!'; text = reason + (role === 'cpu' ? ' 한 판 더 하면 먼저 둘 쪽을 다시 골라요.' : ''); img = 'ggobi-cheer'; if (first) beep('win'); }
-  else { title = '아쉽게 졌어요'; text = room.endReason === 'leave' ? '내가 나가서 끝났어요.' : (role === 'cpu' ? '꼬비가 다섯 개를 이었어요. 다음엔 꼭 이겨요!' : `${nameOf(w)}님이 다섯 개를 이었어요. 다음엔 꼭 이겨요!`); img = 'ggobi-cry'; if (first) beep('lose'); }
+  else if (w === mine) { title = role === 'cpu' ? '깨비샘을 이겼어요!' : '이겼어요!'; text = reason + (role === 'cpu' ? ' 한 판 더 하면 먼저 둘 쪽을 다시 골라요.' : ''); img = 'ggobi-cheer'; if (first) beep('win'); }
+  else { title = '아쉽게 졌어요'; text = room.endReason === 'leave' ? '내가 나가서 끝났어요.' : (role === 'cpu' ? '깨비샘이 다섯 개를 이었어요. 다음엔 꼭 이겨요!' : `${nameOf(w)}님이 다섯 개를 이었어요. 다음엔 꼭 이겨요!`); img = 'ggobi-cry'; if (first) beep('lose'); }
   $('resImg').src = `img/${img}.png`; $('resTitle').textContent = title; $('resText').textContent = text;
   let h = '<button class="game-btn btn-secondary" id="seeBoardBtn">판 보기</button>';
   if ((role === 'local' || role === 'cpu')) h += '<button class="game-btn btn-primary" id="againBtn">한 판 더</button><button class="game-btn btn-info" id="watchLeaveBtn">그만하기</button>';

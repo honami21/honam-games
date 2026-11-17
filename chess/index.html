@@ -6,9 +6,9 @@
 <link rel="apple-touch-icon" href="/icons/icon-180.png"/>
 <link rel="icon" type="image/png" href="/icons/icon-192.png"/>
 <link rel="manifest" href="/manifest.webmanifest"/>
-<meta name="apple-mobile-web-app-title" content="꼬비샘과 쉬는 시간"/>
+<meta name="apple-mobile-web-app-title" content="깨비샘과 쉬는 시간"/>
 <meta name="theme-color" content="#2a2860"/>
-<title>꼬비와 체스 한판 - 꼬비샘과 쉬는 시간</title>
+<title>깨비샘의 체스 한 판 - 깨비샘과 쉬는 시간</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
 <style>
@@ -63,7 +63,7 @@
   .note { font-size:14px; color:var(--ink2); margin-top:8px; text-align:center; word-break:keep-all; line-height:1.45; }
   .msg { min-height:20px; font-size:15px; color:var(--coral-d); margin-top:8px; text-align:center; word-break:keep-all; }
 
-  .game-btn { padding:11px 24px; font-size:clamp(17px,2.8vw,20px); border-radius:40px; border:3px solid var(--ink); color:#fff;
+  .game-btn { padding:11px 24px; font-size:clamp(17px,2.8vw,20px); border-radius:40px; border:3px solid var(--ink); color:var(--ink);
     cursor:pointer; min-width:120px; box-shadow:none; transition:transform .08s, box-shadow .08s; white-space:nowrap; }
   .game-btn:active { transform:translateY(2px) scale(.97); }
   .game-btn:disabled { opacity:.55; cursor:not-allowed; }
@@ -182,11 +182,14 @@
   /* 버튼 아래 두꺼운 그림자를 없애 테두리 두께를 위아래 같게 */
   .game-btn, .topbar a, .topbar button { box-shadow:none !important; }
   .game-btn:active { transform:translateY(2px) scale(.97) !important; }
+  .mode-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .mode-row .game-btn { min-width:0; padding:10px 6px; font-size:clamp(15px,2.4vw,18px); white-space:normal; line-height:1.2; word-break:keep-all; }
+  @media (max-width:560px){ .mode-row{ grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
 <div class="topbar">
-  <a href="../" id="home-link" title="꼬비샘과 쉬는 시간으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">쉬는 시간</span></a>
+  <a href="../" id="home-link" title="깨비샘과 쉬는 시간으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">쉬는 시간</span></a>
   <div class="right">
     <button id="sndToggle" type="button" title="소리 켜기/끄기" aria-label="소리 켜기/끄기">🔊</button>
     <button id="fs-btn" type="button" title="전체화면"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="t" id="fs-txt">전체화면</span></button>
@@ -221,7 +224,7 @@
   <div class="pcard" id="pBot"><span class="chip" id="chBot"></span><div style="min-width:0"><div class="nm" id="nmBot">-</div><div class="sub" id="subBot"></div></div><div class="tm" id="tmBot"></div></div>
   <div id="actions"></div>
 </div>
-<img class="side-ggobi hidden" id="sideGgobi" src="img/ggobi-think.png" alt="">
+<img class="side-ggobi hidden" id="sideGgobi" src="img/ggobi-think.png?v=2" alt="">
 <div class="side-room hidden" id="sideRoom">방 코드<b id="sideCode"></b><span id="sideRule"></span></div>
 
 <!-- 시작 화면 -->
@@ -229,18 +232,17 @@
   <div class="section">
     <div class="start-wrap">
       <div class="card">
-        <img class="logo" src="img/logo.png" alt="꼬비와 체스 한판" width="900" height="300">
-        <p class="lead">친구와 <b>방 코드</b>로 만나거나 꼬비와 겨뤄요.<br>상대 <b>킹</b>을 꼼짝 못 하게 잡으면 이겨요!</p>
+        <img class="logo" src="img/logo.png?v=2" alt="깨비샘의 체스 한 판" width="1100" height="875">
         <div class="box">
           <div class="field"><input id="nameInput" maxlength="8" placeholder="내 이름 (별명도 좋아요)" autocomplete="off"></div>
+        </div>
+        <div class="box">
+          <div class="mode-row"><button class="game-btn btn-primary" id="createBtn">방 만들기</button><button class="game-btn btn-info" id="localBtn">한 화면에서<br>둘이 하기</button><button class="game-btn btn-sky" id="cpuBtn">깨비샘과 하기</button></div>
         </div>
         <div class="box">
           <div class="box-title">규칙 고르기</div>
           <div class="seg-label">시간 제한 (각자)</div>
           <div class="seg" id="tcSeg"><button data-tc="0">없음</button><button data-tc="5">5분</button><button data-tc="10">10분</button><button data-tc="15">15분</button></div>
-          <p class="note">내 시간을 다 쓰면 지는 거예요.</p>
-          <div class="btn-row"><button class="game-btn btn-primary" id="createBtn">방 만들기</button><button class="game-btn btn-info" id="localBtn">한 화면에서 둘이 하기</button><button class="game-btn btn-sky" id="cpuBtn">꼬비와 하기</button></div>
-          <p class="note">한 화면에서 둘이 하기는 컴퓨터나 휴대폰 하나로 번갈아 둬요.<br>꼬비와 하기는 혼자서 꼬비와 겨뤄요. 둘 다 방 코드가 필요 없어요.</p>
         </div>
         <div class="box">
           <div class="box-title">방 코드로 들어가기</div>
@@ -248,12 +250,11 @@
             <input id="codeInput" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="0000" autocomplete="off">
             <button class="game-btn btn-info" id="joinBtn" style="min-width:0">들어가기</button>
           </div>
-          <p class="note">먼저 들어온 한 명이 대결하고, 그다음부터는 구경할 수 있어요.</p>
         </div>
         <div class="msg" id="startMsg"></div>
         <button class="link-btn" id="helpBtn" type="button">체스가 처음이에요 · 말 움직이는 법</button>
       </div>
-      <img class="start-ggobi" src="img/ggobi-think.png" alt="">
+      <img class="start-ggobi" src="img/ggobi-think.png?v=2" alt="">
     </div>
   </div>
 </div>
@@ -262,7 +263,7 @@
 <div id="waitScreen" class="screen hidden">
   <div class="section">
     <div class="card" style="margin-top:80px">
-      <img class="wait-img" src="img/ggobi-wait.png" alt="">
+      <img class="wait-img" src="img/ggobi-wait.png?v=2" alt="">
       <div class="code-label">우리 방 코드</div>
       <div class="code-big" id="codeBig"></div>
       <p class="lead">친구에게 이 번호를 알려 주세요.<br><span class="dots">친구를 기다리는 중</span></p>
@@ -275,7 +276,7 @@
 <!-- 결과 -->
 <div id="resultModal" class="modal hidden">
   <div class="card">
-    <img class="res-img" id="resImg" src="img/ggobi-win.png" alt="">
+    <img class="res-img" id="resImg" src="img/ggobi-win.png?v=2" alt="">
     <h2 id="resTitle"></h2>
     <p id="resText"></p>
     <div class="btn-row" id="resBtns"></div>
@@ -296,29 +297,29 @@
   </div>
 </div>
 
-<!-- 꼬비와 하기 -->
+<!-- 깨비샘과 하기 -->
 <div id="cpuModal" class="modal hidden">
   <div class="card">
-    <img class="res-img" src="img/ggobi-normal.png" alt="">
-    <h2 style="font-size:28px">꼬비와 하기</h2>
-    <p>꼬비 실력을 골라요.</p>
+    <img class="res-img" src="img/ggobi-normal.png?v=2" alt="">
+    <h2 style="font-size:28px">깨비샘과 하기</h2>
+    <p>깨비샘 실력을 골라요.</p>
     <div class="lv-list">
-      <button class="game-btn btn-info lv" data-lv="1"><span><img src="img/ggobi-easy.png" alt="">아주 쉬움</span><small>체스를 처음 배우는 친구</small></button>
-      <button class="game-btn btn-info lv" data-lv="2"><span><img src="img/ggobi-easy.png" alt="">쉬움</span><small>말 움직임을 아는 친구</small></button>
-      <button class="game-btn btn-primary lv" data-lv="3"><span><img src="img/ggobi-normal.png" alt="">보통</span><small>체스를 자주 하는 친구</small></button>
-      <button class="game-btn btn-primary lv" data-lv="4"><span><img src="img/ggobi-normal.png" alt="">어려움</span><small>어른도 힘들어요</small></button>
-      <button class="game-btn lv" data-lv="5" style="background:#6b4bb8"><span><img src="img/ggobi-hard.png" alt="">고수</span><small>체스 대회 선수 수준</small></button>
-      <button class="game-btn lv" data-lv="6" style="background:#2c2950"><span><img src="img/ggobi-hard.png" alt="">최강</span><small>세계 챔피언보다 강해요</small></button>
+      <button class="game-btn btn-info lv" data-lv="1"><span><img src="img/ggobi-easy.png?v=2" alt="">아주 쉬움</span><small>체스를 처음 배우는 친구</small></button>
+      <button class="game-btn btn-info lv" data-lv="2"><span><img src="img/ggobi-easy.png?v=2" alt="">쉬움</span><small>말 움직임을 아는 친구</small></button>
+      <button class="game-btn btn-primary lv" data-lv="3"><span><img src="img/ggobi-normal.png?v=2" alt="">보통</span><small>체스를 자주 하는 친구</small></button>
+      <button class="game-btn btn-primary lv" data-lv="4"><span><img src="img/ggobi-normal.png?v=2" alt="">어려움</span><small>어른도 힘들어요</small></button>
+      <button class="game-btn lv" data-lv="5" style="background:#6b4bb8"><span><img src="img/ggobi-hard.png?v=2" alt="">고수</span><small>체스 대회 선수 수준</small></button>
+      <button class="game-btn lv" data-lv="6" style="background:#2c2950"><span><img src="img/ggobi-hard.png?v=2" alt="">최강</span><small>세계 챔피언보다 강해요</small></button>
     </div>
     <div class="btn-row"><button class="game-btn btn-secondary" id="cpuCancel" style="min-width:140px">취소</button></div>
-    <p class="credit">꼬비의 두뇌는 무료 공개 체스 프로그램 <a href="https://stockfishchess.org/" target="_blank" rel="noopener">Stockfish</a>예요 (<a href="engine/COPYING-stockfish.txt" target="_blank">GPL v3</a>, <a href="https://github.com/nmrugg/stockfish.js" target="_blank" rel="noopener">원본 코드</a>). 처음 한 번 약 2MB를 받아요.</p>
+    <p class="credit">깨비샘의 두뇌는 무료 공개 체스 프로그램 <a href="https://stockfishchess.org/" target="_blank" rel="noopener">Stockfish</a>예요 (<a href="engine/COPYING-stockfish.txt" target="_blank">GPL v3</a>, <a href="https://github.com/nmrugg/stockfish.js" target="_blank" rel="noopener">원본 코드</a>). 처음 한 번 약 2MB를 받아요.</p>
   </div>
 </div>
 
 <!-- 선 정하기 -->
 <div id="chooseModal" class="modal hidden">
   <div class="card">
-    <img class="res-img" src="img/ggobi-hello.png" alt="">
+    <img class="res-img" src="img/ggobi-hello.png?v=2" alt="">
     <h2 style="font-size:28px">누가 먼저 둘까요?</h2>
     <p id="chText"></p>
     <div class="btn-row" style="flex-direction:column;align-items:center">
@@ -332,7 +333,7 @@
 <!-- 폰 승급 -->
 <div id="promoModal" class="modal hidden">
   <div class="card">
-    <img class="res-img" src="img/ggobi-promote.png" alt="">
+    <img class="res-img" src="img/ggobi-promote.png?v=2" alt="">
     <h2 style="font-size:26px">폰이 끝까지 왔어요!</h2>
     <p>무엇으로 바꿀까요?</p>
     <div class="promo" id="promoBtns"></div>
@@ -361,7 +362,7 @@
 <div id="stkTray" class="hidden"></div>
 <div id="stkShow" class="hidden"><img id="stkImg" src="" alt=""><span id="stkWho"></span></div>
 <div id="toast"></div>
-<img id="bigCheck" src="img/text-check.png" alt="">
+<img id="bigCheck" src="img/text-check.png?v=2" alt="">
 
 <script src="../audio/bgm.js"></script>
 <script type="module">
@@ -438,7 +439,7 @@ function beep(kind) {
 const PIECE_ART = true;
 const ART_NAME = { k: 'king', q: 'queen', r: 'rook', b: 'bishop', n: 'knight', p: 'pawn' };
 const pieceImg = {};
-if (PIECE_ART) for (const c of 'wb') for (const t of 'kqrbnp') { const i = new Image(); i.src = `img/${c}-${ART_NAME[t]}.png`; i.onload = () => draw(); pieceImg[c + t] = i; }
+if (PIECE_ART) for (const c of 'wb') for (const t of 'kqrbnp') { const i = new Image(); i.src = `img/${c}-${ART_NAME[t]}.png?v=2`; i.onload = () => draw(); pieceImg[c + t] = i; }
 const GLYPH = { k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟︎' };
 const GFONT = "'Segoe UI Symbol','Noto Sans Symbols 2','Noto Sans Symbols','DejaVu Sans','Apple Symbols',serif";
 function drawPieceOn(ctx, type, color, x, y, s, alpha = 1) {
@@ -536,8 +537,8 @@ function show(id) {
 }
 let toastT = 0;
 function toast(t, ms = 1800) { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), ms); }
-['text-check', 'text-checkmate', 'text-draw', 'fx-poof', 'fx-sparkle', 'mark-move', 'mark-capture', 'mark-check', 'ggobi-check', 'ggobi-win', 'ggobi-lose', 'ggobi-draw'].forEach(n => { const i = new Image(); i.src = `img/${n}.png`; });
-function bigImg(n) { const el = $('bigCheck'); el.src = `img/${n}.png`; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); }
+['text-check', 'text-checkmate', 'text-draw', 'fx-poof', 'fx-sparkle', 'mark-move', 'mark-capture', 'mark-check', 'ggobi-check', 'ggobi-win', 'ggobi-lose', 'ggobi-draw'].forEach(n => { const i = new Image(); i.src = `img/${n}.png?v=2`; });
+function bigImg(n) { const el = $('bigCheck'); el.src = `img/${n}.png?v=2`; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); }
 function errText(e) {
   const c = (e && (e.code || e.message)) || '';
   if (String(c).includes('permission')) return '방 기능 설정이 아직 안 되어 있어요. 선생님께 알려 주세요.';
@@ -719,7 +720,7 @@ function onRoom(snap) {
   render();
   if (room.status === 'done') showResult();
   else { $('resultModal').classList.add('hidden'); shownResultFor = ''; }
-  // 선 정하기: 방장(한 화면 모드와 꼬비와 하기는 이 기기)이 고름
+  // 선 정하기: 방장(한 화면 모드와 깨비샘과 하기는 이 기기)이 고름
   if (room.status === 'choosing' && (role === 'host' || isSolo())) showChoose();
   else $('chooseModal').classList.add('hidden');
   maybeAiMove();
@@ -728,7 +729,7 @@ function showChoose() {
   const hn = room.hostName || '방장', gn = room.guestName || '친구';
   const rd = room.round || 1;
   $('chText').textContent = (rd > 1 ? `${rd}번째 판이에요. ` : '') + '먼저 두는 사람이 흰 말이에요.';
-  if (role === 'cpu') $('chText').textContent = (rd > 1 ? `${rd}번째 판이에요. ` : `꼬비 실력: ${LEVELS[room.level].name}. `) + '먼저 두는 쪽이 흰 말이에요.';
+  if (role === 'cpu') $('chText').textContent = (rd > 1 ? `${rd}번째 판이에요. ` : `깨비샘 실력: ${LEVELS[room.level].name}. `) + '먼저 두는 쪽이 흰 말이에요.';
   $('chHost').textContent = role === 'local' ? hn : `나 (${hn})`;
   $('chGuest').textContent = gn;
   $('chooseModal').classList.remove('hidden');
@@ -778,7 +779,7 @@ function render() {
     const waitingName = room.status === 'waiting' && c !== (room.hostColor || 'w');
     setHTML($('nm' + P), waitingName ? '<span class="dots">기다리는 중</span>'
       : esc(nameOf(c)) + (role !== 'local' && role !== 'watch' && myColor() === c ? '<span class="me">나</span>' : ''));
-    const lst = cap.out[c].map(t => PIECE_ART ? `<img src="img/${other(c)}-${ART_NAME[t]}.png" alt="">` : GLYPH[t].replace('︎', '')).join('');
+    const lst = cap.out[c].map(t => PIECE_ART ? `<img src="img/${other(c)}-${ART_NAME[t]}.png?v=2" alt="">` : GLYPH[t].replace('︎', '')).join('');
     const diff = cap.mat[c] - cap.mat[other(c)];
     setHTML($('sub' + P), lst ? `<span class="cap">${lst}${diff > 0 ? `<em>+${diff}</em>` : ''}</span>` : colorName(c) + (c === 'w' ? ' · 먼저 둬요' : ''));
     $('p' + P).classList.toggle('turn', playing && room.turn === c);
@@ -790,8 +791,8 @@ function render() {
     if (tenseRound !== rk && room.moveNo >= 14 && (g.inCheck() || cap.mat.w + cap.mat.b <= 30)) tenseRound = rk;
     KBGM.track(tenseRound === rk ? 'tense' : 'play'); KBGM.full(); bgmJingled = false;
   } else KBGM.calm();
-  // 옆의 꼬비: 내 킹이 체크면 놀란 얼굴
-  const sg = (role !== 'watch' && playing && g.inCheck() && room.turn === myColor()) ? 'img/ggobi-check.png' : 'img/ggobi-think.png';
+  // 옆의 깨비샘: 내 킹이 체크면 놀란 얼굴
+  const sg = (role !== 'watch' && playing && g.inCheck() && room.turn === myColor()) ? 'img/ggobi-check.png?v=2' : 'img/ggobi-think.png?v=2';
   if (!$('sideGgobi').src.endsWith(sg)) $('sideGgobi').src = sg;
   $('sideCode').textContent = code; $('sideRoom').classList.toggle('hidden', isSolo() || $('game').classList.contains('hidden'));
   $('sideRule').innerHTML = tcText(room.tc);
@@ -834,7 +835,7 @@ function renderStatus(g) {
   if (role === 'local') { const nm = nameOf(room.turn); st.innerHTML = prevTxt + `<b>${esc(nm)}</b> 차례예요` + (nm === colorName(room.turn) ? '' : ` (${colorName(room.turn)})`) + chk; return; }
   if (role === 'watch') { st.innerHTML = prevTxt + `👀 구경 중 · <b>${esc(nameOf(room.turn))}</b> 차례예요` + chk; return; }
   if (room.turn === mine) st.innerHTML = prevTxt + (g.inCheck() ? '<b>체크!</b> 킹을 지켜요' : '<b>내 차례예요!</b> 움직일 말을 골라요');
-  else st.innerHTML = prevTxt + (role === 'cpu' ? (aiLoading ? '꼬비 두뇌를 불러오는 중<span class="dots"></span>' : '꼬비가 생각하고 있어요<span class="dots"></span>') : `${esc(nameOf(room.turn))} 차례예요<span class="dots"></span>`) + chk;
+  else st.innerHTML = prevTxt + (role === 'cpu' ? (aiLoading ? '깨비샘 두뇌를 불러오는 중<span class="dots"></span>' : '깨비샘이 생각하고 있어요<span class="dots"></span>') : `${esc(nameOf(room.turn))} 차례예요<span class="dots"></span>`) + chk;
 }
 function renderActions() {
   const a = $('actions'), mine = myColor();
@@ -864,9 +865,9 @@ function renderActions() {
 
 // ---------- 응원 스티커 ----------
 const STICKERS = ['best', 'nice', 'cheer', 'wow', 'clap', 'hmm', 'oops', 'nervous', 'laugh', 'gg', 'again', 'wait', 'heart'];
-STICKERS.forEach(n => { const i = new Image(); i.src = `img/sticker-${n}.png`; });
+STICKERS.forEach(n => { const i = new Image(); i.src = `img/sticker-${n}.png?v=2`; });
 let lastStk = null, stkCoolUntil = 0, stkHideT = 0;
-$('stkTray').innerHTML = '<div class="tt">응원 스티커를 골라요</div>' + STICKERS.map(n => `<button data-s="${n}"><img src="img/sticker-${n}.png" alt=""></button>`).join('');
+$('stkTray').innerHTML = '<div class="tt">응원 스티커를 골라요</div>' + STICKERS.map(n => `<button data-s="${n}"><img src="img/sticker-${n}.png?v=2" alt=""></button>`).join('');
 $('stkTray').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   $('stkTray').classList.add('hidden');
@@ -897,7 +898,7 @@ function showSticker(st) {
   const spaceRight = window.innerWidth - r.right;
   if (spaceRight > size + 30) { el.style.left = (r.right + 18) + 'px'; el.style.top = (r.top + 10) + 'px'; }
   else { el.style.left = (r.right - size - 8) + 'px'; el.style.top = (r.top + 8) + 'px'; }
-  $('stkImg').src = `img/sticker-${st.s}.png`;
+  $('stkImg').src = `img/sticker-${st.s}.png?v=2`;
   $('stkWho').textContent = (st.w ? '👀 ' : '') + (st.by || '');
   el.classList.remove('hidden', 'on'); void el.offsetWidth; el.classList.add('on');
   clearTimeout(stkHideT); stkHideT = setTimeout(() => el.classList.add('hidden'), 2700);
@@ -909,12 +910,12 @@ const cv = $('board'), cx = cv.getContext('2d');
 let S = 320, cell = 40, dpr = 1, OFF = 32;
 // 나무 테두리 그림(board-frame.png)에서 칸이 들어갈 안쪽 자리 (원본 1254px 기준)
 const FR = { x0: 55 / 1254, x1: 1199 / 1254, in0: 169 / 1254, in1: 1085 / 1254 };
-const frameImg = new Image(); frameImg.src = 'img/board-frame.png'; frameImg.onload = () => draw();
+const frameImg = new Image(); frameImg.src = 'img/board-frame.png?v=2'; frameImg.onload = () => draw();
 const tileImg = { l: new Image(), d: new Image() };
 tileImg.l.src = 'img/tile-light.jpg'; tileImg.d.src = 'img/tile-dark.jpg';
 tileImg.l.onload = tileImg.d.onload = () => draw();
 const markImg = {};
-for (const n of ['move', 'capture', 'check']) { markImg[n] = new Image(); markImg[n].src = `img/mark-${n}.png`; markImg[n].onload = () => draw(); }
+for (const n of ['move', 'capture', 'check']) { markImg[n] = new Image(); markImg[n].src = `img/mark-${n}.png?v=2`; markImg[n].onload = () => draw(); }
 const ok = im => im && im.complete && im.naturalWidth;
 function layout() {
   if ($('game').classList.contains('hidden')) return;
@@ -951,7 +952,7 @@ function fxAt(sq, kind) {
   if (!cv.width) return;
   const [x, y] = sqXY(sq), size = cell * (kind === 'poof' ? 1.5 : 1.7);
   const el = document.createElement('img');
-  el.src = kind === 'poof' ? 'img/fx-poof.png' : 'img/fx-sparkle.png';
+  el.src = kind === 'poof' ? 'img/fx-poof.png?v=2' : 'img/fx-sparkle.png?v=2';
   el.className = 'fx ' + kind;
   el.style.width = el.style.height = size + 'px';
   el.style.left = (x + cell / 2 - size / 2) + 'px'; el.style.top = (y + cell / 2 - size / 2 - (kind === 'poof' ? 0 : cell * .15)) + 'px';
@@ -1038,7 +1039,7 @@ cv.addEventListener('pointerup', e => {
   if (!room || room.status !== 'playing') return;
   const mine = myColor();
   if (!mine) { toast('구경 중에는 둘 수 없어요'); return; }
-  if (room.turn !== mine) { toast(role === 'cpu' ? '꼬비 차례예요. 조금만 기다려요!' : '친구 차례예요. 조금만 기다려요!'); return; }
+  if (room.turn !== mine) { toast(role === 'cpu' ? '깨비샘 차례예요. 조금만 기다려요!' : '친구 차례예요. 조금만 기다려요!'); return; }
   if (busy || pendingPromo) return;
   const r = cv.getBoundingClientRect();
   const sq = sqAt(e.clientX - r.left, e.clientY - r.top); if (!sq) return;
@@ -1184,7 +1185,7 @@ function askResign() {
 }
 
 // ============================================================
-//  꼬비 (컴퓨터): Stockfish
+//  깨비샘 (컴퓨터): Stockfish
 // ============================================================
 const LEVELS = {
   1: { name: '아주 쉬움', skill: 0, go: 'depth 1', rand: .55, wait: 700 },
@@ -1228,7 +1229,7 @@ function sfBest(moves, lv) {
   });
 }
 function aiStop() { clearTimeout(aiTimer); aiKey = ''; if (sf && sfWait) { const w = sfWait; sfWait = null; sfIgnore++; sf.postMessage('stop'); w(null); } }
-// 엔진을 못 쓸 때의 간단한 꼬비
+// 엔진을 못 쓸 때의 간단한 깨비샘
 function simpleMove(g) {
   const ms = g.moves({ verbose: true });
   let best = null, bv = -1e9;
@@ -1290,7 +1291,7 @@ function startCpu(level) {
   loadEngine().catch(() => {});
   onRoom({ exists: () => true, data: () => (Object.assign({
     code: '', status: 'choosing', tc: tcPick, level,
-    hostId: 'ME', hostName: n, guestId: 'CPU', guestName: '꼬비', hostColor: 'w',
+    hostId: 'ME', hostName: n, guestId: 'CPU', guestName: '깨비샘', hostColor: 'w',
     tick: 1, round: 1, lastEvent: 'start', left: '', again: { host: false, guest: false }
   }, newBoardFields(tcPick))) });
 }
@@ -1298,7 +1299,7 @@ $('cpuBtn').onclick = () => { $('startMsg').textContent = ''; $('cpuModal').clas
 $('cpuCancel').onclick = () => $('cpuModal').classList.add('hidden');
 document.querySelectorAll('#cpuModal .lv').forEach(b => b.onclick = () => startCpu(+b.dataset.lv));
 
-// 한 화면 모드와 꼬비와 하기에서는 Firebase 대신 이 기기 안에서만 바꿔요
+// 한 화면 모드와 깨비샘과 하기에서는 Firebase 대신 이 기기 안에서만 바꿔요
 async function txRun(fn) {
   if (!isSolo()) return runTransaction(db, fn);
   const cur = JSON.parse(JSON.stringify(room));
@@ -1352,16 +1353,16 @@ function showResult() {
   else if (role === 'local') { title = `${nameOf(w)} 승리!`; text = reason + ' 한 판 더 하면 먼저 둘 사람을 다시 골라요.'; img = 'ggobi-win'; if (first) beep('win'); }
   else if (!mine) { title = `${nameOf(w)} 승리!`; text = reason; }
   else if (w === mine) {
-    title = role === 'cpu' ? '꼬비를 이겼어요!' : '이겼어요!';
-    text = (role === 'cpu' && er === 'resign' ? '꼬비가 기권했어요.' : reason) + (role === 'cpu' ? ` (${LEVELS[room.level].name}) 한 판 더 하면 먼저 둘 쪽을 다시 골라요.` : '');
+    title = role === 'cpu' ? '깨비샘을 이겼어요!' : '이겼어요!';
+    text = (role === 'cpu' && er === 'resign' ? '깨비샘이 기권했어요.' : reason) + (role === 'cpu' ? ` (${LEVELS[room.level].name}) 한 판 더 하면 먼저 둘 쪽을 다시 골라요.` : '');
     img = 'ggobi-win'; if (first) beep('win');
   } else {
     title = '아쉽게 졌어요';
     text = er === 'leave' ? '내가 나가서 끝났어요.' : er === 'resign' ? '기권했어요. 다음엔 꼭 이겨요!' : er === 'time' ? '시간이 다 됐어요. 다음엔 꼭 이겨요!'
-      : (role === 'cpu' ? '꼬비가 체크메이트를 했어요. 다음엔 꼭 이겨요!' : `${nameOf(w)}님이 체크메이트를 했어요. 다음엔 꼭 이겨요!`);
+      : (role === 'cpu' ? '깨비샘이 체크메이트를 했어요. 다음엔 꼭 이겨요!' : `${nameOf(w)}님이 체크메이트를 했어요. 다음엔 꼭 이겨요!`);
     img = 'ggobi-lose'; if (first) beep('lose');
   }
-  $('resImg').src = `img/${img}.png`; $('resTitle').textContent = title; $('resText').textContent = text;
+  $('resImg').src = `img/${img}.png?v=2`; $('resTitle').textContent = title; $('resText').textContent = text;
   let h = '<button class="game-btn btn-secondary" id="seeBoardBtn">판 보기</button>';
   if (isSolo()) h += '<button class="game-btn btn-primary" id="againBtn">한 판 더</button><button class="game-btn btn-info" id="watchLeaveBtn">그만하기</button>';
   else if (role !== 'watch') {

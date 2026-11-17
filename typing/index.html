@@ -6,9 +6,9 @@
 <link rel="apple-touch-icon" href="/icons/icon-180.png"/>
 <link rel="icon" type="image/png" href="/icons/icon-192.png"/>
 <link rel="manifest" href="/manifest.webmanifest"/>
-<meta name="apple-mobile-web-app-title" content="꼬비샘과 쉬는 시간"/>
+<meta name="apple-mobile-web-app-title" content="깨비샘과 쉬는 시간"/>
 <meta name="theme-color" content="#2a2860"/>
-<title>꼬비의 영어 타자 연습 - 꼬비샘과 쉬는 시간</title>
+<title>깨비샘의 영어 타자 연습 - 깨비샘과 쉬는 시간</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Jua&display=swap" rel="stylesheet">
 <style>
@@ -126,7 +126,7 @@
   #overlay .section { display:flex; flex-direction:column; align-items:center; gap:14px; width:100%; max-width:600px; margin:auto; }
   .card { background:var(--cream); border:3px solid var(--ink); border-radius:28px; box-shadow:0 8px 0 var(--ink), 0 16px 30px rgba(20,10,50,.35);
     padding:22px 26px 24px; width:100%; }
-  .logo { height:auto; width:min(400px, 88%); display:block; margin:-6px auto 0; filter:drop-shadow(0 4px 0 rgba(44,41,80,.18)); }
+  .logo { height:auto; width:min(540px, 96%); display:block; margin:-6px auto 14px; filter:drop-shadow(0 4px 0 rgba(44,41,80,.18)); }
   .lead { font-size:clamp(17px,2.6vw,21px); line-height:1.5; color:var(--ink); }
   .lead b { color:var(--coral-d); font-weight:normal; }
   .lead-sub { font-size:.82em; color:var(--ink2); }
@@ -144,7 +144,7 @@
   @media (max-width:760px){ .start-ggobi{ display:none; } }
 
   .button-group { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; width:100%; }
-  .game-btn { padding:12px 26px; font-size:clamp(18px,2.8vw,22px); border-radius:40px; border:3px solid var(--ink); color:#fff;
+  .game-btn { padding:12px 26px; font-size:clamp(18px,2.8vw,22px); border-radius:40px; border:3px solid var(--ink); color:var(--ink);
     cursor:pointer; min-width:150px; font-family:'Jua',sans-serif; box-shadow:0 5px 0 var(--ink); transition:transform .08s, box-shadow .08s; }
   .game-btn:active { transform:translateY(4px); box-shadow:0 1px 0 var(--ink); }
   .game-btn:disabled { opacity:.55; cursor:not-allowed; }
@@ -209,7 +209,7 @@
 </head>
 <body class="menu">
 <div class="topbar">
-  <a href="../" id="home-link" title="꼬비샘과 쉬는 시간으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">쉬는 시간</span></a>
+  <a href="../" id="home-link" title="깨비샘과 쉬는 시간으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">쉬는 시간</span></a>
   <button id="fs-btn" type="button" title="전체화면"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="t" id="fs-txt">전체화면</span></button>
 </div>
 <script>
@@ -247,7 +247,7 @@
   <div class="stage-note" id="stage-note"><img src="img/ggobi-cheer.png" alt=""><span id="stage-note-txt">Stage 1</span></div>
 
   <div class="bottom">
-    <div class="ggobi" id="ggobi"><img id="ggobi-img" src="img/ggobi-type.png" alt="키보드를 치는 꼬비"></div>
+    <div class="ggobi" id="ggobi"><img id="ggobi-img" src="img/ggobi-type.png" alt="키보드를 치는 깨비샘"></div>
     <div class="input-wrap">
       <div class="ime-tip hidden" id="ime-tip"><kbd>한/영</kbd> 키를 눌러 영어로 바꿔 주세요!</div>
       <input type="text" id="word-input" placeholder="여기에 단어를 입력해요" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="14" lang="en" inputmode="text">
@@ -264,8 +264,7 @@
   <div id="start-section" class="section">
     <div class="start-wrap">
       <div class="card">
-        <img class="logo" src="img/logo.png" alt="꼬비의 영어 타자 연습" width="1000" height="321">
-        <p class="lead" style="margin:8px 0 14px">하늘에서 내려오는 <b>영어 단어</b>를 키보드로 똑같이 쳐요!<br><span class="lead-sub">단어가 풀밭에 닿기 전에 없애야 해요.</span></p>
+        <img class="logo" src="img/logo.png?v=3" alt="깨비샘의 영어 타자 연습" width="1000" height="330">
         <div class="hint">
           <div class="hint-section">
             <div class="hint-title">하는 방법</div>
@@ -336,7 +335,7 @@
 <!-- 휴대폰·태블릿 안내 -->
 <div id="pc-only">
   <div class="card">
-    <img class="logo" src="img/logo.png" alt="꼬비의 영어 타자 연습" width="1000" height="321">
+    <img class="logo" src="img/logo.png?v=3" alt="깨비샘의 영어 타자 연습" width="1000" height="330">
     <img class="who" src="img/ggobi-type.png" alt="">
     <b>컴퓨터에서 만나요!</b>
     <p>이 게임은 <span style="color:var(--coral-d)">컴퓨터 키보드</span>로 영어 타자를<br>익히는 연습이에요.</p>

@@ -6,9 +6,9 @@
 <link rel="apple-touch-icon" href="/icons/icon-180.png"/>
 <link rel="icon" type="image/png" href="/icons/icon-192.png"/>
 <link rel="manifest" href="/manifest.webmanifest"/>
-<meta name="apple-mobile-web-app-title" content="꼬비샘과 쉬는 시간"/>
+<meta name="apple-mobile-web-app-title" content="깨비샘과 쉬는 시간"/>
 <meta name="theme-color" content="#2a2860"/>
-<title>꼬비샘과 쉬는 시간</title>
+<title>깨비샘과 쉬는 시간</title>
 <link rel="preload" as="image" href="img/bg.jpg"/>
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet"/>
 <style>
@@ -21,7 +21,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   background:linear-gradient(180deg,rgba(30,26,80,.15),rgba(30,26,80,0) 40%,rgba(30,26,80,.25)),url(img/bg.jpg) center top/cover no-repeat}
 .page{max-width:1500px;margin:0 auto;display:grid;grid-template-columns:230px minmax(0,1fr) 230px;grid-template-areas:"head head head" "char cards .";column-gap:12px;align-items:end;position:relative}
 header{grid-area:head;text-align:center;position:relative;padding:40px 0 30px}
-.logo{display:block;width:min(720px,92%);height:auto;margin:0 auto;filter:drop-shadow(0 6px 0 rgba(20,16,60,.35))}
+.logo{display:block;width:min(820px,92%);height:auto;margin:0 auto;filter:drop-shadow(0 6px 0 rgba(20,16,60,.35))}
 h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .sub{color:#fff;font-size:22px;margin-top:10px;text-shadow:0 2px 0 rgba(20,16,60,.6),0 0 12px rgba(20,16,60,.6);letter-spacing:.5px}
 .char{grid-area:char;align-self:end;width:100%;height:auto;margin-bottom:-6px;transform-origin:50% 100%;animation:wave 3.2s ease-in-out infinite;filter:drop-shadow(0 8px 10px rgba(10,8,40,.45))}
@@ -65,7 +65,6 @@ h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
   .sub{font-size:15px;margin-top:6px}
   .char{align-self:center;margin:24px 0 14px}
   .grid{grid-template-columns:1fr;gap:18px}
-  .game img{aspect-ratio:4/3;object-position:center top}
   .soon{min-height:190px}
   .soon img{width:70px}
   .soon span{margin:0 0 20px;font-size:22px}
@@ -81,6 +80,42 @@ h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .info a{display:inline-flex;align-items:center;gap:6px;color:#fff6e4;text-decoration:none;background:rgba(30,26,80,.55);border-radius:999px;padding:5px 12px 5px 6px}
 .info a:hover{background:rgba(30,26,80,.8)}
 .info svg{width:20px;height:20px}
+/* ====== 관리자: 게임 순서 바꾸기 ====== */
+.adm-btn{position:fixed;right:14px;bottom:14px;z-index:40;width:38px;height:38px;border-radius:50%;border:2px solid rgba(255,246,228,.55);background:rgba(30,26,80,.55);color:#fff6e4;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:.55;transition:opacity .15s}
+.adm-btn:hover,.adm-btn:focus-visible,.adm-btn.kn-focus{opacity:1}
+.adm-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:760px){.adm-btn{display:none}}
+.adm-modal{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;background:rgba(20,16,60,.6);padding:16px}
+.adm-modal.on{display:flex}
+.adm-box{width:min(360px,100%);background:var(--cream);border:3px solid var(--line);border-radius:24px;padding:22px 22px 20px;text-align:center;box-shadow:0 14px 28px rgba(10,8,40,.45)}
+.adm-box h2{font-weight:normal;font-size:24px;margin-bottom:6px}
+.adm-box p{font-size:15px;color:#5a4d58;margin-bottom:14px;word-break:keep-all}
+.adm-box input{width:100%;font:inherit;font-size:20px;text-align:center;padding:8px 12px;border:3px solid var(--line);border-radius:14px;background:#fff;color:var(--ink);outline:none}
+.adm-box input:focus{border-color:var(--coral)}
+.adm-msg{min-height:22px;margin:8px 0 4px;font-size:15px;color:#d2463d}
+.adm-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.adm-b{font-family:'Jua',sans-serif;font-size:17px;color:var(--ink);background:var(--yellow);border:3px solid var(--line);border-radius:999px;padding:6px 18px;cursor:pointer}
+.adm-b:hover{filter:brightness(1.05)}
+.adm-b.gray{background:#efe4d4}
+.adm-b.coral{background:var(--coral);color:#fff}
+.adm-b:disabled{opacity:.55;cursor:default}
+.adm-bar{position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:60;display:none;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;
+  background:var(--cream);border:3px solid var(--line);border-radius:22px;padding:8px 12px 8px 18px;box-shadow:0 10px 24px rgba(10,8,40,.4);max-width:calc(100% - 24px)}
+.adm-bar.on{display:flex}
+.adm-bar span{font-size:17px;margin-right:4px}
+.adm-bar .adm-b{font-size:15px;padding:4px 14px}
+body.adm-edit .topbar{display:none}
+body.adm-edit .game{cursor:grab;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;animation:jiggle .5s ease-in-out infinite alternate}
+body.adm-edit .game:nth-child(2n){animation-delay:-.25s}
+body.adm-edit .game:hover{transform:none}
+body.adm-edit .game img{pointer-events:none}
+@keyframes jiggle{from{transform:rotate(-.6deg)}to{transform:rotate(.6deg)}}
+.game.adm-hole{opacity:.3;animation:none !important;outline:3px dashed #fff6e4;outline-offset:4px}
+.game.adm-ghost{position:fixed;z-index:90;margin:0;pointer-events:none;animation:none;transform:rotate(-2deg) scale(1.04);box-shadow:0 22px 40px rgba(10,8,40,.5);cursor:grabbing}
+.adm-num{position:absolute;left:-8px;top:-8px;z-index:2;min-width:34px;height:34px;border-radius:999px;background:var(--coral);color:#fff;border:3px solid var(--line);
+  display:none;align-items:center;justify-content:center;font-size:17px;padding:0 6px}
+body.adm-edit .adm-num{display:flex}
 </style>
 </head>
 <body data-keynav>
@@ -114,56 +149,65 @@ h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
     <img class="wisp w2" src="img/wisp.png" alt="">
     <img class="wisp w3" src="img/wisp.png" alt="">
     <img class="wisp w4" src="img/wisp.png" alt="">
-    <h1>꼬비샘과 쉬는 시간</h1>
-    <img class="logo" src="img/logo.png" alt="꼬비샘과 쉬는 시간" width="1100" height="186">
+    <h1>깨비샘과 쉬는 시간</h1>
+    <img class="logo" src="img/logo.png" alt="깨비샘과 쉬는 시간" width="1100" height="303">
     <p class="sub">쉬는 시간에 친구들과 즐겨 보세요!</p>
   </header>
-  <img class="char" src="img/ggobi-wave.png" alt="손을 흔드는 꼬비" width="382" height="640">
+  <img class="char" src="img/ggobi-wave.png" alt="손을 흔드는 깨비샘" width="400" height="642">
   <div class="grid">
     <a class="game" href="tetris/">
-      <img src="tetris/thumb.jpg" alt="꼬비의 블록 쌓기 게임 화면">
-      <div class="title"><b>꼬비의 블록 쌓기</b></div>
+      <span class="adm-num"></span>
+      <img src="tetris/thumb.jpg?v=5" alt="깨비샘의 블록 쌓기 게임 화면">
+      <div class="title"><b>깨비샘의 블록 쌓기</b></div>
       <p>10단계까지 완주하고 랭킹 TOP 50에 도전!</p>
     </a>
     <a class="game" href="spelling/">
-      <img src="spelling/thumb.jpg" alt="꼬비의 한글 맞춤법 대소동 게임 화면">
-      <div class="title"><b>꼬비의 한글 맞춤법 대소동</b></div>
+      <span class="adm-num"></span>
+      <img src="spelling/thumb.jpg?v=3" alt="깨비샘의 한글 맞춤법 대소동 게임 화면">
+      <div class="title"><b>깨비샘의 한글 맞춤법 대소동</b></div>
       <p>낱말과 빈칸 문장, 옳은 맞춤법 블록을 톡! 50문제에 도전!</p>
     </a>
     <a class="game" href="typing/">
-      <img src="typing/thumb.jpg" alt="꼬비의 영어 타자 연습 게임 화면">
-      <div class="title"><b>꼬비의 영어 타자 연습</b></div>
+      <span class="adm-num"></span>
+      <img src="typing/thumb.jpg?v=3" alt="깨비샘의 영어 타자 연습 게임 화면">
+      <div class="title"><b>깨비샘의 영어 타자 연습</b></div>
       <p>내려오는 영어 단어를 키보드로 톡톡! 컴퓨터에서 즐겨요.</p>
     </a>
     <a class="game" href="flags/">
-      <img src="flags/thumb.jpg" alt="꼬비의 국기 맞히기 게임 화면">
-      <div class="title"><b>꼬비의 국기 맞히기</b></div>
+      <span class="adm-num"></span>
+      <img src="flags/thumb.jpg?v=2" alt="깨비샘의 국기 맞히기 게임 화면">
+      <div class="title"><b>깨비샘의 국기 맞히기</b></div>
       <p>국기에 맞는 나라의 유리 다리로 폴짝! 세계 여행을 떠나요.</p>
     </a>
     <a class="game" href="omok/">
-      <img src="omok/thumb.jpg" alt="꼬비의 오목 대결 게임 화면">
-      <div class="title"><b>꼬비의 오목 대결</b></div>
+      <span class="adm-num"></span>
+      <img src="omok/thumb.jpg?v=2" alt="깨비샘의 오목 대결 게임 화면">
+      <div class="title"><b>깨비샘의 오목 대결</b></div>
       <p>방 코드로 친구와 만나 한 수씩! 다섯 개를 먼저 이어요.</p>
     </a>
     <a class="game" href="alkkagi/">
-      <img src="alkkagi/thumb.jpg?v=2" alt="꼬비의 알까기 게임 화면">
-      <div class="title"><b>꼬비의 알까기</b></div>
+      <span class="adm-num"></span>
+      <img src="alkkagi/thumb.jpg?v=4" alt="깨비샘의 알까기 게임 화면">
+      <div class="title"><b>깨비샘의 알까기</b></div>
       <p>바둑알·장기알을 톡! 힘 게이지와 "딱!" 타이밍으로 판 밖으로.</p>
     </a>
     <a class="game" href="survivor/">
-      <img src="survivor/thumb.jpg?v=2" alt="꼬비의 도깨비숲 생존기 게임 화면">
-      <div class="title"><b>꼬비의 도깨비숲 생존기</b></div>
+      <span class="adm-num"></span>
+      <img src="survivor/thumb.jpg?v=4" alt="깨비샘의 도깨비숲 생존기 게임 화면">
+      <div class="title"><b>깨비샘의 도깨비숲 생존기</b></div>
       <p>몰려오는 숲속 요괴를 피해 20분! 무기를 키우고 조합해요.</p>
     </a>
     <a class="game" href="worldtour/">
-      <img src="worldtour/thumb.jpg" alt="꼬비의 세계 여행 게임 화면">
-      <div class="title"><b>꼬비의 세계 여행</b></div>
-      <p>주사위를 굴려 세계 도시를 사고 건물을 지어요. 친구나 꼬비 AI와 함께!</p>
+      <span class="adm-num"></span>
+      <img src="worldtour/thumb.jpg?v=5" alt="깨비샘의 세계 여행 게임 화면">
+      <div class="title"><b>깨비샘의 세계 여행</b></div>
+      <p>주사위를 굴려 세계 도시를 사고 건물을 지어요. 친구나 깨비샘 AI와 함께!</p>
     </a>
     <a class="game" href="chess/">
-      <img src="chess/thumb.jpg?v=2" alt="꼬비와 체스 한판 게임 화면">
-      <div class="title"><b>꼬비와 체스 한판</b></div>
-      <p>방 코드로 친구와 한 판! 꼬비와 겨루면 아주 쉬움부터 최강까지.</p>
+      <span class="adm-num"></span>
+      <img src="chess/thumb.jpg?v=4" alt="깨비샘의 체스 한 판 게임 화면">
+      <div class="title"><b>깨비샘의 체스 한 판</b></div>
+      <p>방 코드로 친구와 한 판! 깨비샘과 겨루면 아주 쉬움부터 최강까지.</p>
     </a>
     <a class="game" href="cards/">
       <img src="cards/thumb.jpg" alt="GGOBI 카드 게임 화면">
@@ -172,19 +216,217 @@ h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
     </a>
     <div class="soon">
       <span>새 게임 준비 중</span>
-      <img src="img/ggobi-peek.png" alt="" width="440" height="411">
+      <img src="img/ggobi-peek.png" alt="" width="440" height="335">
     </div>
   </div>
 </div>
+<script>
+// 관리자가 정한 게임 순서를 먼저 적용 (저장된 순서를 기억해 두었다가 바로 보여 주고, 서버 값으로 다시 맞춤)
+(function(){
+  var KEY='home-order', grid=document.querySelector('.grid');
+  function apply(order){
+    if(!order||!order.length) return;
+    var cards=[].slice.call(grid.querySelectorAll('.game')), soon=grid.querySelector('.soon');
+    var by={}; cards.forEach(function(c){ by[c.getAttribute('href')]=c; });
+    order.forEach(function(id){ if(by[id]){ grid.insertBefore(by[id], soon); delete by[id]; } });
+    cards.forEach(function(c){ if(by[c.getAttribute('href')]) grid.insertBefore(c, soon); });   // 새로 생긴 게임은 뒤에
+  }
+  window.homeOrderApply=apply;
+  window.homeOrderDefault=[].map.call(grid.querySelectorAll('.game'),function(c){ return c.getAttribute('href'); });
+  try{ apply(JSON.parse(localStorage.getItem(KEY)||'null')); }catch(e){}
+  if(!window.fetch) return;
+  fetch('https://firestore.googleapis.com/v1/projects/honamsaem-class-games/databases/(default)/documents/site/home-order?key=AIzaSyDw2EvTh7PVBrPnkii2F1kPGcqbzcIo41s')
+    .then(function(r){ return r.ok?r.json():null; })
+    .then(function(d){
+      var v=d&&d.fields&&d.fields.order&&d.fields.order.arrayValue&&d.fields.order.arrayValue.values;
+      if(!v) return;
+      var order=v.map(function(x){ return x.stringValue; });
+      if(document.body.classList.contains('adm-edit')) return;
+      apply(order);
+      try{ localStorage.setItem(KEY, JSON.stringify(order)); }catch(e){}
+    }).catch(function(){});
+})();
+</script>
 <footer class="info">
-  <span>© 꼬비샘</span>
-  <a href="https://www.instagram.com/ggobilog/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="ig" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#feda75"/><stop offset=".35" stop-color="#fa7e1e"/><stop offset=".6" stop-color="#d62976"/><stop offset="1" stop-color="#4f5bd5"/></linearGradient></defs><rect x="1" y="1" width="22" height="22" rx="6.5" fill="url(#ig)"/><rect x="5.5" y="5.5" width="13" height="13" rx="4" fill="none" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="#fff" stroke-width="2"/><circle cx="16.6" cy="7.4" r="1.1" fill="#fff"/></svg>ggobilog</a>
+  <span>© 깨비샘</span>
+  <a href="https://www.instagram.com/ggaebilog/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="ig" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#feda75"/><stop offset=".35" stop-color="#fa7e1e"/><stop offset=".6" stop-color="#d62976"/><stop offset="1" stop-color="#4f5bd5"/></linearGradient></defs><rect x="1" y="1" width="22" height="22" rx="6.5" fill="url(#ig)"/><rect x="5.5" y="5.5" width="13" height="13" rx="4" fill="none" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="#fff" stroke-width="2"/><circle cx="16.6" cy="7.4" r="1.1" fill="#fff"/></svg>ggaebilog</a>
 </footer>
 <script src="audio/bgm.js"></script>
 <script>
 // 첫 화면 음악: 다른 사이트 안에 들어가 있으므로 처음에는 꺼 둠 (켜면 기억)
 KBGM.init({ key:'home', tracks:{ play:'audio/home-bgm.mp3' }, defaultOn:false, vol:.25, calm:1 });
 (function(){ var fs=document.getElementById('fs-btn'); var b=KBGM.button({ className:'', parent:fs.parentNode, long:true }); fs.parentNode.insertBefore(b, fs); })();
+</script>
+<button class="adm-btn" id="adm-btn" type="button" title="관리자" aria-label="관리자"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></button>
+<div class="adm-modal modal" id="adm-modal">
+  <form class="adm-box" id="adm-form" autocomplete="off">
+    <h2>관리자</h2>
+    <p>코드를 넣으면 게임 순서를 바꿀 수 있어요.</p>
+    <input id="adm-code" type="password" placeholder="관리자 코드" aria-label="관리자 코드">
+    <div class="adm-msg" id="adm-msg"></div>
+    <div class="adm-row">
+      <button class="adm-b gray" type="button" id="adm-close">닫기</button>
+      <button class="adm-b" type="submit" id="adm-go">들어가기</button>
+    </div>
+  </form>
+</div>
+<div class="adm-bar" id="adm-bar" data-keynav="off">
+  <span>카드를 끌어서 순서를 바꿔요</span>
+  <button class="adm-b gray" type="button" id="adm-reset">처음 순서로</button>
+  <button class="adm-b gray" type="button" id="adm-cancel">취소</button>
+  <button class="adm-b coral" type="button" id="adm-save">저장</button>
+  <button class="adm-b gray" type="button" id="adm-out">로그아웃</button>
+</div>
+<script type="module">
+// 관리자: 로그인 (Firebase 이메일 로그인, 비밀번호 = 관리자 코드) 뒤 카드 끌어서 순서 바꾸기
+const ADMIN_EMAIL = 'admin@honam-games.pages.dev';
+const V = '12.13.0', base = `https://www.gstatic.com/firebasejs/${V}/`;
+const cfg = {
+  apiKey: "AIzaSyDw2EvTh7PVBrPnkii2F1kPGcqbzcIo41s",
+  authDomain: "honamsaem-class-games.firebaseapp.com",
+  projectId: "honamsaem-class-games",
+  storageBucket: "honamsaem-class-games.firebasestorage.app",
+  messagingSenderId: "251087835017",
+  appId: "1:251087835017:web:451941d17f634179ca1b58"
+};
+const $ = id => document.getElementById(id);
+const grid = document.querySelector('.grid'), soon = grid.querySelector('.soon');
+const cards = () => [...grid.querySelectorAll('.game')];
+const ids = () => cards().map(c => c.getAttribute('href'));
+const HTML_ORDER = window.homeOrderDefault;   // 처음 순서 (HTML에 적힌 순서)
+
+let fb = null, user = null, before = null;
+async function load() {
+  if (fb) return fb;
+  const [app, auth, fs] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-auth.js'), import(base + 'firebase-firestore.js')]);
+  const a = app.getApps().length ? app.getApp() : app.initializeApp(cfg);
+  const au = auth.getAuth(a);
+  await auth.setPersistence(au, auth.browserSessionPersistence);   // 창을 닫으면 로그아웃
+  fb = { auth, fs, au, db: fs.getFirestore(a) };
+  return fb;
+}
+function openModal() { $('adm-msg').textContent = ''; $('adm-code').value = ''; $('adm-modal').classList.add('on'); setTimeout(() => $('adm-code').focus(), 30); }
+function closeModal() { $('adm-modal').classList.remove('on'); }
+
+$('adm-btn').addEventListener('click', async () => {
+  if (user) { startEdit(); return; }
+  openModal();
+  try { const f = await load(); if (f.au.currentUser) { user = f.au.currentUser; closeModal(); startEdit(); } } catch (e) {}
+});
+$('adm-close').addEventListener('click', closeModal);
+$('adm-modal').addEventListener('click', e => { if (e.target === $('adm-modal')) closeModal(); });
+addEventListener('keydown', e => { if (e.key === 'Escape' && $('adm-modal').classList.contains('on')) closeModal(); });
+$('adm-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const code = $('adm-code').value.trim();
+  if (!code) { $('adm-msg').textContent = '관리자 코드를 넣어 주세요.'; return; }
+  $('adm-go').disabled = true; $('adm-msg').textContent = '확인하는 중...';
+  try {
+    const f = await load();
+    const r = await f.auth.signInWithEmailAndPassword(f.au, ADMIN_EMAIL, code);
+    user = r.user; closeModal(); startEdit();
+  } catch (err) {
+    const c = err && err.code || '';
+    $('adm-msg').textContent = c.includes('too-many') ? '여러 번 틀렸어요. 잠시 뒤에 다시 해 주세요.'
+      : c.includes('network') ? '인터넷 연결을 확인해 주세요.'
+      : c.includes('operation-not-allowed') || c.includes('configuration') ? 'Firebase에서 이메일 로그인이 아직 꺼져 있어요.'
+      : '관리자 코드가 맞지 않아요.';
+  }
+  $('adm-go').disabled = false;
+});
+
+// ===== 순서 바꾸기 =====
+function number() { cards().forEach((c, i) => { c.querySelector('.adm-num').textContent = i + 1; }); }
+function startEdit() {
+  before = ids();
+  document.body.classList.add('adm-edit');
+  $('adm-bar').classList.add('on');
+  number();
+}
+function endEdit() {
+  document.body.classList.remove('adm-edit');
+  $('adm-bar').classList.remove('on');
+}
+$('adm-cancel').addEventListener('click', () => { window.homeOrderApply(before); endEdit(); });
+$('adm-reset').addEventListener('click', () => { window.homeOrderApply(HTML_ORDER); number(); });
+$('adm-out').addEventListener('click', async () => {
+  window.homeOrderApply(before); endEdit();
+  try { const f = await load(); await f.auth.signOut(f.au); } catch (e) {}
+  user = null;
+});
+$('adm-save').addEventListener('click', async () => {
+  const b = $('adm-save'), order = ids();
+  b.disabled = true; b.textContent = '저장 중...';
+  try {
+    const f = await load();
+    await f.fs.setDoc(f.fs.doc(f.db, 'site', 'home-order'), { order, updatedAt: f.fs.serverTimestamp() });
+    try { localStorage.setItem('home-order', JSON.stringify(order)); } catch (e) {}
+    endEdit();
+  } catch (err) {
+    alertBar((err && err.code || '').includes('permission') ? '저장 권한이 없어요. Firebase 규칙을 확인해 주세요.' : '저장하지 못했어요. 다시 눌러 주세요.');
+  }
+  b.disabled = false; b.textContent = '저장';
+});
+function alertBar(t) { const s = $('adm-bar').querySelector('span'), o = s.textContent; s.textContent = t; s.style.color = '#d2463d'; setTimeout(() => { s.textContent = o; s.style.color = ''; }, 3500); }
+
+// 링크로 이동하지 않게
+grid.addEventListener('click', e => { if (document.body.classList.contains('adm-edit') && e.target.closest('.game')) e.preventDefault(); }, true);
+grid.addEventListener('dragstart', e => { if (document.body.classList.contains('adm-edit')) e.preventDefault(); });
+grid.addEventListener('contextmenu', e => { if (document.body.classList.contains('adm-edit')) e.preventDefault(); });
+
+// 끌기: 마우스는 바로, 손가락은 길게 누르면 시작
+let drag = null, press = null;
+grid.addEventListener('pointerdown', e => {
+  if (!document.body.classList.contains('adm-edit') || e.button > 0) return;
+  const card = e.target.closest('.game'); if (!card) return;
+  if (e.pointerType === 'mouse') { e.preventDefault(); press = { card, x: e.clientX, y: e.clientY, id: e.pointerId, ready: true }; }
+  else {
+    press = { card, x: e.clientX, y: e.clientY, id: e.pointerId, ready: false };
+    press.timer = setTimeout(() => { if (press) { press.ready = true; begin(press.x, press.y); if (navigator.vibrate) navigator.vibrate(15); } }, 350);
+  }
+});
+addEventListener('pointermove', e => {
+  if (!press || e.pointerId !== press.id) return;
+  if (drag) { e.preventDefault(); move(e.clientX, e.clientY); return; }
+  const far = Math.hypot(e.clientX - press.x, e.clientY - press.y) > 6;
+  if (press.ready && far) begin(e.clientX, e.clientY);
+  else if (!press.ready && far) { clearTimeout(press.timer); press = null; }   // 길게 누르기 전에 움직이면 화면 넘기기
+  else { press.x = e.clientX; press.y = e.clientY; }
+}, { passive: false });
+addEventListener('touchmove', e => { if (drag) e.preventDefault(); }, { passive: false });
+const finish = e => {
+  if (!press || (e && e.pointerId !== press.id)) return;
+  clearTimeout(press.timer);
+  if (drag) { drag.ghost.remove(); drag.card.classList.remove('adm-hole'); drag = null; number(); }
+  press = null;
+};
+addEventListener('pointerup', finish); addEventListener('pointercancel', finish);
+
+function begin(x, y) {
+  const card = press.card, r = card.getBoundingClientRect();
+  const ghost = card.cloneNode(true);
+  ghost.classList.add('adm-ghost');
+  ghost.style.width = r.width + 'px'; ghost.style.height = r.height + 'px';
+  ghost.style.left = r.left + 'px'; ghost.style.top = r.top + 'px';
+  document.body.appendChild(ghost);
+  card.classList.add('adm-hole');
+  drag = { card, ghost, dx: x - r.left, dy: y - r.top };
+  move(x, y);
+}
+function move(x, y) {
+  drag.ghost.style.left = (x - drag.dx) + 'px'; drag.ghost.style.top = (y - drag.dy) + 'px';
+  // 화면 끝에 가까우면 스크롤
+  if (y < 60) scrollBy(0, -12); else if (y > innerHeight - 60) scrollBy(0, 12);
+  for (const c of cards()) {
+    if (c === drag.card) continue;
+    const r = c.getBoundingClientRect();
+    if (x < r.left || x > r.right || y < r.top || y > r.bottom) continue;
+    const list = cards(), from = list.indexOf(drag.card), to = list.indexOf(c);
+    if (from < to) grid.insertBefore(drag.card, c.nextSibling); else grid.insertBefore(drag.card, c);
+    number();
+    break;
+  }
+}
 </script>
 <script src="keynav.js"></script>
 </body>

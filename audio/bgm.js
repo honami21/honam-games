@@ -1,4 +1,4 @@
-// 꼬비샘과 쉬는 시간: 게임 공용 배경 음악
+// 깨비샘과 쉬는 시간: 게임 공용 배경 음악
 // 사용법: KBGM.init({ key:'tetris', tracks:{ play:'audio/bgm-play.mp3' } })
 //   KBGM.full()   게임 중 (원래 크기)
 //   KBGM.calm()   시작 화면, 일시정지, 결과 화면 (작게)

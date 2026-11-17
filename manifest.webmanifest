@@ -1,6 +1,6 @@
 {
-  "name": "꼬비샘과 쉬는 시간",
-  "short_name": "꼬비샘 쉬는시간",
+  "name": "깨비샘과 쉬는 시간",
+  "short_name": "깨비샘 쉬는시간",
   "start_url": "/",
   "scope": "/",
   "display": "browser",

@@ -6,9 +6,9 @@
 <link rel="apple-touch-icon" href="/icons/icon-180.png"/>
 <link rel="icon" type="image/png" href="/icons/icon-192.png"/>
 <link rel="manifest" href="/manifest.webmanifest"/>
-<meta name="apple-mobile-web-app-title" content="꼬비샘과 쉬는 시간"/>
+<meta name="apple-mobile-web-app-title" content="깨비샘과 쉬는 시간"/>
 <meta name="theme-color" content="#16233a"/>
-<title>꼬비의 도깨비숲 생존기 - 꼬비샘과 쉬는 시간</title>
+<title>깨비샘의 도깨비숲 생존기 - 깨비샘과 쉬는 시간</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Jua&display=swap" rel="stylesheet">
 <style>
@@ -57,6 +57,8 @@
   #stats { position:absolute; top:58px; right:12px; display:flex; flex-direction:column; align-items:flex-end; gap:5px; }
   img.mini { height:1.45em; width:auto; vertical-align:-.4em; margin:0 1px; }
   .chip-ic { height:1.25em; width:auto; vertical-align:-.25em; }
+  .ico { height:1.15em; width:auto; vertical-align:-.2em; margin-right:.3em; }
+  #pause-btn .ico { margin-right:0; }
   .chip { background:rgba(10,14,30,.6); color:#fff; border-radius:14px; padding:3px 12px; font-size:clamp(16px,1.3vw,21px); }
   #pause-btn { pointer-events:auto; cursor:pointer; border:2px solid rgba(255,255,255,.35); font-family:'Jua',sans-serif; }
   #bossbar { position:absolute; left:50%; top:78px; transform:translateX(-50%); width:min(520px,70vw); text-align:center; color:#fff; font-size:16px; text-shadow:0 2px 0 #000; }
@@ -79,7 +81,7 @@
   .panel { background:var(--cream); border:4px solid var(--ink); border-radius:26px; padding:20px 22px; width:min(560px,100%); text-align:center; max-height:100%; overflow:auto; margin:auto; }
   .panel h2 { font-size:clamp(24px,4vw,32px); font-weight:normal; color:var(--coral-d); margin-bottom:4px; }
   .panel .sub { color:var(--ink2); font-size:15px; margin-bottom:12px; word-break:keep-all; }
-  .game-btn { padding:11px 24px; font-size:clamp(17px,2.6vw,21px); border-radius:40px; border:3px solid var(--ink); color:#fff; background:var(--coral);
+  .game-btn { padding:11px 24px; font-size:clamp(17px,2.6vw,21px); border-radius:40px; border:3px solid var(--ink); color:var(--ink); background:var(--coral);
     cursor:pointer; min-width:140px; font-family:'Jua',sans-serif; transition:transform .08s; }
   .game-btn:active { transform:translateY(2px) scale(.97); }
   .game-btn.sun { background:var(--sun); color:var(--ink); }
@@ -90,13 +92,13 @@
   .btns { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:14px; }
 
   /* 시작 화면 */
-  #start { background:linear-gradient(rgba(6,10,22,.1), rgba(6,10,22,.35)), url(img/start-bg.jpg) center/cover no-repeat #0b1228; }
+  #start { background:linear-gradient(rgba(6,10,22,.1), rgba(6,10,22,.35)), url(img/start-bg.jpg?v=3) center/cover no-repeat #0b1228; }
   #start .panel { width:min(760px,100%); background:rgba(8,14,36,.28); border-color:rgba(255,255,255,.35); }
   #start .panel .sub, #start .pick-title, #start #wp-desc, #start .howto { color:#fff; text-shadow:0 2px 0 rgba(8,12,30,.9), 0 0 8px rgba(8,12,30,.9); }
   #start .howto .kbd { text-shadow:none; }
   #start #title-text { color:#fff; text-shadow:0 3px 0 rgba(8,12,30,.9); }
   #start #title-logo { filter:drop-shadow(0 4px 8px rgba(8,12,30,.6)); }
-  #title { flex-direction:column; justify-content:space-between; padding:max(64px,7vh) 16px max(28px,7vh); background:linear-gradient(rgba(6,10,22,.05), rgba(6,10,22,0) 40%, rgba(6,10,22,.45)), url(img/start-bg.jpg) center/cover no-repeat #0b1228; }
+  #title { flex-direction:column; justify-content:space-between; padding:max(64px,7vh) 16px max(28px,7vh); background:linear-gradient(rgba(6,10,22,.05), rgba(6,10,22,0) 40%, rgba(6,10,22,.45)), url(img/start-bg.jpg?v=3) center/cover no-repeat #0b1228; }
   #big-logo { width:min(1000px,94vw); max-height:34vh; object-fit:contain; filter:drop-shadow(0 6px 12px rgba(8,12,30,.65)); animation:logoFloat 3.2s ease-in-out infinite; }
   #big-text { font-size:clamp(40px,9vw,96px); color:#fff; text-shadow:0 4px 0 rgba(8,12,30,.9); word-break:keep-all; text-align:center; }
   #big-text b { color:#8fe07a; font-weight:normal; }
@@ -134,8 +136,14 @@
   .pick-title { margin:14px 0 8px; font-size:18px; }
   #weapon-pick { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
   .wp { border:3px solid var(--edge); background:#fff; border-radius:16px; padding:8px 4px 6px; cursor:pointer; font-family:'Jua',sans-serif; color:var(--ink); font-size:15px; }
-  .wp .ic { margin:0 auto 4px; }
-  @media (min-width:760px) { #start .panel { width:min(900px,100%); } #weapon-pick { grid-template-columns:repeat(6,1fr); } }
+  .wp .ic { margin:0 auto 4px; border:1.5px solid #222; }
+  @media (min-width:760px) { #start .panel { width:min(760px,100%); } }
+  #start { flex-direction:column; justify-content:flex-start; gap:6px; }
+  #start > * { flex:none; }
+  #start > .panel { margin:0 auto auto; }
+  #start > #title-logo, #start > #title-text { margin-top:auto; }
+  #start #title-logo { width:min(720px,92%); max-width:none; max-height:none; margin:auto auto 4px; }
+  #start .pick-title { margin-top:2px; }
   .wp.on { border-color:var(--wpn); background:#fff1ee; transform:scale(1.03); }
   .wp small { display:block; color:var(--ink2); font-size:12px; margin-top:2px; word-break:keep-all; }
   #wp-desc { min-height:40px; margin-top:10px; font-size:15px; color:var(--ink2); word-break:keep-all; }
@@ -259,7 +267,7 @@
 </head>
 <body class="menu">
 <div class="topbar">
-  <a href="../" id="home-link" title="꼬비샘과 쉬는 시간으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">쉬는 시간</span></a>
+  <a href="../" id="home-link" title="깨비샘과 쉬는 시간으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">쉬는 시간</span></a>
   <button id="fs-btn" type="button" title="전체화면"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="t" id="fs-txt">전체화면</span></button>
 </div>
 <script>
@@ -294,22 +302,21 @@
     <div class="chip" id="lvl">Lv 1</div>
     <div class="chip"><img class="chip-ic" src="img/m-egg.png" alt="잡은 요괴" onerror="this.replaceWith('👻')"> <span id="kills">0</span></div>
     <div class="chip"><img class="chip-ic" src="img/coin.png" alt="엽전" onerror="this.replaceWith('🪙')"> <span id="coins">0</span></div>
-    <button class="chip" id="pause-btn" type="button" aria-label="멈춤">⏸<span class="t2"> 멈춤</span></button>
+    <button class="chip" id="pause-btn" type="button" aria-label="멈춤"><img class="ico" src="img/icon-pause.png" alt=""><span class="t2"> 멈춤</span></button>
   </div>
   <div id="bossbar" class="hidden"><span id="bossname">보스</span><div class="bar"><div id="bossfill"></div></div></div>
 </div>
 <div id="banner"></div>
 <div id="joy" class="hidden"><div id="knob"></div></div>
-<div id="touch-hint" class="hidden">화면을 누른 채로 끌면 꼬비가 움직여요</div>
+<div id="touch-hint" class="hidden">화면을 누른 채로 끌면 깨비샘이 움직여요</div>
 
 <!-- 시작 화면 -->
 <div class="ov" id="title">
-  <img id="big-logo" src="img/logo.png" alt="꼬비의 도깨비숲 생존기" onerror="this.style.display='none';document.getElementById('big-text').classList.remove('hidden')">
-  <div id="big-text" class="hidden">꼬비의 <b>도깨비숲</b> 생존기</div>
+  <img id="big-logo" src="img/logo.png?v=3" alt="깨비샘의 도깨비숲 생존기" onerror="this.style.display='none';document.getElementById('big-text').classList.remove('hidden')">
+  <div id="big-text" class="hidden">깨비샘의 <b>도깨비숲</b> 생존기</div>
   <div class="title-bottom">
-    <button class="game-btn" id="title-start" type="button">▶ 게임 시작</button>
+    <button class="game-btn" id="title-start" type="button">게임 시작</button>
     <button class="game-btn white" id="title-music" type="button">🎵 음악 켬</button>
-    <p class="title-tip">무기를 고르고, 몰려오는 요괴를 피해 20분을 버텨요!</p>
   </div>
   <button id="dev-open" type="button" aria-label="개발자 모드">🔧<span class="dev-txt"> 개발자 모드</span></button>
 </div>
@@ -350,32 +357,29 @@
   </div>
 </div>
 <div class="ov hidden" id="start">
+  <img id="title-logo" class="hidden" src="img/logo.png?v=3" alt="깨비샘의 도깨비숲 생존기">
+  <div id="title-text">깨비샘의 <b>도깨비숲</b> 생존기</div>
   <div class="panel">
-    <img id="title-logo" class="hidden" src="img/logo.png" alt="꼬비의 도깨비숲 생존기">
-    <div id="title-text">꼬비의 <b>도깨비숲</b> 생존기</div>
-    <p class="sub">몰려오는 숲속 요괴들을 피해 20분을 버티고, 마지막 보스 이무기를 물리쳐요!</p>
-    <div class="pick-title">처음 들고 갈 무기를 골라요</div>
+    <div class="pick-title"><span style="display:inline-block;padding:6px 26px;border-radius:999px;background:rgba(8,12,30,.55);border:2px solid rgba(255,255,255,.6);font-size:clamp(20px,2.6vw,26px)">무기 선택</span></div>
     <div id="weapon-pick"></div>
     <div id="wp-desc"></div>
     <div class="btns">
       <button class="game-btn" id="start-btn" type="button">숲으로 출발!</button>
-      <button class="game-btn sun" id="rank-btn" type="button">🏆 랭킹</button>
-      <button class="game-btn white" id="help-btn" type="button">📖 조합표</button>
+      <button class="game-btn sun" id="rank-btn" type="button"><img class="ico" src="img/icon-rank.png" alt="">랭킹</button>
+      <button class="game-btn white" id="help-btn" type="button"><img class="ico" src="img/icon-book.png" alt="">조합표</button>
     </div>
-    <p class="howto" id="howto-pc">움직이기 <span class="kbd">←↑↓→</span> 또는 <span class="kbd">W A S D</span> · 멈춤 <span class="kbd">Esc</span> · 🎮 컨트롤러도 돼요 · 공격은 저절로 해요</p>
-    <p class="howto hidden" id="howto-touch">화면을 누른 채로 끌면 움직여요 · 공격은 저절로 해요</p>
   </div>
 </div>
 
 <!-- 레벨업 -->
 <div class="ov hidden" id="levelup">
   <div class="panel">
-    <img class="ggobi hidden" id="lv-img" src="img/ggobi-levelup.png" alt="">
+    <img class="ggobi hidden" id="lv-img" src="img/ggobi-levelup.png?v=2" alt="">
     <h2>레벨 업! <span id="lv-num"></span></h2>
     <p class="sub">하나를 골라요</p>
     <div class="cards" id="lv-cards"></div>
     <div class="btns">
-      <button class="game-btn white small" id="reroll-btn" type="button">🎲 다시 뽑기 (<span id="reroll-n">2</span>)</button>
+      <button class="game-btn white small" id="reroll-btn" type="button"><img class="ico" src="img/icon-dice.png" alt="">다시 뽑기 (<span id="reroll-n">2</span>)</button>
       <button class="game-btn white small" id="skip-btn" type="button">건너뛰기</button>
     </div>
   </div>
@@ -431,7 +435,7 @@
     <div id="save-status"></div>
     <div class="btns">
       <button class="game-btn" id="again-btn" type="button">다시 하기</button>
-      <button class="game-btn sun" id="end-rank-btn" type="button">🏆 랭킹</button>
+      <button class="game-btn sun" id="end-rank-btn" type="button"><img class="ico" src="img/icon-rank.png" alt="">랭킹</button>
     </div>
   </div>
 </div>
@@ -439,7 +443,7 @@
 <!-- 랭킹 -->
 <div class="ov hidden" id="ranking">
   <div class="panel">
-    <h2>🏆 랭킹 TOP 50</h2>
+    <h2><img class="ico" src="img/icon-rank.png" alt="">랭킹 TOP 50</h2>
     <div id="ranking-list"></div>
     <div class="btns"><button class="game-btn" id="rank-close" type="button">닫기</button></div>
   </div>
@@ -447,7 +451,7 @@
 <script>
 'use strict';
 /* =====================================================================
-   꼬비의 도깨비숲 생존기 - 데이터
+   깨비샘의 도깨비숲 생존기 - 데이터
    무기(빨강) + 강화(보라) = 조합(분홍)
    ===================================================================== */
 const GAME_LEN = 20 * 60;          // 20분이 되면 이무기 등장
@@ -460,8 +464,8 @@ const WEAPONS = {
     desc:['','바라보는 쪽을 넓게 휘둘러요.','뒤쪽도 한 번 더 휘둘러요.','힘 +6','휘두르는 범위 +15%','힘 +6','더 자주 휘둘러요.','힘 +8','휘두르는 범위 +20%'],
     evoDesc:'빙 둘러 크게 휘둘러요. 요괴를 잡으면 가끔 엽전과 체력이 나와요.' },
   wisp: { name:'도깨비불', emoji:'🔥', pair:'lamp', evoName:'꺼지지 않는 도깨비불', evoEmoji:'☄️',
-    short:'꼬비 주위를 빙글빙글 돌아요',
-    desc:['','도깨비불 2개가 꼬비 주위를 돌아요.','도깨비불 +1','더 넓고 빠르게 돌아요.','힘 +5, 더 오래 돌아요.','도깨비불 +1','더 빠르게 돌아요.','힘 +5, 더 오래 돌아요.','도깨비불 +1'],
+    short:'깨비샘 주위를 빙글빙글 돌아요',
+    desc:['','도깨비불 2개가 깨비샘 주위를 돌아요.','도깨비불 +1','더 넓고 빠르게 돌아요.','힘 +5, 더 오래 돌아요.','도깨비불 +1','더 빠르게 돌아요.','힘 +5, 더 오래 돌아요.','도깨비불 +1'],
     evoDesc:'쉬지 않고 돌아요. 불이 2개 늘고 훨씬 뜨거워져요.' },
   top: { name:'팽이', emoji:'🪀', pair:'beans', evoName:'팽이 회오리', evoEmoji:'🌀',
     short:'요괴 사이를 통통 튕겨 다녀요',
@@ -470,14 +474,14 @@ const WEAPONS = {
   shoe: { name:'고무신', emoji:'👟', pair:'straw', evoName:'천리 고무신', evoEmoji:'⚡',
     short:'부메랑처럼 날아갔다 돌아와요',
     desc:['','고무신을 던지면 요괴를 뚫고 돌아와요.','고무신 +1','힘 +8','더 크게 날아가요.','고무신 +1','더 빠르게 날아가요.','힘 +10','고무신 +1'],
-    evoDesc:'꼬비가 빠를수록 세져요. 더 멀리, 더 크게 날아가요.' },
+    evoDesc:'깨비샘이 빠를수록 세져요. 더 멀리, 더 크게 날아가요.' },
   fan: { name:'부채', emoji:'🪭', pair:'cloth', evoName:'태풍 부채', evoEmoji:'🌪️',
     short:'바람으로 요괴를 밀어내요',
     desc:['','앞쪽으로 바람을 일으켜 요괴를 밀어내요.','힘 +5','바람이 넓어져요.','반대쪽에도 바람 +1','더 자주 부쳐요.','힘 +7','바람이 넓어져요.','힘 +8, 더 세게 밀어요.'],
     evoDesc:'부칠 때마다 회오리가 생겨 요괴를 빨아들여요.' },
   drum: { name:'북', emoji:'🥁', pair:'sundial', evoName:'천둥 북', evoEmoji:'🌩️',
     short:'둥! 둥근 충격파가 퍼져요',
-    desc:['','둥! 꼬비를 중심으로 충격파가 퍼져요.','힘 +8','충격파가 넓어져요.','충격파 +1 (한 번 더 둥!)','더 자주 쳐요.','힘 +10','충격파가 넓어져요.','힘 +12'],
+    desc:['','둥! 깨비샘을 중심으로 충격파가 퍼져요.','힘 +8','충격파가 넓어져요.','충격파 +1 (한 번 더 둥!)','더 자주 쳐요.','힘 +10','충격파가 넓어져요.','힘 +12'],
     evoDesc:'충격파와 함께 화면 곳곳에 천둥번개가 떨어져요.' },
   brush: { name:'붓', emoji:'🖌️', pair:'book', evoName:'일필휘지 붓', evoEmoji:'✒️',
     short:'바닥에 먹물 웅덩이를 남겨요',
@@ -500,8 +504,8 @@ const WEAPONS = {
     desc:['','가까운 요괴를 쿵! 내려찍어요. 최대 체력이 많을수록 세져요.','힘 +10','찍는 범위 +20%','한 번 더 찍어요.','더 자주 찍어요.','힘 +12','찍는 범위 +20%','한 번 더 찍어요.'],
     evoDesc:'보름달처럼 크게 내려찍고, 맞은 요괴 수만큼 체력이 차요.' },
   mask: { name:'하회탈', emoji:'🎭', pair:'lid', evoName:'천하무적 탈', evoEmoji:'👑',
-    short:'꼬비를 지키며 요괴 공격을 막아요',
-    desc:['','탈이 꼬비 주위를 천천히 돌며 날아오는 공격을 막고 요괴를 밀쳐요.','힘 +5','탈 +1','탈이 커져요.','힘 +6','탈 +1','더 빨리 돌아요.','탈 +1'],
+    short:'깨비샘을 지키며 요괴 공격을 막아요',
+    desc:['','탈이 깨비샘 주위를 천천히 돌며 날아오는 공격을 막고 요괴를 밀쳐요.','힘 +5','탈 +1','탈이 커져요.','힘 +6','탈 +1','더 빨리 돌아요.','탈 +1'],
     evoDesc:'탈이 2개 늘고, 10초마다 2초 동안 아무 피해도 받지 않아요.' },
 };
 
@@ -606,7 +610,7 @@ const IMG_NAMES = [
 <script>
 'use strict';
 /* =====================================================================
-   꼬비의 도깨비숲 생존기 - 게임
+   깨비샘의 도깨비숲 생존기 - 게임
    ===================================================================== */
 const $ = id => document.getElementById(id);
 const cv = $('cv'), ctx = cv.getContext('2d');
@@ -622,19 +626,19 @@ function loadImg(name, src) {
   im.onload = () => { IMG[name] = im; if (im.decode) im.decode().catch(() => {}); if (name === 'logo') { $('title-logo').classList.remove('hidden'); $('title-text').classList.add('hidden'); } if (name === 'ground') groundPattern = null; clearTimeout(loadImg.t); loadImg.t = setTimeout(() => { if (typeof modal !== 'undefined' && modal === 'start') buildPick(); }, 120); };
   im.src = src;
 }
-IMG_NAMES.forEach(n => loadImg(n, 'img/' + n + (n === 'ground' ? '.jpg' : '.png')));
-loadImg('_ggobi', '../img/ggobi-wave.png');   // 꼬비 그림이 오기 전 임시
+IMG_NAMES.forEach(n => loadImg(n, 'img/' + n + (n === 'ground' ? '.jpg' : '.png') + (n.startsWith('ggobi-') ? '?v=2' : '')));
+loadImg('_ggobi', '../img/ggobi-wave.png');   // 깨비샘 그림이 오기 전 임시
 
 function iconKey(kind, id) { return (kind === 'p' ? 'p-' : kind === 'e' ? 'e-' : 'w-') + id; }
 // 글 사이에 들어가는 작은 그림 (그림이 없으면 이모지)
 function mini(kind, id) {
   const key = iconKey(kind, id), em = kind === 'p' ? PASSIVES[id].emoji : kind === 'e' ? WEAPONS[id].evoEmoji : WEAPONS[id].emoji;
-  return IMG[key] ? `<img class="mini" src="img/${key}.png" alt="">` : em;
+  return IMG[key] ? `<img class="mini" src="img/${key}.png${key.startsWith('ggobi-') ? '?v=2' : ''}" alt="">` : em;
 }
 function iconHTML(kind, id, small) {
   const key = iconKey(kind, id);
   const em = kind === 'p' ? PASSIVES[id].emoji : kind === 'e' ? WEAPONS[id].evoEmoji : WEAPONS[id].emoji;
-  const inner = IMG[key] ? `<img src="img/${key}.png" alt="">` : em;
+  const inner = IMG[key] ? `<img src="img/${key}.png${key.startsWith('ggobi-') ? '?v=2' : ''}" alt="">` : em;
   return `<div class="ic ${kind === 'p' ? 'p' : kind === 'e' ? 'e' : ''} ${small ? 's' : ''}">${inner}</div>`;
 }
 
@@ -1394,7 +1398,7 @@ function updateEnemies(dt) {
     if (GROUNDED[e.type] && !e.straight) pushOut(e, e.r * .5, e.r * .5);
     const k = Math.min(1, dt * 9); e.kbx -= e.kbx * k; e.kby -= e.kby * k;
     if (Math.abs(vx) > 2) e.face = vx < 0 ? -1 : 1;
-    // 꼬비와 부딪히기
+    // 깨비샘과 부딪히기
     const ddx = p.x - e.x, ddy = p.y - e.y, rr = e.r + p.r * .8;
     if (ddx * ddx + ddy * ddy < rr * rr && MONSTERS[e.type].dmg) damagePlayer(e.dmg);
     // 너무 멀어지면 앞쪽으로 다시 데려와요
@@ -1495,7 +1499,7 @@ function update(dt) {
     let c = 0; while (G.spawnAcc >= 1 && c++ < 12) { G.spawnAcc--; spawnOne(pickMix(wv.mix)); }
   } else G.spawnAcc = 0;
   updateLanterns(dt);
-  // 꼬비 움직임
+  // 깨비샘 움직임
   const [ix, iy] = inputDir();
   p.moving = !!(ix || iy);
   if (p.moving) { p.fx = ix; p.fy = iy; if (Math.abs(ix) > .1) p.face = ix < 0 ? -1 : 1; }
@@ -1687,8 +1691,8 @@ function drawPlayer() {
   let pick = null;
   if (p.hurtT > 0) pick = ['ggobi-hurt', 70];
   else if (p.moving) {
-    if (vert) pick = ['ggobi-' + vert + (Math.floor(G.t / .14) % 2 + 1), 72];
-    else pick = [['ggobi-run', 70], ['ggobi-run3', 76], ['ggobi-run2', 72], ['ggobi-run4', 76]][Math.floor(G.t / .09) % 4];
+    if (vert) pick = ['ggobi-' + vert + (Math.floor(G.t / .14) % 2 + 1), 74];
+    else pick = [['ggobi-run', 74], ['ggobi-run3', 74], ['ggobi-run2', 74], ['ggobi-run4', 74]][Math.floor(G.t / .09) % 4];
   } else pick = vert ? ['ggobi-idle-' + vert, 74] : ['ggobi-idle', 74];
   if (pick && !IMG[pick[0]] && p.moving && IMG['ggobi-run2'] && Math.floor(G.t / .13) % 2) pick = ['ggobi-run2', 72];
   if (pick && IMG[pick[0]]) { im = pick[0]; ph = pick[1]; }
@@ -1757,7 +1761,7 @@ function render() {
     }
   }
   // 요괴 (위에서 아래 순서로)
-  // 꼬비보다 뒤쪽(위쪽)에 있는 나무는 먼저 그려서 꼬비가 앞에 보이게 해요
+  // 깨비샘보다 뒤쪽(위쪽)에 있는 나무는 먼저 그려서 깨비샘이 앞에 보이게 해요
   for (const d of tall) if (d.y + 4 <= G.p.y + 14) spr(d.t[0], d.x, d.y - d.t[2] * .4, d.t[2]) || drawDecoFallback(d.t[0], d.x, d.y, d.t[2]);
   const list = G.enemies.slice().sort((a, b) => a.y - b.y);
   for (const e of list) if (e.type === 'seg') drawMonster(e);
@@ -1903,12 +1907,12 @@ function refreshSlots() {
   const pcls = id => pc[id] ? ` pair${pc[id].done ? ' done' : ''}" style="--pc:${pc[id].c}` : '';
   for (const w of G.weapons) {
     const key = iconKey(w.evo ? 'e' : 'w', w.id), em = w.evo ? WEAPONS[w.id].evoEmoji : WEAPONS[w.id].emoji;
-    h += `<div class="slot ${w.evo ? 'e' : 'w'} ${canEvolve(w) ? 'ready' : ''}${pcls(w.id)}" title="${esc(w.evo ? WEAPONS[w.id].evoName : WEAPONS[w.id].name)}">${IMG[key] ? `<img src="img/${key}.png" alt="">` : em}<i>${w.evo ? '★' : w.lv}</i></div>`;
+    h += `<div class="slot ${w.evo ? 'e' : 'w'} ${canEvolve(w) ? 'ready' : ''}${pcls(w.id)}" title="${esc(w.evo ? WEAPONS[w.id].evoName : WEAPONS[w.id].name)}">${IMG[key] ? `<img src="img/${key}.png${key.startsWith('ggobi-') ? '?v=2' : ''}" alt="">` : em}<i>${w.evo ? '★' : w.lv}</i></div>`;
   }
   $('slots-w').innerHTML = h; h = '';
   for (const id of G.passiveOrder) {
     const key = 'p-' + id;
-    h += `<div class="slot p${pcls(id)}" title="${esc(PASSIVES[id].name)}">${IMG[key] ? `<img src="img/${key}.png" alt="">` : PASSIVES[id].emoji}<i>${G.passives[id]}</i></div>`;
+    h += `<div class="slot p${pcls(id)}" title="${esc(PASSIVES[id].name)}">${IMG[key] ? `<img src="img/${key}.png${key.startsWith('ggobi-') ? '?v=2' : ''}" alt="">` : PASSIVES[id].emoji}<i>${G.passives[id]}</i></div>`;
   }
   $('slots-p').innerHTML = h;
 }
@@ -1952,14 +1956,14 @@ function cardHTML(o, i, forChest) {
   if (o.k === 'w') {
     const W = WEAPONS[o.id], w = weaponById(o.id), next = w ? w.lv + 1 : 1;
     icon = iconHTML('w', o.id); title = W.name;
-    tag = w ? `<em>Lv ${next}</em>` : '<em class="new-w">새 무기</em>';
+    tag = w ? `<em>Lv ${w.lv} → Lv ${next}</em>` : '<em class="new-w">새 무기</em>';
     desc = W.desc[next] + (next === 8 ? ' · 최고 레벨!' : '');
     pair = `짝꿍: ${mini('p', W.pair)} ${PASSIVES[W.pair].name} → ${mini('e', o.id)} ${W.evoName}`;
     if (!forChest && G.passives[W.pair]) link = w ? `✅ 짝꿍 ${PASSIVES[W.pair].name} 완성!` : `🔗 고르면 ${PASSIVES[W.pair].name} 짝꿍 완성! → ${W.evoName}`;
   } else if (o.k === 'p') {
     const P = PASSIVES[o.id], lv = (G.passives[o.id] || 0) + 1;
     icon = iconHTML('p', o.id); title = P.name;
-    tag = G.passives[o.id] ? `<em class="p">Lv ${lv}</em>` : '<em class="new-p">새 강화</em>';
+    tag = G.passives[o.id] ? `<em class="p">Lv ${lv - 1} → Lv ${lv}</em>` : '<em class="new-p">새 강화</em>';
     desc = P.each;
     const pw = PAIR_OF[o.id], pwo = pw && weaponById(pw); if (pw) pair = pwo && pwo.evo ? `✅ 이미 조합 완료: ${mini('e', pw)} ${WEAPONS[pw].evoName}` : `짝꿍 무기: ${mini('w', pw)} ${WEAPONS[pw].name} → ${mini('e', pw)} ${WEAPONS[pw].evoName}`;
     const ow = pw && weaponById(pw);
@@ -2112,7 +2116,7 @@ function openPause() {
 }
 function openComboFromMenu() {
   modal = 'pause'; pauseFromMenu = true;
-  $('pause-title').textContent = '📖 조합표';
+  $('pause-title').innerHTML = '<img class="ico" src="img/icon-book.png" alt="">조합표';
   document.querySelector('#pause .tabs').classList.add('hidden');
   $('tab-combo').innerHTML = comboTable(); setTab('combo');
   $('resume-btn').textContent = '닫기'; $('giveup-btn').classList.add('hidden'); $('dev-btn').classList.add('hidden'); updateSoundBtn(); show('pause');
@@ -2143,7 +2147,7 @@ function endGame(cleared, gaveUp) {
   $('end-title').textContent = cleared ? '🎉 도깨비숲을 지켰어요!' : gaveUp ? '여기까지 했어요' : '쓰러졌어요...';
   $('end-sub').textContent = cleared ? '이무기까지 물리친 진짜 도깨비숲 지킴이!' : sec >= 600 ? '정말 오래 버텼어요! 조합 무기를 노려 봐요.' : '무기를 8레벨까지 키우고 짝꿍 강화를 모아 조합해 봐요!';
   const im = cleared ? 'ggobi-clear' : 'ggobi-gameover';
-  const ei = $('end-img'); if (IMG[im]) { ei.src = 'img/' + im + '.png'; ei.classList.remove('hidden'); } else ei.classList.add('hidden');
+  const ei = $('end-img'); if (IMG[im]) { ei.src = 'img/' + im + '.png?v=2'; ei.classList.remove('hidden'); } else ei.classList.add('hidden');
   $('end-score').textContent = score.toLocaleString();
   $('r-time').textContent = fmtTime(sec); $('r-kills').textContent = G.kills.toLocaleString(); $('r-level').textContent = G.p.lv; $('r-boss').textContent = G.bossBonus.toLocaleString();
   $('save-status').textContent = G.dev ? '개발자 모드라서 랭킹에 저장되지 않아요.' : ''; $('save-status').classList.remove('error'); $('save-btn').disabled = false;
@@ -2161,7 +2165,7 @@ $('again-btn').addEventListener('click', () => { hide('end'); G = null; modal = 
 let pickedWeapon = 'club';
 try { const s = localStorage.getItem('survivor-weapon'); if (s && WEAPONS[s]) pickedWeapon = s; } catch (e) {}
 function buildPick() {
-  $('weapon-pick').innerHTML = Object.keys(WEAPONS).map(id => `<button type="button" class="wp ${id === pickedWeapon ? 'on' : ''}" data-id="${id}">${iconHTML('w', id)}${WEAPONS[id].name}<small>${WEAPONS[id].short}</small></button>`).join('');
+  $('weapon-pick').innerHTML = Object.keys(WEAPONS).map(id => `<button type="button" class="wp ${id === pickedWeapon ? 'on' : ''}" data-id="${id}">${iconHTML('w', id)}${WEAPONS[id].name}</button>`).join('');
   $('wp-desc').textContent = WEAPONS[pickedWeapon].name + ': ' + WEAPONS[pickedWeapon].desc[1];
 }
 $('weapon-pick').addEventListener('click', e => {
@@ -2275,7 +2279,6 @@ $('help-btn').addEventListener('click', openComboFromMenu);
 $('rank-btn').addEventListener('click', () => showRanking());
 $('end-rank-btn').addEventListener('click', () => showRanking());
 $('rank-close').addEventListener('click', () => { hide('ranking'); });
-if (isTouch) { hide('howto-pc'); show('howto-touch'); }
 
 /* ---------- 게임 컨트롤러 ---------- */
 // 왼쪽 스틱·십자키: 움직이기와 메뉴 고르기, A: 누르기, B: 닫기, START: 멈춤과 시작

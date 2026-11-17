@@ -6,9 +6,9 @@
 <link rel="apple-touch-icon" href="/icons/icon-180.png"/>
 <link rel="icon" type="image/png" href="/icons/icon-192.png"/>
 <link rel="manifest" href="/manifest.webmanifest"/>
-<meta name="apple-mobile-web-app-title" content="꼬비샘과 쉬는 시간"/>
+<meta name="apple-mobile-web-app-title" content="깨비샘과 쉬는 시간"/>
 <meta name="theme-color" content="#2a2860"/>
-<title>꼬비의 국기 맞히기 - 꼬비샘과 쉬는 시간</title>
+<title>깨비샘의 국기 맞히기 - 깨비샘과 쉬는 시간</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
 <style>
@@ -133,7 +133,7 @@
   .section { display:flex; flex-direction:column; align-items:center; gap:14px; width:100%; max-width:600px; margin:auto; }
   .card { background:var(--cream); border:3px solid var(--ink); border-radius:28px; box-shadow:0 8px 0 var(--ink), 0 16px 30px rgba(20,10,50,.35);
     padding:20px 24px 24px; width:100%; }
-  .logo { height:auto; width:min(420px, 92%); display:block; margin:-4px auto 0; }
+  .logo { height:auto; width:min(560px, 96%); display:block; margin:-4px auto 14px; }
   .lead { font-size:clamp(16px,2.6vw,20px); line-height:1.5; color:var(--ink); margin:8px 0 12px; word-break:keep-all; }
   .lead b { color:var(--coral-d); font-weight:normal; }
   .start-wrap { position:relative; width:100%; }
@@ -149,7 +149,7 @@
   .diff-btn:hover { filter:brightness(1.05); }
   .diff-btn:active { transform:translateY(3px); box-shadow:0 1px 0 var(--ink); }
   .diff-btn small { font-size:14px; color:var(--ink2); }
-  .diff-btn.hard { background:var(--coral); color:#fff; }
+  .diff-btn.hard { background:var(--coral); color:var(--ink); }
   .diff-btn.hard small { color:#ffe3e6; }
   .diff-btn.cont-btn { background:var(--sky); }
   .ranking-note { margin-top:10px; font-size:14px; color:var(--ink2); }
@@ -163,7 +163,7 @@
     font-family:'Jua',sans-serif; font-size:13px; color:var(--ink); box-shadow:0 2px 0 var(--ink); min-width:22px; text-align:center; line-height:1.5; }
 
   .button-group { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; width:100%; }
-  .game-btn { padding:11px 24px; font-size:clamp(17px,2.8vw,21px); border-radius:40px; border:3px solid var(--ink); color:#fff;
+  .game-btn { padding:11px 24px; font-size:clamp(17px,2.8vw,21px); border-radius:40px; border:3px solid var(--ink); color:var(--ink);
     cursor:pointer; min-width:140px; font-family:'Jua',sans-serif; box-shadow:0 5px 0 var(--ink); transition:transform .08s, box-shadow .08s; }
   .game-btn:active { transform:translateY(4px); box-shadow:0 1px 0 var(--ink); }
   .game-btn:disabled { opacity:.55; cursor:not-allowed; }
@@ -236,7 +236,7 @@
 </head>
 <body>
 <div class="topbar">
-  <a href="../" id="home-link" title="꼬비샘과 쉬는 시간으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">쉬는 시간</span></a>
+  <a href="../" id="home-link" title="깨비샘과 쉬는 시간으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">쉬는 시간</span></a>
   <div class="right">
     <button id="bgmToggle" type="button" title="소리 켜기/끄기" aria-label="소리 켜기/끄기">🔊</button>
     <button id="fs-btn" type="button" title="전체화면"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="t" id="fs-txt">전체화면</span></button>
@@ -264,7 +264,7 @@
 </script>
 
 <!-- 2D 무대 -->
-<div id="stage"><div id="world"><img id="ggobi" src="img/ggobi-back.png" alt="꼬비"></div></div>
+<div id="stage"><div id="world"><img id="ggobi" src="img/ggobi-back.png" alt="깨비샘"></div></div>
 
 <!-- 게임 중 점수판 -->
 <div id="hud" class="hidden">
@@ -301,8 +301,7 @@
   <div id="start-section" class="section">
     <div class="start-wrap">
       <div class="card">
-        <img class="logo" src="img/logo.png" alt="꼬비의 국기 맞히기" width="1000" height="312">
-        <p class="lead">꼬비가 하늘 위로 폴짝폴짝 올라가요!<br>국기를 보고 <b>맞는 나라 발판</b>으로 점프해요.<br>틀린 발판을 밟으면 유리가 깨져 떨어져요.</p>
+        <img class="logo" src="img/logo.png?v=4" alt="깨비샘의 국기 맞히기" width="1100" height="365">
         <div class="diff-section">
           <div class="diff-title">난이도 고르기</div>
           <div class="diff-buttons">

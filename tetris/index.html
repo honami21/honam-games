@@ -6,9 +6,9 @@
 <link rel="apple-touch-icon" href="/icons/icon-180.png"/>
 <link rel="icon" type="image/png" href="/icons/icon-192.png"/>
 <link rel="manifest" href="/manifest.webmanifest"/>
-<meta name="apple-mobile-web-app-title" content="꼬비샘과 쉬는 시간"/>
+<meta name="apple-mobile-web-app-title" content="깨비샘과 쉬는 시간"/>
 <meta name="theme-color" content="#2a2860"/>
-<title>꼬비의 블록 쌓기 - 꼬비샘과 쉬는 시간</title>
+<title>깨비샘의 블록 쌓기 - 깨비샘과 쉬는 시간</title>
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet"/>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -81,7 +81,7 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
   background:var(--cream);color:var(--ink);box-shadow:0 5px 0 var(--cream-edge),0 8px 16px rgba(0,0,0,.18)}
 .btn:hover{transform:translateY(1px);filter:brightness(1.03)}
 .btn:active{transform:translateY(5px);box-shadow:0 0 0 var(--cream-edge)}
-.btn-s,.btn-r{background:linear-gradient(180deg,#ff8d90,#ec5168);color:#fff;text-shadow:0 2px 0 rgba(160,30,60,.35);box-shadow:0 5px 0 var(--coral-dark),0 8px 16px rgba(0,0,0,.22)}
+.btn-s,.btn-r{background:linear-gradient(180deg,#ff8d90,#ec5168);color:var(--ink);box-shadow:0 5px 0 var(--coral-dark),0 8px 16px rgba(0,0,0,.22)}
 .btn-s:active,.btn-r:active{box-shadow:0 0 0 var(--coral-dark)}
 .btn-p{background:linear-gradient(180deg,#ffe27e,#ffc94a);color:#5b3b05;box-shadow:0 5px 0 var(--sun-dark),0 8px 16px rgba(0,0,0,.2)}
 .btn-p:active{box-shadow:0 0 0 var(--sun-dark)}
@@ -131,6 +131,8 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
 @media (max-height:700px){.modal-hero{width:110px}}
 .modal-title{font-size:34px;color:var(--coral);text-shadow:0 3px 0 #fff,0 4px 0 #f3b9b9;margin-bottom:6px;letter-spacing:2px;}
 .modal-sub{font-size:16px;color:#7b6f8c;margin-bottom:16px;}
+.start-logo{display:block;width:min(440px,100%);height:auto;margin:-4px auto 14px}
+@media (max-height:700px){.start-logo{width:min(320px,100%)}}
 .result-card{background:#fff;border:2px solid var(--cream2);border-radius:18px;padding:12px 18px;margin-bottom:14px;}
 .result-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1.5px dashed #f1dccb;font-size:15px;}
 .result-row:last-child{border-bottom:none;}
@@ -267,7 +269,7 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
   .topbar svg{width:18px;height:18px}
   .topbar .t{display:none}
 }
-/* ====== 꼬비 테마 (꼬비샘과 쉬는 시간 홈 화면과 같은 분위기) ====== */
+/* ====== 꼬비 테마 (깨비샘과 쉬는 시간 홈 화면과 같은 분위기) ====== */
 :root{--line:#3a2b33;--cream:#fff6e4;--cream2:#f3e2c8;--cream-edge:rgba(58,43,51,.55);--coral:#f2685f;--coral2:#ff8f7f;--coral-dark:#b9453d;--sun:#ffd75e;--sun-dark:#c99a1e}
 #sky-bg{background:#2a2860 url(img/bg.jpg) center top/cover no-repeat}
 #sky-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(26,22,70,.30),rgba(26,22,70,.12) 40%,rgba(26,22,70,.50))}
@@ -339,7 +341,7 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
 </head>
 <body>
 <div class="topbar">
-  <a href="../" id="home-link" title="꼬비샘과 쉬는 시간으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">쉬는 시간</span></a>
+  <a href="../" id="home-link" title="깨비샘과 쉬는 시간으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">쉬는 시간</span></a>
   <button id="fs-btn" type="button" title="전체화면"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="t" id="fs-txt">전체화면</span></button>
 </div>
 <script>
@@ -406,9 +408,8 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
 <img class="wisp" src="img/wisp.png" alt="" style="right:20%;top:58%;width:26px;animation-delay:-3s">
 <div class="wrap">
   <div class="logo">
-    <img class="peek" src="img/ggobi-peek.png" alt="">
     <img class="wisp-i" src="img/wisp.png" alt="">
-    <h1 class="game-title"><img class="logo-img" src="img/logo.png" alt="꼬비의 블록 쌓기"></h1>
+    <h1 class="game-title"><img class="logo-img" src="img/logo.png?v=3" alt="깨비샘의 블록 쌓기"></h1>
     <img class="wisp-i r" src="img/wisp.png" alt="">
   </div>
   <div id="layout">
@@ -476,9 +477,7 @@ body{font-family:'Jua',sans-serif;color:var(--ink);background:var(--night);min-h
 <!-- ========= START MODAL ========= -->
 <div id="start-modal" class="modal show">
   <div class="modal-box">
-    <div class="modal-hero"><img src="img/ggobi-wave.png" alt="" style="width:46%;margin:0 auto"><svg class="hs a"><use href="#i-spark"/></svg><svg class="hs b"><use href="#i-spark"/></svg></div>
-    <div class="modal-title">꼬비의 블록 쌓기</div>
-    <div class="modal-sub">10단계까지 완주해 보세요!</div>
+    <img class="start-logo" src="img/logo.png?v=3" alt="깨비샘의 블록 쌓기">
     <div class="result-card rules">
       <div class="rt">🎯 게임 규칙</div>
       <div class="rb">
