@@ -234,17 +234,16 @@
     <div class="start-wrap">
       <div class="card">
         <img class="logo" src="img/logo.png" alt="깨비샘의 알까기" width="900" height="307">
-        <p class="lead">내 알을 <b>톡!</b> 튕겨서 친구 알을 판 밖으로 떨어뜨려요.<br>상대 알을 <b>모두</b> 떨어뜨리면 이겨요!</p>
         <div class="how">
-          <div><i>👆</i><b>1. 조준</b>새총처럼 쏠 방향의 반대쪽으로 당겨요</div>
-          <div><i>💪</i><b>2. 힘</b>알 둘레 게이지가 차오르면 원하는 힘에서 톡!</div>
-          <div><i>🎯</i><b>3. 딱!</b>흔들리는 바늘을 가운데에서 멈추면 정확하게 쏙</div>
+          <div><i>👆</i><b>1. 조준</b></div>
+          <div><i>💪</i><b>2. 힘</b></div>
+          <div><i>🎯</i><b>3. 딱!</b></div>
         </div>
         <div class="box">
           <div class="box-title">어떤 알로 할까요?</div>
           <div class="vpick">
-            <button type="button" class="vbtn" data-v="baduk"><span class="ic ic-b"></span><b>바둑알</b><small>한 사람 7개 · 금방 끝나요</small></button>
-            <button type="button" class="vbtn" data-v="janggi"><span class="ic ic-j">車</span><b>장기알</b><small>한 사람 16개 · 장기판 그대로, 가운데 경첩은 통!</small></button>
+            <button type="button" class="vbtn" data-v="baduk"><span class="ic ic-b"></span><b>바둑알</b></button>
+            <button type="button" class="vbtn" data-v="janggi"><span class="ic ic-j">車</span><b>장기알</b></button>
           </div>
         </div>
         <div class="box">
@@ -252,14 +251,13 @@
         </div>
         <div class="box">
           <div class="box-title">규칙 고르기</div>
-          <label class="opt"><input type="checkbox" id="optBonus"><span>상대 알을 떨어뜨리면 한 번 더<small>내 알은 하나도 안 떨어지고 상대 알만 떨어뜨리면 한 번 더 튕길 수 있어요.</small></span></label>
-          <label class="opt"><input type="checkbox" id="optTimer" checked><span>한 번에 30초 제한<small>30초 안에 튕기지 않으면 차례가 친구에게 넘어가요.</small></span></label>
+          <label class="opt"><input type="checkbox" id="optBonus"><span>상대 알을 떨어뜨리면 한 번 더</span></label>
+          <label class="opt"><input type="checkbox" id="optTimer" checked><span>한 번에 30초 제한</span></label>
           <div class="mode-row">
             <button class="game-btn btn-primary" id="createBtn">방 만들기</button>
             <button class="game-btn btn-info" id="localBtn">한 화면에서<br>둘이 하기</button>
             <button class="game-btn btn-mint" id="cpuBtn">깨비샘과 연습하기</button>
           </div>
-          <p style="font-size:14px;color:var(--ink2);margin-top:8px;text-align:center;word-break:keep-all">방 만들기는 첫 판은 방장이, 다음 판부터는 진 사람이 먼저 해요.<br>한 화면과 연습은 판마다 누가 먼저 할지 골라요.</p>
         </div>
         <div class="box">
           <div class="box-title">방 코드로 들어가기</div>
@@ -267,7 +265,6 @@
             <input id="codeInput" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="0000" autocomplete="off">
             <button class="game-btn btn-info" id="joinBtn" style="min-width:0">들어가기</button>
           </div>
-          <p style="font-size:14px;color:var(--ink2);margin-top:8px;text-align:center;word-break:keep-all">먼저 들어온 한 명이 대결하고, 그다음부터는 구경할 수 있어요.</p>
         </div>
         <div class="msg" id="startMsg"></div>
       </div>
