@@ -40,7 +40,7 @@
   .section { display:flex; flex-direction:column; align-items:center; gap:14px; width:100%; max-width:560px; margin:auto; }
   .card { background:var(--cream); border:3px solid var(--ink); border-radius:28px; box-shadow:0 8px 0 var(--ink), 0 16px 30px rgba(20,10,50,.35);
     padding:20px 24px 24px; width:100%; position:relative; }
-  .logo { height:auto; width:min(420px, 92%); display:block; margin:-4px auto 0; }
+  .logo { height:auto; width:min(500px, 100%); display:block; margin:-4px auto 2px; }
   .logo-text { font-weight:normal; font-size:clamp(40px,10vw,62px); line-height:1.1; margin:4px 0 2px; -webkit-text-stroke:2px var(--ink); paint-order:stroke fill; text-shadow:0 4px 0 var(--ink); letter-spacing:1px; }
   .logo-text span { white-space:nowrap; } .logo-text { word-break:keep-all; } .logo-text .a { color:var(--sun); } .logo-text .b { color:#fff; font-size:.7em; } .logo-text .c { color:#ff8a8a; }
   .lead { font-size:clamp(16px,2.6vw,19px); line-height:1.5; color:var(--ink); margin:8px 0 12px; word-break:keep-all; }
@@ -103,6 +103,7 @@
   #status b { color:var(--sun); font-weight:normal; }
   #boardWrap { position:relative; border:4px solid var(--ink); border-radius:18px; box-shadow:0 7px 0 var(--ink), 0 16px 30px rgba(20,10,50,.4); overflow:hidden; flex:none; background:#3d357f; }
   #board { display:block; touch-action:none; }
+  #boardWrap.art { border:none; background:none; box-shadow:none; border-radius:0; overflow:visible; filter:drop-shadow(0 10px 18px rgba(10,5,30,.5)); }
   #actions { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; min-height:52px; align-items:center; }
   #actions .game-btn { padding:8px 18px; font-size:17px; min-width:0; }
   #placeBtn { background:var(--coral); font-size:19px !important; padding:9px 26px !important; }
@@ -133,8 +134,8 @@
 
   /* ===== 결과 / 확인 창 ===== */
   .modal { position:fixed; inset:0; z-index:40; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(30,20,70,.45); }
-  .modal .card { max-width:400px; text-align:center; margin-top:60px; }
-  .modal .res-img { width:140px; display:block; margin:-90px auto 0; filter:drop-shadow(0 4px 0 rgba(44,41,80,.2)); }
+  .modal .card { max-width:400px; text-align:center; margin-top:90px; }
+  .modal .res-img { width:auto; height:160px; max-width:200px; object-fit:contain; display:block; margin:-110px auto 0; filter:drop-shadow(0 4px 0 rgba(44,41,80,.2)); }
   .modal h2 { font-size:clamp(30px,6vw,38px); font-weight:normal; color:var(--coral-d); margin-top:4px; }
   .modal p { font-size:17px; line-height:1.5; color:var(--ink); margin-top:6px; word-break:keep-all; }
 
@@ -150,6 +151,7 @@
     .pcard .nm { font-size:16px; } .pcard .sub { font-size:11px; } .pcard .tm { font-size:18px; }
     .vs { font-size:17px; }
     #boardWrap { border-width:3px; border-radius:10px; }
+    #boardWrap.art { border:none; }
   }
   /* 버튼 아래 두꺼운 그림자를 없애 테두리 두께를 위아래 같게 */
   .game-btn, .diff-btn, .btn, .btn-s, .btn-r, .btn-p, .tbtn, .pad button, .topbar a, .topbar button { box-shadow:none !important; }
@@ -208,7 +210,7 @@
   <div class="section">
     <div class="start-wrap">
       <div class="card">
-        <h1 class="logo-text"><span class="a">깨비샘</span><span class="b">의</span> <span class="c">밀당 큐브</span></h1>
+        <img class="logo" src="img/logo.png" alt="깨비샘의 밀당 큐브" width="1000" height="188">
         <div class="box">
           <div class="field"><input id="nameInput" maxlength="8" placeholder="내 이름 (별명도 좋아요)" autocomplete="off"></div>
         </div>
@@ -227,7 +229,7 @@
         </div>
         <div class="msg" id="startMsg"></div>
       </div>
-      <img class="start-ggobi" src="img/ggaebi-think.png" alt="">
+      <img class="start-ggobi" src="img/ggaebi-hello.png" alt="">
     </div>
   </div>
 </div>
@@ -729,7 +731,8 @@ function layout() {
   const mobile = matchMedia('(max-width:760px), (pointer:coarse)').matches;
   const used = (mobile ? 44 + 8 : 56 + 12) + $('players').offsetHeight + $('status').offsetHeight + 62 + (mobile ? 21 : 30) + 14;
   S = Math.floor(Math.max(220, Math.min(vw - (mobile ? 14 : 40), vh - used, 600)));
-  pad = S * .1; cell = (S - pad * 2) / N;
+  pad = S * (ART.board ? .12 : .1); cell = (S - pad * 2) / N;
+  $('boardWrap').classList.toggle('art', !!ART.board);
   dpr = Math.min(window.devicePixelRatio || 1, 3);
   cv.width = Math.round(S * dpr); cv.height = Math.round(S * dpr);
   cv.style.width = S + 'px'; cv.style.height = S + 'px';
@@ -749,7 +752,7 @@ function drawSym(c, x, y, s, alpha = 1) {
 // 그림 파일 (있으면 그림으로, 아직 없으면 코드로 그림)
 const ART = {};
 [['.', 'cube-empty'], ['b', 'cube-o'], ['w', 'cube-x'], ['board', 'board'], ['arrow', 'arrow']].forEach(([k, n]) => {
-  const im = new Image(); im.onload = () => { ART[k] = im; draw(); }; im.src = `img/${n}.png`;
+  const im = new Image(); im.onload = () => { ART[k] = im; if (k === 'board') layout(); else draw(); }; im.src = `img/${n}.png`;
 });
 // 큐브 한 개: 윗면(모양) + 아래 옆면(두께)
 function drawCube(c, x, y, o = {}) {
@@ -809,11 +812,15 @@ function draw() {
   // 받침판
   const g = cx.createLinearGradient(0, 0, 0, S);
   g.addColorStop(0, '#5a4fa8'); g.addColorStop(1, '#3d357f');
-  cx.fillStyle = g; rrect(0, 0, S, S, S * .05); cx.fill();
-  if (ART.board) cx.drawImage(ART.board, 0, 0, S, S);
-  cx.fillStyle = 'rgba(15,10,45,.35)';
-  rrect(pad - cell * .06, pad - cell * .06, cell * N + cell * .12, cell * N + cell * .12, cell * .2); cx.fill();
-  for (let i = 0; i < N * N; i++) { cx.fillStyle = R.isEdge(i) ? 'rgba(255,255,255,.07)' : 'rgba(0,0,0,.12)'; rrect(CX(i) - cell * .45, CY(i) - cell * .45, cell * .9, cell * .9, cell * .18); cx.fill(); }
+  if (ART.board) {
+    cx.drawImage(ART.board, 0, 0, S, S);
+    for (let i = 0; i < N * N; i++) { cx.fillStyle = 'rgba(0,0,0,.22)'; rrect(CX(i) - cell * .44, CY(i) - cell * .44, cell * .88, cell * .88, cell * .16); cx.fill(); }
+  } else {
+    cx.fillStyle = g; rrect(0, 0, S, S, S * .05); cx.fill();
+    cx.fillStyle = 'rgba(15,10,45,.35)';
+    rrect(pad - cell * .06, pad - cell * .06, cell * N + cell * .12, cell * N + cell * .12, cell * .2); cx.fill();
+    for (let i = 0; i < N * N; i++) { cx.fillStyle = R.isEdge(i) ? 'rgba(255,255,255,.07)' : 'rgba(0,0,0,.12)'; rrect(CX(i) - cell * .45, CY(i) - cell * .45, cell * .9, cell * .9, cell * .18); cx.fill(); }
+  }
   if (!room) return;
   const bd = room.board, mine = myColor(), myTurn = canMoveNow();
   const wl = room.status === 'done' && room.winLine ? new Set(room.winLine) : null;
