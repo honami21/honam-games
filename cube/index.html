@@ -746,9 +746,22 @@ function drawSym(c, x, y, s, alpha = 1) {
   else if (c === 'w') { const r = s * .22; cx.strokeStyle = SYM.w; cx.beginPath(); cx.moveTo(x - r, y - r); cx.lineTo(x + r, y + r); cx.moveTo(x + r, y - r); cx.lineTo(x - r, y + r); cx.stroke(); }
   cx.restore();
 }
+// 그림 파일 (있으면 그림으로, 아직 없으면 코드로 그림)
+const ART = {};
+[['.', 'cube-empty'], ['b', 'cube-o'], ['w', 'cube-x'], ['board', 'board'], ['arrow', 'arrow']].forEach(([k, n]) => {
+  const im = new Image(); im.onload = () => { ART[k] = im; draw(); }; im.src = `img/${n}.png`;
+});
 // 큐브 한 개: 윗면(모양) + 아래 옆면(두께)
 function drawCube(c, x, y, o = {}) {
   const s = cell * .86, r = s * .17, d = s * .1, lift = o.lift || 0;
+  if (ART[c]) {
+    cx.save(); if (o.alpha != null) cx.globalAlpha = o.alpha;
+    if (lift) { cx.fillStyle = `rgba(15,10,45,${.18 + lift / cell * .4})`; rrect(x - s / 2 + lift * .25, y - s / 2 + lift * .4 + d, s, s - d, r); cx.fill(); }
+    const top = y - s / 2 - lift, w = cell * .94;
+    cx.drawImage(ART[c], x - w / 2, y - w / 2 - lift, w, w);
+    if (o.ring) { cx.lineWidth = Math.max(2.5, s * (o.thin ? .055 : .08)); cx.strokeStyle = o.ring; rrect(x - s / 2 - s * .03, top - s * .03, s * 1.06, s * 1.06, r * 1.15); cx.stroke(); }
+    cx.restore(); return;
+  }
   cx.save(); if (o.alpha != null) cx.globalAlpha = o.alpha;
   cx.fillStyle = `rgba(15,10,45,${.28 + lift / cell * .5})`;
   rrect(x - s / 2 + lift * .25, y - s / 2 + d + lift * .4, s, s, r); cx.fill();
@@ -776,6 +789,7 @@ function arrowAt(from, to) {
 function drawArrow(a, mine, hot) {
   const L = pad * .42;
   cx.save(); cx.translate(a.x, a.y); cx.rotate(Math.atan2(a.dy, a.dx));
+  if (ART.arrow) { const w = L * 2.3 * (hot ? 1.15 : 1); cx.drawImage(ART.arrow, -w / 2, -w / 2, w, w); cx.restore(); return; }
   cx.fillStyle = hot ? '#ffd25e' : '#fff1c9'; cx.strokeStyle = '#2c2950'; cx.lineWidth = Math.max(1.5, pad * .07); cx.lineJoin = 'round';
   cx.beginPath(); cx.moveTo(L, 0); cx.lineTo(-L * .55, -L * .85); cx.lineTo(-L * .55, L * .85); cx.closePath(); cx.fill(); cx.stroke();
   cx.restore();
@@ -796,6 +810,7 @@ function draw() {
   const g = cx.createLinearGradient(0, 0, 0, S);
   g.addColorStop(0, '#5a4fa8'); g.addColorStop(1, '#3d357f');
   cx.fillStyle = g; rrect(0, 0, S, S, S * .05); cx.fill();
+  if (ART.board) cx.drawImage(ART.board, 0, 0, S, S);
   cx.fillStyle = 'rgba(15,10,45,.35)';
   rrect(pad - cell * .06, pad - cell * .06, cell * N + cell * .12, cell * N + cell * .12, cell * .2); cx.fill();
   for (let i = 0; i < N * N; i++) { cx.fillStyle = R.isEdge(i) ? 'rgba(255,255,255,.07)' : 'rgba(0,0,0,.12)'; rrect(CX(i) - cell * .45, CY(i) - cell * .45, cell * .9, cell * .9, cell * .18); cx.fill(); }
