@@ -1956,14 +1956,14 @@ function cardHTML(o, i, forChest) {
   if (o.k === 'w') {
     const W = WEAPONS[o.id], w = weaponById(o.id), next = w ? w.lv + 1 : 1;
     icon = iconHTML('w', o.id); title = W.name;
-    tag = w ? `<em>Lv ${next}</em>` : '<em class="new-w">새 무기</em>';
+    tag = w ? `<em>Lv ${w.lv} → Lv ${next}</em>` : '<em class="new-w">새 무기</em>';
     desc = W.desc[next] + (next === 8 ? ' · 최고 레벨!' : '');
     pair = `짝꿍: ${mini('p', W.pair)} ${PASSIVES[W.pair].name} → ${mini('e', o.id)} ${W.evoName}`;
     if (!forChest && G.passives[W.pair]) link = w ? `✅ 짝꿍 ${PASSIVES[W.pair].name} 완성!` : `🔗 고르면 ${PASSIVES[W.pair].name} 짝꿍 완성! → ${W.evoName}`;
   } else if (o.k === 'p') {
     const P = PASSIVES[o.id], lv = (G.passives[o.id] || 0) + 1;
     icon = iconHTML('p', o.id); title = P.name;
-    tag = G.passives[o.id] ? `<em class="p">Lv ${lv}</em>` : '<em class="new-p">새 강화</em>';
+    tag = G.passives[o.id] ? `<em class="p">Lv ${lv - 1} → Lv ${lv}</em>` : '<em class="new-p">새 강화</em>';
     desc = P.each;
     const pw = PAIR_OF[o.id], pwo = pw && weaponById(pw); if (pw) pair = pwo && pwo.evo ? `✅ 이미 조합 완료: ${mini('e', pw)} ${WEAPONS[pw].evoName}` : `짝꿍 무기: ${mini('w', pw)} ${WEAPONS[pw].name} → ${mini('e', pw)} ${WEAPONS[pw].evoName}`;
     const ow = pw && weaponById(pw);
