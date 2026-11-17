@@ -192,9 +192,9 @@
 <!-- 대국 화면 -->
 <div id="game" class="hidden">
   <div id="players">
-    <div class="pcard" id="pB"><svg class="st" viewBox="0 0 40 40"><circle cx="20" cy="20" r="12" fill="none" stroke="#ee5a6f" stroke-width="6"/></svg><div style="min-width:0"><div class="nm" id="nmB">-</div><div class="sub">동그라미 · 먼저 해요</div></div><div class="tm" id="tmB"></div></div>
+    <div class="pcard" id="pB"><svg class="st" viewBox="0 0 40 40"><circle cx="20" cy="20" r="12" fill="none" stroke="#ee4a4a" stroke-width="6"/></svg><div style="min-width:0"><div class="nm" id="nmB">-</div><div class="sub">동그라미 · 먼저 해요</div></div><div class="tm" id="tmB"></div></div>
     <div class="vs">VS</div>
-    <div class="pcard" id="pW"><svg class="st" viewBox="0 0 40 40"><path d="M10 10L30 30M30 10L10 30" stroke="#3f6fd8" stroke-width="6" stroke-linecap="round"/></svg><div style="min-width:0"><div class="nm" id="nmW">-</div><div class="sub">가위표</div></div><div class="tm" id="tmW"></div></div>
+    <div class="pcard" id="pW"><svg class="st" viewBox="0 0 40 40"><path d="M10 10L30 30M30 10L10 30" stroke="#1f8fe0" stroke-width="6" stroke-linecap="round"/></svg><div style="min-width:0"><div class="nm" id="nmW">-</div><div class="sub">가위표</div></div><div class="tm" id="tmW"></div></div>
   </div>
   <div id="status"></div>
   <div id="boardWrap"><canvas id="board"></canvas></div>
@@ -262,8 +262,8 @@
     <h2 style="font-size:26px;margin-top:0">한 화면에서 둘이 하기</h2>
     <p>두 사람 이름을 적어 주세요.</p>
     <div class="box" style="margin-top:10px">
-      <div class="field" style="margin-bottom:8px"><svg style="width:30px;flex:none" viewBox="0 0 40 40"><circle cx="20" cy="20" r="12" fill="none" stroke="#ee5a6f" stroke-width="6"/></svg><input id="lnB" maxlength="8" placeholder="동그라미 (먼저 하는 사람)" autocomplete="off"></div>
-      <div class="field"><svg style="width:30px;flex:none" viewBox="0 0 40 40"><path d="M10 10L30 30M30 10L10 30" stroke="#3f6fd8" stroke-width="6" stroke-linecap="round"/></svg><input id="lnW" maxlength="8" placeholder="가위표" autocomplete="off"></div>
+      <div class="field" style="margin-bottom:8px"><svg style="width:30px;flex:none" viewBox="0 0 40 40"><circle cx="20" cy="20" r="12" fill="none" stroke="#ee4a4a" stroke-width="6"/></svg><input id="lnB" maxlength="8" placeholder="동그라미 (먼저 하는 사람)" autocomplete="off"></div>
+      <div class="field"><svg style="width:30px;flex:none" viewBox="0 0 40 40"><path d="M10 10L30 30M30 10L10 30" stroke="#1f8fe0" stroke-width="6" stroke-linecap="round"/></svg><input id="lnW" maxlength="8" placeholder="가위표" autocomplete="off"></div>
     </div>
     <div class="tags" id="localTags"></div>
     <div class="btn-row"><button class="game-btn btn-secondary" id="lnCancel">취소</button><button class="game-btn btn-primary" id="lnStart">시작!</button></div>
@@ -739,7 +739,7 @@ function layout() {
 window.addEventListener('resize', layout);
 const CX = i => pad + (i % N) * cell + cell / 2, CY = i => pad + Math.floor(i / N) * cell + cell / 2;
 function rrect(x, y, w, h, r) { cx.beginPath(); cx.moveTo(x + r, y); cx.arcTo(x + w, y, x + w, y + h, r); cx.arcTo(x + w, y + h, x, y + h, r); cx.arcTo(x, y + h, x, y, r); cx.arcTo(x, y, x + w, y, r); cx.closePath(); }
-const SYM = { b: '#ee5a6f', w: '#3f6fd8' };
+const SYM = { b: '#ee4a4a', w: '#1f8fe0' };
 function drawSym(c, x, y, s, alpha = 1) {
   cx.save(); cx.globalAlpha *= alpha; cx.lineCap = 'round'; cx.lineWidth = s * .12;
   if (c === 'b') { cx.strokeStyle = SYM.b; cx.beginPath(); cx.arc(x, y, s * .26, 0, 7); cx.stroke(); }
@@ -766,11 +766,11 @@ function drawCube(c, x, y, o = {}) {
   cx.fillStyle = `rgba(15,10,45,${.28 + lift / cell * .5})`;
   rrect(x - s / 2 + lift * .25, y - s / 2 + d + lift * .4, s, s, r); cx.fill();
   const top = y - s / 2 - lift;
-  cx.fillStyle = '#d7b98f'; rrect(x - s / 2, top + d, s, s - d * .2, r); cx.fill();
+  cx.fillStyle = '#c38a4c'; rrect(x - s / 2, top + d, s, s - d * .2, r); cx.fill();
   const g = cx.createLinearGradient(0, top, 0, top + s);
-  g.addColorStop(0, '#fffaf1'); g.addColorStop(1, '#f3e3cb');
+  g.addColorStop(0, '#f8dfb0'); g.addColorStop(1, '#eac184');
   cx.fillStyle = g; rrect(x - s / 2, top, s, s - d, r); cx.fill();
-  cx.lineWidth = Math.max(1.5, s * .045); cx.strokeStyle = '#2c2950';
+  cx.lineWidth = Math.max(1.5, s * .045); cx.strokeStyle = '#4a2a14';
   rrect(x - s / 2, top, s, s - d * .2 + d, r); cx.stroke();
   cx.lineWidth = Math.max(1, s * .03); cx.strokeStyle = 'rgba(44,41,80,.35)';
   cx.beginPath(); cx.moveTo(x - s / 2 + r * .6, top + s - d); cx.lineTo(x + s / 2 - r * .6, top + s - d); cx.stroke();
