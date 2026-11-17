@@ -2,8 +2,7 @@
 (() => {
 'use strict';
 const $ = id => document.getElementById(id);
-const { COLORS, CNAME, isWild, colOf, valOf, canPlay, nxt } = GG;
-const PLAYING = ['play', 'drawn', 'pick', 'challenge'];
+const { COLORS, CNAME, isWild, colOf, valOf, canPlay, nxt, playable, canRespond, isNum, speedUp, PLAYING } = GG;
 const clone = o => JSON.parse(JSON.stringify(o));
 const rnd = (a, b) => a + Math.random() * (b - a);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -27,10 +26,18 @@ const getTarget = seg('tgSeg', 'cards-target', 0, [0, 200, 500]);
 const getSec = seg('secSeg', 'cards-sec', 30, [0, 20, 30, 60]);
 const getAiN = seg('aiNSeg', 'cards-ain', 2, [1, 2, 3, 4, 5]);
 const tgText = t => t ? `${t}점 먼저` : '한 판만';
+// 확장팩 켜고 끄기
+const EXT_NAME = { rev: '리버스', swp: '스왑', spd: '스피드', stk: '스택' };
+let ext = {};
+try { ext = JSON.parse(store('cards-ext') || '{}') || {}; } catch (e) { ext = {}; }
+function updExt() { document.querySelectorAll('#extSeg button').forEach(b => b.classList.toggle('on', !!ext[b.dataset.v])); }
+$('extSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; ext[b.dataset.v] = !ext[b.dataset.v]; store('cards-ext', JSON.stringify(ext)); updExt(); tagsAll(); });
+updExt();
+const getExt = () => { const o = {}; GG.EXTS.forEach(k => { o[k] = !!ext[k]; }); return o; };
+const extTags = x => GG.EXTS.filter(k => x && x[k]).map(k => `<span class="tag">${EXT_NAME[k]} 확장</span>`).join('');
 function tagsAll() {
-  $('cpuTags').innerHTML = `<span class="tag">${tgText(getTarget())}</span>`;
-  $('localTags').innerHTML = `<span class="tag">${tgText(getTarget())}</span>`;
-  $('createTags').innerHTML = `<span class="tag">${tgText(getTarget())}</span>`;
+  const h = `<span class="tag">${tgText(getTarget())}</span>${extTags(getExt())}`;
+  $('cpuTags').innerHTML = h; $('localTags').innerHTML = h; $('createTags').innerHTML = h;
 }
 tagsAll();
 
@@ -102,26 +109,61 @@ const PETAL = 'M20 20 C19 11 23 4 31 3 C32 11 28 18 20 20Z';
 const SVG_PIN = cls => `<svg class="pin ${cls}" viewBox="0 0 40 40"><g stroke="#2c2950" stroke-width="2.2" stroke-linejoin="round">` +
   ['--cr', '--cy', '--cg', '--cb'].map((v, i) => `<path d="${PETAL}" style="fill:var(${v})" transform="rotate(${i * 90} 20 20)"/>`).join('') +
   '<circle cx="20" cy="20" r="3.6" fill="#fff"/></g></svg>';
+// 선으로 그린 아이콘 (남색 테두리 + 흰 선)
+const LINE = d => `<svg viewBox="0 0 40 40"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="${d}" stroke="#2c2950" stroke-width="9"/><path d="${d}" stroke="#fff" stroke-width="4.2"/></g></svg>`;
+const FILL = inner => `<svg viewBox="0 0 40 40"><g fill="#fff" stroke="#2c2950" stroke-width="3" stroke-linejoin="round">${inner}</g></svg>`;
+const SVG_STACK = FILL('<rect x="14" y="3" width="19" height="25" rx="3"/><rect x="10.5" y="7.5" width="19" height="25" rx="3"/><rect x="7" y="12" width="19" height="25" rx="3"/>');
+const SVG_SPEED = FILL('<path d="M3 7 H13 L25 20 L13 33 H3 L15 20Z"/><path d="M15 7 H25 L37 20 L25 33 H15 L27 20Z"/>');
+const SVG_FAN = FILL('<rect x="12" y="5" width="16" height="24" rx="3" transform="rotate(-24 20 34)"/><rect x="12" y="5" width="16" height="24" rx="3" transform="rotate(24 20 34)"/><rect x="12" y="5" width="16" height="24" rx="3"/>');
+const SVG_ONE = LINE('M13 34 V7 M7 13 L13 7 L19 13 M27 6 V33 M21 27 L27 33 L33 27');
+const SVG_XCHG = LINE('M6 13 H32 M26 7 L32 13 L26 19 M34 27 H8 M14 21 L8 27 L14 33');
+const SVG_CIRC = LINE('M9 17 A12 12 0 0 1 30 11 M31 4 V12 H23 M31 23 A12 12 0 0 1 10 29 M9 36 V28 H17');
+const SVG_SHUF = LINE('M5 29 H11 L25 11 H33 M28 6 L33 11 L28 16 M5 11 H11 L16 17 M21 23 L25 29 H33 M28 24 L33 29 L28 34');
+const ico = (svg, cls = 'ico') => svg.replace('<svg', `<svg class="${cls}"`);
+// 색 카드 가운데 그림과 귀퉁이 표시
+const FACE = {
+  S: () => [ico(SVG_SKIP), SVG_SKIP],
+  R: () => [ico(SVG_REV), SVG_REV],
+  D: () => ['<span class="big sm">+2</span>', '+2'],
+  Q: () => [`<div class="duo">${ico(SVG_REV, 'i')}<b>+2</b></div>`, SVG_REV + '2'],
+  K: () => [`<div class="duo two">${ico(SVG_REV, 'i')}${ico(SVG_SKIP, 'i')}</div>`, SVG_REV + SVG_SKIP],
+  X: () => [ico(SVG_ONE), SVG_ONE],
+  H: () => [ico(SVG_FAN), SVG_FAN],
+  A: () => [`<div class="duo">${ico(SVG_STACK, 'i')}<b>+1</b></div>`, SVG_STACK + '1'],
+  B: () => [`<div class="duo">${ico(SVG_STACK, 'i')}<b>+2</b></div>`, SVG_STACK + '2']
+};
+// 와일드 카드 아래쪽 그림과 귀퉁이 표시
+const WFACE = {
+  F: ['<span class="plus4">+4</span>', '+4'],
+  Z: ['<span class="plus4">+3</span>', SVG_STACK + '3'],
+  M: ['<span class="plus4">+?</span>', SVG_STACK + '?'],
+  U: [ico(SVG_SHUF, 'wico'), SVG_SHUF],
+  P: [ico(SVG_REV, 'wico'), SVG_REV + '!'],
+  N: ['<span class="plus4 sm">너!</span>', SVG_REV],
+  E: [ico(SVG_XCHG, 'wico'), SVG_XCHG],
+  T: [ico(SVG_CIRC, 'wico'), SVG_CIRC],
+  V: [ico(SVG_SPEED, 'wico'), SVG_SPEED]
+};
 function cardHTML(c, cls = '') {
   if (c === 'back') return `<div class="cd back ${ART['card-back'] ? 'art' : ''} ${cls}"><div class="in"><span class="bt">GGAEBI</span></div></div>`;
   if (isWild(c)) {
-    return c === 'F'
-      ? `<div class="cd c-w ${cls}" data-c="F"><div class="in">${SVG_PIN('small')}<span class="plus4">+4</span></div><span class="k tl">+4</span><span class="k br">+4</span></div>`
-      : `<div class="cd c-w ${cls}" data-c="W"><div class="in">${SVG_PIN('')}</div></div>`;
+    const f = WFACE[c];
+    if (!f) return `<div class="cd c-w ${cls}" data-c="${c}"><div class="in">${SVG_PIN('')}</div></div>`;
+    return `<div class="cd c-w ${cls}" data-c="${c}"><div class="in">${SVG_PIN('small')}${f[0]}</div><span class="k tl">${f[1]}</span><span class="k br">${f[1]}</span></div>`;
   }
-  const col = c[0], v = valOf(c);
+  const col = c[0], v = valOf(c), sp = speedUp(c);
   let center, corner;
-  if (v === 'S') { center = SVG_SKIP.replace('<svg', '<svg class="ico"'); corner = SVG_SKIP; }
-  else if (v === 'R') { center = SVG_REV.replace('<svg', '<svg class="ico"'); corner = SVG_REV; }
-  else if (v === 'D') { center = '<span class="big sm">+2</span>'; corner = '+2'; }
+  if (FACE[v]) [center, corner] = FACE[v]();
   else { center = `<span class="big ${v === '6' || v === '9' ? 'u' : ''}">${v}</span>`; corner = v; }
+  if (sp) center += ico(SVG_SPEED, 'spb');
   return `<div class="cd c-${col} ${cls}" data-c="${c}"><div class="in">${center}</div><span class="k tl">${corner}</span><span class="k br">${corner}</span></div>`;
 }
+const WNAME = { W: '색 바꾸기', F: '색 바꾸기 +4', U: '모두 섞기', P: '파워 방향 바꾸기', N: '나 말고 너', E: '강제 교환', T: '손패 넘기기', Z: '스택 +3', M: '스택 +?', V: '더블 스피드 업' };
+const VNAME = { S: '건너뛰기', R: '방향 바꾸기', D: '+2', Q: '방향 바꾸기 +2', K: '방향 바꾸기 건너뛰기', X: '한 장 바꾸기', H: '손패 교체', A: '스택 +1', B: '스택 +2' };
 const CARD_NAME = c => {
-  if (c === 'W') return '색 바꾸기';
-  if (c === 'F') return '색 바꾸기 +4';
-  const v = valOf(c), cn = CNAME[c[0]];
-  return cn + ' ' + (v === 'S' ? '건너뛰기' : v === 'R' ? '방향 바꾸기' : v === 'D' ? '+2' : v);
+  if (isWild(c)) return WNAME[c] || '와일드';
+  const v = valOf(c);
+  return CNAME[c[0]] + ' ' + (VNAME[v] || v) + (speedUp(c) ? ' (스피드 업)' : '');
 };
 const COLHEX = { r: 'var(--cr)', y: 'var(--cy)', g: 'var(--cg)', b: 'var(--cb)' };
 
@@ -166,7 +208,7 @@ function show(id) {
   if (id !== 'game') { KBGM.track('lobby'); KBGM.calm(); }
   else { KBGM.track('play'); KBGM.full(); }
 }
-function hideModals() { ['colorModal', 'chalModal', 'revealModal', 'resultModal', 'confirmModal', 'stkTray', 'cover'].forEach(id => $(id).classList.add('hidden')); }
+function hideModals() { ['colorModal', 'chalModal', 'targetModal', 'revealModal', 'resultModal', 'confirmModal', 'stkTray', 'cover'].forEach(id => $(id).classList.add('hidden')); }
 function getName() {
   const n = $('nameInput').value.trim().replace(/\s+/g, ' ').slice(0, 8);
   if (!n) { $('startMsg').textContent = '먼저 내 이름을 적어 주세요.'; $('nameInput').focus(); return null; }
@@ -299,6 +341,31 @@ async function animate(old, ng) {
     else if (e.t === 'empty') { toast('더미에 남은 카드가 없어요', 1500); }
     else if (e.t === 'chal') { beep('catch'); bigPop('chal'); await sleep(900); chalEv = e; }
     else if (e.t === 'leave') { toast(`${ng.players[e.p].name}님이 나갔어요`, 2000); }
+    else if (e.t === 'pen') { beep('skip'); bubble(e.p, `+${e.n}장?`); await sleep(200); }
+    else if (e.t === 'speed') { beep('gg'); toast(`스피드 ${e.n}! 이제 한 차례에 ${e.n}장씩 내요`, 2200); await sleep(300); }
+    else if (e.t === 'speedreset') { toast(`${nmS(e.p, ng)} 다 못 내서 ${e.k}장을 가져가요. 스피드가 1로 돌아가요`, 2400); }
+    else if (e.t === 'more') { bubble(e.p, `${e.k}장 더!`); }
+    else if (e.t === 'again') { bubble(e.p, '한 번 더!'); }
+    else if (e.t === 'flipn') {
+      beep('shuffle');
+      for (const c of e.cs.slice(-4)) { await fly(cardHTML(c), deckRect(), pileRect(), { s0: 1, s1: .7, dur: 300 }); }
+      toast(e.n ? `숫자 ${e.n}이 나와서 +${e.n}!` : '숫자 0이 나와서 +0!', 2200); await sleep(400);
+    }
+    else if (e.t === 'shufhands' || e.t === 'passhands') {
+      beep('shuffle');
+      const ps = ng.players.map((p, i) => i).filter(i => !ng.players[i].out);
+      await Promise.all(ps.map((i, k) => fly(cardHTML('back'), seatRect(i), pileRect(), { s0: .5, s1: .6, dur: 320, delay: k * 60 })));
+      toast(e.t === 'shufhands' ? `${nmS(e.p, ng)} 모두 섞기! 모든 카드를 다시 나눠요` : '모두 손패를 다음 사람에게 넘겨요!', 2400);
+      await Promise.all(ps.map((i, k) => fly(cardHTML('back'), pileRect(), seatRect(nxt(ng, i)), { s0: .6, s1: .5, dur: 320, delay: k * 60 })));
+    }
+    else if (e.t === 'refresh') { beep('shuffle'); await fly(cardHTML('back'), seatRect(e.p), pileRect(), { s0: .5, s1: .6, dur: 320 }); toast(`${nmS(e.p, ng)} 손패 ${e.k}장을 모두 새로 바꿔요`, 2000); }
+    else if (e.t === 'take') { beep('draw'); await fly(cardHTML('back'), seatRect(e.from), seatRect(e.p), { s0: .5, s1: .5, dur: 400 }); toast(`${nmS(e.p, ng)} ${nm(e.from, ng)}에게서 카드 한 장을 가져왔어요`, 1800); }
+    else if (e.t === 'give') { beep('draw'); await fly(cardHTML('back'), seatRect(e.p), seatRect(e.to), { s0: .5, s1: .5, dur: 400 }); }
+    else if (e.t === 'xchg') {
+      beep('shuffle');
+      await Promise.all([fly(cardHTML('back'), seatRect(e.a), seatRect(e.b), { s0: .5, s1: .5, dur: 480 }), fly(cardHTML('back'), seatRect(e.b), seatRect(e.a), { s0: .5, s1: .5, dur: 480 })]);
+      toast(`${nm(e.a, ng)}, ${nm(e.b, ng)} 손패를 맞바꿨어요!`, 2200);
+    }
   }
   if (chalEv) showReveal(chalEv, ng);
 }
@@ -340,10 +407,13 @@ function render() {
   document.querySelector('.colchip i').style.setProperty('--cur', curCol ? COLHEX[curCol] : '#ddd');
   $('colName').textContent = curCol ? `지금 색: ${CNAME[curCol]}` : '색 고르는 중';
   $('dirIco').classList.toggle('ccw', g.dir < 0);
+  const sp = $('spChip');
+  sp.classList.toggle('hidden', !(g.ext && g.ext.spd));
+  if (g.ext && g.ext.spd) sp.textContent = `스피드 ${g.speed}` + (g.spAdd ? ` → ${g.speed + g.spAdd}` : '');
   $('roundTag').textContent = g.target ? `${g.round}번째 판 · ${g.target}점 먼저` : '한 판 승부';
   // 내 카드
   const myTurn = playing && me >= 0 && t === me;
-  const canAct = myTurn && (g.phase === 'play' || g.phase === 'drawn');
+  const canAct = myTurn && ['play', 'drawn', 'pen', 'challenge', 'give'].includes(g.phase);
   $('deckWrap').classList.toggle('can', myTurn && g.phase === 'play');
   const hand = $('hand');
   hand.classList.toggle('my', canAct);
@@ -356,7 +426,7 @@ function render() {
       if (canAct) {
         let ok;
         if (g.phase === 'drawn') { ok = c === g.drawn && !drawnMarked; if (ok) drawnMarked = true; }
-        else ok = canPlay(g, c);
+        else ok = playable(g, me, c);
         cls = ok ? 'ok' : 'no';
       }
       return cardHTML(c, cls);
@@ -374,6 +444,7 @@ function render() {
   updTimer();
   // 긴장되는 음악: 누군가 한 장 남았을 때
   if (playing) KBGM.track(P.some(p => !p.out && p.hand.length === 1) ? 'tense' : 'play');
+  if (tipFor && !document.body.contains(tipFor)) hideTip();
 }
 function layoutHand() {
   const hand = $('hand'), cards = hand.querySelectorAll('.cd');
@@ -392,11 +463,17 @@ function renderStatus() {
   if (g.phase === 'roundEnd' || g.phase === 'gameEnd') s = g.winner >= 0 || g.res ? `<b>${esc(nm(g.res ? g.res.w : g.winner))}</b> 카드를 다 냈어요!` : '';
   else if (g.phase === 'pick') s = t === me ? '첫 카드가 <b>색 바꾸기</b>예요. 시작할 색을 골라요!' : `<b>${esc(nm(t))}</b> 첫 색을 고르는 중`;
   else if (g.phase === 'challenge') s = t === me ? '<b>+4</b>를 받았어요. 도전할까요?' : `<b>${esc(nm(t))}</b> +4 도전을 고민하는 중`;
+  else if (g.phase === 'pen') s = t === me ? `<b>+${g.pen.n}장</b>을 받아야 해요. 넘길 카드가 있으면 내요!` : `<b>${esc(nm(t))}</b> +${g.pen.n}장을 받을 차례`;
+  else if (g.phase === 'target') s = t === me ? (g.tg.k === 'X' ? '카드 한 장을 바꿀 친구를 골라요' : '손패를 맞바꿀 두 사람을 골라요') : `<b>${esc(nm(t))}</b> 바꿀 사람을 고르는 중`;
+  else if (g.phase === 'give') s = t === me ? `<b>${esc(P[g.tg.to].name)}</b>에게 줄 카드 한 장을 골라요` : `<b>${esc(nm(t))}</b> 줄 카드를 고르는 중`;
   else if (t === me) {
     if (g.phase === 'drawn') s = `가져온 <b>${CARD_NAME(g.drawn)}</b> 카드를 낼 수 있어요!`;
     else {
       const any = P[me].hand.some(c => canPlay(g, c));
-      s = any ? '<b>내 차례</b>! 같은 색이나 같은 숫자를 내요' : '<b>내 차례</b>! 낼 카드가 없어요. 더미에서 가져와요';
+      const spd = g.ext && g.ext.spd && (g.speed > 1 || g.tplayed > 0);
+      if (spd && g.tplayed > 0) s = any ? `이어서 <b>${g.left}장</b> 더 내요! 방금 낸 카드와 맞춰요` : `더 낼 카드가 없어요. <b>${g.speed}장</b>을 가져와요`;
+      else if (spd) s = any ? `<b>내 차례</b>! 이번엔 <b>${g.left}장</b>을 이어서 내요` : `<b>내 차례</b>! 낼 카드가 없어요. <b>${g.speed}장</b>을 가져와요`;
+      else s = any ? '<b>내 차례</b>! 같은 색이나 같은 숫자를 내요' : '<b>내 차례</b>! 낼 카드가 없어요. 더미에서 가져와요';
     }
   } else if (mode === 'local' && me < 0) s = `<b>${esc(P[t].name)}</b> 차례예요`;
   else s = `<b>${esc(nm(t))}</b> 차례예요`;
@@ -407,12 +484,16 @@ function renderActions() {
   const me = meIdx(), t = g.turn, P = g.players, playing = PLAYING.includes(g.phase);
   let h = '';
   if (playing && me >= 0 && t === me) {
-    if (g.phase === 'play') h += '<button class="game-btn btn-info" id="aDraw">카드 가져오기</button>';
+    const spd = g.ext && g.ext.spd && (g.speed > 1 || g.tplayed > 0);
+    if (g.phase === 'play') h += `<button class="game-btn btn-info" id="aDraw">${spd ? `못 내요 (${g.speed}장 가져오기)` : '카드 가져오기'}</button>`;
     if (g.phase === 'drawn') h += '<button class="game-btn btn-secondary" id="aKeep">안 내고 넘기기</button>';
+    if (g.phase === 'pen') h += `<button class="game-btn btn-primary" id="aAccept">${g.pen.n}장 받기</button>`;
+    if (g.phase === 'challenge') h += '<button class="game-btn btn-primary" id="aChal">도전!</button><button class="game-btn btn-secondary" id="aAccept">4장 받기</button>';
+    if (g.phase === 'target') h += '<button class="game-btn btn-primary" id="aTarget">고르기</button>';
   }
   if (playing && me >= 0 && !P[me].out) {
     if (g.exposed === me) h += '<button class="ggbtn urgent" id="aGg">GGAEBI!</button>';
-    else if (t === me && P[me].hand.length === 2 && (g.phase === 'play' || g.phase === 'drawn')) h += P[me].gg ? '<button class="ggbtn armed" disabled>GGAEBI! 외쳤어요</button>' : '<button class="ggbtn" id="aGg">GGAEBI!</button>';
+    else if (t === me && P[me].hand.length >= 2 && P[me].hand.length <= (g.left || 1) + 1 && (g.phase === 'play' || g.phase === 'drawn')) h += P[me].gg ? '<button class="ggbtn armed" disabled>GGAEBI! 외쳤어요</button>' : '<button class="ggbtn" id="aGg">GGAEBI!</button>';
   }
   if (playing && g.exposed >= 0 && g.exposed !== me && (me >= 0 || mode === 'local')) h += `<button class="catchbtn" id="aCatch">잡았다! ${esc(P[g.exposed].name)} 1장</button>`;
   if (mode === 'online') h += '<button class="game-btn btn-sky" id="aStk">응원</button>';
@@ -421,6 +502,9 @@ function renderActions() {
   const on = (id, fn) => { const b = $(id); if (b) b.onclick = fn; };
   on('aDraw', () => { if (!animating) doMine({ t: 'draw' }); });
   on('aKeep', () => { if (!animating) doMine({ t: 'keep' }); });
+  on('aAccept', () => { if (!animating) { $('chalModal').classList.add('hidden'); doMine({ t: 'accept' }); } });
+  on('aChal', () => { if (!animating) { $('chalModal').classList.add('hidden'); doMine({ t: 'challenge' }); } });
+  on('aTarget', openTarget);
   on('aGg', () => doMine({ t: 'gg' }));
   on('aCatch', () => doCatch());
   on('aStk', toggleTray);
@@ -431,15 +515,78 @@ $('deckWrap').onclick = () => {
   if (!g || animating || me < 0 || g.turn !== me || g.phase !== 'play') return;
   doMine({ t: 'draw' });
 };
+// ---------- 특수 카드 설명 (마우스를 올리거나, 휴대폰에서 꾹 누르면) ----------
+const DESC = {
+  S: '다음 사람은 차례를 쉬어요.',
+  R: '도는 방향이 반대로 바뀌어요. 둘이 할 때는 건너뛰기와 같아요.',
+  D: '다음 사람이 2장을 가져가고 쉬어요.',
+  Q: '방향이 바뀌고, 바뀐 방향의 다음 사람이 2장을 가져가고 쉬어요. 방향 바꾸기나 +2 위에는 색이 달라도 낼 수 있어요.',
+  K: '방향이 바뀌고, 바뀐 방향의 다음 사람이 쉬어요. 방향 바꾸기나 건너뛰기 위에는 색이 달라도 낼 수 있어요.',
+  X: '친구 한 명에게서 카드 한 장을 무작위로 가져오고, 내 카드 한 장을 줘요.',
+  H: '내 카드를 모두 버리고, 그만큼 새로 가져와요.',
+  A: '다음 사람이 1장을 가져가고 쉬어요. +카드를 받을 때 같은 색이면 쌓아서 넘길 수 있어요.',
+  B: '다음 사람이 2장을 가져가고 쉬어요. +카드를 받을 때 같은 색이면 쌓아서 넘길 수 있어요.',
+  W: '언제든 낼 수 있어요. 다음 색을 내가 정해요.',
+  F: '같은 색 카드나 다른 와일드 카드가 없을 때만 내요. 다음 사람이 4장을 가져가고 쉬어요. 반칙 같으면 도전할 수 있어요.',
+  U: '모두의 카드를 모아 섞어서 다음 사람부터 한 장씩 다시 나눠요. 색도 정해요.',
+  P: '방향이 바뀌고 색을 정한 뒤, 내가 한 번 더 해요.',
+  N: '+카드를 받아야 할 때 내면, 방향이 바뀌고 그 카드를 낸 사람이 대신 받아요. 평소에는 방향을 바꾸는 색 바꾸기예요.',
+  E: '두 사람을 골라 손패를 통째로 맞바꾸게 해요. 나도 고를 수 있어요.',
+  T: '모두 자기 손패를 다음 사람에게 넘겨요. 색도 정해요.',
+  Z: '아무 때나 낼 수 있어요. 다음 사람이 3장을 가져가요. 어떤 벌칙 위에도 쌓을 수 있어요.',
+  M: '숫자 카드가 나올 때까지 더미를 뒤집어서, 그 숫자만큼 다음 사람이 가져가요. 벌칙 위에도 쌓을 수 있어요.',
+  V: '스피드가 2만큼 올라가요. 색도 정해요.'
+};
+function cardDesc(c) {
+  if (!c || c === 'back') return '';
+  const v = isWild(c) ? c : valOf(c);
+  let d = DESC[v] || '';
+  if (speedUp(c) && !isWild(c)) d = '스피드 업 카드예요. 다음 사람부터 한 차례에 내는 장수가 1장 늘어요.';
+  return d;
+}
+const tipEl = document.createElement('div'); tipEl.id = 'cardTip'; tipEl.className = 'hidden'; document.body.appendChild(tipEl);
+let tipT = 0, tipFor = null, pressTip = false;
+function showTip(el) {
+  const c = el.dataset.c, d = cardDesc(c); if (!d) return;
+  tipFor = el;
+  tipEl.innerHTML = `<b>${esc(CARD_NAME(c))}</b>${esc(d)}`;
+  tipEl.classList.remove('hidden');
+  const r = el.getBoundingClientRect(), w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+  const x = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2));
+  let y = r.top - h - 10; if (y < 8) y = r.bottom + 10;
+  tipEl.style.left = x + 'px'; tipEl.style.top = y + 'px';
+}
+function hideTip() { clearTimeout(tipT); tipFor = null; tipEl.classList.add('hidden'); }
+['hand', 'pileWrap'].forEach(id => {
+  const box = $(id);
+  box.addEventListener('pointerover', e => {
+    if (e.pointerType !== 'mouse') return;
+    const el = e.target.closest('.cd'); if (!el || el === tipFor) return;
+    clearTimeout(tipT); tipT = setTimeout(() => showTip(el), 280);
+  });
+  box.addEventListener('pointerout', e => { if (e.pointerType === 'mouse' && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.cd') === tipFor && tipFor)) hideTip(); });
+  box.addEventListener('pointerdown', e => {   // 휴대폰: 꾹 누르면 설명, 손을 떼면 닫혀요
+    if (e.pointerType === 'mouse') return;
+    const el = e.target.closest('.cd'); if (!el) return;
+    pressTip = false; clearTimeout(tipT);
+    tipT = setTimeout(() => { if (cardDesc(el.dataset.c)) { pressTip = true; showTip(el); } }, 450);
+  });
+  const up = e => { if (e.pointerType === 'mouse') return; clearTimeout(tipT); if (pressTip) setTimeout(hideTip, 1200); };
+  box.addEventListener('pointerup', up); box.addEventListener('pointercancel', up);
+  box.addEventListener('contextmenu', e => { if (e.target.closest('.cd')) e.preventDefault(); });
+});
 $('hand').addEventListener('click', e => {
   const el = e.target.closest('.cd'); if (!el || !g) return;
+  if (pressTip) { pressTip = false; return; }   // 꾹 눌러 설명을 본 거라면 내지 않아요
+  hideTip();
   const me = meIdx(); if (me < 0) return;
   if (animating) return;
   const c = el.dataset.c;
-  if (g.turn !== me || !(g.phase === 'play' || g.phase === 'drawn')) { toast(g.phase === 'challenge' || g.phase === 'pick' ? '먼저 위의 창에서 골라요' : '아직 내 차례가 아니에요', 1300); return; }
+  if (g.turn !== me || !['play', 'drawn', 'pen', 'challenge', 'give'].includes(g.phase)) { toast(g.phase === 'pick' || g.phase === 'target' ? '먼저 위의 창에서 골라요' : '아직 내 차례가 아니에요', 1300); return; }
+  if (g.phase === 'give') { doMine({ t: 'give', c }); return; }
   if (!el.classList.contains('ok')) {
     beep('bad');
-    toast(g.phase === 'drawn' ? '방금 가져온 카드만 낼 수 있어요' : `${CNAME[g.color]} 카드나 같은 숫자를 내야 해요`, 1500);
+    toast(g.phase === 'drawn' ? '방금 가져온 카드만 낼 수 있어요' : g.phase === 'pen' || g.phase === 'challenge' ? '이 카드로는 넘길 수 없어요' : `${CNAME[g.color]} 카드나 같은 숫자를 내야 해요`, 1500);
     return;
   }
   if (isWild(c)) { openColor(c); return; }
@@ -459,7 +606,7 @@ function openColor(c) {
   const cnt = col => h.filter(x => x !== c && colOf(x) === col).length;
   $('colorTitle').textContent = c === 'pick' ? '시작할 색을 골라요' : '무슨 색으로 할까요?';
   let txt = '';
-  if (c === 'F' && h.some(x => colOf(x) === g.color)) txt = `지금 색(${CNAME[g.color]}) 카드가 있는데 +4를 내면, 다음 사람이 도전해서 내가 4장을 가져갈 수 있어요!`;
+  if (c === 'F' && g.phase === 'play' && h.some(x => x !== 'F' && (colOf(x) === g.color || isWild(x)))) txt = `지금 색(${CNAME[g.color]}) 카드나 다른 와일드 카드가 있는데 +4를 내면, 다음 사람이 도전해서 내가 4장을 가져갈 수 있어요!`;
   $('colorText').textContent = txt;
   $('colorBtns').innerHTML = COLORS.map(col => `<button class="${col}" data-col="${col}">${CNAME[col]}<small>내 카드 ${cnt(col)}장</small></button>`).join('');
   $('colorCancelRow').classList.toggle('hidden', c === 'pick');
@@ -475,14 +622,19 @@ $('colorBtns').onclick = e => {
 $('colorCancel').onclick = () => { $('colorModal').classList.add('hidden'); colorFor = null; };
 
 // ---------- +4 도전 ----------
+let chalHide = '';
 function showChal() {
   const pd = g.pend4; if (!pd) return;
+  if (chalHide === `${g.gid}-${g.seq}`) return;
+  const me = meIdx();
+  $('chalPass').classList.toggle('hidden', !(me >= 0 && g.players[me].hand.some(c => canRespond(g, c))));
   const by = g.players[pd.by].name;
   $('chalText').innerHTML = `<b>${esc(by)}</b>님이 색 바꾸기 +4를 냈어요.<br>그 전 색은 <b>${CNAME[pd.prev]}</b>이었어요.<br>${esc(by)}님에게 ${CNAME[pd.prev]} 카드가 있었을까요?`;
   $('chalModal').classList.remove('hidden');
 }
 $('chalYes').onclick = () => { $('chalModal').classList.add('hidden'); doMine({ t: 'challenge' }); };
 $('chalNo').onclick = () => { $('chalModal').classList.add('hidden'); doMine({ t: 'accept' }); };
+$('chalPass').onclick = () => { chalHide = `${g.gid}-${g.seq}`; $('chalModal').classList.add('hidden'); toast('넘길 카드를 골라 내요', 1500); };
 let revT = 0;
 function showReveal(e, st) {
   const me = meIdx(st);
@@ -494,15 +646,43 @@ function showReveal(e, st) {
   }
   $('revTitle').textContent = e.ok ? '도전 성공!' : '도전 실패!';
   $('revText').innerHTML = e.ok
-    ? `${esc(by)}님에게 ${CNAME[e.prev]} 카드가 있었어요.<br><b>${esc(by)}</b>님이 4장을 가져가요.`
+    ? `${esc(by)}님에게 ${CNAME[e.prev]} 카드나 다른 와일드 카드가 있었어요.<br><b>${esc(by)}</b>님이 4장을 가져가요.`
     : `${esc(by)}님에게 ${CNAME[e.prev]} 카드가 없었어요.<br><b>${esc(who)}</b>님이 6장을 가져가요.`;
   $('revCards').innerHTML = mine ? e.hand.map(c => cardHTML(c, colOf(c) === e.prev ? '' : '')).join('') : '<p class="note">카드는 도전한 사람만 볼 수 있어요.</p>';
-  if (mine) [...$('revCards').children].forEach((el, k) => { if (colOf(e.hand[k]) !== e.prev) el.style.opacity = '.45'; });
+  if (mine) [...$('revCards').children].forEach((el, k) => { const c = e.hand[k]; if (colOf(c) !== e.prev && !(isWild(c) && c !== 'F')) el.style.opacity = '.45'; });
   $('revealModal').classList.remove('hidden');
   clearTimeout(revT);
   revT = setTimeout(() => { $('revealModal').classList.add('hidden'); after(); }, mine ? 6000 : 3500);
 }
 $('revOk').onclick = () => { clearTimeout(revT); $('revealModal').classList.add('hidden'); after(); };
+
+// ---------- 누구와 바꿀까요 ----------
+let tgSel = [];
+function openTarget() {
+  if (!g || g.phase !== 'target') return;
+  const me = meIdx(); if (me < 0 || g.turn !== me) return;
+  const P = g.players, X = g.tg.k === 'X';
+  $('tgTitle').textContent = X ? '누구와 한 장 바꿀까요?' : '누구와 누구의 손패를 바꿀까요?';
+  $('tgText').textContent = X ? '고른 친구에게서 카드 한 장을 무작위로 가져오고, 내 카드 한 장을 줘요.' : '두 사람을 골라요. 나도 고를 수 있어요.';
+  tgSel = [];
+  const draw = () => {
+    $('tgList').innerHTML = P.map((p, i) => {
+      if (p.out || (X && i === me)) return '';
+      return `<button data-i="${i}" class="${tgSel.includes(i) ? 'on' : ''}">${avatarHTML(i, g)}<span>${esc(i === me && mode !== 'local' ? '나' : p.name)}</span><small>${p.hand.length}장</small></button>`;
+    }).join('');
+    $('tgRow').innerHTML = X ? '' : `<button class="game-btn btn-primary" id="tgGo" ${tgSel.length === 2 ? '' : 'disabled'}>바꾸기!</button>`;
+    if ($('tgGo')) $('tgGo').onclick = () => { $('targetModal').classList.add('hidden'); doMine({ t: 'target', p: tgSel[0], q: tgSel[1] }); };
+  };
+  $('tgList').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const i = +b.dataset.i;
+    if (X) { $('targetModal').classList.add('hidden'); doMine({ t: 'target', p: i }); return; }
+    if (tgSel.includes(i)) tgSel = tgSel.filter(x => x !== i); else { tgSel.push(i); if (tgSel.length > 2) tgSel.shift(); }
+    draw();
+  };
+  draw();
+  $('targetModal').classList.remove('hidden');
+}
 
 // ============================================================
 //  행동 보내기
@@ -551,7 +731,8 @@ function after() {
   if (playing && me >= 0 && g.turn === me && !revOpen) {
     if (g.phase === 'pick' && $('colorModal').classList.contains('hidden')) openColor('pick');
     if (g.phase === 'challenge') showChal(); else $('chalModal').classList.add('hidden');
-  } else { $('chalModal').classList.add('hidden'); if (colorFor === 'pick') { $('colorModal').classList.add('hidden'); colorFor = null; } }
+    if (g.phase === 'target') { if ($('targetModal').classList.contains('hidden')) openTarget(); } else $('targetModal').classList.add('hidden');
+  } else { $('chalModal').classList.add('hidden'); $('targetModal').classList.add('hidden'); if (colorFor === 'pick') { $('colorModal').classList.add('hidden'); colorFor = null; } }
   if (g.phase === 'roundEnd' || g.phase === 'gameEnd') showResult();
   else $('resultModal').classList.add('hidden');
   aiTick();
@@ -563,6 +744,7 @@ function showCover() {
   $('coverTitle').textContent = `${P[t].name} 차례예요`;
   let txt = '다른 친구들은 화면을 보지 말아요.';
   if (g.phase === 'challenge') txt = `${P[g.pend4.by].name}님이 +4를 냈어요! ` + txt;
+  if (g.phase === 'pen') txt = `+${g.pen.n}장을 받을 차례예요! ` + txt;
   $('coverText').textContent = txt;
   let h = `<button class="game-btn btn-primary" id="cvShow" style="min-width:220px">내 카드 보기</button>`;
   if (g.exposed >= 0) {
@@ -605,7 +787,7 @@ function aiTick() {
   }
   const t = g.turn, p = g.players[t];
   if (!p.ai) return;
-  const wait = rnd(850, 1400) + (g.exposed >= 0 ? 1600 : 0) + (g.phase === 'challenge' ? 600 : 0);
+  const wait = (g.tplayed > 0 ? rnd(550, 800) : rnd(850, 1400)) + (g.exposed >= 0 ? 1600 : 0) + (g.phase === 'challenge' ? 600 : 0);
   aiT = setTimeout(async () => {
     if (!g || animating || g.turn !== t) { aiTick(); return; }
     const a = aiDecide(g, t);
@@ -614,7 +796,7 @@ function aiTick() {
       if (a.gg) { await doAct(t, { t: 'gg' }); await sleep(500); while (animating) await sleep(80); }
       delete a.gg;
       const err = await doAct(t, a);
-      if (err) { console.warn('ai', err, a); if (latest().phase === 'play' && latest().turn === t) await doAct(t, { t: 'draw' }); }
+      if (err) { console.warn('ai', err, a); const st = latest(); if (st.turn === t) await doAct(t, st.phase === 'play' ? { t: 'draw' } : st.phase === 'pen' || st.phase === 'challenge' ? { t: 'accept' } : st.phase === 'give' ? { t: 'give', c: st.players[t].hand[0] } : { t: 'timeout' }); }
     } finally { aiBusy = false; }
     if (!animating) after();
   }, wait);
@@ -628,21 +810,44 @@ function bestColor(h) {
 }
 function aiDecide(st, i) {
   const L = LV[level], P = st.players, h = P[i].hand;
+  const colFor = c => { const rest = h.slice(); rest.splice(rest.indexOf(c), 1); return level === 1 ? COLORS[Math.floor(Math.random() * 4)] : bestColor(rest.length ? rest : h); };
+  const others = P.map((p, k) => k).filter(k => k !== i && !P[k].out);
   if (st.phase === 'pick') return { t: 'pick', col: level === 1 ? COLORS[Math.floor(Math.random() * 4)] : bestColor(h) };
-  if (st.phase === 'challenge') {
+  if (st.phase === 'pen' || st.phase === 'challenge') {
+    const resp = h.filter(c => canRespond(st, c));
+    const want = [0, .5, .8, .95][level];
+    if (resp.length && Math.random() < want) {
+      const order = c => (c === 'N' ? 0 : colOf(c) ? 1 : 2) + Math.random() * .5;   // 나 말고 너 > 색 스택 > 와일드 스택
+      const c = resp.sort((a, b) => order(a) - order(b))[0];
+      return { t: 'play', c, col: isWild(c) ? colFor(c) : undefined };
+    }
+    if (st.phase === 'pen') return { t: 'accept' };
     let pr = L.chal;
     if (level === 3) pr = P[st.pend4.by].hand.length >= 5 ? .55 : P[st.pend4.by].hand.length >= 3 ? .35 : .2;
     return { t: Math.random() < pr ? 'challenge' : 'accept' };
   }
-  const wantGg = h.length === 2 && Math.random() >= L.forget;
-  if (st.phase === 'drawn') {
-    const rest = h.slice(); rest.splice(rest.indexOf(st.drawn), 1);
-    return { t: 'play', c: st.drawn, col: bestColor(rest.length ? rest : h), gg: wantGg };
+  if (st.phase === 'target') {
+    const fewest = others.slice().sort((a, b) => P[a].hand.length - P[b].hand.length);
+    if (st.tg.k === 'X') return { t: 'target', p: level === 1 ? others[Math.floor(Math.random() * others.length)] : fewest[0] };
+    const lead = fewest[0], most = fewest[fewest.length - 1];
+    if (level === 1) return { t: 'target', p: i, q: others[Math.floor(Math.random() * others.length)] };
+    if (P[lead].hand.length < h.length) return { t: 'target', p: i, q: lead };
+    return { t: 'target', p: lead, q: most === lead ? i : most };
   }
+  if (st.phase === 'give') {   // 쓸모가 적은 카드를 줘요 (와일드는 아껴요)
+    const plain = h.filter(c => !isWild(c));
+    const pool = plain.length ? plain : h;
+    const cnt = {}; h.forEach(c => { if (!isWild(c)) cnt[c[0]] = (cnt[c[0]] || 0) + 1; });
+    const bad = c => (isWild(c) ? -50 : 0) - (cnt[c[0]] || 0) * 3 + (isNum(c) ? +valOf(c) : 5);
+    return { t: 'give', c: level === 1 ? pool[Math.floor(Math.random() * pool.length)] : pool.slice().sort((a, b) => bad(b) - bad(a))[0] };
+  }
+  const wantGg = h.length >= 2 && h.length <= (st.left || 1) + 1 && Math.random() >= L.forget;
+  if (st.phase === 'drawn') return { t: 'play', c: st.drawn, col: colFor(st.drawn), gg: wantGg };
   const ok = h.filter(c => canPlay(st, c));
   if (!ok.length) return { t: 'draw' };
   const nx = nxt(st, i), danger = P[nx].hand.length <= 2;
-  const hasCol = h.some(c => colOf(c) === st.color);
+  const hasCol = h.some(c => c !== 'F' && (colOf(c) === st.color || isWild(c)));
+  const last = (st.left || 1) <= 1;   // 이번 차례의 마지막 카드인가요 (스피드)
   let pick;
   if (level === 1) {
     const plain = ok.filter(c => !isWild(c));
@@ -651,15 +856,27 @@ function aiDecide(st, i) {
   } else {
     const cnt = {}; h.forEach(c => { if (!isWild(c)) cnt[c[0]] = (cnt[c[0]] || 0) + 1; });
     const leader = P.some((p, k) => k !== i && !p.out && p.hand.length <= 2);
+    const minOther = Math.min(...others.map(k => P[k].hand.length));
+    const prev = P[nxt({ players: P, dir: -st.dir }, i)];
     const score = c => {
       let s = 0;
       if (c === 'W') s = h.length <= 2 ? 30 : 2;
       else if (c === 'F') s = (hasCol ? -8 : 3) + (danger && level === 3 ? 30 : 0) + (h.length <= 2 ? 25 : 0);
+      else if (c === 'Z' || c === 'M') s = (danger ? 28 : 4) + (h.length <= 2 ? 20 : 0);
+      else if (c === 'N') s = h.length <= 2 ? 22 : -6;   // 막을 때 쓰려고 아껴요
+      else if (c === 'P') s = 14 + (h.length >= 3 ? 6 : 0);
+      else if (c === 'E') s = (h.length - minOther) * 4;
+      else if (c === 'T') s = (h.length - prev.hand.length) * 4;
+      else if (c === 'U') s = (h.length - (st.players.reduce((a, p) => a + (p.out ? 0 : p.hand.length), 0) / others.length + 1)) * 3;
+      else if (c === 'V') s = 6 + (danger ? 8 : 0);
       else {
         const v = valOf(c);
         s = 10 + (cnt[c[0]] || 0) * (level === 3 ? 3 : 1.5) + GG.points(c) / (leader ? 2 : 6);
         if (colOf(c) !== st.color) s -= 1;
-        if ('SRD'.includes(v)) s += danger ? (level === 3 ? 25 : 10) : (level === 3 ? -2 : 2);
+        if ('SRDQKAB'.includes(v)) s += !last ? -4 : danger ? (level === 3 ? 25 : 10) : (level === 3 ? -2 : 2);
+        if (v === 'H') s = h.length >= 4 ? 8 : -4;
+        if (v === 'X') s = 6;
+        if (speedUp(c)) s += danger ? 6 : 1;
       }
       return s + Math.random() * (level === 3 ? 1 : 4);
     };
@@ -668,8 +885,7 @@ function aiDecide(st, i) {
       const alt = ok.filter(c => c !== 'F'); if (alt.length) pick = alt.sort((a, b) => score(b) - score(a))[0];
     }
   }
-  const rest = h.slice(); rest.splice(rest.indexOf(pick), 1);
-  return { t: 'play', c: pick, col: isWild(pick) ? (level === 1 ? COLORS[Math.floor(Math.random() * 4)] : bestColor(rest.length ? rest : h)) : undefined, gg: wantGg };
+  return { t: 'play', c: pick, col: isWild(pick) ? colFor(pick) : undefined, gg: wantGg };
 }
 
 // ---------- 결과 ----------
@@ -728,7 +944,7 @@ $('status').addEventListener('click', () => { if (g && (g.phase === 'roundEnd' |
 let soloPlayers = null;
 function startSolo(players) {
   soloPlayers = players;
-  const ng = GG.newGame(players, { target: getTarget(), sec: 0 }, Date.now());
+  const ng = GG.newGame(players, { target: getTarget(), sec: 0, ext: getExt() }, Date.now());
   ng.gid = Math.random().toString(36).slice(2, 9);
   g = null; pendingG = null;
   show('game');
@@ -836,7 +1052,7 @@ $('createGo').onclick = async () => {
           const d = s.data(), age = Date.now() - (d.updatedAt ? d.updatedAt.toMillis() : 0);
           if (d.status !== 'closed' && age < STALE_MS) return null;
         }
-        tx.set(r, { code: c, status: 'waiting', hostId: myId, members: [{ id: myId, name }], target: getTarget(), sec: getSec(), g: null, stk: null,
+        tx.set(r, { code: c, status: 'waiting', hostId: myId, members: [{ id: myId, name }], target: getTarget(), sec: getSec(), ext: getExt(), g: null, stk: null,
           createdAt: F.serverTimestamp(), updatedAt: F.serverTimestamp() });
         return c;
       });
@@ -913,7 +1129,7 @@ function showWait() {
   $('codeBig').innerHTML = code.split('').map(ch => `<span>${ch}</span>`).join('');
   const ms = room.members || [];
   $('memberList').innerHTML = ms.map(m => `<span class="${m.id === myId ? 'me' : ''}">${esc(m.name)}${m.id === room.hostId ? '<small>방장</small>' : ''}</span>`).join('');
-  $('waitTags').innerHTML = `<span class="tag">${tgText(room.target)}</span><span class="tag">${room.sec ? `차례 ${room.sec}초` : '시간 제한 없음'}</span><span class="tag">${ms.length}/6명</span>`;
+  $('waitTags').innerHTML = `<span class="tag">${tgText(room.target)}</span>${extTags(room.ext)}<span class="tag">${room.sec ? `차례 ${room.sec}초` : '시간 제한 없음'}</span><span class="tag">${ms.length}/6명</span>`;
   let lead, b = '';
   if (role === 'host') {
     lead = ms.length < 2 ? '친구에게 이 번호를 알려 주세요.<br><span class="dots">친구를 기다리는 중</span>' : '모두 모이면 시작을 눌러요!';
@@ -939,7 +1155,7 @@ async function startOnline() {
     await F.runTransaction(F.db, async tx => {
       const s = await tx.get(ref); const d = s.data();
       if (!d || d.status !== 'waiting' || d.hostId !== myId || (d.members || []).length < 2) return;
-      const ng = GG.newGame(d.members.map(m => ({ id: m.id, name: m.name, ai: 0 })), { target: d.target || 0, sec: d.sec || 0 }, Date.now());
+      const ng = GG.newGame(d.members.map(m => ({ id: m.id, name: m.name, ai: 0 })), { target: d.target || 0, sec: d.sec || 0, ext: d.ext || {} }, Date.now());
       ng.gid = Math.random().toString(36).slice(2, 9);
       tx.update(ref, { status: 'playing', g: ng, updatedAt: F.serverTimestamp() });
     });
@@ -1047,11 +1263,30 @@ const HELP = [
   ['yR', '<b>방향 바꾸기</b> · 도는 방향이 반대로 바뀌어요. 둘이 할 때는 건너뛰기와 같아요.'],
   ['rD', '<b>+2</b> · 다음 사람이 2장을 가져가고 차례를 쉬어요.'],
   ['W', '<b>색 바꾸기</b> · 언제든 낼 수 있어요. 다음 색을 내가 정해요.'],
-  ['F', '<b>색 바꾸기 +4</b> · 지금 색과 같은 색 카드가 없을 때만 낼 수 있어요. 다음 사람은 4장을 가져가고 쉬어요. 의심되면 <b>도전!</b> 맞으면 낸 사람이 4장, 틀리면 도전한 사람이 6장을 가져가요.'],
-  ['back', '카드가 2장일 때 한 장을 내면서 <b>GGAEBI!</b> 버튼을 눌러요. 깜빡했는데 다음 사람이 움직이기 전에 누가 <b>잡았다!</b>를 누르면 2장을 가져가요. (컴퓨터에서는 G 키도 돼요)'],
-  ['y9', '먼저 카드를 다 낸 사람이 이겨요. 다른 사람 손에 남은 카드가 내 점수가 돼요. 숫자는 그 숫자만큼, 건너뛰기·방향 바꾸기·+2는 20점, 색 바꾸기는 50점이에요.']
+  ['F', '<b>색 바꾸기 +4</b> · 지금 색과 같은 색 카드나 다른 와일드 카드가 없을 때만 낼 수 있어요. 다음 사람은 4장을 가져가고 쉬어요. 반칙 같으면 다음 사람이 <b>도전!</b>할 수 있어요. 낸 사람에게 그런 카드가 있었으면 반칙이라 낸 사람이 4장, 없었으면 도전한 사람이 6장을 가져가요.'],
+  ['U', '<b>모두 섞기</b> · 모두의 카드를 모아 섞은 뒤 다음 사람부터 한 장씩 다시 나눠요. 그리고 색을 정해요.'],
+  ['back', '카드가 2장일 때 한 장을 내면서 <b>GGAEBI!</b> 버튼을 눌러요. 깜빡했는데 다음 사람이 움직이기 전에 누가 <b>잡았다!</b>를 누르면 2장을 가져가요. 카드가 바뀌어 1장이 됐을 때도 외쳐요. (컴퓨터에서는 G 키도 돼요)'],
+  ['y9', '먼저 카드를 다 낸 사람이 이겨요. 다른 사람 손에 남은 카드가 내 점수가 돼요. 숫자는 그 숫자만큼, 색 특수 카드는 20점, 와일드 카드는 50점이에요.'],
+  ['리버스 확장'],
+  ['rQ', '<b>방향 바꾸기 +2</b> · 방향이 바뀌고, 바뀐 방향의 다음 사람이 2장을 가져가고 쉬어요. 방향 바꾸기나 +2 카드 위에는 색이 달라도 낼 수 있어요.'],
+  ['bK', '<b>방향 바꾸기 건너뛰기</b> · 방향이 바뀌고, 바뀐 방향의 다음 사람이 쉬어요. 방향 바꾸기나 건너뛰기 위에는 색이 달라도 낼 수 있어요.'],
+  ['P', '<b>파워 방향 바꾸기</b> · 방향이 바뀌고 색을 정한 뒤, 내가 한 번 더 해요.'],
+  ['N', '<b>나 말고 너</b> · 내가 +카드를 받아야 할 때 내면, 방향이 바뀌고 그 카드를 낸 사람이 대신 받아요. 평소에는 방향을 바꾸는 색 바꾸기로 써요.'],
+  ['스왑 확장'],
+  ['gX', '<b>한 장 바꾸기</b> · 친구 한 명을 골라 카드 한 장을 무작위로 가져오고, 내 카드 한 장을 줘요.'],
+  ['yH', '<b>손패 교체</b> · 내 카드를 모두 버리고, 그만큼 새로 가져와요.'],
+  ['E', '<b>강제 교환</b> · 두 사람을 골라 손패를 통째로 맞바꾸게 해요. 나도 고를 수 있어요.'],
+  ['T', '<b>손패 넘기기</b> · 모두 자기 손패를 다음 사람에게 넘겨요.'],
+  ['스피드 확장'],
+  ['r4^', '<b>스피드 업</b> 표시가 있는 카드가 나오면, 다음 사람부터 한 차례에 내야 하는 장수가 1장씩 늘어요. 여러 장을 낼 때는 한 장씩 앞 카드와 맞춰서 내요.'],
+  ['V', '<b>더블 스피드 업</b> · 스피드가 2만큼 올라가고, 색을 정해요.'],
+  ['b6', '특수 카드는 그 차례의 <b>마지막 카드</b>일 때만 효과가 있어요. 다 못 내면 지금 스피드만큼 카드를 가져가고, 스피드는 1로 돌아가요.'],
+  ['스택 확장'],
+  ['rA', '<b>스택 +1, +2</b> · 다음 사람이 그만큼 가져가고 쉬어요. +카드를 받아야 할 때 같은 색 스택 카드를 내면 벌칙이 쌓여서 다음 사람에게 넘어가요.'],
+  ['Z', '<b>스택 +3</b> · 아무 때나 낼 수 있고, 어떤 벌칙 위에도 쌓을 수 있어요. 색도 정해요.'],
+  ['M', '<b>스택 +?</b> · 숫자 카드가 나올 때까지 더미를 뒤집어서, 그 숫자만큼 벌칙이 늘어나요.']
 ];
-$('helpList').innerHTML = HELP.map(([c, t]) => `<div>${cardHTML(c)}<span>${t}</span></div>`).join('');
+$('helpList').innerHTML = HELP.map(([c, t]) => t ? `<div>${cardHTML(c)}<span>${t}</span></div>` : `<h3 class="help-h">${c}</h3>`).join('');
 $('helpBtn').onclick = () => $('helpModal').classList.remove('hidden');
 $('helpClose').onclick = () => $('helpModal').classList.add('hidden');
 
