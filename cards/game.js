@@ -78,7 +78,7 @@ function beep(kind) {
 window.addEventListener('pointerdown', () => { if (actx && actx.state === 'suspended') actx.resume(); }, { passive: true });
 
 // 배경 음악 (지금은 체스 음악을 빌려 써요. cards/audio에 새 곡이 오면 바꿔요)
-const MUSIC = { lobby: '../chess/audio/bgm-lobby.mp3', play: '../chess/audio/bgm-play.mp3', tense: '../chess/audio/bgm-tense.mp3' };
+const MUSIC = { lobby: 'audio/bgm-lobby.mp3', play: 'audio/bgm-play.mp3', tense: 'audio/bgm-tense.mp3' };
 KBGM.init({ key: 'cards', tracks: MUSIC, start: 'lobby' });
 KBGM.button({ after: $('sndToggle'), icon: SVG_MUSIC });
 
