@@ -6,7 +6,7 @@
 <link rel="apple-touch-icon" href="/icons/icon-180.png"/>
 <link rel="icon" type="image/png" href="/icons/icon-192.png"/>
 <link rel="manifest" href="/manifest.webmanifest"/>
-<meta name="apple-mobile-web-app-title" content="꼬비샘과 쉬는 시간"/>
+<meta name="apple-mobile-web-app-title" content="깨비샘과 쉬는 시간"/>
 <meta name="theme-color" content="#16233a"/>
 <title>깨비샘의 도깨비숲 생존기 - 깨비샘과 쉬는 시간</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -259,7 +259,7 @@
 </head>
 <body class="menu">
 <div class="topbar">
-  <a href="../" id="home-link" title="꼬비샘과 쉬는 시간으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">쉬는 시간</span></a>
+  <a href="../" id="home-link" title="깨비샘과 쉬는 시간으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">쉬는 시간</span></a>
   <button id="fs-btn" type="button" title="전체화면"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="t" id="fs-txt">전체화면</span></button>
 </div>
 <script>
@@ -300,7 +300,7 @@
 </div>
 <div id="banner"></div>
 <div id="joy" class="hidden"><div id="knob"></div></div>
-<div id="touch-hint" class="hidden">화면을 누른 채로 끌면 꼬비가 움직여요</div>
+<div id="touch-hint" class="hidden">화면을 누른 채로 끌면 깨비샘이 움직여요</div>
 
 <!-- 시작 화면 -->
 <div class="ov" id="title">
@@ -309,7 +309,6 @@
   <div class="title-bottom">
     <button class="game-btn" id="title-start" type="button">▶ 게임 시작</button>
     <button class="game-btn white" id="title-music" type="button">🎵 음악 켬</button>
-    <p class="title-tip">무기를 고르고, 몰려오는 요괴를 피해 20분을 버텨요!</p>
   </div>
   <button id="dev-open" type="button" aria-label="개발자 모드">🔧<span class="dev-txt"> 개발자 모드</span></button>
 </div>
@@ -352,9 +351,8 @@
 <div class="ov hidden" id="start">
   <div class="panel">
     <img id="title-logo" class="hidden" src="img/logo.png?v=3" alt="깨비샘의 도깨비숲 생존기">
-    <div id="title-text">꼬비의 <b>도깨비숲</b> 생존기</div>
-    <p class="sub">몰려오는 숲속 요괴들을 피해 20분을 버티고, 마지막 보스 이무기를 물리쳐요!</p>
-    <div class="pick-title">처음 들고 갈 무기를 골라요</div>
+    <div id="title-text">깨비샘의 <b>도깨비숲</b> 생존기</div>
+    <div class="pick-title"><span style="display:inline-block;padding:4px 18px;border-radius:999px;background:rgba(8,12,30,.55);border:2px solid rgba(255,255,255,.6)">무기 선택</span></div>
     <div id="weapon-pick"></div>
     <div id="wp-desc"></div>
     <div class="btns">
@@ -362,8 +360,8 @@
       <button class="game-btn sun" id="rank-btn" type="button">🏆 랭킹</button>
       <button class="game-btn white" id="help-btn" type="button">📖 조합표</button>
     </div>
-    <p class="howto" id="howto-pc">움직이기 <span class="kbd">←↑↓→</span> 또는 <span class="kbd">W A S D</span> · 멈춤 <span class="kbd">Esc</span> · 🎮 컨트롤러도 돼요 · 공격은 저절로 해요</p>
-    <p class="howto hidden" id="howto-touch">화면을 누른 채로 끌면 움직여요 · 공격은 저절로 해요</p>
+    <p class="howto" id="howto-pc">움직이기 <span class="kbd">←↑↓→</span> 또는 <span class="kbd">W A S D</span> · 멈춤 <span class="kbd">Esc</span> </p>
+    <p class="howto hidden" id="howto-touch">화면을 누른 채로 끌면 움직여요</p>
   </div>
 </div>
 
@@ -447,7 +445,7 @@
 <script>
 'use strict';
 /* =====================================================================
-   꼬비의 도깨비숲 생존기 - 데이터
+   깨비샘의 도깨비숲 생존기 - 데이터
    무기(빨강) + 강화(보라) = 조합(분홍)
    ===================================================================== */
 const GAME_LEN = 20 * 60;          // 20분이 되면 이무기 등장
@@ -460,8 +458,8 @@ const WEAPONS = {
     desc:['','바라보는 쪽을 넓게 휘둘러요.','뒤쪽도 한 번 더 휘둘러요.','힘 +6','휘두르는 범위 +15%','힘 +6','더 자주 휘둘러요.','힘 +8','휘두르는 범위 +20%'],
     evoDesc:'빙 둘러 크게 휘둘러요. 요괴를 잡으면 가끔 엽전과 체력이 나와요.' },
   wisp: { name:'도깨비불', emoji:'🔥', pair:'lamp', evoName:'꺼지지 않는 도깨비불', evoEmoji:'☄️',
-    short:'꼬비 주위를 빙글빙글 돌아요',
-    desc:['','도깨비불 2개가 꼬비 주위를 돌아요.','도깨비불 +1','더 넓고 빠르게 돌아요.','힘 +5, 더 오래 돌아요.','도깨비불 +1','더 빠르게 돌아요.','힘 +5, 더 오래 돌아요.','도깨비불 +1'],
+    short:'깨비샘 주위를 빙글빙글 돌아요',
+    desc:['','도깨비불 2개가 깨비샘 주위를 돌아요.','도깨비불 +1','더 넓고 빠르게 돌아요.','힘 +5, 더 오래 돌아요.','도깨비불 +1','더 빠르게 돌아요.','힘 +5, 더 오래 돌아요.','도깨비불 +1'],
     evoDesc:'쉬지 않고 돌아요. 불이 2개 늘고 훨씬 뜨거워져요.' },
   top: { name:'팽이', emoji:'🪀', pair:'beans', evoName:'팽이 회오리', evoEmoji:'🌀',
     short:'요괴 사이를 통통 튕겨 다녀요',
@@ -470,14 +468,14 @@ const WEAPONS = {
   shoe: { name:'고무신', emoji:'👟', pair:'straw', evoName:'천리 고무신', evoEmoji:'⚡',
     short:'부메랑처럼 날아갔다 돌아와요',
     desc:['','고무신을 던지면 요괴를 뚫고 돌아와요.','고무신 +1','힘 +8','더 크게 날아가요.','고무신 +1','더 빠르게 날아가요.','힘 +10','고무신 +1'],
-    evoDesc:'꼬비가 빠를수록 세져요. 더 멀리, 더 크게 날아가요.' },
+    evoDesc:'깨비샘이 빠를수록 세져요. 더 멀리, 더 크게 날아가요.' },
   fan: { name:'부채', emoji:'🪭', pair:'cloth', evoName:'태풍 부채', evoEmoji:'🌪️',
     short:'바람으로 요괴를 밀어내요',
     desc:['','앞쪽으로 바람을 일으켜 요괴를 밀어내요.','힘 +5','바람이 넓어져요.','반대쪽에도 바람 +1','더 자주 부쳐요.','힘 +7','바람이 넓어져요.','힘 +8, 더 세게 밀어요.'],
     evoDesc:'부칠 때마다 회오리가 생겨 요괴를 빨아들여요.' },
   drum: { name:'북', emoji:'🥁', pair:'sundial', evoName:'천둥 북', evoEmoji:'🌩️',
     short:'둥! 둥근 충격파가 퍼져요',
-    desc:['','둥! 꼬비를 중심으로 충격파가 퍼져요.','힘 +8','충격파가 넓어져요.','충격파 +1 (한 번 더 둥!)','더 자주 쳐요.','힘 +10','충격파가 넓어져요.','힘 +12'],
+    desc:['','둥! 깨비샘을 중심으로 충격파가 퍼져요.','힘 +8','충격파가 넓어져요.','충격파 +1 (한 번 더 둥!)','더 자주 쳐요.','힘 +10','충격파가 넓어져요.','힘 +12'],
     evoDesc:'충격파와 함께 화면 곳곳에 천둥번개가 떨어져요.' },
   brush: { name:'붓', emoji:'🖌️', pair:'book', evoName:'일필휘지 붓', evoEmoji:'✒️',
     short:'바닥에 먹물 웅덩이를 남겨요',
@@ -500,8 +498,8 @@ const WEAPONS = {
     desc:['','가까운 요괴를 쿵! 내려찍어요. 최대 체력이 많을수록 세져요.','힘 +10','찍는 범위 +20%','한 번 더 찍어요.','더 자주 찍어요.','힘 +12','찍는 범위 +20%','한 번 더 찍어요.'],
     evoDesc:'보름달처럼 크게 내려찍고, 맞은 요괴 수만큼 체력이 차요.' },
   mask: { name:'하회탈', emoji:'🎭', pair:'lid', evoName:'천하무적 탈', evoEmoji:'👑',
-    short:'꼬비를 지키며 요괴 공격을 막아요',
-    desc:['','탈이 꼬비 주위를 천천히 돌며 날아오는 공격을 막고 요괴를 밀쳐요.','힘 +5','탈 +1','탈이 커져요.','힘 +6','탈 +1','더 빨리 돌아요.','탈 +1'],
+    short:'깨비샘을 지키며 요괴 공격을 막아요',
+    desc:['','탈이 깨비샘 주위를 천천히 돌며 날아오는 공격을 막고 요괴를 밀쳐요.','힘 +5','탈 +1','탈이 커져요.','힘 +6','탈 +1','더 빨리 돌아요.','탈 +1'],
     evoDesc:'탈이 2개 늘고, 10초마다 2초 동안 아무 피해도 받지 않아요.' },
 };
 
@@ -606,7 +604,7 @@ const IMG_NAMES = [
 <script>
 'use strict';
 /* =====================================================================
-   꼬비의 도깨비숲 생존기 - 게임
+   깨비샘의 도깨비숲 생존기 - 게임
    ===================================================================== */
 const $ = id => document.getElementById(id);
 const cv = $('cv'), ctx = cv.getContext('2d');
@@ -623,7 +621,7 @@ function loadImg(name, src) {
   im.src = src;
 }
 IMG_NAMES.forEach(n => loadImg(n, 'img/' + n + (n === 'ground' ? '.jpg' : '.png')));
-loadImg('_ggobi', '../img/ggobi-wave.png');   // 꼬비 그림이 오기 전 임시
+loadImg('_ggobi', '../img/ggobi-wave.png');   // 깨비샘 그림이 오기 전 임시
 
 function iconKey(kind, id) { return (kind === 'p' ? 'p-' : kind === 'e' ? 'e-' : 'w-') + id; }
 // 글 사이에 들어가는 작은 그림 (그림이 없으면 이모지)
@@ -1394,7 +1392,7 @@ function updateEnemies(dt) {
     if (GROUNDED[e.type] && !e.straight) pushOut(e, e.r * .5, e.r * .5);
     const k = Math.min(1, dt * 9); e.kbx -= e.kbx * k; e.kby -= e.kby * k;
     if (Math.abs(vx) > 2) e.face = vx < 0 ? -1 : 1;
-    // 꼬비와 부딪히기
+    // 깨비샘과 부딪히기
     const ddx = p.x - e.x, ddy = p.y - e.y, rr = e.r + p.r * .8;
     if (ddx * ddx + ddy * ddy < rr * rr && MONSTERS[e.type].dmg) damagePlayer(e.dmg);
     // 너무 멀어지면 앞쪽으로 다시 데려와요
@@ -1495,7 +1493,7 @@ function update(dt) {
     let c = 0; while (G.spawnAcc >= 1 && c++ < 12) { G.spawnAcc--; spawnOne(pickMix(wv.mix)); }
   } else G.spawnAcc = 0;
   updateLanterns(dt);
-  // 꼬비 움직임
+  // 깨비샘 움직임
   const [ix, iy] = inputDir();
   p.moving = !!(ix || iy);
   if (p.moving) { p.fx = ix; p.fy = iy; if (Math.abs(ix) > .1) p.face = ix < 0 ? -1 : 1; }
@@ -1757,7 +1755,7 @@ function render() {
     }
   }
   // 요괴 (위에서 아래 순서로)
-  // 꼬비보다 뒤쪽(위쪽)에 있는 나무는 먼저 그려서 꼬비가 앞에 보이게 해요
+  // 깨비샘보다 뒤쪽(위쪽)에 있는 나무는 먼저 그려서 깨비샘이 앞에 보이게 해요
   for (const d of tall) if (d.y + 4 <= G.p.y + 14) spr(d.t[0], d.x, d.y - d.t[2] * .4, d.t[2]) || drawDecoFallback(d.t[0], d.x, d.y, d.t[2]);
   const list = G.enemies.slice().sort((a, b) => a.y - b.y);
   for (const e of list) if (e.type === 'seg') drawMonster(e);
@@ -2161,7 +2159,7 @@ $('again-btn').addEventListener('click', () => { hide('end'); G = null; modal = 
 let pickedWeapon = 'club';
 try { const s = localStorage.getItem('survivor-weapon'); if (s && WEAPONS[s]) pickedWeapon = s; } catch (e) {}
 function buildPick() {
-  $('weapon-pick').innerHTML = Object.keys(WEAPONS).map(id => `<button type="button" class="wp ${id === pickedWeapon ? 'on' : ''}" data-id="${id}">${iconHTML('w', id)}${WEAPONS[id].name}<small>${WEAPONS[id].short}</small></button>`).join('');
+  $('weapon-pick').innerHTML = Object.keys(WEAPONS).map(id => `<button type="button" class="wp ${id === pickedWeapon ? 'on' : ''}" data-id="${id}">${iconHTML('w', id)}${WEAPONS[id].name}</button>`).join('');
   $('wp-desc').textContent = WEAPONS[pickedWeapon].name + ': ' + WEAPONS[pickedWeapon].desc[1];
 }
 $('weapon-pick').addEventListener('click', e => {
