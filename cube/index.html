@@ -401,12 +401,12 @@ function nameOf(c) {
   return (c === hc ? room.hostName : room.guestName) || '?';
 }
 // 배경 음악: 게임 중에는 원래 크기, 대기실과 결과 화면에서는 작게
-KBGM.init({ key:'cube', tracks:{ play:'../omok/audio/bgm-play.mp3' } });
+KBGM.init({ key:'cube', tracks:{ lobby:'audio/bgm-lobby.mp3', play:'audio/bgm-play.mp3' }, start:'lobby' });
 KBGM.button({ after: $('sndToggle'), icon: SVG_MUSIC });
 let bgmJingled = false;
 function show(id) {
   ['startScreen', 'waitScreen', 'game'].forEach(s => $(s).classList.toggle('hidden', s !== id));
-  if (id !== 'game') KBGM.calm();
+  if (id !== 'game') { KBGM.track('lobby'); KBGM.full(); } else KBGM.track('play');
   const g = id === 'game';
   $('sideGgobi').classList.toggle('hidden', !g); $('sideRoom').classList.toggle('hidden', !g);
   if (g) layout();
