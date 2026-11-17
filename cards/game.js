@@ -444,6 +444,7 @@ function render() {
   updTimer();
   // 긴장되는 음악: 누군가 한 장 남았을 때
   if (playing) KBGM.track(P.some(p => !p.out && p.hand.length === 1) ? 'tense' : 'play');
+  if (tipFor && !document.body.contains(tipFor)) hideTip();
 }
 function layoutHand() {
   const hand = $('hand'), cards = hand.querySelectorAll('.cd');
@@ -514,8 +515,70 @@ $('deckWrap').onclick = () => {
   if (!g || animating || me < 0 || g.turn !== me || g.phase !== 'play') return;
   doMine({ t: 'draw' });
 };
+// ---------- 특수 카드 설명 (마우스를 올리거나, 휴대폰에서 꾹 누르면) ----------
+const DESC = {
+  S: '다음 사람은 차례를 쉬어요.',
+  R: '도는 방향이 반대로 바뀌어요. 둘이 할 때는 건너뛰기와 같아요.',
+  D: '다음 사람이 2장을 가져가고 쉬어요.',
+  Q: '방향이 바뀌고, 바뀐 방향의 다음 사람이 2장을 가져가고 쉬어요. 방향 바꾸기나 +2 위에는 색이 달라도 낼 수 있어요.',
+  K: '방향이 바뀌고, 바뀐 방향의 다음 사람이 쉬어요. 방향 바꾸기나 건너뛰기 위에는 색이 달라도 낼 수 있어요.',
+  X: '친구 한 명에게서 카드 한 장을 무작위로 가져오고, 내 카드 한 장을 줘요.',
+  H: '내 카드를 모두 버리고, 그만큼 새로 가져와요.',
+  A: '다음 사람이 1장을 가져가고 쉬어요. +카드를 받을 때 같은 색이면 쌓아서 넘길 수 있어요.',
+  B: '다음 사람이 2장을 가져가고 쉬어요. +카드를 받을 때 같은 색이면 쌓아서 넘길 수 있어요.',
+  W: '언제든 낼 수 있어요. 다음 색을 내가 정해요.',
+  F: '같은 색 카드나 다른 와일드 카드가 없을 때만 내요. 다음 사람이 4장을 가져가고 쉬어요. 반칙 같으면 도전할 수 있어요.',
+  U: '모두의 카드를 모아 섞어서 다음 사람부터 한 장씩 다시 나눠요. 색도 정해요.',
+  P: '방향이 바뀌고 색을 정한 뒤, 내가 한 번 더 해요.',
+  N: '+카드를 받아야 할 때 내면, 방향이 바뀌고 그 카드를 낸 사람이 대신 받아요. 평소에는 방향을 바꾸는 색 바꾸기예요.',
+  E: '두 사람을 골라 손패를 통째로 맞바꾸게 해요. 나도 고를 수 있어요.',
+  T: '모두 자기 손패를 다음 사람에게 넘겨요. 색도 정해요.',
+  Z: '아무 때나 낼 수 있어요. 다음 사람이 3장을 가져가요. 어떤 벌칙 위에도 쌓을 수 있어요.',
+  M: '숫자 카드가 나올 때까지 더미를 뒤집어서, 그 숫자만큼 다음 사람이 가져가요. 벌칙 위에도 쌓을 수 있어요.',
+  V: '스피드가 2만큼 올라가요. 색도 정해요.'
+};
+function cardDesc(c) {
+  if (!c || c === 'back') return '';
+  const v = isWild(c) ? c : valOf(c);
+  let d = DESC[v] || '';
+  if (speedUp(c) && !isWild(c)) d = '스피드 업 카드예요. 다음 사람부터 한 차례에 내는 장수가 1장 늘어요.';
+  return d;
+}
+const tipEl = document.createElement('div'); tipEl.id = 'cardTip'; tipEl.className = 'hidden'; document.body.appendChild(tipEl);
+let tipT = 0, tipFor = null, pressTip = false;
+function showTip(el) {
+  const c = el.dataset.c, d = cardDesc(c); if (!d) return;
+  tipFor = el;
+  tipEl.innerHTML = `<b>${esc(CARD_NAME(c))}</b>${esc(d)}`;
+  tipEl.classList.remove('hidden');
+  const r = el.getBoundingClientRect(), w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+  const x = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2));
+  let y = r.top - h - 10; if (y < 8) y = r.bottom + 10;
+  tipEl.style.left = x + 'px'; tipEl.style.top = y + 'px';
+}
+function hideTip() { clearTimeout(tipT); tipFor = null; tipEl.classList.add('hidden'); }
+['hand', 'pileWrap'].forEach(id => {
+  const box = $(id);
+  box.addEventListener('pointerover', e => {
+    if (e.pointerType !== 'mouse') return;
+    const el = e.target.closest('.cd'); if (!el || el === tipFor) return;
+    clearTimeout(tipT); tipT = setTimeout(() => showTip(el), 280);
+  });
+  box.addEventListener('pointerout', e => { if (e.pointerType === 'mouse' && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.cd') === tipFor && tipFor)) hideTip(); });
+  box.addEventListener('pointerdown', e => {   // 휴대폰: 꾹 누르면 설명, 손을 떼면 닫혀요
+    if (e.pointerType === 'mouse') return;
+    const el = e.target.closest('.cd'); if (!el) return;
+    pressTip = false; clearTimeout(tipT);
+    tipT = setTimeout(() => { if (cardDesc(el.dataset.c)) { pressTip = true; showTip(el); } }, 450);
+  });
+  const up = e => { if (e.pointerType === 'mouse') return; clearTimeout(tipT); if (pressTip) setTimeout(hideTip, 1200); };
+  box.addEventListener('pointerup', up); box.addEventListener('pointercancel', up);
+  box.addEventListener('contextmenu', e => { if (e.target.closest('.cd')) e.preventDefault(); });
+});
 $('hand').addEventListener('click', e => {
   const el = e.target.closest('.cd'); if (!el || !g) return;
+  if (pressTip) { pressTip = false; return; }   // 꾹 눌러 설명을 본 거라면 내지 않아요
+  hideTip();
   const me = meIdx(); if (me < 0) return;
   if (animating) return;
   const c = el.dataset.c;
