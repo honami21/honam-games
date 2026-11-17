@@ -182,6 +182,9 @@
   /* 버튼 아래 두꺼운 그림자를 없애 테두리 두께를 위아래 같게 */
   .game-btn, .topbar a, .topbar button { box-shadow:none !important; }
   .game-btn:active { transform:translateY(2px) scale(.97) !important; }
+  .mode-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .mode-row .game-btn { min-width:0; padding:10px 6px; font-size:clamp(15px,2.4vw,18px); white-space:normal; line-height:1.2; word-break:keep-all; }
+  @media (max-width:560px){ .mode-row{ grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
@@ -230,17 +233,16 @@
     <div class="start-wrap">
       <div class="card">
         <img class="logo" src="img/logo.png?v=2" alt="깨비샘의 체스 한 판" width="1100" height="875">
-        <p class="lead">친구와 <b>방 코드</b>로 만나거나 깨비샘과 겨뤄요.<br>상대 <b>킹</b>을 꼼짝 못 하게 잡으면 이겨요!</p>
         <div class="box">
           <div class="field"><input id="nameInput" maxlength="8" placeholder="내 이름 (별명도 좋아요)" autocomplete="off"></div>
+        </div>
+        <div class="box">
+          <div class="mode-row"><button class="game-btn btn-primary" id="createBtn">방 만들기</button><button class="game-btn btn-info" id="localBtn">한 화면에서<br>둘이 하기</button><button class="game-btn btn-sky" id="cpuBtn">깨비샘과 하기</button></div>
         </div>
         <div class="box">
           <div class="box-title">규칙 고르기</div>
           <div class="seg-label">시간 제한 (각자)</div>
           <div class="seg" id="tcSeg"><button data-tc="0">없음</button><button data-tc="5">5분</button><button data-tc="10">10분</button><button data-tc="15">15분</button></div>
-          <p class="note">내 시간을 다 쓰면 지는 거예요.</p>
-          <div class="btn-row"><button class="game-btn btn-primary" id="createBtn">방 만들기</button><button class="game-btn btn-info" id="localBtn">한 화면에서 둘이 하기</button><button class="game-btn btn-sky" id="cpuBtn">깨비샘과 하기</button></div>
-          <p class="note">한 화면에서 둘이 하기는 컴퓨터나 휴대폰 하나로 번갈아 둬요.<br>깨비샘과 하기는 혼자서 깨비샘과 겨뤄요. 둘 다 방 코드가 필요 없어요.</p>
         </div>
         <div class="box">
           <div class="box-title">방 코드로 들어가기</div>
@@ -248,7 +250,6 @@
             <input id="codeInput" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="0000" autocomplete="off">
             <button class="game-btn btn-info" id="joinBtn" style="min-width:0">들어가기</button>
           </div>
-          <p class="note">먼저 들어온 한 명이 대결하고, 그다음부터는 구경할 수 있어요.</p>
         </div>
         <div class="msg" id="startMsg"></div>
         <button class="link-btn" id="helpBtn" type="button">체스가 처음이에요 · 말 움직이는 법</button>
