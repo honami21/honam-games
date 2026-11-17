@@ -1,4 +1,4 @@
-// GGOBI 카드 게임: 화면, 꼬비 AI, 방 코드 대결
+// 깨비샘의 GGAEBI 카드 게임: 화면, AI, 방 코드 대결
 (() => {
 'use strict';
 const $ = id => document.getElementById(id);
@@ -84,16 +84,16 @@ KBGM.button({ after: $('sndToggle'), icon: SVG_MUSIC });
 
 // ---------- 그림 (있으면 쓰고, 없으면 그려서 보여요) ----------
 const ART = {};
-['logo', 'card-back', 'text-ggobi', 'text-catch', 'text-challenge'].forEach(n => {
+['logo', 'card-back', 'text-ggaebi', 'text-catch', 'text-challenge'].forEach(n => {
   const i = new Image();
   i.onload = () => {
     ART[n] = true;
-    if (n === 'logo') $('logoBox').innerHTML = '<img class="logo" src="img/logo.png" alt="GGOBI">';
+    if (n === 'logo') $('logoBox').innerHTML = '<img class="logo" src="img/logo.png" alt="깨비샘의 GGAEBI">';
     if (n === 'card-back' && g) render();
   };
-  i.src = `img/${n}.png`;
+  i.src = `img/${n}.${n === 'card-back' ? 'jpg' : 'png'}`;
 });
-['ggobi-win', 'ggobi-lose', 'ggobi-shout', 'ggobi-catch', 'ggobi-think'].forEach(n => { const i = new Image(); i.src = `img/${n}.png`; });
+['ggaebi-win', 'ggaebi-lose', 'ggaebi-think', 'ggaebi-hello', 'ggaebi-wait'].forEach(n => { const i = new Image(); i.src = `img/${n}.png`; });
 
 // ---------- 카드 그리기 ----------
 const SVG_SKIP = '<svg viewBox="0 0 40 40"><g fill="#fff" stroke="#2c2950" stroke-width="3" stroke-linejoin="round"><path d="M4 8 L17 20 L4 32 Z"/><path d="M17 8 L30 20 L17 32 Z"/><rect x="31" y="8" width="6" height="24" rx="2"/></g></svg>';
@@ -103,7 +103,7 @@ const SVG_PIN = cls => `<svg class="pin ${cls}" viewBox="0 0 40 40"><g stroke="#
   ['--cr', '--cy', '--cg', '--cb'].map((v, i) => `<path d="${PETAL}" style="fill:var(${v})" transform="rotate(${i * 90} 20 20)"/>`).join('') +
   '<circle cx="20" cy="20" r="3.6" fill="#fff"/></g></svg>';
 function cardHTML(c, cls = '') {
-  if (c === 'back') return `<div class="cd back ${ART['card-back'] ? 'art' : ''} ${cls}"><div class="in"><span class="bt">GGOBI</span></div></div>`;
+  if (c === 'back') return `<div class="cd back ${ART['card-back'] ? 'art' : ''} ${cls}"><div class="in"><span class="bt">GGAEBI</span></div></div>`;
   if (isWild(c)) {
     return c === 'F'
       ? `<div class="cd c-w ${cls}" data-c="F"><div class="in">${SVG_PIN('small')}<span class="plus4">+4</span></div><span class="k tl">+4</span><span class="k br">+4</span></div>`
@@ -133,8 +133,8 @@ let viewer = -1;            // 한 화면 모드: 지금 카드를 보는 사람
 let level = 2;
 let room = null, code = '', ref = null, role = '', unsub = null;
 let FB = null, busy = false;
-const AI_NAMES = ['꼬비', '꼬미', '꼬롱', '꼬동', '꼬순'];
-const AI_AV = ['avatar-ggobi', 'avatar-ggomi', 'avatar-ggorong', 'avatar-ggodong', 'avatar-ggosun'];
+const AI_NAMES = ['깨비샘', '깨순이', '깨돌이', '깨롱이', '깨미'];
+const AI_AV = ['avatar-ggaebisaem', 'avatar-ggaesun', 'avatar-ggaedol', 'avatar-ggaerong', 'avatar-ggaemi'];
 const PAL = ['#ee5a6f', '#3a83e8', '#38b468', '#f39c32', '#8e6be0', '#e05aa8'];
 const latest = () => pendingG || g;
 
@@ -152,7 +152,7 @@ function toast(t, ms = 1800) { const el = $('toast'); el.textContent = t; el.cla
 function bigPop(kind, sub) {
   const el = $('big');
   let h;
-  if (kind === 'ggobi') h = ART['text-ggobi'] ? '<img src="img/text-ggobi.png" alt="GGOBI!">' : '<div class="tx red">GGOBI!</div>';
+  if (kind === 'ggobi') h = ART['text-ggaebi'] ? '<img src="img/text-ggaebi.png" alt="GGAEBI!">' : '<div class="tx red">GGAEBI!</div>';
   else if (kind === 'catch') h = ART['text-catch'] ? '<img src="img/text-catch.png" alt="잡았다!">' : '<div class="tx">잡았다!</div>';
   else if (kind === 'chal') h = ART['text-challenge'] ? '<img src="img/text-challenge.png" alt="도전!">' : '<div class="tx mint">도전!</div>';
   else h = `<div class="tx">${esc(kind)}</div>`;
@@ -283,7 +283,7 @@ async function animate(old, ng) {
       await Promise.all(jobs);
       if (e.k >= 2) bubble(e.p, `+${e.k}장`);
     } else if (e.t === 'gg') {
-      beep('gg'); bigPop('ggobi', e.early ? '' : `${nm(e.p, ng)} 휴, 안전!`); bubble(e.p, 'GGOBI!');
+      beep('gg'); bigPop('ggobi', e.early ? '' : `${nm(e.p, ng)} 휴, 안전!`); bubble(e.p, 'GGAEBI!');
       await sleep(e.early ? 350 : 600);
     } else if (e.t === 'catch') {
       beep('catch');
@@ -308,7 +308,7 @@ async function animate(old, ng) {
 // ============================================================
 function avatarHTML(i, st) {
   const p = st.players[i];
-  if (p.ai) return `<div class="av"><img src="img/${AI_AV[(p.ai - 1) % AI_AV.length]}.png" alt=""></div>`;
+  if (p.ai) return `<div class="av ai"><img src="img/${AI_AV[(p.ai - 1) % AI_AV.length]}.png" alt=""></div>`;
   return `<div class="av" style="background:${PAL[i % PAL.length]}">${esc((p.name || '?').slice(0, 1))}</div>`;
 }
 function render() {
@@ -321,7 +321,7 @@ function render() {
   $('opps').innerHTML = order.map(i => {
     const p = P[i], n = p.hand.length;
     let badge = '';
-    if (!p.out && playing && n === 1) badge = g.exposed === i ? '<span class="badge">1장!</span>' : '<span class="badge safe">GGOBI!</span>';
+    if (!p.out && playing && n === 1) badge = g.exposed === i ? '<span class="badge">1장!</span>' : '<span class="badge safe">GGAEBI!</span>';
     if (p.out) badge = '<span class="badge" style="background:#999">나감</span>';
     return `<div class="seat ${playing && t === i ? 'turn' : ''} ${p.out ? 'out' : ''}" data-i="${i}">${avatarHTML(i, g)}
       <div class="si"><div class="nm">${esc(p.name)}</div><div class="ct">${cardHTML('back')}<b>${n}</b>장${g.target ? ` <span class="sc">${p.score}점</span>` : ''}</div></div>
@@ -411,8 +411,8 @@ function renderActions() {
     if (g.phase === 'drawn') h += '<button class="game-btn btn-secondary" id="aKeep">안 내고 넘기기</button>';
   }
   if (playing && me >= 0 && !P[me].out) {
-    if (g.exposed === me) h += '<button class="ggbtn urgent" id="aGg">GGOBI!</button>';
-    else if (t === me && P[me].hand.length === 2 && (g.phase === 'play' || g.phase === 'drawn')) h += P[me].gg ? '<button class="ggbtn armed" disabled>GGOBI! 외쳤어요</button>' : '<button class="ggbtn" id="aGg">GGOBI!</button>';
+    if (g.exposed === me) h += '<button class="ggbtn urgent" id="aGg">GGAEBI!</button>';
+    else if (t === me && P[me].hand.length === 2 && (g.phase === 'play' || g.phase === 'drawn')) h += P[me].gg ? '<button class="ggbtn armed" disabled>GGAEBI! 외쳤어요</button>' : '<button class="ggbtn" id="aGg">GGAEBI!</button>';
   }
   if (playing && g.exposed >= 0 && g.exposed !== me && (me >= 0 || mode === 'local')) h += `<button class="catchbtn" id="aCatch">잡았다! ${esc(P[g.exposed].name)} 1장</button>`;
   if (mode === 'online') h += '<button class="game-btn btn-sky" id="aStk">응원</button>';
@@ -445,7 +445,7 @@ $('hand').addEventListener('click', e => {
   if (isWild(c)) { openColor(c); return; }
   doMine({ t: 'play', c });
 });
-// 키보드: G 키로 GGOBI!
+// 키보드: G 키로 GGAEBI!
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' || !g || $('game').classList.contains('hidden')) return;
   if (e.key === 'g' || e.key === 'G' || e.key === 'ㅎ') { const b = $('aGg'); if (b) b.click(); }
@@ -529,7 +529,7 @@ async function doAct(who, a) {
 }
 
 // ============================================================
-//  게임 진행 뒤에 할 일 (꼬비 AI, 한 화면 가리기, 결과)
+//  게임 진행 뒤에 할 일 (AI, 한 화면 가리기, 결과)
 // ============================================================
 let aiBusy = false;
 let aiT = 0, catchTimers = [], catchKey = '', lastTurnKey = '', shownResult = '';
@@ -566,7 +566,7 @@ function showCover() {
   $('coverText').textContent = txt;
   let h = `<button class="game-btn btn-primary" id="cvShow" style="min-width:220px">내 카드 보기</button>`;
   if (g.exposed >= 0) {
-    h += `<button class="ggbtn urgent" id="cvGg">${esc(P[g.exposed].name)} GGOBI!</button>`;
+    h += `<button class="ggbtn urgent" id="cvGg">${esc(P[g.exposed].name)} GGAEBI!</button>`;
     h += `<button class="catchbtn" id="cvCatch">잡았다! ${esc(P[g.exposed].name)} 1장</button>`;
   }
   $('coverBtns').innerHTML = h;
@@ -576,7 +576,7 @@ function showCover() {
   $('cover').classList.remove('hidden');
 }
 
-// ---------- 꼬비 AI ----------
+// ---------- AI ----------
 const LV = {
   1: { forget: .4, notice: .5, catchMs: [2800, 4200], save: .25, chal: 0 },
   2: { forget: .15, notice: .85, catchMs: [1700, 2600], save: .45, chal: .25 },
@@ -587,7 +587,7 @@ function aiTick() {
   if (mode !== 'cpu' || !g || animating || aiBusy || !PLAYING.includes(g.phase)) return;
   if (!$('revealModal').classList.contains('hidden')) return;
   const L = LV[level];
-  // 잡았다! / 스스로 GGOBI!
+  // 잡았다! / 스스로 GGAEBI!
   const ck = g.exposed >= 0 ? `${g.gid}-${g.round}-${g.exposed}-${g.pile.length}` : '';
   if (ck !== catchKey) {
     catchKey = ck; catchTimers.forEach(clearTimeout); catchTimers = [];
@@ -679,11 +679,11 @@ function showResult() {
   const first = !shownResult.startsWith(`${g.gid}-${g.round}-`);
   shownResult = key;
   const P = g.players, me = meIdx(), w = g.res ? g.res.w : g.winner, end = g.phase === 'gameEnd';
-  let title, text = '', img = 'ggobi-win';
+  let title, text = '', img = 'ggaebi-win';
   if (!g.res) { title = `${P[w] ? P[w].name : ''} 우승!`; text = '다른 친구들이 모두 나갔어요.'; }
   else if (mode === 'local' || me < 0) { title = `${P[w].name} ${end ? '우승' : '승리'}!`; text = `${P[w].name}님이 카드를 다 내서 ${g.res.pts}점을 얻었어요.`; }
-  else if (w === me) { title = end ? (mode === 'cpu' ? '꼬비들을 이겼어요!' : '우승이에요!') : '이번 판 승리!'; text = `카드를 다 내서 ${g.res.pts}점을 얻었어요.`; }
-  else { title = end ? '아쉽게 졌어요' : `${P[w].name} 승리`; text = `${P[w].name}님이 카드를 먼저 다 냈어요. 다음엔 꼭 이겨요!`; img = 'ggobi-lose'; }
+  else if (w === me) { title = end ? (mode === 'cpu' ? '깨비샘 친구들을 이겼어요!' : '우승이에요!') : '이번 판 승리!'; text = `카드를 다 내서 ${g.res.pts}점을 얻었어요.`; }
+  else { title = end ? '아쉽게 졌어요' : `${P[w].name} 승리`; text = `${P[w].name}님이 카드를 먼저 다 냈어요. 다음엔 꼭 이겨요!`; img = 'ggaebi-lose'; }
   if (end && g.target) text += ` ${g.target}점에 먼저 도착했어요!`;
   if (!end) text += ` 아직 ${g.target}점에 아무도 못 갔어요. 다음 판을 해요.`;
   if (first) {
@@ -723,7 +723,7 @@ function showResult() {
 $('status').addEventListener('click', () => { if (g && (g.phase === 'roundEnd' || g.phase === 'gameEnd')) { shownResult = ''; showResult(); } });
 
 // ============================================================
-//  꼬비와 하기 / 한 화면에서 여럿이
+//  깨비샘과 하기 / 한 화면에서 여럿이
 // ============================================================
 let soloPlayers = null;
 function startSolo(players) {
@@ -1048,7 +1048,7 @@ const HELP = [
   ['rD', '<b>+2</b> · 다음 사람이 2장을 가져가고 차례를 쉬어요.'],
   ['W', '<b>색 바꾸기</b> · 언제든 낼 수 있어요. 다음 색을 내가 정해요.'],
   ['F', '<b>색 바꾸기 +4</b> · 지금 색과 같은 색 카드가 없을 때만 낼 수 있어요. 다음 사람은 4장을 가져가고 쉬어요. 의심되면 <b>도전!</b> 맞으면 낸 사람이 4장, 틀리면 도전한 사람이 6장을 가져가요.'],
-  ['back', '카드가 2장일 때 한 장을 내면서 <b>GGOBI!</b> 버튼을 눌러요. 깜빡했는데 다음 사람이 움직이기 전에 누가 <b>잡았다!</b>를 누르면 2장을 가져가요. (컴퓨터에서는 G 키도 돼요)'],
+  ['back', '카드가 2장일 때 한 장을 내면서 <b>GGAEBI!</b> 버튼을 눌러요. 깜빡했는데 다음 사람이 움직이기 전에 누가 <b>잡았다!</b>를 누르면 2장을 가져가요. (컴퓨터에서는 G 키도 돼요)'],
   ['y9', '먼저 카드를 다 낸 사람이 이겨요. 다른 사람 손에 남은 카드가 내 점수가 돼요. 숫자는 그 숫자만큼, 건너뛰기·방향 바꾸기·+2는 20점, 색 바꾸기는 50점이에요.']
 ];
 $('helpList').innerHTML = HELP.map(([c, t]) => `<div>${cardHTML(c)}<span>${t}</span></div>`).join('');
