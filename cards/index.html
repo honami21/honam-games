@@ -76,6 +76,15 @@
   .btn-secondary { background:#fff; color:var(--ink); }
   .btn-sky { background:var(--sky); color:var(--ink); }
   .btn-mint { background:var(--mint); color:var(--ink); }
+  .seg.ext { margin-top:8px; }
+  .tg-list { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:12px 0; }
+  .tg-list button { display:flex; align-items:center; gap:8px; padding:8px 10px; border:3px solid var(--ink); border-radius:16px; background:#fff; font:inherit; font-size:17px; color:var(--ink); cursor:pointer; text-align:left; }
+  .tg-list button .av { width:34px; height:34px; flex:none; border-radius:50%; border:3px solid var(--ink); background:#fff; display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:17px; color:#fff; }
+  .tg-list .av img { width:100%; height:100%; object-fit:cover; } .tg-list .av.ai { border:none; background:none; }
+  .tg-list button small { color:var(--ink2); font-size:14px; margin-left:auto; white-space:nowrap; }
+  .tg-list button.on { background:var(--sun); }
+  .tg-list button:disabled { opacity:.4; cursor:default; }
+  .spchip { background:var(--coral); color:#fff; border:3px solid var(--ink); border-radius:999px; padding:2px 10px; font-size:15px; white-space:nowrap; }
   .mode-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
   .mode-row .game-btn { min-width:0; padding:10px 6px; font-size:clamp(15px,2.4vw,18px); white-space:normal; line-height:1.2; word-break:keep-all; }
   @media (max-width:560px){ .mode-row{ grid-template-columns:1fr; } }
@@ -120,6 +129,15 @@
   .cd .pin.small { position:absolute; width:calc(var(--w) * .42); height:calc(var(--w) * .42); top:calc(var(--w) * .2); }
   .cd.c-w .in::before { background:rgba(255,255,255,.08); }
   .cd .plus4 { position:absolute; z-index:2; bottom:calc(var(--w) * .2); font-size:calc(var(--w) * .42); color:#fff; -webkit-text-stroke:calc(var(--w) * .045) var(--ink); paint-order:stroke fill; }
+  .cd .k { display:flex; align-items:center; gap:1px; line-height:1; }
+  .cd .k svg + svg { margin-left:-2px; }
+  .cd .duo { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:calc(var(--w) * .02); }
+  .cd .duo .i { width:calc(var(--w) * .42); height:calc(var(--w) * .42); display:block; filter:drop-shadow(0 calc(var(--w) * .025) 0 var(--ink)); }
+  .cd .duo.two .i { width:calc(var(--w) * .38); height:calc(var(--w) * .38); }
+  .cd .duo b { font-weight:normal; font-size:calc(var(--w) * .34); line-height:1; color:#fff; -webkit-text-stroke:calc(var(--w) * .04) var(--ink); paint-order:stroke fill; }
+  .cd .spb { position:absolute; z-index:2; left:50%; top:calc(var(--w) * .08); width:calc(var(--w) * .3); height:calc(var(--w) * .3); transform:translateX(-50%); }
+  .cd .wico { position:absolute; z-index:2; bottom:calc(var(--w) * .2); width:calc(var(--w) * .46); height:calc(var(--w) * .46); }
+  .cd .plus4.sm { font-size:calc(var(--w) * .3); }
   .cd.back .in { background:radial-gradient(circle at 50% 42%, #6a55c8, #2c2950 72%); }
   .cd.back .in::before { background:none; border:calc(var(--w) * .035) dashed rgba(255,210,94,.55); width:calc(var(--w) * .82); height:calc(var(--w) * 1.12); border-radius:calc(var(--w) * .1); box-shadow:none; }
   .cd.back .bt { position:relative; z-index:1; transform:rotate(-62deg); font-size:calc(var(--w) * .3); letter-spacing:calc(var(--w) * .01); color:var(--sun); -webkit-text-stroke:calc(var(--w) * .04) var(--ink); paint-order:stroke fill; }
@@ -256,6 +274,7 @@
   .help div { display:flex; gap:10px; align-items:center; padding:6px 2px; border-bottom:2px dashed var(--cream2); font-size:16px; line-height:1.4; word-break:keep-all; }
   .help div:last-child { border-bottom:none; }
   .help .cd { --w:40px; }
+  .help .help-h { margin:14px 0 4px; color:var(--coral-d); font-size:18px; font-weight:normal; text-align:center; }
   .help b { color:var(--coral-d); font-weight:normal; }
 
   /* 한 화면 모드: 차례 넘기기 */
@@ -335,6 +354,7 @@
     <div id="pileWrap"></div>
     <div id="info">
       <div class="colchip"><i></i><span id="colName">-</span></div>
+      <div class="spchip hidden" id="spChip"></div>
       <svg id="dirIco" viewBox="0 0 64 64" aria-label="진행 방향"><g class="spin"><path d="M32 8a24 24 0 0 1 22 15" fill="none" stroke="#fff6ec" stroke-width="7" stroke-linecap="round"/><path d="M56 32a24 24 0 0 1-15 22" fill="none" stroke="#fff6ec" stroke-width="7" stroke-linecap="round"/><path d="M32 56a24 24 0 0 1-22-15" fill="none" stroke="#fff6ec" stroke-width="7" stroke-linecap="round"/><path d="M8 32a24 24 0 0 1 15-22" fill="none" stroke="#fff6ec" stroke-width="7" stroke-linecap="round"/><path d="M49 13l7 10-12 1z M51 49l-10 7-1-12z M15 51l-7-10 12-1z M13 15l10-7 1 12z" fill="#fff6ec"/></g></svg>
       <div id="roundTag"></div>
     </div>
@@ -359,6 +379,7 @@
         <div class="box">
           <div class="box-title">규칙 고르기</div>
           <div class="seg" id="tgSeg"><button data-v="0">한 판만</button><button data-v="200">200점 먼저</button><button data-v="500">500점 먼저</button></div>
+          <div class="seg ext" id="extSeg"><button data-v="rev">리버스 확장</button><button data-v="swp">스왑 확장</button><button data-v="spd">스피드 확장</button><button data-v="stk">스택 확장</button></div>
         </div>
         <div class="box">
           <div class="box-title">방 코드로 들어가기</div>
@@ -455,6 +476,16 @@
   </div>
 </div>
 
+<!-- 누구와 바꿀까요 -->
+<div id="targetModal" class="modal hidden">
+  <div class="card">
+    <h2 style="margin-top:0" id="tgTitle">누구와 바꿀까요?</h2>
+    <p id="tgText"></p>
+    <div class="tg-list" id="tgList"></div>
+    <div class="btn-row" id="tgRow"></div>
+  </div>
+</div>
+
 <!-- +4 도전 -->
 <div id="chalModal" class="modal hidden">
   <div class="card">
@@ -464,6 +495,7 @@
     <div class="btn-row" style="flex-direction:column;align-items:center">
       <button class="game-btn btn-primary" id="chalYes" style="min-width:240px">도전! (카드 확인)</button>
       <button class="game-btn btn-secondary" id="chalNo" style="min-width:240px">그냥 4장 받기</button>
+      <button class="game-btn btn-mint hidden" id="chalPass" style="min-width:240px">카드로 넘기기</button>
     </div>
     <p class="note">낸 사람에게 같은 색 카드가 있었으면 그 사람이 4장,<br>없었으면 내가 6장을 가져가요.</p>
   </div>
