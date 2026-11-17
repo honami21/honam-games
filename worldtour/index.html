@@ -66,7 +66,7 @@
   .hint { font-size:14px; color:var(--ink2); text-align:center; margin-top:8px; word-break:keep-all; line-height:1.4; }
   .msg { min-height:20px; font-size:15px; color:var(--coral-d); margin-top:8px; text-align:center; word-break:keep-all; }
 
-  .game-btn { padding:11px 24px; font-size:clamp(17px,2.8vw,20px); border-radius:40px; border:3px solid var(--ink); color:#fff;
+  .game-btn { padding:11px 24px; font-size:clamp(17px,2.8vw,20px); border-radius:40px; border:3px solid var(--ink); color:var(--ink);
     cursor:pointer; min-width:120px; box-shadow:none; transition:transform .08s; white-space:nowrap; }
   .game-btn:active { transform:translateY(2px) scale(.97); }
   .game-btn:disabled { opacity:.45; cursor:not-allowed; }
@@ -359,7 +359,7 @@
     <img class="tl-balloon b2" src="img/corner-balloon.png" alt="" onerror="this.remove()">
     <img id="tlLogo" src="img/logo.png?v=5" alt="깨비샘의 세계 여행" onerror="this.outerHTML='<div class=&quot;tl-logo-txt&quot;><small>깨비샘의</small>세계 여행</div>'">
     <div class="tl-cast"><img class="gg" src="img/ggobi-travel.png" alt="" onerror="this.src='../img/ggobi-wave.png'"><img class="pc" src="img/piece-red.png" alt="" onerror="this.remove()"><img class="pc" src="img/piece-blue.png" alt="" onerror="this.remove()"><img class="pc" src="img/piece-green.png" alt="" onerror="this.remove()"><img class="pc" src="img/piece-yellow.png" alt="" onerror="this.remove()"></div>
-    <button class="game-btn btn-primary" id="tlGo" type="button">▶ 여행 떠나기</button>
+    <button class="game-btn btn-primary" id="tlGo" type="button">여행 떠나기</button>
   </div>
   <div class="tl-row r2"><div class="tl-track" id="tlRow2"></div></div>
 </div>
