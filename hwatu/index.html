@@ -101,6 +101,28 @@
   .ht.back { background-image:url(img/card-back.webp); }
   .ht.new { animation:pop .35s ease-out; }
   @keyframes pop { 0%{ transform:scale(.4); opacity:0 } 70%{ transform:scale(1.08); opacity:1 } 100%{ transform:scale(1) } }
+  .ht.ghost { visibility:hidden; animation:none !important; }
+  .ht.flyc { position:fixed; z-index:70; pointer-events:none; will-change:transform; filter:drop-shadow(0 8px 10px rgba(0,0,0,.45)); }
+  .fx-ring { position:fixed; z-index:69; pointer-events:none; border-radius:50%; border:4px solid rgba(255,240,190,.95); box-shadow:0 0 18px rgba(255,210,94,.9), inset 0 0 12px rgba(255,255,255,.7);
+    animation:ring .45s ease-out forwards; }
+  .fx-ring.art { border:none; box-shadow:none; border-radius:0; background:url(img/fx-slam.png) center / contain no-repeat; }
+  @keyframes ring { 0%{ transform:scale(.35); opacity:1 } 100%{ transform:scale(1.15); opacity:0 } }
+  .fx-spk { position:fixed; z-index:69; pointer-events:none; background:url(img/fx-sparkle.png) center / contain no-repeat; animation:spkimg .6s ease-out forwards; }
+  @keyframes spkimg { 0%{ transform:scale(.4) rotate(-20deg); opacity:0 } 30%{ opacity:1 } 100%{ transform:scale(1.2) rotate(15deg); opacity:0 } }
+  .spk { position:fixed; z-index:69; pointer-events:none; width:10px; height:10px; margin:-5px 0 0 -5px; background:var(--sun);
+    clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%); animation:spk .6s ease-out forwards; }
+  @keyframes spk { 0%{ transform:translate(0,0) scale(.4); opacity:1 } 100%{ transform:translate(var(--dx),var(--dy)) scale(1.4) rotate(90deg); opacity:0 } }
+  #mid.shake { animation:shk .28s ease-out; } #mid.shake2 { animation:shk2 .5s ease-out; }
+  @keyframes shk { 20%{ transform:translate(2px,3px) } 45%{ transform:translate(-2px,-1px) } 70%{ transform:translate(1px,1px) } }
+  @keyframes shk2 { 10%{ transform:translate(-7px,5px) } 25%{ transform:translate(6px,-6px) } 40%{ transform:translate(-5px,3px) } 60%{ transform:translate(4px,-2px) } 80%{ transform:translate(-2px,1px) } }
+  #flash { position:fixed; inset:0; z-index:58; pointer-events:none; opacity:0; }
+  #flash.on { animation:fl .5s ease-out; }
+  #flash.gold { background:radial-gradient(circle at 50% 45%, rgba(255,226,130,.55), transparent 65%); }
+  #flash.red { background:radial-gradient(circle at 50% 45%, rgba(255,110,110,.5), transparent 65%); }
+  #flash.mint { background:radial-gradient(circle at 50% 45%, rgba(150,240,170,.5), transparent 65%); }
+  @keyframes fl { 0%{ opacity:0 } 20%{ opacity:1 } 100%{ opacity:0 } }
+  .grp .ht.got { animation:gotp .4s ease-out; }
+  @keyframes gotp { 0%{ transform:translateY(-6px) scale(1.25) } 100%{ transform:none } }
   .ht.glow { filter:drop-shadow(0 0 0 #fff) drop-shadow(0 0 6px var(--sun)) drop-shadow(0 0 3px var(--sun)); }
   .ht.pickable { cursor:pointer; animation:bob 1s ease-in-out infinite; filter:drop-shadow(0 0 6px #fff) drop-shadow(0 0 4px var(--sun)); }
   @keyframes bob { 50%{ transform:translateY(-6px) } }
@@ -354,6 +376,7 @@
   </div>
 </div>
 
+<div id="flash"></div>
 <div id="toast"></div>
 <div id="big"></div>
 

@@ -19,6 +19,9 @@ const ART = {};
 function probe(name, src, fn) { const im = new Image(); im.onload = () => { ART[name] = true; fn && fn(); }; im.src = src; }
 probe('logo', 'img/logo.png', () => { $('logoBox').innerHTML = '<img class="logo" src="img/logo.png" alt="깨비샘의 화투">'; });
 probe('bg', 'img/bg.jpg', () => document.body.classList.add('art'));
+const TXT = ['jjok', 'ppuk', 'ttadak', 'sweep', 'go', 'stop', 'shake', 'bomb', 'chongtong', 'nagari', 'pibak'];
+TXT.forEach(n => probe('text-' + n, `img/text-${n}.png`));
+['fx-slam', 'fx-sparkle', 'fx-wisp'].forEach(n => probe(n, `img/${n}.png`));
 
 // ---------- 고르기 ----------
 let level = +(store('hwatu-lv') || 2); if (![1, 2, 3].includes(level)) level = 2;
@@ -53,13 +56,22 @@ function beep(k) {
       gn.gain.setValueAtTime(v, t + s); gn.gain.exponentialRampToValueAtTime(.001, t + s + d);
       src.connect(f); f.connect(gn); gn.connect(actx.destination); src.start(t + s); src.stop(t + s + d + .02);
     };
-    if (k === 'tak') { noise(0, .07, .7, 1400); tone(140, 0, .07, 'sine', .35); }       // 착!
-    else if (k === 'flip') { noise(0, .1, .3, 3200); }
-    else if (k === 'take') { noise(0, .05, .3, 2400); noise(.07, .05, .25, 2600); }
+    if (k === 'tak') { noise(0, .045, .9, 1100); noise(0, .02, .5, 4200); tone(95, 0, .12, 'sine', .55, 55); }      // 탁! 내려치기
+    else if (k === 'match') { noise(0, .04, .9, 1300); tone(110, 0, .1, 'sine', .5, 60); noise(.075, .04, .8, 1700); tone(1568, .075, .12, 'triangle', .12); }  // 짝!
+    else if (k === 'swoosh') { noise(0, .16, .18, 900); noise(.03, .12, .12, 2600); }
+    else if (k === 'flip') { noise(0, .06, .35, 3600); tone(520, 0, .05, 'triangle', .08, 760); }
+    else if (k === 'take') { [0, .05, .1].forEach((d, i) => noise(d, .035, .35, 2200 + i * 500)); tone(1047, .12, .14, 'triangle', .1); }
     else if (k === 'big') { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * .07, .22, 'triangle', .22)); }
-    else if (k === 'ppuk') { tone(300, 0, .3, 'square', .1, 120); }
+    else if (k === 'jjok') { tone(500, 0, .12, 'sine', .3, 1400); noise(0, .03, .4, 3000); [1047, 1319].forEach((f, i) => tone(f, .12 + i * .08, .18, 'triangle', .18)); }
+    else if (k === 'ttadak') { noise(0, .03, 1, 1500); tone(100, 0, .1, 'sine', .5, 55); noise(.09, .03, 1, 1900); tone(120, .09, .1, 'sine', .5, 60); [784, 988, 1175].forEach((f, i) => tone(f, .2 + i * .06, .18, 'triangle', .18)); }
+    else if (k === 'sweep') { noise(0, .35, .35, 700); noise(.1, .3, .25, 2400); [659, 784, 988, 1319].forEach((f, i) => tone(f, .25 + i * .07, .22, 'triangle', .18)); }
+    else if (k === 'bomb') { tone(80, 0, .5, 'sine', .7, 30); noise(0, .4, .9, 300); noise(0, .15, .5, 1200); }
+    else if (k === 'shake') { [0, .08, .16, .24].forEach(d => noise(d, .05, .3, 2800)); tone(660, .3, .2, 'triangle', .15, 880); }
+    else if (k === 'stop') { tone(90, 0, .25, 'sine', .7, 50); noise(0, .06, .8, 900); [1047, 1319, 1568].forEach((f, i) => tone(f, .12 + i * .05, .3, 'triangle', .14)); }
+    else if (k === 'steal') { tone(880, 0, .08, 'square', .08, 1320); tone(1320, .08, .1, 'square', .06, 660); }
+    else if (k === 'ppuk') { tone(330, 0, .16, 'square', .12, 160); tone(160, .14, .3, 'sawtooth', .08, 70); noise(.1, .2, .25, 500); }
     else if (k === 'turn') { tone(880, 0, .12, 'triangle', .18); tone(1320, .1, .18, 'triangle', .15); }
-    else if (k === 'go') { tone(660, 0, .12, 'square', .12); tone(990, .1, .2, 'square', .12); }
+    else if (k === 'go') { noise(0, .05, .8, 1100); tone(392, 0, .14, 'sawtooth', .12); tone(523, .1, .14, 'sawtooth', .12); tone(784, .2, .3, 'sawtooth', .14); tone(784, .2, .3, 'triangle', .2); }
     else if (k === 'win') { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, i * .11, .32, 'triangle', .22)); }
     else if (k === 'lose') { [392, 330, 262].forEach((f, i) => tone(f, i * .16, .35, 'sine', .2)); }
     else if (k === 'join') { tone(660, 0, .1, 'triangle', .2); tone(880, .1, .14, 'triangle', .2); }
@@ -73,7 +85,7 @@ KBGM.button({ after: $('sndToggle'), icon: SVG_MUSIC });
 let mode = null;              // 'cpu' | 'online'
 let g = null, pendingG = null, animating = false;
 let room = null, code = '', ref = null, role = '', unsub = null, FB = null, busy = false;
-let sel = -1, aiT = 0, shownRes = '', shownGs = '';
+let sel = -1, aiT = 0, shownRes = '', shownGs = '', ghostSet = new Set();
 const AI = [{ name: '깨비샘', av: 'avatar-ggaebisaem' }, { name: '깨순이', av: 'avatar-ggaesun' }];
 const PAL = ['#ee5a6f', '#3a83e8', '#38b468'];
 const latest = () => pendingG || g;
@@ -92,9 +104,10 @@ function avatarHTML(i, st) {
 
 let toastT = 0;
 function toast(t, ms = 1800) { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), ms); }
-function bigPop(text, cls = '', sub = '') {
+function bigPop(text, cls = '', sub = '', img = '') {
   const el = $('big');
-  el.innerHTML = `<div class="tx ${cls}">${esc(text)}</div>` + (sub ? `<div class="sub">${esc(sub)}</div>` : '');
+  const main = img && ART['text-' + img] ? `<img src="img/text-${img}.png" alt="${esc(text)}">` : `<div class="tx ${cls}">${esc(text)}</div>`;
+  el.innerHTML = main + (sub ? `<div class="sub">${esc(sub)}</div>` : '');
   el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
 }
 function show(id) {
@@ -140,7 +153,7 @@ function capsHTML(caps, got) {
   return ['g', 'a', 'r', 'p'].map(k => {
     if (!gr[k].length) return '';
     const ids = gr[k].slice().sort((x, y) => x - y);
-    return `<span class="grp ${k}">${ids.map(id => cardH(id, got && got.has(id) ? 'got' : '')).join('')}<b>${lab[k]}</b></span>`;
+    return `<span class="grp ${k}">${ids.map(id => cardH(id, ghostSet.has(id) ? 'ghost' : got && got.has(id) ? 'got' : '')).join('')}<b>${lab[k]}</b></span>`;
   }).join('');
 }
 function goTag(p) { return p.go ? `<span class="gochip">${p.go}고</span>` : ''; }
@@ -153,6 +166,7 @@ function render(view) {
   const me = meIdx(st), watch = me < 0;
   const pd = st.pend;
   const v = view || {};
+  ghostSet = new Set(v.ghost || []);
   // 상대 자리
   const order = []; for (let k = 1; k <= st.n; k++) { const i = (Math.max(me, 0) + k) % st.n; if (i !== me) order.push(i); }
   if (watch) { order.length = 0; for (let i = 0; i < st.n; i++) order.push(i); }
@@ -173,7 +187,7 @@ function render(view) {
   const pickSet = new Set(st.phase === 'pick' && pd && st.turn === me ? (pd.need === 'h' ? pd.hm : pd.fm) : []);
   const hlM = sel >= 0 ? MON(sel) : -1;
   $('floor').innerHTML = Object.keys(groups).sort((a, b) => a - b).map(m =>
-    `<span class="fg ${+m === hlM ? 'hl' : ''}" data-m="${m}">${groups[m].map(id => cardH(id, (fresh.has(id) ? 'new ' : '') + (pickSet.has(id) ? 'pickable' : ''))).join('')}</span>`).join('');
+    `<span class="fg ${+m === hlM ? 'hl' : ''}" data-m="${m}">${groups[m].map(id => cardH(id, (ghostSet.has(id) ? 'ghost ' : fresh.has(id) ? 'new ' : '') + (pickSet.has(id) ? 'pickable' : ''))).join('')}</span>`).join('');
   const dn = v.deckN != null ? v.deckN : st.deck.length;
   $('deckStack').innerHTML = dn ? backH() + (dn > 1 ? backH() : '') + (dn > 2 ? backH() : '') : '';
   $('deckN').textContent = dn ? `${dn}장` : '';
@@ -250,60 +264,148 @@ async function runPending() {
   after();
 }
 const evKey = e => e ? JSON.stringify([e.who, e.hc, e.f, e.caps, e.tags, e.bomb]) : '';
+// ---------- 날아가는 카드 ----------
+const rectOf = el => { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width }; };
+const qCard = (root, id) => root.querySelector(`.ht[data-id="${id}"]`);
+function srcRect(who, id) {
+  if (who === meIdx()) { const c = qCard($('hand'), id); if (c) return rectOf(c); }
+  const s = document.querySelector(`.seat[data-i="${who}"] .hn`);
+  return s ? rectOf(s) : { x: innerWidth / 2, y: 60, w: 20 };
+}
+function fly(id, from, to, opt = {}) {
+  return new Promise(res => {
+    const el = document.createElement('i');
+    el.className = 'ht flyc' + (opt.back ? ' back' : '');
+    if (!opt.back) el.style.backgroundImage = `url(${IMG(id)})`;
+    const w = to.w, h = w * 1.3333;
+    el.style.cssText += `;--w:${w}px;left:0;top:0;`;
+    document.body.appendChild(el);
+    const sx = from.w / w || .3;
+    const dur = opt.dur || 340;
+    const lift = opt.arc != null ? opt.arc : -Math.min(60, Math.abs(to.y - from.y) * .25 + 20);
+    const mx = (from.x + to.x) / 2, my = (from.y + to.y) / 2 + lift;
+    const rot = opt.rot != null ? opt.rot : (Math.random() * 16 - 8);
+    const k = [
+      { transform: `translate(${from.x - w / 2}px,${from.y - h / 2}px) scale(${sx}) rotate(0deg)`, opacity: opt.fade ? 0 : 1 },
+      { transform: `translate(${mx - w / 2}px,${my - h / 2}px) scale(${(sx + 1) / 2 * (opt.big ? 1.25 : 1.1)}) rotate(${rot}deg)`, opacity: 1, offset: .55 },
+      { transform: `translate(${to.x - w / 2}px,${to.y - h / 2}px) scale(1) rotate(0deg)`, opacity: 1 }
+    ];
+    if (opt.flipAt) {   // 더미에서 뒤집으며 날아와요
+      setTimeout(() => { el.classList.remove('back'); el.style.backgroundImage = `url(${IMG(id)})`; }, dur * opt.flipAt);
+      k[1].transform += ' scaleX(.05)';
+    }
+    const an = el.animate(k, { duration: dur, easing: 'cubic-bezier(.3,.7,.4,1)', fill: 'forwards' });
+    an.onfinish = () => { res(el); if (!opt.keep) el.remove(); };
+  });
+}
+function slam(at, power = 1) {
+  // 탁! 내려치는 순간: 충격 고리, 화면 울림
+  const fx = document.createElement('div');
+  fx.className = 'fx-ring' + (ART['fx-slam'] ? ' art' : '');
+  const sz = at.w * (1.9 + power * .5);
+  fx.style.cssText = `left:${at.x - sz / 2}px;top:${at.y - sz / 2}px;width:${sz}px;height:${sz}px`;
+  document.body.appendChild(fx); setTimeout(() => fx.remove(), 500);
+  const m = $('mid'); m.classList.remove('shake', 'shake2'); void m.offsetWidth; m.classList.add(power > 1.5 ? 'shake2' : 'shake');
+}
+function sparkle(at, n = 8) {
+  if (ART['fx-sparkle']) { const fx = document.createElement('div'); fx.className = 'fx-spk'; const sz = at.w * 2.4; fx.style.cssText = `left:${at.x - sz / 2}px;top:${at.y - sz / 2}px;width:${sz}px;height:${sz}px`; document.body.appendChild(fx); setTimeout(() => fx.remove(), 650); return; }
+  for (let i = 0; i < n; i++) {
+    const d = document.createElement('i'); d.className = 'spk';
+    const ang = (i / n) * Math.PI * 2 + Math.random() * .5, dist = at.w * (.6 + Math.random() * .5);
+    d.style.cssText = `left:${at.x}px;top:${at.y}px;--dx:${Math.cos(ang) * dist}px;--dy:${Math.sin(ang) * dist}px`;
+    document.body.appendChild(d); setTimeout(() => d.remove(), 650);
+  }
+}
+function flash(cls) { const f = $('flash'); f.className = ''; void f.offsetWidth; f.className = 'on ' + (cls || ''); }
+const isMatch = (floorIds, id) => floorIds.some(x => x !== id && MON(x) === MON(id));
+
 async function animate(old, ng) {
   const ev = ng.last;
   const newEv = ev && evKey(ev) !== evKey(old.last);
   const toPick = ng.phase === 'pick' && old.phase !== 'pick';
   if (toPick) {
-    // 카드를 냈는데 고를 게 생겼어요 → 낸 카드(와 뒤집은 카드)를 바닥에 보여 줘요
+    // 카드를 냈는데 고를 게 생겼어요 → 낸 카드(와 뒤집은 카드)를 바닥으로 날려 보여 줘요
+    const pd = ng.pend, who = ng.turn;
+    const from = pd.hc != null ? srcRect(who, pd.hc) : null;
     g = ng; sel = -1;
-    const pd = ng.pend;
-    if (pd.hc != null && old.phase !== 'pick') beep('tak');
-    if (pd.f != null) beep('flip');
-    render({ fresh: [pd.hc, pd.f].filter(x => x != null && !(old.pend && (old.pend.hc === x || old.pend.f === x))) });
+    const ids = [pd.hc, pd.f].filter(x => x != null);
+    render({ ghost: ids });
+    if (pd.hc != null) {
+      const tgt = qCard($('floor'), pd.hc);
+      if (tgt && from) { beep('swoosh'); await fly(pd.hc, from, rectOf(tgt)); tgt.classList.remove('ghost'); beep('match'); slam(rectOf(tgt)); }
+    }
+    if (pd.f != null) {
+      await sleep(200);
+      const tgt = qCard($('floor'), pd.f);
+      if (tgt) { beep('flip'); await fly(pd.f, rectOf($('deckWrap')), rectOf(tgt), { back: true, flipAt: .5, dur: 420 }); tgt.classList.remove('ghost'); beep('match'); slam(rectOf(tgt)); }
+    }
+    render();
     return;
   }
   if (!newEv) { g = ng; render(); return; }
   const who = ev.who;
-  // 흔들기 / 폭탄 알림
-  if (ev.shake) { bigPop('흔들기!', 'sky', `${nmS(who, ng)} 흔들었어요`); beep('big'); await sleep(900); }
-  // 1) 손에서 낸 카드
-  const keepG = g;
+  // 흔들기 알림
+  if (ev.shake) { bigPop('흔들기!', 'sky', `${nmS(who, ng)} 흔들었어요`, 'shake'); beep('shake'); bubble(who, '흔들기!'); await sleep(950); }
   let floor = old.floor.slice();
   if (old.pend) { if (old.pend.hc != null) floor.push(old.pend.hc); if (old.pend.f != null) floor.push(old.pend.f); }
-  let deckN = old.deck.length - (old.pend && old.pend.f != null ? 0 : 0);
+  let deckN = old.deck.length;
   const played = ev.bomb ? ev.bombIds : (ev.hc != null && !(old.pend && old.pend.hc === ev.hc) ? [ev.hc] : []);
   const hide = ev.bomb ? ev.bombIds : (ev.hc != null ? [ev.hc] : []);
   g = old;
+  // 1) 손에서 낸 카드가 바닥으로 날아가 탁!
   if (played.length) {
+    const froms = played.map(id => srcRect(who, id));
+    const matched = isMatch(floor, played[0]);
     floor = floor.concat(played);
-    render({ floor, fresh: played, hide, deckN });
-    beep('tak');
-    if (ev.bomb) { bigPop('폭탄!', 'red'); beep('big'); }
-    await sleep(ev.bomb ? 800 : 480);
+    render({ floor, ghost: played, hide, deckN });
+    beep('swoosh');
+    await Promise.all(played.map((id, k) => sleep(k * 70).then(() => { const t = qCard($('floor'), id); return t ? fly(id, froms[k], rectOf(t), { big: true }).then(() => t.classList.remove('ghost')) : null; })));
+    const at = qCard($('floor'), played[played.length - 1]);
+    if (ev.bomb) { beep('bomb'); flash('red'); if (at) slam(rectOf(at), 2.2); bigPop('폭탄!', 'red', '', 'bomb'); await sleep(850); }
+    else { beep(matched ? 'match' : 'tak'); if (at) { slam(rectOf(at), matched ? 1.2 : 1); if (matched) sparkle(rectOf(at), 6); } await sleep(260); }
   }
-  // 2) 뒤집은 카드
+  // 2) 더미에서 뒤집은 카드
   if (ev.f != null && !(old.pend && old.pend.f === ev.f)) {
+    const matched = isMatch(floor, ev.f);
     floor = floor.concat([ev.f]); deckN = Math.max(0, deckN - 1);
-    render({ floor, fresh: [ev.f], hide, deckN });
+    const from = rectOf($('deckWrap'));
+    render({ floor, ghost: [ev.f], hide, deckN });
     beep('flip');
-    await sleep(560);
+    const t = qCard($('floor'), ev.f);
+    if (t) { await fly(ev.f, from, rectOf(t), { back: true, flipAt: .45, dur: 430, rot: 0, arc: -30 }); t.classList.remove('ghost'); }
+    beep(matched ? 'match' : 'tak'); if (t) { slam(rectOf(t), matched ? 1.2 : .8); if (matched) sparkle(rectOf(t), 6); }
+    await sleep(330);
   }
-  g = ng; void keepG;
-  // 3) 먹기
-  const got = new Set(ev.caps.concat(ev.stole.map(s => s.id)));
-  render({ got, who });
-  if (ev.caps.length) beep('take');
-  const TAG = { jjok: ['쪽!', ''], ppuk: ['뻑!', 'red'], ttadak: ['따닥!', ''], sweep: ['싹쓸이!', 'mint'], ppukeat: ['뻑 먹기!', 'mint'] };
+  // 3) 큰 글자 (먹기 전에)
+  const TAG = { jjok: ['쪽!', '', 'jjok'], ppuk: ['뻑!', 'red', 'ppuk'], ttadak: ['따닥!', '', 'ttadak'], sweep: ['싹쓸이!', 'mint', 'sweep'], ppukeat: ['뻑 먹기!', 'mint', ''] };
   const tags = ev.tags.filter(t => TAG[t]);
   for (const t of tags) {
-    const sub = t === 'ppuk' ? '' : (ev.stole.length ? '피를 한 장씩 가져와요' : '');
-    bigPop(TAG[t][0], TAG[t][1], sub); beep(t === 'ppuk' ? 'ppuk' : 'big');
-    await sleep(1000);
+    bigPop(TAG[t][0], TAG[t][1], t === 'ppuk' ? '' : (ev.stole.length ? '피를 한 장씩 가져와요' : ''), TAG[t][2]);
+    beep(t === 'ppuk' ? 'ppuk' : t === 'jjok' ? 'jjok' : t === 'ttadak' ? 'ttadak' : t === 'sweep' ? 'sweep' : 'big');
+    if (t !== 'ppuk') flash(t === 'sweep' ? 'mint' : 'gold'); else { const m = $('mid'); m.classList.remove('shake'); void m.offsetWidth; m.classList.add('shake'); }
+    await sleep(900);
   }
-  if (!tags.length && ev.stole.length && !ev.bomb) { toast('피를 한 장씩 가져와요', 1200); }
-  if (ng.log.length && ng.log[ng.log.length - 1].t === 'go') { /* 고 알림은 after()에서 */ }
-  await sleep(tags.length ? 150 : 350);
+  // 4) 먹은 카드가 내 앞(먹은 카드 칸)으로 모여요
+  const fromR = {};
+  ev.caps.forEach(id => { const c = qCard($('floor'), id); if (c) fromR[id] = rectOf(c); });
+  ev.stole.forEach(s0 => { const sc = document.querySelector(`.seat[data-i="${s0.from}"] .ht[data-id="${s0.id}"]`) || (s0.from === meIdx() ? qCard($('meCaps'), s0.id) : null); if (sc) fromR[s0.id] = rectOf(sc); });
+  g = ng;
+  const moving = ev.caps.concat(ev.stole.map(x => x.id)).filter(id => fromR[id]);
+  render({ ghost: moving, who });
+  if (moving.length) {
+    beep('take');
+    const capRoot = who === meIdx() ? $('meCaps') : document.querySelector(`.seat[data-i="${who}"] .caps`);
+    await Promise.all(moving.map((id, k) => sleep(k * 55).then(() => {
+      const t = capRoot && qCard(capRoot, id);
+      if (!t) return null;
+      return fly(id, fromR[id], rectOf(t), { dur: 360, rot: 0 }).then(() => { t.classList.remove('ghost'); t.classList.add('got'); });
+    })));
+    if (ev.stole.length) { beep('steal'); if (!tags.length && !ev.bomb) toast('피를 한 장씩 가져와요', 1200); }
+    const last = capRoot && qCard(capRoot, moving[moving.length - 1]);
+    if (last && who === meIdx()) sparkle(rectOf(last), 8);
+  }
+  ghostSet = new Set();
+  await sleep(moving.length ? 220 : 300);
 }
 
 function after() {
@@ -313,7 +415,7 @@ function after() {
   const lg = st.log[st.log.length - 1];
   if (lg && lg.t === 'go') {
     const k = `${st.gid}-${st.seq}-go`;
-    if (shownGs !== k) { shownGs = k; bigPop(`${lg.n}고!`, 'red', `${nmS(lg.who, st)} 고를 외쳤어요`); beep('go'); bubble(lg.who, `${lg.n}고!`); }
+    if (shownGs !== k) { shownGs = k; bigPop(`${lg.n}고!`, 'red', `${nmS(lg.who, st)} ${lg.n}고를 외쳤어요`, lg.n === 1 ? 'go' : ''); beep('go'); flash('red'); bubble(lg.who, `${lg.n}고!`); }
   }
   if (st.phase === 'end') { showResult(); return; }
   if (st.phase === 'gostop' && st.turn === me) showGs(); else $('gsModal').classList.add('hidden');
@@ -483,7 +585,7 @@ function showResult() {
   const w = r.winner;
   let title, text = '', img = 'ggaebi-win';
   if (r.why === 'left') { title = '판이 멈췄어요'; text = `${esc(st.players[r.left] ? st.players[r.left].name : '친구')}님이 나갔어요.`; img = 'ggaebi-think'; }
-  else if (r.nagari) { title = '나가리!'; text = '아무도 나지 못했어요. 다음 판은 점수가 두 배예요.'; img = 'ggaebi-think'; }
+  else if (r.nagari) { bigPop('나가리', '', '', 'nagari'); beep('ppuk'); title = '나가리!'; text = '아무도 나지 못했어요. 다음 판은 점수가 두 배예요.'; img = 'ggaebi-think'; }
   else {
     title = w === me ? '내가 이겼어요!' : `${esc(st.players[w].name)} 승리!`;
     if (w !== me) img = me >= 0 ? 'ggaebi-win' : 'ggaebi-win';
@@ -492,7 +594,8 @@ function showResult() {
   }
   if (r.why !== 'left' && !r.nagari) {
     if (w === me) { beep('win'); KBGM.jingle(); } else if (me >= 0) { beep('lose'); img = 'ggaebi-win'; }
-    bigPop(r.why === 'chongtong' ? '총통!' : '스톱!', 'red');
+    bigPop(r.why === 'chongtong' ? '총통!' : '스톱!', 'red', '', r.why === 'chongtong' ? 'chongtong' : 'stop'); beep('stop'); flash('gold');
+    if (r.rows.some(x => x.bak.includes('피박'))) setTimeout(() => { bigPop('피박!', 'red', '', 'pibak'); beep('ppuk'); }, 1100);
   }
   $('resImg').src = `../cards/img/${w === me && mode === 'cpu' ? 'ggaebi-lose' : img}.png`;
   $('resTitle').textContent = title.replace(/&[^;]+;/g, '');
@@ -533,7 +636,7 @@ function showResult() {
   on('rQuit', () => { if (mode === 'online') leaveOnline(); else leaveLocal(); });
   on('rNext', () => { $('resultModal').classList.add('hidden'); if (mode === 'cpu') receive(HT.nextRound(g, Date.now())); else nextOnline(); });
   on('rLobby', backToLobby);
-  setTimeout(() => { if (g && g.phase === 'end' && `${g.gid}-res` === k) $('resultModal').classList.remove('hidden'); }, r.why === 'left' ? 0 : 900);
+  setTimeout(() => { if (g && g.phase === 'end' && `${g.gid}-res` === k) $('resultModal').classList.remove('hidden'); }, r.why === 'left' ? 0 : r.rows && r.rows.some(x => x.bak.includes('피박')) ? 2300 : 1300);
 }
 
 // ============================================================
