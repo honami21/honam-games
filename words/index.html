@@ -18,7 +18,7 @@
   }
   * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
   html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
-  html, body { width:100%; height:100%; overflow:hidden; background:#2a2860 url(img/bg.jpg) center / cover no-repeat, #2a2860 url(../img/bg.jpg) center / cover no-repeat;
+  html, body { width:100%; height:100%; overflow:hidden; background:url(img/bg.jpg) center / cover no-repeat, url(../img/bg.jpg) center / cover no-repeat, #2a2860;
     font-family:'Jua','Apple SD Gothic Neo','Malgun Gothic',sans-serif; color:var(--ink); }
   body { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
   .hidden { display:none !important; }
@@ -209,7 +209,7 @@
   /* 버튼 아래 두꺼운 그림자를 없애 테두리 두께를 위아래 같게 */
   .game-btn, .topbar a, .topbar button { box-shadow:none !important; }
   .game-btn:active { transform:translateY(2px) scale(.97) !important; }
-  .mode-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .mode-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .mode-row .game-btn { min-width:0; padding:10px 6px; font-size:clamp(15px,2.4vw,18px); white-space:normal; line-height:1.2; word-break:keep-all; }
   @media (max-width:560px){ .mode-row{ grid-template-columns:1fr; } }
 </style>
@@ -280,7 +280,7 @@
           <div class="field"><input id="nameInput" maxlength="8" placeholder="내 이름 (별명도 좋아요)" autocomplete="off"></div>
         </div>
         <div class="box">
-          <div class="mode-row"><button class="game-btn btn-primary" id="createBtn">방 만들기</button><button class="game-btn btn-info" id="localBtn">한 화면에서<br>둘이 하기</button><button class="game-btn" id="cpuBtn" style="background:var(--sky);color:var(--ink)">깨비샘과 하기</button></div>
+          <div class="mode-row"><button class="game-btn btn-primary" id="createBtn">방 만들기</button><button class="game-btn" id="cpuBtn" style="background:var(--sky);color:var(--ink)">깨비샘과 하기</button></div>
         </div>
         <div class="box">
           <div class="box-title">한 차례 시간</div>
@@ -341,20 +341,6 @@
     </ul>
     <p style="font-size:13px;color:var(--ink2);margin-top:8px">낱말 사전: 국립국어원 한국어기초사전 (CC BY-SA 2.0 KR)</p>
     <div class="btn-row"><button class="game-btn btn-primary" id="rulesClose">알았어요</button></div>
-  </div>
-</div>
-
-<!-- 한 화면에서 둘이 하기 -->
-<div id="localModal" class="modal hidden">
-  <div class="card">
-    <h2 style="font-size:26px;margin-top:0">한 화면에서 둘이 하기</h2>
-    <p>두 사람 이름을 적어 주세요.</p>
-    <div class="box" style="margin-top:10px">
-      <div class="field" style="margin-bottom:8px"><input id="lnB" maxlength="8" placeholder="먼저 하는 사람" autocomplete="off"></div>
-      <div class="field"><input id="lnW" maxlength="8" placeholder="나중에 하는 사람" autocomplete="off"></div>
-    </div>
-    <div class="tags" id="localTags"></div>
-    <div class="btn-row"><button class="game-btn btn-secondary" id="lnCancel">취소</button><button class="game-btn btn-primary" id="lnStart">시작!</button></div>
   </div>
 </div>
 
@@ -999,22 +985,6 @@ async function txRun(fn) {
   if (up) { const next = Object.assign({}, cur, up); onRoom({ exists: () => true, data: () => next }); }
   return res;
 }
-function startLocal() {
-  const nb = $('lnB').value.trim().slice(0, 8) || '첫째', nw = $('lnW').value.trim().slice(0, 8) || '둘째';
-  $('localModal').classList.add('hidden');
-  code = ''; ref = null; role = 'local';
-  room = null; tickKey = ''; passSent = ''; picked = []; shownResultFor = ''; lastMoveSeen = ''; lastStk = null;
-  onRoom({ exists: () => true, data: () => offlineRoom({ status: 'playing', hostId: 'L1', hostName: nb, guestId: 'L2', guestName: nw }) });
-}
-$('localBtn').onclick = () => {
-  $('startMsg').textContent = '';
-  const n = $('nameInput').value.trim();
-  if (n && !$('lnB').value) $('lnB').value = n.slice(0, 8);
-  $('localTags').innerHTML = ruleTags({ timer: turnSec });
-  $('localModal').classList.remove('hidden');
-};
-$('lnCancel').onclick = () => $('localModal').classList.add('hidden');
-$('lnStart').onclick = startLocal;
 
 // ---------- 시간 제한 ----------
 function updTimer() {
