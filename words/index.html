@@ -145,6 +145,11 @@
   .side-room b { display:block; font-size:24px; color:var(--coral-d); font-weight:normal; letter-spacing:3px; }
   @media (max-width:1180px), (max-height:640px){ .side-ggobi, .side-room { display:none; } }
 
+  #poolRow { margin:0 0 8px; padding:6px 6px 8px; border-radius:14px; background:#ffe9ec; border:2px dashed var(--coral); }
+  .pool-lbl { font-size:14px; color:var(--coral-d); margin-bottom:5px; text-align:center; }
+  .pool-lbl small { font-size:12px; color:var(--ink2); }
+  #pool { display:flex; flex-wrap:wrap; gap:5px; justify-content:center; }
+  #pool .tile.left { outline:3px solid var(--coral); outline-offset:1px; border-radius:8px; }
   /* 생성 그림이 있으면 그림으로 (없으면 위의 코드 그림) */
   body.art-tile .tile { background:url(img/tile.png) center / 100% 100% no-repeat; border:none; box-shadow:none; padding-bottom:3px; }
   body.art-tile .tile.v { background-image:url(img/tile-v.png); }
@@ -258,6 +263,7 @@
   <div id="center"></div>
   <div id="handBox">
     <div id="handTitle"><span id="handWho">내 타일</span><span id="handHint"></span></div>
+    <div id="poolRow" class="hidden"><div class="pool-lbl">부순 낱말 타일 <small>다 써야 해요</small></div><div id="pool"></div></div>
     <div id="hand"></div>
     <div id="playWrap">
       <div id="playRow">
@@ -764,15 +770,17 @@ function renderStatus() {
 }
 function wordHtml(x, i) {
   const can = myTurn() && !(room.first && room.first[room.turn]);
-  const L = room.last, isNew = L && L.kind === 'make' && L.words.includes(x.w);
+  const L = room.last, isNew = popKey !== tickKey && L && L.kind === 'make' && L.words.includes(x.w);
   return `<div class="word by-${x.by}${can ? ' can' : ''}${picked.includes(i) ? ' sel' : ''}${isNew ? ' new' : ''}" data-i="${i}">` +
     [...x.w].map(ch => `<span class="syl">${ch}</span>`).join('') + '</div>';
 }
+let popKey = '';
 function renderCenter() {
   const c = room.center || [];
   const h = c.length ? c.map(wordHtml).join('') : '<div class="empty">가운데에 낱말이 아직 없어요</div>';
   const key = h + '|' + tickKey;
   if ($('center').dataset.h !== key) { $('center').innerHTML = h; $('center').dataset.h = key; }
+  popKey = tickKey;   // 새 낱말이 톡 튀어나오는 건 처음 한 번만
 }
 $('center').addEventListener('click', e => {
   const w = e.target.closest('.word'); if (!w || !w.classList.contains('can')) return;
@@ -788,7 +796,22 @@ function renderHand() {
   $('handWho').textContent = role === 'local' ? `${nameOf(owner)}의 타일` : role === 'watch' ? `${nameOf(owner)}의 타일` : '내 타일';
   const canPlay = myTurn() && role !== 'watch';
   $('playWrap').classList.toggle('hidden', !canPlay);
-  const use = lastPreview && lastPreview.own ? lastPreview.own : R.zero();
+  // 적은 낱말에 드는 타일을 부순 낱말에서 먼저 쓰고, 모자란 만큼 내 타일에서 써요
+  let need = R.zero(), broke = R.zero();
+  if (canPlay) {
+    typedWords().forEach(w => { const c = R.cost(w); if (c) need = R.add(need, c); });
+    const cw = centerWords(room);
+    picked.forEach(k => { const c = R.cost(cw[k] || ''); if (c) broke = R.add(broke, c); });
+  }
+  const fromBroke = need.map((x, i) => Math.min(x, broke[i]));
+  const use = need.map((x, i) => Math.max(0, x - broke[i]));
+  let ph = '', firstPV = true;
+  broke.forEach((n, t) => {
+    const gap = t >= R.NC && firstPV ? ' gap' : ''; if (t >= R.NC && n) firstPV = false;
+    for (let k = 0; k < n; k++) ph += `<span class="tile${t >= R.NC ? ' v' : ''}${k === 0 ? gap : ''}${k < fromBroke[t] ? ' use' : ' left'}">${R.TILES[t]}</span>`;
+  });
+  $('poolRow').classList.toggle('hidden', !(canPlay && picked.length));
+  if ($('pool').dataset.h !== ph) { $('pool').innerHTML = ph; $('pool').dataset.h = ph; }
   let html = '';
   const many = R.sum(h) > 24;   // 타일이 많으면 같은 타일을 묶어서 개수로 보여 줘요
   let firstV = true;
@@ -796,7 +819,7 @@ function renderHand() {
     if (!n) return;
     const used = canPlay ? Math.max(0, Math.min(n, use[t] || 0)) : 0;
     const gap = t >= R.NC && firstV ? ' gap' : ''; if (t >= R.NC) firstV = false;
-    if (many) html += `<span class="tile${t >= R.NC ? ' v' : ''}${gap}${used >= n ? ' use' : ''}">${R.TILES[t]}${n - used > 1 || used ? `<i>${n - used}</i>` : ''}</span>`;
+    if (many) html += `<span class="tile${t >= R.NC ? ' v' : ''}${gap}${used >= n ? ' use' : ''}">${R.TILES[t]}${n - used > 0 && (n - used > 1 || used) ? `<i>${n - used}</i>` : ''}</span>`;
     else for (let k = 0; k < n; k++) html += `<span class="tile${t >= R.NC ? ' v' : ''}${k === 0 ? gap : ''}${k < used ? ' use' : ''}">${R.TILES[t]}</span>`;
   });
   if (!html) html = '<span style="color:var(--ink2)">타일을 다 썼어요!</span>';
