@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="apple-touch-icon" href="/icons/icon-180.png"/>
+<link rel="icon" type="image/png" href="/icons/icon-192.png"/>
+<link rel="manifest" href="/manifest.webmanifest"/>
+<meta name="apple-mobile-web-app-title" content="깨비샘과 쉬는 시간"/>
+<meta name="theme-color" content="#1f5a3c"/>
+<title>깨비샘의 화투 - 깨비샘과 쉬는 시간</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#fff6ec; --cream2:#f1e2d2; --ink:#2c2950; --ink2:#6f6585;
+    --coral:#ee5a6f; --coral-d:#c8455a; --sun:#ffd25e; --sun-d:#d9a92c; --mint:#7ccf74; --mint-d:#3f8f4a; --sky:#8fc7ff;
+    --felt:#2e7a4f; --felt-d:#1c5136;
+    --hw:64px;    /* 내 손 카드 너비 (JS가 바꿔요) */
+    --fw:52px;    /* 바닥 카드 너비 */
+    --cw:22px;    /* 먹은 카드 너비 */
+  }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+  html, body { width:100%; height:100%; overflow:hidden; font-family:'Jua','Apple SD Gothic Neo','Malgun Gothic',sans-serif; color:var(--ink);
+    background:var(--felt-d) radial-gradient(ellipse at 50% 45%, #3a8f5f 0%, var(--felt) 45%, var(--felt-d) 100%); }
+  body.art { background:var(--felt-d) url(img/bg.jpg) center / cover no-repeat; }
+  body { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+  .hidden { display:none !important; }
+  button { font-family:'Jua',sans-serif; }
+
+  /* ===== 상단 바 ===== */
+  .topbar{position:fixed;top:12px;left:12px;right:12px;z-index:50;display:flex;justify-content:space-between;pointer-events:none}
+  .topbar .right{display:flex;gap:8px}
+  .topbar a,.topbar button{pointer-events:auto;display:inline-flex;align-items:center;gap:6px;border:2px solid var(--ink);border-radius:20px;padding:6px 13px;
+    font-family:'Jua',sans-serif;font-size:16px;color:var(--ink);background:rgba(255,248,238,.95);text-decoration:none;cursor:pointer;line-height:1.2}
+  .topbar svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+  #sndToggle,.kbgm-btn{padding:6px 10px}
+  #sndToggle.muted,.kbgm-btn.muted{opacity:.6}
+  @media (max-width:600px){ .topbar .t{ display:none; } }
+
+  /* ===== 덮개 화면 ===== */
+  .screen { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:58px 16px 16px; z-index:20; overflow-y:auto; background:rgba(10,30,20,.25); }
+  .section { display:flex; flex-direction:column; align-items:center; gap:14px; width:100%; max-width:560px; margin:auto; }
+  .card { background:var(--cream); border:3px solid var(--ink); border-radius:28px; box-shadow:0 16px 30px rgba(10,30,20,.35);
+    padding:20px 24px 24px; width:100%; position:relative; }
+  .logo { width:min(520px, 96%); display:block; margin:0 auto 4px; }
+  .logo-text { font-size:clamp(46px,11vw,72px); line-height:1.05; margin:6px 0 4px; color:var(--coral); -webkit-text-stroke:5px var(--ink); paint-order:stroke fill;
+    text-shadow:0 5px 0 var(--ink); white-space:nowrap; }
+  .logo-text .y { color:var(--sun); } .logo-text .w { color:#fff; font-size:.7em; }
+  .start-wrap { position:relative; width:100%; }
+  .start-ggaebi { position:absolute; width:190px; right:-175px; top:30px; pointer-events:none; filter:drop-shadow(0 4px 0 rgba(20,10,50,.25)); }
+  @media (max-width:860px){ .start-ggaebi{ display:none; } }
+  .box { background:#fff; border:2px solid var(--cream2); border-radius:18px; padding:12px 14px 14px; margin-top:12px; text-align:left; }
+  .box-title { color:var(--coral-d); font-size:18px; margin-bottom:8px; text-align:center; }
+  .field { display:flex; gap:8px; align-items:center; }
+  .field input { flex:1; min-width:0; padding:10px 14px; border-radius:16px; border:2.5px solid var(--cream2); background:#fff; color:var(--ink);
+    font-size:18px; font-family:'Jua',sans-serif; -webkit-user-select:text; user-select:text; outline:none; }
+  .field input:focus { border-color:var(--coral); }
+  .field input::placeholder { color:#c9b5a3; }
+  #codeInput { letter-spacing:8px; text-align:center; font-size:24px; }
+  .seg { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; }
+  .seg button { border:2.5px solid var(--ink); background:#fff; color:var(--ink); border-radius:16px; padding:6px 12px; font-size:16px; cursor:pointer; white-space:nowrap; }
+  .seg button.on { background:var(--sun); }
+  .seg-label { font-size:17px; text-align:center; margin:2px 0 8px; color:var(--ink2); }
+  .msg { min-height:20px; font-size:15px; color:var(--coral-d); margin-top:8px; text-align:center; word-break:keep-all; }
+  .note { font-size:14px; color:var(--ink2); margin-top:8px; text-align:center; word-break:keep-all; line-height:1.45; }
+
+  .game-btn { padding:11px 24px; font-size:clamp(17px,2.8vw,20px); border-radius:40px; border:3px solid var(--ink); color:#fff;
+    cursor:pointer; min-width:120px; transition:transform .08s; white-space:nowrap; }
+  .game-btn:active { transform:translateY(2px) scale(.97); }
+  .game-btn:disabled { opacity:.55; cursor:not-allowed; }
+  .btn-primary { background:var(--coral); } .btn-info { background:var(--sun); color:var(--ink); } .btn-secondary { background:#fff; color:var(--ink); }
+  .btn-sky { background:var(--sky); color:var(--ink); } .btn-mint { background:var(--mint); color:var(--ink); }
+  .mode-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .mode-row .game-btn { min-width:0; padding:10px 6px; font-size:clamp(15px,2.4vw,18px); white-space:normal; line-height:1.2; word-break:keep-all; }
+  .mode-row .game-btn small { display:block; font-size:13px; opacity:.85; margin-top:2px; }
+  @media (max-width:420px){ .mode-row{ grid-template-columns:1fr; } }
+  .btn-row { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:12px; }
+  .link-btn { background:none; border:none; color:var(--ink2); font-size:15px; text-decoration:underline; cursor:pointer; margin-top:10px; }
+
+  /* 대기실 */
+  .wait-img { width:150px; display:block; margin:-80px auto 0; }
+  .code-label { font-size:18px; color:var(--ink2); margin-top:6px; }
+  .code-big { display:flex; gap:10px; justify-content:center; margin:8px 0 6px; }
+  .code-big span { width:clamp(56px,14vw,76px); height:clamp(70px,17vw,92px); display:flex; align-items:center; justify-content:center; font-size:clamp(44px,11vw,62px);
+    background:#fff; border:3px solid var(--ink); border-radius:16px; color:var(--coral-d); }
+  .lead { font-size:clamp(16px,2.6vw,19px); line-height:1.5; margin:8px 0 4px; word-break:keep-all; }
+  .tags { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin:10px 0 0; }
+  .tag { font-size:14px; padding:3px 10px; border-radius:20px; background:#fff1c9; border:2px solid var(--sun-d); color:var(--ink); }
+  .members { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:12px; }
+  .members span { background:#fff; border:2.5px solid var(--ink); border-radius:16px; padding:4px 12px; font-size:17px; }
+  .members span.me { background:#fff1c9; }
+  .members span small { font-size:12px; color:var(--coral-d); margin-left:4px; }
+  .dots::after { content:''; animation:dots 1.5s steps(4) infinite; }
+  @keyframes dots { 0%{content:''} 25%{content:'.'} 50%{content:'..'} 75%{content:'...'} }
+
+  /* ===== 화투 카드 ===== */
+  .ht { --w:var(--fw); width:var(--w); height:calc(var(--w) * 1.3333); flex:none; position:relative; display:block;
+    background:center / contain no-repeat; filter:drop-shadow(0 2px 2px rgba(0,0,0,.35)); }
+  .ht.back { background-image:url(img/card-back.webp); }
+  .ht.new { animation:pop .35s ease-out; }
+  @keyframes pop { 0%{ transform:scale(.4); opacity:0 } 70%{ transform:scale(1.08); opacity:1 } 100%{ transform:scale(1) } }
+  .ht.glow { filter:drop-shadow(0 0 0 #fff) drop-shadow(0 0 6px var(--sun)) drop-shadow(0 0 3px var(--sun)); }
+  .ht.pickable { cursor:pointer; animation:bob 1s ease-in-out infinite; filter:drop-shadow(0 0 6px #fff) drop-shadow(0 0 4px var(--sun)); }
+  @keyframes bob { 50%{ transform:translateY(-6px) } }
+
+  /* ===== 게임 화면 ===== */
+  #game { position:fixed; inset:0; display:flex; flex-direction:column; align-items:stretch; padding:54px 8px 6px; gap:4px; }
+  #opps { display:flex; gap:8px; justify-content:center; flex:none; }
+  .seat { flex:1 1 0; max-width:560px; min-width:0; background:rgba(255,246,236,.94); border:3px solid var(--ink); border-radius:16px; padding:4px 8px; position:relative;
+    display:flex; flex-direction:column; gap:3px; transition:box-shadow .2s, background .2s; }
+  .seat .top { display:flex; align-items:center; gap:6px; min-width:0; }
+  .av { width:34px; height:34px; flex:none; border-radius:50%; border:2.5px solid var(--ink); background:#fff; display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:17px; color:#fff; }
+  .av img { width:100%; height:100%; object-fit:cover; } .av.ai { border:none; background:none; }
+  .seat .nm { font-size:17px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+  .seat .hn { display:flex; align-items:center; gap:3px; font-size:15px; color:var(--ink2); white-space:nowrap; margin-left:auto; }
+  .seat .hn .ht { --w:13px; filter:none; }
+  .pt { background:var(--ink); color:#fff; border-radius:12px; padding:1px 8px; font-size:15px; white-space:nowrap; }
+  .pt.hot { background:var(--coral); }
+  .gochip { background:var(--sun); border:2px solid var(--ink); border-radius:12px; padding:0 7px; font-size:14px; white-space:nowrap; }
+  .seat.turn { background:#fff1c9; box-shadow:0 0 0 4px var(--sun); }
+  .bubble { position:absolute; left:50%; top:calc(100% + 4px); transform:translateX(-50%); z-index:6; background:#fff; border:3px solid var(--ink); border-radius:16px; padding:2px 12px; font-size:18px; white-space:nowrap; animation:bub 1.8s ease-out forwards; pointer-events:none; }
+  .bubble.up { top:auto; bottom:calc(100% + 4px); }
+  @keyframes bub { 0%{opacity:0; transform:translateX(-50%) scale(.4)} 12%{opacity:1; transform:translateX(-50%) scale(1.1)} 20%{transform:translateX(-50%) scale(1)} 80%{opacity:1} 100%{opacity:0} }
+
+  /* 먹은 카드 */
+  .caps { display:flex; gap:calc(var(--cw) * .45); min-height:calc(var(--cw) * 1.3333); align-items:flex-end; flex-wrap:nowrap; overflow:hidden; }
+  .grp { display:flex; align-items:flex-end; position:relative; flex:none; }
+  .grp .ht { --w:var(--cw); margin-left:calc(var(--cw) * -.62); filter:drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
+  .grp .ht:first-child { margin-left:0; }
+  .grp.p .ht { margin-left:calc(var(--cw) * -.72); } .grp.p .ht:first-child { margin-left:0; }
+  .grp b { position:absolute; right:-6px; top:-8px; background:var(--ink); color:#fff; font-weight:normal; font-size:12px; border-radius:9px; padding:0 5px; z-index:2; line-height:16px; }
+  .grp.p .ht:nth-child(n+2) { margin-left:calc(var(--cw) * -.74); }
+  .grp .ht.got { animation:pop .45s ease-out; }
+
+  #mid { flex:1 1 auto; min-height:0; display:flex; align-items:center; justify-content:center; gap:clamp(8px,2vw,22px); position:relative; }
+  #deckWrap { position:relative; flex:none; --w:calc(var(--fw) * 1.08); width:var(--w); height:calc(var(--w) * 1.3333); }
+  #deckWrap .ht { --w:calc(var(--fw) * 1.08); position:absolute; left:0; top:0; }
+  #deckWrap .ht:nth-child(1){ transform:translate(-4px,4px); } #deckWrap .ht:nth-child(2){ transform:translate(-2px,2px); }
+  #deckWrap.can { cursor:pointer; } #deckWrap.can .ht:last-child { animation:bob 1s ease-in-out infinite; filter:drop-shadow(0 0 6px #fff) drop-shadow(0 0 4px var(--sun)); }
+  #deckN { position:absolute; left:50%; bottom:-20px; transform:translateX(-50%); font-size:14px; color:#fff; text-shadow:0 2px 0 rgba(0,0,0,.6); white-space:nowrap; }
+  #floor { display:flex; flex-wrap:wrap; gap:calc(var(--fw) * .22) calc(var(--fw) * .28); justify-content:center; align-content:center; max-width:min(880px, 100%); }
+  .fg { display:flex; position:relative; }
+  .fg .ht + .ht { margin-left:calc(var(--fw) * -.55); }
+  .fg.hl .ht { filter:drop-shadow(0 0 0 #fff) drop-shadow(0 0 6px var(--sun)) drop-shadow(0 0 3px var(--sun)); }
+  #flipShow { position:absolute; right:clamp(4px,2vw,24px); top:50%; transform:translateY(-50%); display:flex; flex-direction:column; align-items:center; gap:3px; color:#fff; font-size:13px; text-shadow:0 2px 0 rgba(0,0,0,.6); }
+  #flipShow .ht { --w:calc(var(--fw) * .9); }
+
+  #status { flex:none; align-self:center; background:rgba(10,30,20,.55); border-radius:14px; padding:3px 14px; min-height:28px; font-size:clamp(16px,2.6vw,19px); color:#fff; text-align:center; word-break:keep-all; }
+  #status b { color:var(--sun); font-weight:normal; }
+  #actions { flex:none; display:flex; gap:10px; justify-content:center; flex-wrap:wrap; min-height:0; }
+  #actions:empty { display:none; }
+  #actions .game-btn { padding:6px 16px; font-size:17px; min-width:0; }
+  #me { flex:none; background:rgba(255,246,236,.94); border:3px solid var(--ink); border-radius:16px; padding:4px 8px; display:flex; flex-direction:column; gap:4px; }
+  #me.turn { box-shadow:0 0 0 4px var(--sun); background:#fff8e2; }
+  #me .top { display:flex; align-items:center; gap:6px; }
+  #me .top .nm { font-size:17px; }
+  #me .top .sp { margin-left:auto; display:flex; gap:6px; align-items:center; }
+  #hand { display:flex; flex-wrap:wrap; justify-content:center; gap:calc(var(--hw) * .12) calc(var(--hw) * .08); min-height:calc(var(--hw) * 1.3333); padding-bottom:6px; }
+  #hand .ht { --w:var(--hw); cursor:pointer; transition:transform .12s; }
+  #hand .ht.can:hover, #hand .ht.sel { transform:translateY(-8px); }
+  #hand .ht.can::after { content:''; position:absolute; left:50%; bottom:-7px; width:30%; height:5px; border-radius:3px; background:var(--sun); transform:translateX(-50%); box-shadow:0 0 0 2px var(--ink); }
+  #hand .ht .mk { position:absolute; left:50%; top:-8px; transform:translateX(-50%); background:var(--sun); border:2px solid var(--ink); border-radius:10px; font-size:12px; padding:0 6px; white-space:nowrap; color:var(--ink); line-height:16px; }
+  #hand.watch { display:none; }
+
+  /* 결과 */
+  .modal { position:fixed; inset:0; z-index:40; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(10,30,20,.45); overflow-y:auto; }
+  .modal .card { max-width:440px; text-align:center; margin-top:60px; }
+  .modal .res-img { width:140px; display:block; margin:-90px auto 0; }
+  .modal h2 { font-size:clamp(26px,6vw,34px); font-weight:normal; color:var(--coral-d); margin-top:4px; }
+  .modal p { font-size:17px; line-height:1.5; margin-top:6px; word-break:keep-all; }
+  .gs-row { display:flex; gap:12px; justify-content:center; margin-top:14px; }
+  .gs-row .game-btn { font-size:28px; padding:10px 30px; }
+  .sc-lines { margin:10px auto 0; display:flex; flex-direction:column; gap:4px; font-size:16px; max-width:320px; }
+  .sc-lines div { display:flex; justify-content:space-between; border-bottom:2px dashed var(--cream2); padding:2px 4px; }
+  table.score { width:100%; border-collapse:collapse; margin-top:10px; font-size:16px; }
+  table.score th { font-weight:normal; color:var(--ink2); font-size:14px; padding:4px; border-bottom:2px solid var(--cream2); }
+  table.score td { padding:5px 4px; border-bottom:2px dashed var(--cream2); text-align:center; }
+  table.score td:first-child { text-align:left; }
+  table.score tr.win td { color:var(--coral-d); }
+  .bak { display:inline-block; font-size:12px; background:var(--coral); color:#fff; border-radius:8px; padding:0 5px; margin-left:3px; }
+  .help { text-align:left; margin-top:10px; max-height:min(58vh,480px); overflow-y:auto; font-size:16px; line-height:1.5; word-break:keep-all; }
+  .help h3 { margin:12px 0 4px; color:var(--coral-d); font-size:18px; font-weight:normal; }
+  .help p { margin:2px 0 6px; font-size:16px; }
+  .help .row { display:flex; gap:3px; margin:4px 0; flex-wrap:wrap; }
+  .help .row .ht { --w:30px; }
+  .help b { color:var(--coral-d); font-weight:normal; }
+  .shake-show { display:flex; gap:6px; justify-content:center; margin-top:8px; }
+  .shake-show .ht { --w:56px; }
+
+  #toast { position:fixed; left:50%; top:40%; transform:translate(-50%,-50%); z-index:62; background:var(--cream); border:3px solid var(--ink); border-radius:20px;
+    padding:10px 20px; font-size:19px; opacity:0; transition:opacity .25s; pointer-events:none; text-align:center; word-break:keep-all; max-width:86vw; }
+  #toast.show { opacity:1; }
+  #big { position:fixed; left:50%; top:44%; z-index:60; pointer-events:none; opacity:0; transform:translate(-50%,-50%); text-align:center; white-space:nowrap; }
+  #big .tx { font-size:clamp(56px,13vw,120px); color:var(--sun); -webkit-text-stroke:6px var(--ink); paint-order:stroke fill; text-shadow:0 7px 0 var(--ink); letter-spacing:2px; }
+  #big .tx.red { color:var(--coral); } #big .tx.mint { color:var(--mint); } #big .tx.sky { color:var(--sky); }
+  #big .sub { font-size:clamp(18px,3.4vw,26px); color:#fff; -webkit-text-stroke:4px var(--ink); paint-order:stroke fill; margin-top:4px; }
+  #big.on { animation:bigpop 1.5s ease-out forwards; }
+  @keyframes bigpop { 0%{opacity:0; transform:translate(-50%,-50%) scale(.3)} 14%{opacity:1; transform:translate(-50%,-50%) scale(1.12)} 24%{transform:translate(-50%,-50%) scale(1)} 78%{opacity:1} 100%{opacity:0; transform:translate(-50%,-60%) scale(1)} }
+  .side-room { position:fixed; left:12px; bottom:10px; z-index:30; background:rgba(255,246,236,.9); border:2px solid var(--ink); border-radius:14px; padding:2px 10px; font-size:14px; }
+  .side-room b { font-weight:normal; color:var(--coral-d); margin-left:4px; }
+
+  /* 휴대폰 세로 */
+  @media (max-width:600px){
+    #game { padding:50px 4px 4px; gap:3px; }
+    .seat { padding:3px 6px; border-radius:12px; } .seat .nm { font-size:15px; } .av { width:28px; height:28px; font-size:14px; }
+    #me { padding:3px 6px; border-radius:12px; }
+    #status { font-size:15px; }
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a href="../" id="home-link" title="깨비샘과 쉬는 시간으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">쉬는 시간</span></a>
+  <div class="right">
+    <button id="sndToggle" type="button" title="소리 켜기/끄기" aria-label="소리 켜기/끄기"></button>
+    <button id="fs-btn" type="button" title="전체화면"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="t" id="fs-txt">전체화면</span></button>
+  </div>
+</div>
+<script>
+(function(){
+  var b=document.getElementById('fs-btn'),t=document.getElementById('fs-txt'),d=document,el=d.documentElement;
+  var can=d.fullscreenEnabled||d.webkitFullscreenEnabled;
+  var framed=false;try{framed=window.top!==window;}catch(e){framed=true;}
+  if(!can){
+    if(framed){t.textContent='새 창으로';b.title='새 창으로 크게 열기';b.addEventListener('click',function(){window.open(location.href,'_blank');});}
+    else b.style.display='none';
+    return;
+  }
+  var cur=function(){return d.fullscreenElement||d.webkitFullscreenElement;};
+  b.addEventListener('click',function(){
+    if(cur()){(d.exitFullscreen||d.webkitExitFullscreen).call(d);}
+    else{var pr=(el.requestFullscreen||el.webkitRequestFullscreen).call(el);if(pr&&pr.catch)pr.catch(function(){});}
+    b.blur();
+  });
+  var upd=function(){t.textContent=cur()?'나가기':'전체화면';};
+  d.addEventListener('fullscreenchange',upd);d.addEventListener('webkitfullscreenchange',upd);
+})();
+</script>
+
+<!-- 게임 화면 -->
+<div id="game" class="hidden">
+  <div id="opps"></div>
+  <div id="mid">
+    <div id="deckWrap" title="더미"><div id="deckStack"></div><div id="deckN"></div></div>
+    <div id="floor"></div>
+    <div id="flipShow"></div>
+  </div>
+  <div id="status"></div>
+  <div id="actions"></div>
+  <div id="me">
+    <div class="top"><span class="av" id="meAv"></span><span class="nm" id="meName"></span><span class="sp" id="meSp"></span></div>
+    <div class="caps" id="meCaps"></div>
+    <div id="hand"></div>
+  </div>
+</div>
+<div class="side-room hidden" id="sideRoom">방 코드<b id="sideCode"></b></div>
+
+<!-- 시작 화면 -->
+<div id="startScreen" class="screen">
+  <div class="section">
+    <div class="start-wrap">
+      <div class="card">
+        <div id="logoBox"><div class="logo-text"><span class="y">깨비샘</span><span class="w">의</span> 화투</div></div>
+        <div class="box">
+          <div class="field"><input id="nameInput" maxlength="8" placeholder="내 이름 (별명도 좋아요)" autocomplete="off"></div>
+        </div>
+        <div class="box">
+          <div class="mode-row">
+            <button class="game-btn btn-sky" id="cpu2Btn">맞고<small>깨비샘과 둘이</small></button>
+            <button class="game-btn btn-mint" id="cpu3Btn">고스톱<small>깨비샘 둘과 셋이</small></button>
+          </div>
+          <div class="seg-label" style="margin-top:10px">깨비샘 실력</div>
+          <div class="seg" id="lvSeg"><button data-v="1">쉬움</button><button data-v="2">보통</button><button data-v="3">어려움</button></div>
+        </div>
+        <div class="box">
+          <div class="mode-row"><button class="game-btn btn-primary" id="createBtn" style="grid-column:1/-1">방 만들기<small>친구 2~3명</small></button></div>
+          <div class="field" style="margin-top:10px">
+            <input id="codeInput" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="0000" autocomplete="off">
+            <button class="game-btn btn-info" id="joinBtn" style="min-width:0">들어가기</button>
+          </div>
+        </div>
+        <div class="msg" id="startMsg"></div>
+        <button class="link-btn" id="helpBtn" type="button">규칙 보기</button>
+      </div>
+      <img class="start-ggaebi" src="../cards/img/ggaebi-hello.png" alt="">
+    </div>
+  </div>
+</div>
+
+<!-- 대기실 -->
+<div id="waitScreen" class="screen hidden">
+  <div class="section">
+    <div class="card" style="margin-top:80px">
+      <img class="wait-img" src="../cards/img/ggaebi-wait.png" alt="">
+      <div class="code-label">우리 방 코드</div>
+      <div class="code-big" id="codeBig"></div>
+      <p class="lead" id="waitLead"></p>
+      <div class="members" id="memberList"></div>
+      <div class="tags" id="waitTags"></div>
+      <div class="btn-row" id="waitBtns"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 흔들기 / 폭탄 -->
+<div id="askModal" class="modal hidden">
+  <div class="card">
+    <h2 id="askTitle" style="margin-top:0"></h2>
+    <p id="askText"></p>
+    <div class="shake-show" id="askCards"></div>
+    <div class="btn-row" id="askBtns"></div>
+  </div>
+</div>
+
+<!-- 고 / 스톱 -->
+<div id="gsModal" class="modal hidden">
+  <div class="card">
+    <img class="res-img" src="../cards/img/ggaebi-think.png" alt="">
+    <h2 id="gsTitle"></h2>
+    <p id="gsText"></p>
+    <div class="gs-row"><button class="game-btn btn-primary" id="goBtn">고!</button><button class="game-btn btn-sky" id="stopBtn">스톱</button></div>
+  </div>
+</div>
+
+<!-- 판 결과 -->
+<div id="resultModal" class="modal hidden">
+  <div class="card">
+    <img class="res-img" id="resImg" src="../cards/img/ggaebi-win.png" alt="">
+    <h2 id="resTitle"></h2>
+    <p id="resText"></p>
+    <div class="sc-lines" id="resLines"></div>
+    <table class="score" id="resTable"></table>
+    <div class="btn-row" id="resBtns"></div>
+  </div>
+</div>
+
+<!-- 규칙 -->
+<div id="helpModal" class="modal hidden">
+  <div class="card" style="max-width:500px">
+    <h2 style="margin-top:0">고스톱 규칙</h2>
+    <div class="help" id="helpList"></div>
+    <div class="btn-row"><button class="game-btn btn-primary" id="helpClose">알겠어요</button></div>
+  </div>
+</div>
+
+<!-- 확인 -->
+<div id="confirmModal" class="modal hidden">
+  <div class="card">
+    <h2 style="margin-top:0" id="cfTitle"></h2>
+    <p id="cfText"></p>
+    <div class="btn-row"><button class="game-btn btn-secondary" id="cfNo">아니요</button><button class="game-btn btn-primary" id="cfYes">네</button></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div id="big"></div>
+
+<script src="../audio/bgm.js"></script>
+<script src="engine.js"></script>
+<script src="game.js"></script>
+<script src="../keynav.js"></script>
+<script src="../credit.js"></script>
+</body>
+</html>
