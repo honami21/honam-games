@@ -118,6 +118,7 @@
   #pad button .k { position:absolute; left:6px; top:3px; font-size:12px; color:var(--ink2); }
   #pad button.wrap { background:#efe8ff; }
   #pad button.used { opacity:.38; }
+  #pad button.on { background:var(--sun); box-shadow:0 0 0 3px var(--sun) !important; }
   #pad button:active { transform:translateY(2px) scale(.95); }
   #pad.lock button { opacity:.38; pointer-events:none; }
   #actions { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; min-height:50px; align-items:center; }
@@ -334,7 +335,7 @@
       <div class="pieces" id="rulePieces"></div>
       <ul>
         <li>도깨비 손님의 주문 꼬치와 <b>똑같이</b> 꽂아요. 막대는 위아래가 없어서 거꾸로 꽂아도 돼요.</li>
-        <li>김과 달걀지단은 <b>방금 꽂은 재료</b>를 감싸요.</li>
+        <li>김·달걀지단 버튼을 누르고 재료를 꽂은 뒤 <b>한 번 더 누르면</b> 감싸져요. 재료 1개도, 붙어 있는 2개도 한 번에 감쌀 수 있어요.</li>
         <li>가장 먼저 맞게 내면 주문 카드(엽전 3~6개)를 가져요. 틀리면 그 주문은 쉬어요.</li>
         <li><b>도깨비 대장 행차!</b> 카드가 나오면 "어서 오세요!"를 가장 먼저 누른 사람이 1등의 맨 위 카드를 가져와요.</li>
         <li><b>꼬끼오!</b> 닭이 울면 장사 끝. 엽전이 가장 많은 사람이 이겨요. 같으면 둘이서 꼬치 한 번 더!</li>
@@ -466,15 +467,20 @@ function drawFood(c, g, x, y, s) {
 }
 // 토핑 (재료를 감싼 띠)
 function drawWrap(c, w, x, y, s) {
-  if (ART[w]) { const im = ART[w], bw = s * 1.14, bh = Math.min(bw * im.height / im.width, s * .52); c.drawImage(im, x - bw / 2, y - bh / 2, bw, bh); return; }
+  if (ART[w]) { const im = ART[w], bw = s * 1.14, bh = Math.min(bw * im.height / im.width, s * .44); c.drawImage(im, x - bw / 2, y - bh / 2, bw, bh); return; }
   c.save();
-  const bw = s * 1.12, bh = s * .5;
+  const bw = s * 1.12, bh = s * .44;
   c.fillStyle = w === 'k' ? '#1f2b25' : '#ffd84a';
   rr(c, x - bw / 2, y - bh / 2, bw, bh, s * .1); c.fill();
   c.lineWidth = Math.max(1.5, s * .06); c.strokeStyle = '#2c2950'; c.stroke();
   if (w === 'k') { c.fillStyle = 'rgba(120,170,120,.5)'; for (let i = 0; i < 6; i++) { c.beginPath(); c.arc(x - bw * .38 + i * bw * .15, y + ((i % 2) ? -1 : 1) * bh * .15, s * .03, 0, 7); c.fill(); } }
   else { c.strokeStyle = '#e8a628'; c.lineWidth = Math.max(1, s * .04); c.beginPath(); c.moveTo(x - bw * .4, y - bh * .2); c.lineTo(x + bw * .4, y - bh * .2); c.stroke(); }
   c.restore();
+}
+function drawWrapLink(c, w, x, y1, y2, s) {   // 두 재료를 함께 감싼 띠: 오른쪽 옆으로 이어져요
+  const bx = x + s * .5, bw = s * .2;
+  c.save(); c.fillStyle = w === 'k' ? '#26332b' : '#ffd84a'; c.strokeStyle = '#2c2950'; c.lineWidth = Math.max(1.5, s * .05);
+  rr(c, bx - bw / 2, Math.min(y1, y2) - s * .2, bw, Math.abs(y2 - y1) + s * .4, bw * .45); c.fill(); c.stroke(); c.restore();
 }
 function drawPiece(c, p, x, y, s) { drawFood(c, p[0], x, y, s); if (p[1]) drawWrap(c, p[1], x, y, s); }
 function drawCoin(c, x, y, r) {
@@ -504,7 +510,16 @@ function drawSkewer(c, sk, cx, top, bottom, s, o = {}) {
   }
   // 주문 카드는 위에서부터 읽기 좋게 가운데 정렬
   const off = o.center ? (4 - sk.length) * gap / 2 : 0;
-  sk.forEach((p, i) => drawPiece(c, p, cx, base - i * gap - off, s));
+  const Y = i => base - i * gap - off;
+  sk.forEach((p, i) => drawFood(c, p[0], cx, Y(i), s));
+  // 토핑: 같은 토핑이 붙은 이웃 재료는 띠 하나로 이어서 감싸요
+  sk.forEach((p, i) => {
+    if (!p[1]) return;
+    if (i > 0 && sk[i - 1][1] === p[1]) drawWrapLink(c, p[1], cx, Y(i - 1), Y(i), s);
+  });
+  sk.forEach((p, i) => { if (p[1]) drawWrap(c, p[1], cx, Y(i), s); });
+  // 열어 둔 토핑 (아직 재료를 안 꽂음): 다음 자리에 흐리게
+  if (o.pending && sk.length < 4) { c.save(); c.globalAlpha = .45; drawWrap(c, o.pending, cx, Y(sk.length), s); c.restore(); }
 }
 
 // ---------- 주문 카드 / 내 꼬치 그리기 ----------
@@ -566,7 +581,7 @@ function drawMine() {
   c.fillStyle = 'rgba(20,14,50,.45)'; rr(c, 4, 4, w - 8, h - 8, w * .08); c.fill();
   c.strokeStyle = myOut() ? 'rgba(238,90,111,.9)' : 'rgba(255,248,232,.5)'; c.lineWidth = 3; c.stroke();
   const s = Math.min(w * .3, h * .18);
-  drawSkewer(c, mySk, w / 2, h * .08, h * .94, s, { slots: true });
+  drawSkewer(c, mySk, w / 2, h * .08, h * .94, s, { slots: true, pending: myOpen && !myN ? myOpen : '' });
   if (myOut()) {
     c.fillStyle = 'rgba(30,20,60,.55)'; rr(c, 4, 4, w - 8, h - 8, w * .08); c.fill();
     c.fillStyle = '#fff'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `${Math.round(w * .11)}px Jua, sans-serif`;
@@ -592,6 +607,7 @@ function drawAll() { if ($('game').classList.contains('hidden')) return; drawOrd
 const PARTS = ['m', 't', 'j', 'e', 'k', 'y'];
 const PART_NAME = Object.assign({}, R.ING_NAME, R.WRAP_NAME);
 const ICON = {};
+const SHORT = { m: '메밀묵', t: '가래떡', j: '대추', e: '은행', k: '김', y: '지단' };
 function makeIcons() {
   PARTS.forEach(p => {
     const cv = document.createElement('canvas'); cv.width = cv.height = 96;
@@ -602,7 +618,7 @@ function makeIcons() {
   });
   document.querySelectorAll('#pad img[data-p], #rulePieces img[data-p]').forEach(im => im.src = ICON[im.dataset.p]);
 }
-$('pad').innerHTML = PARTS.map((p, i) => `<button type="button" data-p="${p}" class="${R.WRAP.includes(p) ? 'wrap' : ''}"><span class="k">${i + 1}</span><img data-p="${p}" alt=""><span>${PART_NAME[p] === '달걀지단' ? '지단' : PART_NAME[p]}</span></button>`).join('');
+$('pad').innerHTML = PARTS.map((p, i) => `<button type="button" data-p="${p}" class="${R.WRAP.includes(p) ? 'wrap' : ''}"><span class="k">${i + 1}</span><img data-p="${p}" alt=""><span class="lb">${SHORT[p]}</span></button>`).join('');
 $('rulePieces').innerHTML = PARTS.map(p => `<span><img data-p="${p}" alt="">${PART_NAME[p]}</span>`).join('');
 makeIcons();
 $('pad').addEventListener('pointerdown', e => { const b = e.target.closest('button'); if (!b) return; e.preventDefault(); press(b.dataset.p); });
@@ -628,7 +644,7 @@ window.addEventListener('resize', layout);
 // ============================================================
 // mode: 'online' | 'cpu' | 'solo'
 let mode = null, code = null, ref = null, unsub = null, room = null, watch = false, busy = false;
-let mySk = [], buildKey = '', localOutKey = '', stepStart = 0;
+let mySk = [], myOpen = '', myN = 0, myHist = [], buildKey = '', localOutKey = '', stepStart = 0;
 const miniSk = {};
 const ME = () => mode === 'cpu' ? 'ME' : myId;
 const active = d => (d.players || []).filter(p => !(d.left || []).includes(p.id));
@@ -686,21 +702,20 @@ function press(p) {
     if (myOut()) toast(mode === 'solo' ? '잠깐! 곧 다시 할 수 있어요' : '이번 주문은 쉬어요');
     return;
   }
-  const why = R.canAdd(mySk, p);
-  if (why) {
-    beep('bad');
-    toast(why === 'used' ? `${PART_NAME[p]}은(는) 이미 썼어요` : why === 'empty' ? '먼저 재료를 꽂아요' : '맨 위 재료는 이미 감쌌어요');
-    return;
-  }
-  mySk = R.add(mySk, p); beep(R.ING.includes(p) ? 'stick' : 'wrap');
+  const r = R.step({ sk: mySk, open: myOpen, n: myN }, p);
+  if (r.err) { beep('bad'); toast(`${PART_NAME[p]}은(는) 이미 썼어요`); return; }
+  myHist.push({ sk: mySk, open: myOpen, n: myN });
+  mySk = r.b.sk; myOpen = r.b.open; myN = r.b.n;
+  beep(r.kind === 'stick' ? 'stick' : r.kind === 'cancel' ? 'undo' : 'wrap');
   updPad(); drawMine();
 }
-function undo() { if (!canBuild() || !mySk.length) return; const t = mySk[mySk.length - 1]; mySk = t.length > 1 ? mySk.slice(0, -1).concat(t[0]) : mySk.slice(0, -1); beep('undo'); updPad(); drawMine(); }
-function clearSk() { if (!canBuild() || !mySk.length) return; mySk = []; beep('undo'); updPad(); drawMine(); }
+function resetSk() { mySk = []; myOpen = ''; myN = 0; myHist = []; }
+function undo() { if (!canBuild() || !myHist.length) return; const h = myHist.pop(); mySk = h.sk; myOpen = h.open; myN = h.n; beep('undo'); updPad(); drawMine(); }
+function clearSk() { if (!canBuild() || !myHist.length) return; resetSk(); beep('undo'); updPad(); drawMine(); }
 function updPad() {
   const can = canBuild();
   $('pad').classList.toggle('lock', !can);
-  document.querySelectorAll('#pad button').forEach(b => { const p = b.dataset.p; b.classList.toggle('used', mySk.some(x => x[0] === p || x[1] === p)); });
+  document.querySelectorAll('#pad button').forEach(b => { const p = b.dataset.p; const on = myOpen === p; b.classList.toggle('on', on); b.classList.toggle('used', !on && mySk.some(x => x[0] === p || x[1] === p)); b.querySelector('.lb').textContent = on ? '닫기' : SHORT[p]; });
 }
 function serve() {
   if (!canBuild()) return;
@@ -732,7 +747,7 @@ function render() {
   const d = room, me = ME();
   // 새 주문이면 내 꼬치 비우기
   const bk = (d.phase === 'build' || d.phase === 'tie') ? keyOf(d) : '';
-  if (bk && bk !== buildKey) { buildKey = bk; mySk = []; }
+  if (bk && bk !== buildKey) { buildKey = bk; resetSk(); }
   // 손님(사람) 카드
   const list = d.players || [];
   const h = list.map(p => {
@@ -818,12 +833,12 @@ function newGameFields(d) {
 }
 // 다음 카드로
 function advanceFields(d) {
-  if ((d.tie || []).length) return { phase: 'tie', tieOrder: d.tieOrder && d.phase === 'crow' ? d.tieOrder : (Math.random() < .5 ? 5 : 6) + '|' + R.enc(R.makeOrder(Math.random() < .5 ? 5 : 6)), out: [], win: '', step: d.step + 1 };
+  if ((d.tie || []).length) return { phase: 'tie', tieOrder: d.tieOrder && d.phase === 'crow' ? d.tieOrder : R.randomOrder(5), out: [], win: '', step: d.step + 1 };
   const idx = d.idx + 1, card = d.deck[idx];
   if (!card || card === 'C') {
     const act = active(d), best = Math.max(...act.map(p => R.total(d.piles[p.id])));
     const top = act.filter(p => R.total(d.piles[p.id]) === best).map(p => p.id);
-    if (top.length > 1 && act.length > 1) return { idx, phase: 'crow', tie: top, tieOrder: '6|' + R.enc(R.makeOrder(6)), out: [], win: '', step: d.step + 1 };
+    if (top.length > 1 && act.length > 1) return { idx, phase: 'crow', tie: top, tieOrder: R.randomOrder(5), out: [], win: '', step: d.step + 1 };
     return { idx, phase: 'crow', status: 'done', win: top[0] || '', out: [], step: d.step + 1, endReason: 'crow' };
   }
   if (card === 'B') return { idx, phase: 'boss', out: [], win: '', boss: null, step: d.step + 1 };
@@ -929,7 +944,7 @@ function onPhase(prev) {
   const d = room, me = ME();
   clearTimeout(autoT); stepStart = Date.now();
   if (prev && prev.status === 'waiting') beep('join');
-  if (!['build', 'tie', 'won', 'allout', 'tiewon'].includes(d.phase)) mySk = [];
+  if (!['build', 'tie', 'won', 'allout', 'tiewon'].includes(d.phase)) resetSk();
   if (d.phase === 'build' || d.phase === 'tie') { beep('card'); cpuBuild(); }
   else if (d.phase === 'won' || d.phase === 'tiewon') { if (d.win === me) { beep('coin'); flash('ok'); } else beep('card'); }
   else if (d.phase === 'boss') { beep('boss'); cpuGreet(); }
@@ -977,10 +992,10 @@ function cpuBuild() {
   const target = R.cardSkewer(card), wrong = Math.random() < lv.miss;
   const goal = wrong ? R.mistake(target) : target;
   const plan = R.buildPlan(goal), key = keyOf(d);
-  let i = 0;
+  let i = 0, cb = R.fresh();
   const go = () => {
     if (!room || keyOf(room) !== key) return;
-    if (i < plan.length) { miniSk.CPU = R.add(miniSk.CPU, plan[i++]); drawMinis(); cpuT = setTimeout(go, lv.step * (.75 + Math.random() * .5)); return; }
+    if (i < plan.length) { const r = R.step(cb, plan[i++]); if (r.b) cb = r.b; miniSk.CPU = cb.sk; drawMinis(); cpuT = setTimeout(go, lv.step * (.75 + Math.random() * .5)); return; }
     serveRoom('CPU', miniSk.CPU.slice());
   };
   cpuT = setTimeout(go, lv.think * (.8 + Math.random() * .4));
@@ -1005,21 +1020,21 @@ document.querySelectorAll('#cpuModal .lv').forEach(b => b.onclick = () => startC
 //  혼자 60초 도전
 // ============================================================
 const solo = { running: false, card: null, score: 0, count: 0, end: 0, lockUntil: 0 };
-function soloCard() { const v = 3 + Math.floor(Math.random() * 4); let c; do { c = v + '|' + R.enc(R.makeOrder(v)); } while (solo.card === c); return c; }
+function soloCard() { let c; do { c = R.randomOrder(3); } while (solo.card === c); return c; }
 function startSolo() {
   mode = 'solo'; room = null; watch = false;
   Object.assign(solo, { running: true, card: soloCard(), score: 0, count: 0, end: Date.now() + SOLO_SEC * 1000, lockUntil: 0 });
-  mySk = []; $('soloModal').classList.add('hidden');
+  resetSk(); $('soloModal').classList.add('hidden');
   show('game'); render();
 }
 function soloServe() {
   if (R.same(mySk, R.cardSkewer(solo.card))) {
     solo.score += R.cardValue(solo.card); solo.count++;
     beep('coin'); flash('ok');
-    solo.card = soloCard(); mySk = [];
+    solo.card = soloCard(); resetSk();
   } else {
     beep('bad'); flash('bad'); toast('앗, 주문과 달라요!');
-    solo.lockUntil = Date.now() + 1500; mySk = [];
+    solo.lockUntil = Date.now() + 1500; resetSk();
   }
   render();
 }
@@ -1149,7 +1164,7 @@ function leaveLocal() {
   if (unsub) unsub(); unsub = null;
   clearTimeout(cpuT); clearTimeout(autoT);
   sstore('market-room', null);
-  mode = null; code = ref = room = null; watch = false; solo.running = false; mySk = [];
+  mode = null; code = ref = room = null; watch = false; solo.running = false; resetSk();
   ['resultModal', 'soloModal', 'confirmModal'].forEach(m => $(m).classList.add('hidden'));
   show('startScreen');
 }
