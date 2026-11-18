@@ -349,7 +349,7 @@
       <li>시간 안에 못 만들거나 "넘기기"를 누르면 가운데에서 가장 짧은 낱말을 가져가요.</li>
       <li>둘이 합쳐 50차례가 지나도 안 끝나면 남은 타일이 적은 쪽이 이겨요.</li>
     </ul>
-    <p style="font-size:13px;color:var(--ink2);margin-top:8px">낱말 사전: 국립국어원 한국어기초사전 (CC BY-SA 2.0 KR)</p>
+    <p style="font-size:13px;color:var(--ink2);margin-top:8px">낱말 사전: 국립국어원 표준국어대사전, 한국어기초사전 (CC BY-SA 2.0 KR)</p>
     <div class="btn-row"><button class="game-btn btn-primary" id="rulesClose">알았어요</button></div>
   </div>
 </div>
@@ -425,12 +425,13 @@ const $ = id => document.getElementById(id);
 // ---------- 사전 ----------
 let DICT = null, DICT_WORDS = null, DICT_LV = null, aiReady = false;
 const dictOk = w => !!DICT && DICT.has(w);
-const dictLoad = fetch('words.txt?v=3').then(r => { if (!r.ok) throw new Error('dict'); return r.text(); }).then(t => {
+const dictLoad = fetch('words.txt?v=4').then(r => { if (!r.ok) throw new Error('dict'); return r.text(); }).then(t => {
   DICT = new Set(); DICT_WORDS = []; DICT_LV = [];
   for (const line of t.split('\n')) {
     const [w, lv] = line.trim().split(/\s+/);
     if (!w || DICT.has(w)) continue;
-    DICT.add(w); DICT_WORDS.push(w); DICT_LV.push(+lv || 3);
+    DICT.add(w); if (+lv >= 4) continue; // 4 = 표준국어대사전에만 있는 낱말: 판정에만 쓰고 꼬비는 안 써요
+    DICT_WORDS.push(w); DICT_LV.push(+lv || 3);
   }
 }).catch(e => { console.error(e); $('startMsg').textContent = '낱말 사전을 불러오지 못했어요. 새로 고침해 주세요.'; });
 function prepAi() { if (!aiReady && DICT) { R.setList(DICT_WORDS, DICT_LV); aiReady = true; } }
