@@ -114,6 +114,9 @@
     }
     return best;
   }
+  // 어려움: 쓰기 어려운 타일(개수가 적은 것)을 먼저 털어 내려고 해요
+  const W = BOX.map(n => n <= 2 ? 1.6 : n <= 4 ? 1.15 : 1);
+  const weigh = v => v.reduce((a, x, i) => a + x * W[i], 0);
   // 돌려줌 { pick:[], words:[] } 또는 null (못 찾음)
   function aiMove({ hand, center, first, used, level, rnd = Math.random }) {
     if (!LIST) return null;
@@ -129,24 +132,29 @@
     const tries = [];
     center.forEach((_, i) => tries.push([i]));
     if (level >= 3) for (let i = 0; i < center.length; i++) for (let j = i + 1; j < center.length; j++) tries.push([i, j]);
-    let best = null, bs = -1;
+    // 1) 가운데 낱말을 부숴 내 타일을 더한 낱말 후보를 모두 모으고
+    const cand = [];
     for (const pick of tries) {
       let broke = zero(); pick.forEach(k => broke = add(broke, cc[k]));
       const pool = add(hand, broke);
       for (const e of LIST) {
         if (e.lv > maxLv || usedS.has(e.w) || !fits(broke, e.c) || !fits(e.c, pool)) continue;
         const own = sub(e.c, broke), n = sum(own);
-        if (n <= 0) continue;
-        let words = [e.w], tot = n;
-        // 보통 이상: 남은 내 타일로 낱말 하나 더
-        if (level >= 2) {
-          const rest = sub(hand, own);
-          const extra = bestFrom(rest, usedS, maxLv, new Set([e.w]), rnd);
-          if (extra) { words.push(extra.w); tot += extra.n; }
-        }
-        const s = tot + rnd() * (level >= 3 ? 0.5 : 2.5);
-        if (s > bs) { bs = s; best = { pick, words }; }
+        if (n > 0) cand.push({ pick, e, own, n, r: (level >= 3 ? weigh(own) : n) + rnd() * (level >= 3 ? 0.5 : 2.5) });
       }
+    }
+    if (!cand.length) return null;
+    cand.sort((a, b) => b.r - a.r);
+    // 2) 보통 이상은 좋은 후보 몇 개만 골라 남은 내 타일로 낱말 하나를 더 붙여 봐요
+    let best = null, bs = -1;
+    const top = cand.slice(0, level >= 3 ? 40 : level === 2 ? 4 : 1);
+    for (const c of top) {
+      const words = [c.e.w]; let tot = c.r;
+      if (level >= 2) {
+        const extra = bestFrom(sub(hand, c.own), usedS, maxLv, new Set([c.e.w]), rnd);
+        if (extra) { words.push(extra.w); tot += level >= 3 ? weigh(extra.c) : extra.n; }
+      }
+      if (tot > bs) { bs = tot; best = { pick: c.pick, words }; }
     }
     return best;
   }
