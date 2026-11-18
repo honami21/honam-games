@@ -113,6 +113,17 @@ body.adm-edit .game img{pointer-events:none}
 @keyframes jiggle{from{transform:rotate(-.6deg)}to{transform:rotate(.6deg)}}
 .game.adm-hole{opacity:.3;animation:none !important;outline:3px dashed #fff6e4;outline-offset:4px}
 .game.adm-ghost{position:fixed;z-index:90;margin:0;pointer-events:none;animation:none;transform:rotate(-2deg) scale(1.04);box-shadow:0 22px 40px rgba(10,8,40,.5);cursor:grabbing}
+.game.adm-hid{display:none}
+body.adm-see .game.adm-hid,body.adm-edit .game.adm-hid{display:flex}
+body.adm-see .game.adm-hid>*:not(.adm-eye):not(.adm-num),body.adm-edit .game.adm-hid>*:not(.adm-eye):not(.adm-num){opacity:.35}
+body.adm-see .game.adm-hid::after,body.adm-edit .game.adm-hid::after{content:"가려짐";position:absolute;left:50%;top:38%;transform:translate(-50%,-50%) rotate(-6deg);
+  background:var(--line);color:#fff6e4;border-radius:999px;padding:6px 18px 4px;font-size:22px;pointer-events:none}
+.grid.adm-wait{visibility:hidden}
+.adm-eye{position:absolute;right:-8px;top:-8px;z-index:3;display:none;align-items:center;gap:4px;font-family:'Jua',sans-serif;font-size:15px;color:var(--ink);
+  background:var(--yellow);border:3px solid var(--line);border-radius:999px;padding:4px 12px 3px 9px;cursor:pointer}
+.adm-eye svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.game.adm-hid .adm-eye{background:#efe4d4}
+body.adm-edit .adm-eye{display:inline-flex}
 .adm-num{position:absolute;left:-8px;top:-8px;z-index:2;min-width:34px;height:34px;border-radius:999px;background:var(--coral);color:#fff;border:3px solid var(--line);
   display:none;align-items:center;justify-content:center;font-size:17px;padding:0 6px}
 body.adm-edit .adm-num{display:flex}
@@ -231,6 +242,10 @@ body.adm-edit .adm-num{display:flex}
 // 관리자가 정한 게임 순서를 먼저 적용 (저장된 순서를 기억해 두었다가 바로 보여 주고, 서버 값으로 다시 맞춤)
 (function(){
   var KEY='home-order', grid=document.querySelector('.grid');
+  function hide(list){
+    if(!list) return;
+    [].forEach.call(grid.querySelectorAll('.game'),function(c){ c.classList.toggle('adm-hid', list.indexOf(c.getAttribute('href'))>=0); });
+  }
   function apply(order){
     if(!order||!order.length) return;
     var cards=[].slice.call(grid.querySelectorAll('.game')), soon=grid.querySelector('.soon');
@@ -238,20 +253,24 @@ body.adm-edit .adm-num{display:flex}
     order.forEach(function(id){ if(by[id]){ grid.insertBefore(by[id], soon); delete by[id]; } });
     cards.forEach(function(c){ if(by[c.getAttribute('href')]) grid.insertBefore(c, soon); });   // 새로 생긴 게임은 뒤에
   }
-  window.homeOrderApply=apply;
+  window.homeOrderApply=apply; window.homeHideApply=hide;
+  try{ if(sessionStorage.getItem('home-admin')) document.body.classList.add('adm-see'); }catch(e){}
   window.homeOrderDefault=[].map.call(grid.querySelectorAll('.game'),function(c){ return c.getAttribute('href'); });
-  try{ apply(JSON.parse(localStorage.getItem(KEY)||'null')); }catch(e){}
+  var cached=null;
+  try{ cached=localStorage.getItem(KEY); apply(JSON.parse(cached||'null')); hide(JSON.parse(localStorage.getItem('home-hidden')||'null')); }catch(e){}
   if(!window.fetch) return;
+  // 처음 오는 사람은 가린 게임이 잠깐 보이지 않도록 서버 답을 조금 기다려요
+  var show=function(){ grid.classList.remove('adm-wait'); };
+  if(!cached){ grid.classList.add('adm-wait'); setTimeout(show,1500); }
   fetch('https://firestore.googleapis.com/v1/projects/honamsaem-class-games/databases/(default)/documents/site/home-order?key=AIzaSyDw2EvTh7PVBrPnkii2F1kPGcqbzcIo41s')
     .then(function(r){ return r.ok?r.json():null; })
     .then(function(d){
-      var v=d&&d.fields&&d.fields.order&&d.fields.order.arrayValue&&d.fields.order.arrayValue.values;
-      if(!v) return;
-      var order=v.map(function(x){ return x.stringValue; });
-      if(document.body.classList.contains('adm-edit')) return;
-      apply(order);
-      try{ localStorage.setItem(KEY, JSON.stringify(order)); }catch(e){}
-    }).catch(function(){});
+      var f=d&&d.fields||{}, list=function(k){ var a=f[k]&&f[k].arrayValue; return a?(a.values||[]).map(function(x){ return x.stringValue; }):null; };
+      var order=list('order'), hidden=list('hidden')||[];
+      if(!order||document.body.classList.contains('adm-edit')) return;
+      apply(order); hide(hidden);
+      try{ localStorage.setItem(KEY, JSON.stringify(order)); localStorage.setItem('home-hidden', JSON.stringify(hidden)); }catch(e){}
+    }).catch(function(){}).then(show);
 })();
 </script>
 <footer class="info">
@@ -300,9 +319,19 @@ const $ = id => document.getElementById(id);
 const grid = document.querySelector('.grid'), soon = grid.querySelector('.soon');
 const cards = () => [...grid.querySelectorAll('.game')];
 const ids = () => cards().map(c => c.getAttribute('href'));
+const hiddenIds = () => cards().filter(c => c.classList.contains('adm-hid')).map(c => c.getAttribute('href'));
+const EYE_ON = '<svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_OFF = '<svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7c2 0 3.8.7 5.2 1.6M22 12s-3.6 7-10 7c-2 0-3.8-.7-5.2-1.6"/><path d="M4 20 20 4"/></svg>';
+function eyeLabel(c) { const b = c.querySelector('.adm-eye'), h = c.classList.contains('adm-hid'); b.innerHTML = (h ? EYE_ON + '보이기' : EYE_OFF + '가리기'); b.title = h ? '다시 보이게 하기' : '다른 사람에게 가리기'; }
+cards().forEach(c => {
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'adm-eye';
+  b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); c.classList.toggle('adm-hid'); eyeLabel(c); });
+  c.appendChild(b); eyeLabel(c);
+});
 const HTML_ORDER = window.homeOrderDefault;   // 처음 순서 (HTML에 적힌 순서)
 
-let fb = null, user = null, before = null;
+let fb = null, user = null, before = null, beforeHid = null;
+const adminSee = on => { document.body.classList.toggle('adm-see', on); try { on ? sessionStorage.setItem('home-admin', '1') : sessionStorage.removeItem('home-admin'); } catch (e) {} };
 async function load() {
   if (fb) return fb;
   const [app, auth, fs] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-auth.js'), import(base + 'firebase-firestore.js')]);
@@ -345,7 +374,8 @@ $('adm-form').addEventListener('submit', async e => {
 // ===== 순서 바꾸기 =====
 function number() { cards().forEach((c, i) => { c.querySelector('.adm-num').textContent = i + 1; }); }
 function startEdit() {
-  before = ids();
+  before = ids(); beforeHid = hiddenIds(); adminSee(true);
+  cards().forEach(eyeLabel);
   document.body.classList.add('adm-edit');
   $('adm-bar').classList.add('on');
   number();
@@ -354,20 +384,20 @@ function endEdit() {
   document.body.classList.remove('adm-edit');
   $('adm-bar').classList.remove('on');
 }
-$('adm-cancel').addEventListener('click', () => { window.homeOrderApply(before); endEdit(); });
+$('adm-cancel').addEventListener('click', () => { window.homeOrderApply(before); window.homeHideApply(beforeHid); endEdit(); });
 $('adm-reset').addEventListener('click', () => { window.homeOrderApply(HTML_ORDER); number(); });
 $('adm-out').addEventListener('click', async () => {
-  window.homeOrderApply(before); endEdit();
+  window.homeOrderApply(before); window.homeHideApply(beforeHid); endEdit(); adminSee(false);
   try { const f = await load(); await f.auth.signOut(f.au); } catch (e) {}
   user = null;
 });
 $('adm-save').addEventListener('click', async () => {
-  const b = $('adm-save'), order = ids();
+  const b = $('adm-save'), order = ids(), hidden = hiddenIds();
   b.disabled = true; b.textContent = '저장 중...';
   try {
     const f = await load();
-    await f.fs.setDoc(f.fs.doc(f.db, 'site', 'home-order'), { order, updatedAt: f.fs.serverTimestamp() });
-    try { localStorage.setItem('home-order', JSON.stringify(order)); } catch (e) {}
+    await f.fs.setDoc(f.fs.doc(f.db, 'site', 'home-order'), { order, hidden, updatedAt: f.fs.serverTimestamp() });
+    try { localStorage.setItem('home-order', JSON.stringify(order)); localStorage.setItem('home-hidden', JSON.stringify(hidden)); } catch (e) {}
     endEdit();
   } catch (err) {
     alertBar((err && err.code || '').includes('permission') ? '저장 권한이 없어요. Firebase 규칙을 확인해 주세요.' : '저장하지 못했어요. 다시 눌러 주세요.');
@@ -385,7 +415,7 @@ grid.addEventListener('contextmenu', e => { if (document.body.classList.contains
 let drag = null, press = null;
 grid.addEventListener('pointerdown', e => {
   if (!document.body.classList.contains('adm-edit') || e.button > 0) return;
-  const card = e.target.closest('.game'); if (!card) return;
+  const card = e.target.closest('.game'); if (!card || e.target.closest('.adm-eye')) return;
   if (e.pointerType === 'mouse') { e.preventDefault(); press = { card, x: e.clientX, y: e.clientY, id: e.pointerId, ready: true }; }
   else {
     press = { card, x: e.clientX, y: e.clientY, id: e.pointerId, ready: false };
