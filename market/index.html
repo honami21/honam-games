@@ -435,9 +435,9 @@ KBGM.button({ after: $('sndToggle'), icon: SVG_MUSIC });
 //  그림 (그림 파일이 있으면 그림, 없으면 코드로 그려요)
 // ============================================================
 const ART = {};
-const ART_FILES = { m:'food-muk', t:'food-tteok', j:'food-jujube', e:'food-ginkgo', k:'wrap-gim', y:'wrap-egg', stick:'stick', card:'card-order', boss:'card-boss', crow:'card-rooster', coin:'coin' };
+const ART_FILES = { m:'food-muk.png', t:'food-tteok.png', j:'food-jujube.png', e:'food-ginkgo.png', k:'wrap-gim.png', y:'wrap-egg.png', card:'card-order.png', boss:'card-boss.jpg', crow:'card-rooster.jpg', coin:'coin.png' };
 Object.entries(ART_FILES).forEach(([k, n]) => {
-  const im = new Image(); im.onload = () => { ART[k] = im; makeIcons(); drawAll(); }; im.src = `img/${n}.png`;
+  const im = new Image(); im.onload = () => { ART[k] = im; makeIcons(); drawAll(); }; im.src = `img/${n}`;
 });
 { const im = new Image(); im.onload = () => { $('logoImg').src = im.src; $('logoImg').classList.remove('hidden'); $('logoText').classList.add('hidden'); }; im.src = 'img/logo.png'; }
 { const im = new Image(); im.onload = () => document.body.classList.add('art-bg'); im.src = 'img/bg.jpg'; }
@@ -451,7 +451,7 @@ const FOOD = {
 function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
 // 재료 한 개 (가운데 x,y / 크기 s)
 function drawFood(c, g, x, y, s) {
-  if (ART[g]) { const w = s * 1.12; c.drawImage(ART[g], x - w / 2, y - w / 2, w, w); return; }
+  if (ART[g]) { const im = ART[g], k = s * 1.08 / Math.max(im.width, im.height), w = im.width * k, h = im.height * k; c.drawImage(im, x - w / 2, y - h / 2, w, h); return; }
   const f = FOOD[g], h = s * .92, r = s * .2;
   c.save();
   const gr = c.createLinearGradient(0, y - h / 2, 0, y + h / 2); gr.addColorStop(0, f.a); gr.addColorStop(1, f.b);
@@ -466,7 +466,7 @@ function drawFood(c, g, x, y, s) {
 }
 // 토핑 (재료를 감싼 띠)
 function drawWrap(c, w, x, y, s) {
-  if (ART[w]) { const z = s * 1.2; c.drawImage(ART[w], x - z / 2, y - z / 2, z, z); return; }
+  if (ART[w]) { const im = ART[w], bw = s * 1.14, bh = Math.min(bw * im.height / im.width, s * .52); c.drawImage(im, x - bw / 2, y - bh / 2, bw, bh); return; }
   c.save();
   const bw = s * 1.12, bh = s * .5;
   c.fillStyle = w === 'k' ? '#1f2b25' : '#ffd84a';
@@ -555,8 +555,9 @@ function drawCardFace(c, card, w, h, opt = {}) {
   drawCoin(c, w - pad - cr * 1.6, pad + cr * 1.6, cr);
   c.fillStyle = '#2c2950'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `${Math.round(w * .16)}px Jua, sans-serif`;
   c.fillText(v, w - pad - cr * 1.6, pad + cr * 3.9);
-  const s = Math.min(w * .3, h * .18);
-  drawSkewer(c, sk, w * .44, h * .08, h * .94, s, { center: true });
+  const s = Math.min(w * .3, h * (ART.card ? .16 : .18));
+  if (ART.card) drawSkewer(c, sk, w * .47, h * .27, h * .93, s, { center: true });
+  else drawSkewer(c, sk, w * .44, h * .08, h * .94, s, { center: true });
   if (opt.dim) { c.fillStyle = 'rgba(30,20,60,.45)'; rr(c, pad, pad, w - pad * 2, h - pad * 2, r); c.fill(); }
 }
 function drawMine() {
