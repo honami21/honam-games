@@ -436,7 +436,7 @@ KBGM.button({ after: $('sndToggle'), icon: SVG_MUSIC });
 //  그림 (그림 파일이 있으면 그림, 없으면 코드로 그려요)
 // ============================================================
 const ART = {};
-const ART_FILES = { m:'food-muk.png', t:'food-tteok.png', j:'food-jujube.png', e:'food-ginkgo.png', k:'wrap-gim.png', y:'wrap-egg.png', card:'card-order.png', boss:'card-boss.jpg', crow:'card-rooster.jpg', coin:'coin.png' };
+const ART_FILES = { m:'food-muk.png', t:'food-tteok.png', j:'food-jujube.png', e:'food-ginkgo.png', k:'wrap-gim-1.png', y:'wrap-egg-1.png', k2:'wrap-gim-2.png', y2:'wrap-egg-2.png', card:'card-order.png', boss:'card-boss.jpg', crow:'card-rooster.jpg', coin:'coin.png' };
 Object.entries(ART_FILES).forEach(([k, n]) => {
   const im = new Image(); im.onload = () => { ART[k] = im; makeIcons(); drawAll(); }; im.src = `img/${n}`;
 });
@@ -466,21 +466,49 @@ function drawFood(c, g, x, y, s) {
   c.restore();
 }
 // 토핑 (재료를 감싼 띠)
-function drawWrap(c, w, x, y, s) {
-  if (ART[w]) { const im = ART[w], bw = s * 1.14, bh = Math.min(bw * im.height / im.width, s * .44); c.drawImage(im, x - bw / 2, y - bh / 2, bw, bh); return; }
+// 토핑 띠: 원작처럼 구멍에 막대를 꿰어 감싸요. 1개 = 구멍 2개로 세로 한 바퀴, 2개 = 구멍 3개로 ㄹ자
+// 띠 그림의 구멍(가로 hx, 세로 rows)을 막대 위 자리에 맞추고, 구멍 둘레는 그대로 두고 그 사이만 늘려요
+const BAND = { 1: { hx: 110, rows: [48, 480] }, 2: { hx: 114, rows: [48, 278, 479] } };
+function drawBand(c, im, n, x, ys, s, clip) {
+  const b = BAND[n], k = s / 440, F = 44, H = im.height;
+  const src = [0], dst = [ys[0] - b.rows[0] * k];
+  b.rows.forEach((r, i) => {
+    const a = Math.max(r - F, src[src.length - 1] + 1), z = Math.min(r + F, H);
+    src.push(a, z); dst.push(ys[i] - (r - a) * k, ys[i] + (z - r) * k);
+  });
+  src.push(H); dst.push(ys[ys.length - 1] + (H - b.rows[b.rows.length - 1]) * k);
   c.save();
-  const bw = s * 1.12, bh = s * .44;
-  c.fillStyle = w === 'k' ? '#1f2b25' : '#ffd84a';
-  rr(c, x - bw / 2, y - bh / 2, bw, bh, s * .1); c.fill();
-  c.lineWidth = Math.max(1.5, s * .06); c.strokeStyle = '#2c2950'; c.stroke();
-  if (w === 'k') { c.fillStyle = 'rgba(120,170,120,.5)'; for (let i = 0; i < 6; i++) { c.beginPath(); c.arc(x - bw * .38 + i * bw * .15, y + ((i % 2) ? -1 : 1) * bh * .15, s * .03, 0, 7); c.fill(); } }
-  else { c.strokeStyle = '#e8a628'; c.lineWidth = Math.max(1, s * .04); c.beginPath(); c.moveTo(x - bw * .4, y - bh * .2); c.lineTo(x + bw * .4, y - bh * .2); c.stroke(); }
+  if (clip) { c.beginPath(); clip.forEach(([y1, y2]) => c.rect(x - s * 2, y1, s * 4, y2 - y1)); c.clip(); }
+  for (let i = 0; i < src.length - 1; i++) {
+    if (src[i + 1] <= src[i]) continue;
+    c.drawImage(im, 0, src[i], im.width, src[i + 1] - src[i], x - b.hx * k, dst[i], im.width * k, dst[i + 1] - dst[i] + .6);
+  }
   c.restore();
 }
-function drawWrapLink(c, w, x, y1, y2, s) {   // 두 재료를 함께 감싼 띠: 오른쪽 옆으로 이어져요
-  const bx = x + s * .5, bw = s * .2;
-  c.save(); c.fillStyle = w === 'k' ? '#26332b' : '#ffd84a'; c.strokeStyle = '#2c2950'; c.lineWidth = Math.max(1.5, s * .05);
-  rr(c, bx - bw / 2, Math.min(y1, y2) - s * .2, bw, Math.abs(y2 - y1) + s * .4, bw * .45); c.fill(); c.stroke(); c.restore();
+// 재료 1개를 감싼 띠 (y = 재료 가운데)
+function drawWrap(c, w, x, y, s) {
+  if (ART[w]) { drawBand(c, ART[w], 1, x, [y - s * .45, y + s * .45], s); return; }
+  c.save();
+  const bw = s * .46, bh = s * 1.12;
+  c.fillStyle = w === 'k' ? '#1f2b25' : '#ffd84a';
+  rr(c, x - bw / 2, y - bh / 2, bw, bh, s * .14); c.fill();
+  c.lineWidth = Math.max(1.5, s * .06); c.strokeStyle = '#2c2950'; c.stroke();
+  c.restore();
+}
+// 재료 2개를 ㄹ자로 감싼 띠 (yu = 위 재료, yl = 아래 재료). layer: 'back' = 재료 뒤, 'front' = 재료 앞
+function drawWrap2(c, w, x, yu, yl, s, layer) {
+  const ym = (yu + yl) / 2, ys = [yu - s * .45, ym, yl + s * .45];
+  const im = ART[w + '2'];
+  if (im) {
+    if (layer === 'back') drawBand(c, im, 2, x, ys, s);
+    else drawBand(c, im, 2, x, ys, s, [[yu - s * 2, ym + s * .12], [yl + s * .3, yl + s * 2]]);
+    return;
+  }
+  // 그림이 없을 때: 위는 앞 띠, 아래는 오른쪽 옆으로 보이는 뒷면
+  c.save(); c.fillStyle = w === 'k' ? '#1f2b25' : '#ffd84a'; c.strokeStyle = '#2c2950'; c.lineWidth = Math.max(1.5, s * .05);
+  if (layer === 'back') { rr(c, x + s * .3, ym - s * .1, s * .26, yl - ym + s * .6, s * .1); c.fill(); c.stroke(); }
+  else { rr(c, x - s * .23, yu - s * .56, s * .46, ym - yu + s * .62, s * .14); c.fill(); c.stroke(); }
+  c.restore();
 }
 function drawPiece(c, p, x, y, s) { drawFood(c, p[0], x, y, s); if (p[1]) drawWrap(c, p[1], x, y, s); }
 function drawCoin(c, x, y, r) {
@@ -511,13 +539,16 @@ function drawSkewer(c, sk, cx, top, bottom, s, o = {}) {
   // 주문 카드는 위에서부터 읽기 좋게 가운데 정렬
   const off = o.center ? (4 - sk.length) * gap / 2 : 0;
   const Y = i => base - i * gap - off;
-  sk.forEach((p, i) => drawFood(c, p[0], cx, Y(i), s));
-  // 토핑: 같은 토핑이 붙은 이웃 재료는 띠 하나로 이어서 감싸요
+  // 토핑 묶음: 같은 토핑이 붙은 이웃 재료 둘 = ㄹ자 한 장, 혼자면 한 바퀴
+  const spans = [];
   sk.forEach((p, i) => {
     if (!p[1]) return;
-    if (i > 0 && sk[i - 1][1] === p[1]) drawWrapLink(c, p[1], cx, Y(i - 1), Y(i), s);
+    const last = spans[spans.length - 1];
+    if (last && last.w === p[1] && last.hi === i - 1) last.hi = i; else spans.push({ w: p[1], lo: i, hi: i });
   });
-  sk.forEach((p, i) => { if (p[1]) drawWrap(c, p[1], cx, Y(i), s); });
+  spans.forEach(sp => { if (sp.hi > sp.lo) drawWrap2(c, sp.w, cx, Y(sp.hi), Y(sp.lo), s, 'back'); });
+  sk.forEach((p, i) => drawFood(c, p[0], cx, Y(i), s));
+  spans.forEach(sp => { if (sp.hi > sp.lo) drawWrap2(c, sp.w, cx, Y(sp.hi), Y(sp.lo), s, 'front'); else drawWrap(c, sp.w, cx, Y(sp.lo), s); });
   // 열어 둔 토핑 (아직 재료를 안 꽂음): 다음 자리에 흐리게
   if (o.pending && sk.length < 4) { c.save(); c.globalAlpha = .45; drawWrap(c, o.pending, cx, Y(sk.length), s); c.restore(); }
 }
@@ -613,7 +644,7 @@ function makeIcons() {
     const cv = document.createElement('canvas'); cv.width = cv.height = 96;
     const c = cv.getContext('2d');
     if (R.ING.includes(p)) drawFood(c, p, 48, 48, 66);
-    else { if (ART[p]) drawWrap(c, p, 48, 48, 66); else { c.save(); c.translate(48, 48); c.rotate(-.25); drawWrap(c, p, 0, 0, 72); c.restore(); } }
+    else { c.save(); c.translate(48, 48); c.rotate(-.8); drawWrap(c, p, 0, 0, 68); c.restore(); }
     ICON[p] = cv.toDataURL();
   });
   document.querySelectorAll('#pad img[data-p], #rulePieces img[data-p]').forEach(im => im.src = ICON[im.dataset.p]);
