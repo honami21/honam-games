@@ -150,8 +150,11 @@
   body.art-tile .tile.v { background-image:url(img/tile-v.png); }
   body.art-tile .tile.use { opacity:.28; }
   body.art-block .syl { background:url(img/block.png) center / 100% 100% no-repeat; border:none; box-shadow:none; padding-bottom:4px; }
-  body.art-mat #center { background:url(img/mat.png) center / 100% 100% no-repeat; border:none; padding:6% 7%; }
-  body.art-mat #center .empty { color:var(--ink); text-shadow:none; opacity:.6; }
+  body.art-mat #center { background:none; border-style:solid; border-width:34px; border-image:url(img/mat.png) 150 fill / 34px stretch; border-radius:0; padding:4px 6px; }
+  body.art-mat #center .empty { opacity:.55; }
+  body.art-mat .word { background:rgba(255,246,236,.14); }
+  body.art-mat .word.by-b { background:rgba(191,227,255,.85); } body.art-mat .word.by-w { background:rgba(255,201,214,.88); }
+  body.logo-art .start-ggobi { display:none; }
   /* 규칙 */
   .rules { text-align:left; font-size:16px; line-height:1.55; word-break:keep-all; max-height:56vh; overflow-y:auto; padding-right:4px; }
   .rules li { margin:0 0 6px 18px; }
@@ -177,7 +180,7 @@
 
   /* 알림 (차례 넘어감 등) */
   #toast { position:fixed; left:50%; top:40%; transform:translate(-50%,-50%); z-index:30; background:var(--cream); border:3px solid var(--ink); border-radius:20px;
-    box-shadow:0 5px 0 var(--ink); padding:10px 20px; font-size:20px; white-space:nowrap; pointer-events:none; opacity:0; transition:opacity .25s; }
+    box-shadow:0 5px 0 var(--ink); padding:10px 20px; font-size:20px; white-space:normal; word-break:keep-all; text-align:center; width:max-content; max-width:calc(100vw - 24px); pointer-events:none; opacity:0; transition:opacity .25s; }
   #toast.show { opacity:1; }
 
   /* ===== 결과 / 확인 창 ===== */
@@ -198,6 +201,7 @@
     .pcard .nm { font-size:16px; } .pcard .sub { font-size:11px; } .pcard .tm { font-size:18px; }
     .vs { font-size:17px; }
     #center { padding:8px; gap:8px; border-radius:16px; }
+    body.art-mat #center { border-width:22px; border-image-width:22px; padding:2px; }
     .syl { --sz:36px; }
     #handBox { padding:6px 6px 8px; border-radius:16px; }
     .tile { width:30px; height:36px; font-size:22px; border-radius:7px; }
@@ -274,7 +278,7 @@
   <div class="section">
     <div class="start-wrap">
       <div class="card">
-        <img class="logo hidden" id="logoImg" src="img/logo.png" alt="깨비샘의 낱말 뚝딱" onload="this.classList.remove('hidden');document.getElementById('logoText').classList.add('hidden')">
+        <img class="logo hidden" id="logoImg" src="img/logo.png" alt="깨비샘의 낱말 뚝딱" onload="this.classList.remove('hidden');document.getElementById('logoText').classList.add('hidden');document.body.classList.add('logo-art')">
         <h1 class="logo-text" id="logoText"><span class="a">깨비샘</span><span class="b">의</span> <span class="c">낱말 뚝딱</span></h1>
         <div class="box">
           <div class="field"><input id="nameInput" maxlength="8" placeholder="내 이름 (별명도 좋아요)" autocomplete="off"></div>
@@ -415,7 +419,7 @@ const $ = id => document.getElementById(id);
 // ---------- 사전 ----------
 let DICT = null, DICT_WORDS = null, DICT_LV = null, aiReady = false;
 const dictOk = w => !!DICT && DICT.has(w);
-const dictLoad = fetch('words.txt?v=2').then(r => { if (!r.ok) throw new Error('dict'); return r.text(); }).then(t => {
+const dictLoad = fetch('words.txt?v=3').then(r => { if (!r.ok) throw new Error('dict'); return r.text(); }).then(t => {
   DICT = new Set(); DICT_WORDS = []; DICT_LV = [];
   for (const line of t.split('\n')) {
     const [w, lv] = line.trim().split(/\s+/);
@@ -496,12 +500,12 @@ function nameOf(c) {
 const hand = c => (room && room.hands && room.hands[c]) || R.zero();
 const centerWords = d => (d.center || []).map(x => x.w);
 
-KBGM.init({ key:'words', tracks:{ play:'../audio/home-bgm.mp3' } });
+KBGM.init({ key:'words', tracks:{ lobby:'audio/bgm-lobby.mp3', play:'audio/bgm-play.mp3' }, start:'lobby' });
 KBGM.button({ after: $('sndToggle'), icon: SVG_MUSIC });
 let bgmJingled = false;
 function show(id) {
   ['startScreen', 'waitScreen', 'game'].forEach(s => $(s).classList.toggle('hidden', s !== id));
-  if (id !== 'game') KBGM.calm();
+  if (id !== 'game') { KBGM.track('lobby'); KBGM.full(); } else KBGM.track('play');
   const g = id === 'game';
   $('sideGgobi').classList.toggle('hidden', !g); $('sideRoom').classList.toggle('hidden', !g);
 }
