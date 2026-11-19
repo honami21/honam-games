@@ -1,4 +1,4 @@
-// 깨비샘의 꽃들의 전쟁: 섯다 (두 장 승부, 깨비샘 둘과 셋이)
+// 깨비의 꽃들의 전쟁: 섯다 (두 장 승부, 깨비 둘과 셋이)
 // 엽전은 진짜 돈이 아니에요. 기기에만 저장돼요.
 (() => {
 'use strict';
@@ -44,7 +44,7 @@ function judge(list) {   // list: [{i, e}]
   if (best === 890 || best === 900) { const t = list.filter(x => x.e.ah); if (t.length) return { win: t.map(x => x.i), special: '암행어사' }; }
   return { win: list.filter(x => x.e.s === best).map(x => x.i) };
 }
-// 깨비샘이 보는 패의 힘 (0~1)
+// 깨비가 보는 패의 힘 (0~1)
 function power(e) {
   if (e.s >= 1000) return 1; if (e.s >= 890) return .97; if (e.s === 810) return .95;
   if (e.s > 800) return .78 + (e.s - 800) * .018;

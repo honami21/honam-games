@@ -1,4 +1,4 @@
-// 깨비샘의 꽃들의 전쟁: 화면, 깨비샘(컴퓨터), 방 코드 대결
+// 깨비의 꽃들의 전쟁: 화면, 깨비(컴퓨터), 방 코드 대결
 (() => {
 'use strict';
 const $ = id => document.getElementById(id);
@@ -17,7 +17,7 @@ $('nameInput').value = store('hwatu-name') || store('cards-name') || '';
 // 그림 파일이 있으면 씀 (로고, 배경)
 const ART = {};
 function probe(name, src, fn) { const im = new Image(); im.onload = () => { ART[name] = true; fn && fn(); }; im.src = src; }
-probe('logo', 'img/logo.png', () => { $('logoBox').innerHTML = '<img class="logo" src="img/logo.png" alt="깨비샘의 꽃들의 전쟁">'; });
+probe('logo', 'img/logo.png', () => { $('logoBox').innerHTML = '<img class="logo" src="img/logo.png" alt="깨비의 꽃들의 전쟁">'; });
 probe('bg', 'img/bg.jpg', () => document.body.classList.add('art'));
 const TXT = ['jjok', 'ppuk', 'ttadak', 'sweep', 'go', 'stop', 'shake', 'bomb', 'chongtong', 'nagari', 'pibak'];
 TXT.forEach(n => probe('text-' + n, `img/text-${n}.png`));
@@ -113,7 +113,7 @@ let g = null, pendingG = null, animating = false;
 let room = null, code = '', ref = null, role = '', unsub = null, FB = null, busy = false;
 let shownCoin = null;
 let sel = -1, aiT = 0, shownRes = '', shownGs = '', ghostSet = new Set();
-const AI = [{ name: '깨비샘', av: 'avatar-ggaebisaem' }, { name: '깨순이', av: 'avatar-ggaesun' }];
+const AI = [{ name: '깨비', av: 'avatar-ggaebisaem' }, { name: '깨순이', av: 'avatar-ggaesun' }];
 const PAL = ['#ee5a6f', '#3a83e8', '#38b468'];
 const latest = () => pendingG || g;
 function meIdx(st = g) { if (!st) return -1; if (mode === 'cpu') return 0; return st.players.findIndex(p => p.id === myId); }
@@ -589,7 +589,7 @@ function doLocal(who, a) {
 }
 
 // ============================================================
-//  깨비샘 (컴퓨터)
+//  깨비 (컴퓨터)
 // ============================================================
 function aiTick() {
   clearTimeout(aiT);
@@ -1059,7 +1059,7 @@ $('helpList').innerHTML = `
   <h3>박</h3>
   <p>이긴 사람이 피로 점수를 냈는데 진 사람 피가 7장 이하면 <b>피박</b>, 광으로 점수를 냈는데 진 사람 광이 없으면 <b>광박</b>, 이긴 사람 열끗이 7장 이상이면 <b>멍박</b>. 하나마다 두 배예요.</p>
   <h3>엽전</h3>
-  <p>처음에 1만 냥을 들고 시작해요. 진 사람은 <b>점수 × 점당 판돈</b>만큼 이긴 사람에게 엽전을 줘요. 점당 100냥 판은 3천 냥, 1,000냥 판은 3만 냥이 있어야 들어갈 수 있어요. 엽전이 다 떨어지면 깨비샘이 하루 한 번 5천 냥을 줘요. 엽전은 이 기기에만 저장되고, 진짜 돈이 아니에요.</p>
+  <p>처음에 1만 냥을 들고 시작해요. 진 사람은 <b>점수 × 점당 판돈</b>만큼 이긴 사람에게 엽전을 줘요. 점당 100냥 판은 3천 냥, 1,000냥 판은 3만 냥이 있어야 들어갈 수 있어요. 엽전이 다 떨어지면 깨비가 하루 한 번 5천 냥을 줘요. 엽전은 이 기기에만 저장되고, 진짜 돈이 아니에요.</p>
   <h3>섯다</h3>
   <p>1월부터 10월까지 20장으로 두 장씩 받아요. 두 번째 패는 손가락으로 밀어 올려 <b>쪼아</b> 봐요. 판돈은 점당 판돈의 10배를 먼저 걸고, 차례대로 <b>체크</b>, <b>삥</b>, <b>콜</b>, <b>하프</b>(판돈 절반 더), <b>따당</b>(앞 사람의 두 배), <b>다이</b>(포기) 중에 골라요.</p>
   <p>족보: 38광땡 &gt; 18·13광땡 &gt; 장땡 &gt; 9땡 … 삥땡 &gt; 알리(1·2) &gt; 독사(1·4) &gt; 구삥(1·9) &gt; 장삥(1·10) &gt; 장사(10·4) &gt; 세륙(4·6) &gt; 갑오(9끗) … 망통(0끗).</p>
