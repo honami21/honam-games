@@ -88,7 +88,7 @@ function deal(g, now) {
     p.hand = deck.splice(0, handN).sort((a, b) => a - b);
     p.caps = []; p.go = 0; p.goAt = 0; p.shake = 0; p.bomb = 0; p.dummy = 0; p.ppuk = 0; p.score = 0; p.shown = [];
   });
-  g.floor = floor; g.deck = deck;
+  g.floor = floor; g.deck = deck; g.ppukBy = {};
   g.turn = g.starter % g.n; g.phase = 'play'; g.pend = null; g.last = null; g.res = null; g.turnAt = now || 0;
   g.log = [];
   // 총통: 손에 같은 달 4장
@@ -223,26 +223,28 @@ function flip(g, now) {
 function resolve(g, now) {
   const pd = g.pend, ev = pd.ev, who = g.turn, p = g.players[who];
   let doSteal = 0;
+  // 뻑 먹기: 내가 싼 뻑을 내가 먹으면 자뻑 (피 두 장씩)
+  const eatPpuk = m => { const by = g.ppukBy && g.ppukBy[m]; if (g.ppukBy) delete g.ppukBy[m]; if (by === who) { ev.tags.push('jappuk'); doSteal += 2; } else { ev.tags.push('ppukeat'); doSteal++; } };
   const hc = pd.hc, f = pd.f;
   const hm = hc != null ? MON(hc) : -1;
   const hk = pd.hm.length;
   if (hc != null && f != null && MON(f) === hm) {
     if (hk === 0) { take(g, who, []); p.caps.push(hc, f); ev.caps.push(hc, f); ev.tags.push('jjok'); doSteal++; }
-    else if (hk === 1) { g.floor.push(hc, f); ev.tags.push('ppuk'); p.ppuk++; ev.ppuk = hm; }
+    else if (hk === 1) { g.floor.push(hc, f); ev.tags.push('ppuk'); p.ppuk++; ev.ppuk = hm; (g.ppukBy = g.ppukBy || {})[hm] = who; }
     else if (hk === 2) { take(g, who, pd.hm); p.caps.push(hc, f); ev.caps.push(...pd.hm, hc, f); ev.tags.push('ttadak'); doSteal++; }
   } else {
     if (hc != null) {
       if (hk === 0) g.floor.push(hc);
       else if (hk === 1) { take(g, who, pd.hm); p.caps.push(hc); ev.caps.push(pd.hm[0], hc); }
       else if (hk === 2) { take(g, who, [pd.hPick]); p.caps.push(hc); ev.caps.push(pd.hPick, hc); }
-      else { take(g, who, pd.hm); p.caps.push(hc); ev.caps.push(...pd.hm, hc); ev.tags.push('ppukeat'); doSteal++; }
+      else { take(g, who, pd.hm); p.caps.push(hc); ev.caps.push(...pd.hm, hc); eatPpuk(hm); }
     }
     if (f != null) {
       const fm = pd.fm || [];
       if (fm.length === 0) g.floor.push(f);
       else if (fm.length === 1) { take(g, who, fm); p.caps.push(f); ev.caps.push(fm[0], f); }
       else if (fm.length === 2) { take(g, who, [pd.fPick]); p.caps.push(f); ev.caps.push(pd.fPick, f); }
-      else { take(g, who, fm); p.caps.push(f); ev.caps.push(...fm, f); ev.tags.push('ppukeat'); doSteal++; }
+      else { take(g, who, fm); p.caps.push(f); ev.caps.push(...fm, f); eatPpuk(MON(f)); }
     }
   }
   if (pd.bombDone) ev.tags.unshift('bomb');

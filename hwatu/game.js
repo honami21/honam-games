@@ -19,7 +19,7 @@ const ART = {};
 function probe(name, src, fn) { const im = new Image(); im.onload = () => { ART[name] = true; fn && fn(); }; im.src = src; }
 probe('logo', 'img/logo.webp', () => { $('logoBox').innerHTML = '<img class="logo" src="img/logo.webp" alt="깨비의 꽃들의 전쟁">'; });
 probe('bg', 'img/bg.jpg', () => document.body.classList.add('art'));
-const TXT = ['jjok', 'ppuk', 'ppukeat', 'ttadak', 'sweep', 'go', 'stop', 'shake', 'bomb', 'chongtong', 'nagari', 'pibak'];
+const TXT = ['jjok', 'ppuk', 'ppukeat', 'jappuk', 'ttadak', 'sweep', 'go', 'stop', 'shake', 'bomb', 'chongtong', 'nagari', 'pibak'];
 TXT.forEach(n => probe('text-' + n, `img/text-${n}.webp`));
 for (let n = 1; n <= 9; n++) probe('text-go' + n, `img/text-go${n}.webp`);
 ['fx-slam', 'fx-sparkle', 'fx-wisp'].forEach(n => probe(n, `img/${n}.webp`));
@@ -418,7 +418,7 @@ async function animate(old, ng) {
     await sleep(330);
   }
   // 3) 큰 글자 (먹기 전에)
-  const TAG = { jjok: ['쪽!', '', 'jjok'], ppuk: ['뻑!', 'red', 'ppuk'], ttadak: ['따닥!', '', 'ttadak'], sweep: ['싹쓸이!', 'mint', 'sweep'], ppukeat: ['뻑 먹기!', 'mint', 'ppukeat'] };
+  const TAG = { jjok: ['쪽!', '', 'jjok'], ppuk: ['뻑!', 'red', 'ppuk'], ttadak: ['따닥!', '', 'ttadak'], sweep: ['싹쓸이!', 'mint', 'sweep'], ppukeat: ['뻑 먹기!', 'mint', 'ppukeat'], jappuk: ['자뻑!', 'mint', 'jappuk'] };
   const tags = ev.tags.filter(t => TAG[t]);
   for (const t of tags) {
     bigPop(TAG[t][0], TAG[t][1], t === 'ppuk' ? '' : (ev.stole.length ? '피를 한 장씩 가져와요' : ''), TAG[t][2]);
@@ -1064,7 +1064,7 @@ const HELP = {
   <p>고를 했는데 상대가 먼저 나면 <b>고박</b>이라 두 배를 물어요.</p>
 <h3>특별한 일</h3>
   <p><b>쪽</b> · 낸 카드와 뒤집은 카드가 짝이 되면 가져오고, 모두에게 피를 한 장씩 받아요.</p>
-  <p><b>뻑</b> · 짝을 맞췄는데 뒤집은 카드도 같은 달이면 석 장이 바닥에 남아요. 나중에 남은 한 장으로 넉 장을 다 가져오면 피를 한 장씩 받아요.</p>
+  <p><b>뻑</b> · 짝을 맞췄는데 뒤집은 카드도 같은 달이면 석 장이 바닥에 남아요. 나중에 남은 한 장으로 넉 장을 다 가져오면 <b>뻑 먹기</b>로 피를 한 장씩 받아요. 내가 싼 뻑을 내가 먹으면 <b>자뻑</b>이라 피를 두 장씩 받아요.</p>
   <p><b>따닥</b> · 바닥의 두 장과 내 카드, 뒤집은 카드가 모두 같은 달이면 넉 장을 다 가져오고 피를 한 장씩 받아요.</p>
   <p><b>싹쓸이</b> · 바닥 카드를 모두 가져오면 피를 한 장씩 받아요.</p>
   <p><b>흔들기</b> · 같은 달 석 장을 들고 있고 바닥에 그 달이 없을 때, 보여 주고 내면 이겼을 때 점수가 두 배예요.</p>
@@ -1090,7 +1090,7 @@ const HELP = {
   <p>고를 했는데 다른 사람이 먼저 나면 <b>고박</b>이에요. 고를 외친 사람이 진 사람 몫까지 혼자 다 물어 줘요.</p>
 <h3>특별한 일</h3>
   <p><b>쪽</b> · 낸 카드와 뒤집은 카드가 짝이 되면 가져오고, 모두에게 피를 한 장씩 받아요.</p>
-  <p><b>뻑</b> · 짝을 맞췄는데 뒤집은 카드도 같은 달이면 석 장이 바닥에 남아요. 나중에 남은 한 장으로 넉 장을 다 가져오면 피를 한 장씩 받아요.</p>
+  <p><b>뻑</b> · 짝을 맞췄는데 뒤집은 카드도 같은 달이면 석 장이 바닥에 남아요. 나중에 남은 한 장으로 넉 장을 다 가져오면 <b>뻑 먹기</b>로 피를 한 장씩 받아요. 내가 싼 뻑을 내가 먹으면 <b>자뻑</b>이라 피를 두 장씩 받아요.</p>
   <p><b>따닥</b> · 바닥의 두 장과 내 카드, 뒤집은 카드가 모두 같은 달이면 넉 장을 다 가져오고 피를 한 장씩 받아요.</p>
   <p><b>싹쓸이</b> · 바닥 카드를 모두 가져오면 피를 한 장씩 받아요.</p>
   <p><b>흔들기</b> · 같은 달 석 장을 들고 있고 바닥에 그 달이 없을 때, 보여 주고 내면 이겼을 때 점수가 두 배예요.</p>
