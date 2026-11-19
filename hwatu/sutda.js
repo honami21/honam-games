@@ -60,6 +60,16 @@ function power(e) {
   const k = e.s - 500; return .08 + k * .055;
 }
 
+// 한 장만 보고 매기는 힘 (첫 번째 베팅)
+function power1(id) {
+  const m = MON(id);
+  if (isG(id)) return m === 3 ? .7 : .64;
+  if (m === 10) return .6; if (m === 1) return .55;
+  return .2 + m * .035 + (isY(id) ? .04 : 0);
+}
+// 땡값: 땡으로 이기면 나머지가 기본 판돈의 몇 배를 더 내요
+const ttMul = s => s >= 1000 ? 5 : s >= 890 ? 3 : s === 810 ? 2 : s >= 801 ? 1 : 0;
+
 // ---------- 상태 ----------
 let S = null, busy = false, aiT = 0, token = 0;
 const ME = 0;
@@ -83,12 +93,12 @@ async function startHand(regame) {
   clearTimeout(aiT);
   const st = S;
   if (!regame) {
-    st.hand++; st.dealer = (st.dealer + 1) % 3; st.pot = 0; st.ante = H.stake * 10; st.start = H.coin;
-    st.players.forEach(p => { p.fold = false; p.paid = 0; });
+    st.hand++; if (st.lastWin != null) st.dealer = st.lastWin; st.pot = 0; st.ante = H.stake * 10; st.start = H.coin;
+    st.players.forEach(p => { p.fold = false; p.out = false; p.paid = 0; p.tt = 0; });
   }
   st.players.forEach(p => { p.cards = []; p.bet = 0; p.acted = false; p.last = ''; p.peeled = !!p.ai; p.e = null; p.tag = ''; p.won = false; p.open = false; });
   H.setTrack('play'); if (regame) beep('tense');
-  st.maxBet = 0; st.raises = 0; st.phase = 'deal'; st.turn = -1; st.res = null; st.regame = regame;
+  st.maxBet = 0; st.raises = 0; st.phase = 'deal'; st.turn = -1; st.res = null; st.regame = regame; st.round = 1; st.sun = null;
   render();
   setStatus(regame ? '<b>재경기!</b> 판돈은 그대로, 패를 다시 받아요' : '판돈을 걸어요');
   // 기본 판돈
@@ -103,19 +113,27 @@ async function startHand(regame) {
     beep('coin');
     await sleep(450); if (my !== token) return;
   }
-  // 패 나누기
-  const deck = shuffle(DECK.slice());
+  // 패 나누기: 한 장씩 받고 걸고, 한 장 더 받고 또 걸어요
+  st.deck = shuffle(DECK.slice());
+  await dealRound(my, 0);
+}
+async function dealRound(my, round) {
+  const st = S;
+  st.phase = 'deal'; st.turn = -1; st.round = round + 1;
+  if (round) setStatus('<b>두 번째 패</b>를 받아요');
   const order = [1, 2, 0].map(k => (st.dealer + k) % 3).filter(i => !st.players[i].fold);
-  for (let round = 0; round < 2; round++) {
-    for (const i of order) {
-      st.players[i].cards.push(deck.pop());
-      render(); dealFx(i, round);
-      await sleep(170); if (my !== token) return;
-    }
+  for (const i of order) {
+    st.players[i].cards.push(st.deck.pop());
+    render(); dealFx(i, round);
+    await sleep(190); if (my !== token) return;
   }
   st.players.forEach(p => { if (p.cards.length === 2) p.e = evalH(p.cards[0], p.cards[1]); });
+  // 걸기는 선부터 (선이 다이했으면 선 다음 사람)
+  st.players.forEach(p => { p.bet = 0; p.acted = false; });
+  st.maxBet = 0; st.raises = 0;
+  st.sun = [0, 1, 2].map(k => (st.dealer + k) % 3).find(i => !st.players[i].fold);
   st.phase = 'bet';
-  st.turn = (order[0] + 2) % 3;
+  st.turn = (st.sun + 2) % 3;
   render();
   next();
 }
@@ -136,8 +154,9 @@ function options(i) {
   const canRaise = st.raises < 5;
   const add = (t, label, total) => { total = Math.min(total, cap); if (total <= st.maxBet && t !== 'call' && t !== 'check') return; o.push({ t, label, amt: Math.max(0, total - p.bet) }); };
   if (toCall <= 0) {
+    // 체크·삥은 선만 할 수 있어요. 선이 체크하면 다른 사람도 체크로 따라갈 수 있어요.
     o.push({ t: 'check', label: '체크', amt: 0 });
-    if (canRaise) { add('ppying', '삥', st.maxBet + roundU(st.ante)); add('half', '하프', st.maxBet + roundU(st.pot / 2)); }
+    if (canRaise) { if (i === st.sun) add('ppying', '삥', st.maxBet + roundU(st.ante)); add('half', '하프', st.maxBet + roundU(st.pot / 2)); }
   } else {
     o.push({ t: 'call', label: '콜', amt: Math.min(toCall, cap - p.bet) });
     if (canRaise) { add('half', '하프', st.maxBet + roundU((st.pot + toCall) / 2)); add('ddadang', '따당', st.maxBet * 2); }
@@ -173,8 +192,10 @@ function next() {
     if (d === 3 && !pending(k)) break;
     if (pending(k)) { st.turn = k; render(); if (st.players[k].ai) aiTurn(k); return; }
   }
-  // 모두 맞췄으면 패를 열어요
-  st.phase = 'show'; st.turn = -1; render();
+  // 모두 맞췄으면 첫 번째 걸기 뒤엔 한 장 더, 두 번째 걸기 뒤엔 패를 열어요
+  st.turn = -1;
+  if (st.round === 1) { st.phase = 'deal'; render(); const my = token; setTimeout(() => { if (my === token && S === st) dealRound(my, 1); }, 600); return; }
+  st.phase = 'show'; render();
   setTimeout(() => showdown(false), 600);
 }
 function aiTurn(i) {
@@ -188,7 +209,7 @@ function aiTurn(i) {
 function aiDecide(i) {
   const st = S, p = st.players[i], o = options(i), has = t => o.some(x => x.t === t);
   const lv = p.ai || 2, noise = lv === 1 ? .28 : lv === 2 ? .16 : .08;
-  let r = power(p.e) + rnd(-noise, noise);
+  let r = (st.round === 1 || !p.e ? power1(p.cards[0]) : power(p.e)) + rnd(-noise, noise);
   if (Math.random() < (lv === 3 ? .1 : .07)) r += .3;            // 가끔 허세
   const toCall = st.maxBet - p.bet;
   if (toCall <= 0) {
@@ -226,24 +247,44 @@ async function showdown(solo) {
     await sleep(1800); if (my !== token) return;
     startHand(true); return;
   }
-  st.phase = 'end'; st.res = res;
-  const wins = res.win, share = Math.floor(st.pot / wins.length);
+  if (res.win.length > 1) {   // 비기면 판돈은 그대로, 비긴 사람끼리 다시 해요
+    st.players.forEach((p, k) => { if (!p.fold && !res.win.includes(k)) { p.fold = true; p.out = true; } });
+    bigPop('무승부!', 'red', '비긴 사람끼리 재경기예요'); beep('shake'); flash('mint');
+    await sleep(1800); if (my !== token) return;
+    startHand(true); return;
+  }
+  st.phase = 'end'; st.res = res; st.lastWin = res.win[0];
+  const wins = res.win, share = st.pot;
   const wName = wins.map(k => k === ME ? '내' : st.players[k].name).join(', ');
   const wp = st.players[wins[0]];
+  // 땡값: 땡으로 이기면 다른 사람 모두(다이한 사람도)에게 기본 판돈의 몇 배를 더 받아요
+  const w = wins[0], mul = !solo && !res.special ? ttMul(wp.e.s) : 0;
+  let ttSum = 0;
+  if (mul) {
+    st.players.forEach((p, k) => {
+      if (k === w) return;
+      let a = st.ante * mul;
+      if (k === ME) { a = Math.min(a, H.coin); H.setCoin(H.coin - a); }
+      p.tt -= a; ttSum += a;
+    });
+    wp.tt += ttSum;
+    if (w === ME) H.setCoin(H.coin + ttSum);
+  }
   if (!solo) {
     const tx = res.special || wp.e.n;
-    bigPop(tx + '!', 'red', `${wins.includes(ME) && wins.length === 1 ? '내가' : wName + (wins.length > 1 ? ' 함께' : '이(가)')} 이겼어요`, JBI(tx));
+    bigPop(tx + '!', 'red', `${w === ME ? '내가' : wName + '이(가)'} 이겼어요${mul ? ` · 땡값 ${fmt(ttSum)}냥` : ''}`, JBI(tx));
     beep('stop'); flash('gold');
   }
   wins.forEach(k => { st.players[k].won = true; });
   render();
   await sleep(solo ? 200 : 900); if (my !== token) return;
   wins.forEach(k => flyCoins($('sdPile'), seatEl(k), 12, 55));
+  if (mul) st.players.forEach((p, k) => { if (k !== w) flyCoins(seatEl(k), seatEl(w), 5, 60); });
   if (wins.includes(ME)) H.setCoin(H.coin + share);
   st.pot = 0; bumpPot();
   setTimeout(() => { beep('coin'); }, 700);
   st.net = H.coin - st.start;
-  st.players.forEach((p, k) => { p.net += (wins.includes(k) ? share : 0) - p.paid; });
+  st.players.forEach((p, k) => { p.net += (wins.includes(k) ? share : 0) - p.paid + p.tt; });
   if (wins.includes(ME)) { beep('win'); H.charPop('ggaebi-lose'); } else { beep('lose'); if (SDWIN) H.charPop('ggaebi-sdwin'); }
   H.setTrack('play');
   await sleep(900); if (my !== token) return;
@@ -304,7 +345,7 @@ function render() {
     const p = st.players[i];
     const cards = p.cards.map(id => p.open ? cardH(id) : backH()).join('');
     return `<div class="seat ${st.turn === i ? 'turn' : ''} ${p.fold ? 'fold' : ''}" data-i="${i}">
-      <div class="top">${avatar(i)}<span class="nm">${esc(p.name)}</span>${p.fold ? '<span class="pt">다이</span>' : ''}<span class="sd-bet" style="margin-left:auto">${p.paid ? `건 돈 ${fmt(p.paid)}냥` : ''}</span></div>
+      <div class="top">${avatar(i)}<span class="nm">${esc(p.name)}</span>${(st.sun ?? st.dealer) === i ? '<span class="pt sun">선</span>' : ''}${p.fold ? `<span class="pt">${p.out ? '구경' : '다이'}</span>` : ''}<span class="sd-bet" style="margin-left:auto">${p.paid ? `건 돈 ${fmt(p.paid)}냥` : ''}</span></div>
       <div class="sd-cards">${cards}</div>${p.tag ? `<span class="sd-tag ${p.won ? 'win' : ''}">${esc(p.tag)}</span>` : ''}</div>`;
   }).join('');
   // 나
@@ -312,7 +353,7 @@ function render() {
   $('sdMe').classList.toggle('turn', st.turn === ME);
   $('sdMe').classList.toggle('fold', !!m.fold);
   $('sdMeAv').outerHTML = `<span class="av" id="sdMeAv" style="background:${PAL[0]}">${esc((m.name || '?').slice(0, 1))}</span>`;
-  $('sdMeName').textContent = m.name;
+  $('sdMeName').innerHTML = esc(m.name) + ((st.sun ?? st.dealer) === ME ? ' <span class="pt sun">선</span>' : '');
   $('sdMeBet').textContent = m.paid ? `건 돈 ${fmt(m.paid)}냥` : '';
   if (!counting) $('sdCoin').innerHTML = `${YP}${fmt(H.coin)}냥`;
   const hand = $('sdHand');
@@ -333,12 +374,12 @@ function render() {
   // 버튼
   let h = '';
   if (st.phase === 'bet' && st.turn === ME) {
-    if (!m.peeled) { h = ''; setStatus('<b>내 차례</b> · 먼저 두 번째 패를 쪼아 봐요'); }
+    if (!m.peeled && m.cards.length === 2) { h = ''; setStatus('<b>내 차례</b> · 먼저 두 번째 패를 쪼아 봐요'); }
     else {
       const o = options(ME);
       const cls = { check: 'btn-sky', ppying: 'btn-mint', call: 'btn-sky', half: 'btn-info', ddadang: 'btn-primary', die: 'btn-secondary' };
       h = o.map((x, k) => `<button class="game-btn ${cls[x.t]}" data-t="${x.t}"><span>${x.label}</span><small>${x.amt ? fmt(x.amt) + '냥' : x.t === 'die' ? '포기' : '그냥 넘기기'}</small><span class="kn">${k + 1}</span></button>`).join('');
-      setStatus(`<b>내 차례</b>${st.maxBet - m.bet > 0 ? ` · 따라가려면 ${fmt(st.maxBet - m.bet)}냥` : ''}`);
+      setStatus(`<b>내 차례</b>${st.round === 1 ? ' · 한 장 보고 걸기' : ''}${st.maxBet - m.bet > 0 ? ` · 따라가려면 ${fmt(st.maxBet - m.bet)}냥` : ''}`);
     }
   } else if (st.phase === 'bet') {
     if (st.turn >= 0) setStatus(`${esc(st.players[st.turn].name)} 차례<span class="dots"></span>`);
@@ -441,5 +482,5 @@ addEventListener('keydown', e => {
   if (e.key === 'Enter' && S.phase === 'end') { const b = btns.find(x => x.dataset.t === 'next' || x.dataset.t === 'refill'); if (b) { e.preventDefault(); b.click(); } }
 });
 
-window.__sd = { get S() { return S; }, evalH, judge, act, newTable };
+window.__sd = { get S() { return S; }, evalH, judge, act, newTable, showdown };
 })();
