@@ -80,6 +80,7 @@ async function startHand(regame) {
     st.players.forEach(p => { p.fold = false; p.paid = 0; });
   }
   st.players.forEach(p => { p.cards = []; p.bet = 0; p.acted = false; p.last = ''; p.peeled = !!p.ai; p.e = null; p.tag = ''; p.won = false; p.open = false; });
+  H.setTrack(regame ? 'tense' : 'play');
   st.maxBet = 0; st.raises = 0; st.phase = 'deal'; st.turn = -1; st.res = null; st.regame = regame;
   render();
   setStatus(regame ? '<b>재경기!</b> 판돈은 그대로, 패를 다시 받아요' : '판돈을 걸어요');
@@ -145,7 +146,7 @@ async function act(i, t) {
   if (t === 'die') { p.fold = true; beep('ppuk'); }
   else if (op.amt > 0) {
     pay(i, op.amt); p.bet += op.amt;
-    if (p.bet > st.maxBet) { st.maxBet = p.bet; st.raises++; st.players.forEach((q, k) => { if (k !== i) q.acted = false; }); }
+    if (p.bet > st.maxBet) { st.maxBet = p.bet; st.raises++; if (st.raises >= 2) H.setTrack('tense'); st.players.forEach((q, k) => { if (k !== i) q.acted = false; }); }
     if (t === 'ddadang') { beep('go'); flash('red'); slam(centerOf($('sdPot')), 1.6, $('sdMid')); }
     else if (t === 'half') { beep('go'); slam(centerOf($('sdPot')), 1, $('sdMid')); }
     else beep('coin');
@@ -236,7 +237,8 @@ async function showdown(solo) {
   setTimeout(() => { beep('coin'); }, 700);
   st.net = H.coin - st.start;
   st.players.forEach((p, k) => { p.net += (wins.includes(k) ? share : 0) - p.paid; });
-  if (wins.includes(ME)) { try { KBGM.jingle(); } catch (e) {} beep('win'); } else beep('lose');
+  if (wins.includes(ME)) { try { KBGM.jingle(); } catch (e) {} beep('win'); H.charPop('ggaebi-lose'); } else { beep('lose'); H.charPop('ggaebi-win'); }
+  H.setTrack('play');
   await sleep(900); if (my !== token) return;
   coinCount();
   render();
