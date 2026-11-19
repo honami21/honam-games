@@ -383,10 +383,12 @@
   #sdMe { flex:none; background:rgba(255,246,236,.94); border:3px solid var(--ink); border-radius:16px; padding:6px 10px 8px; display:flex; flex-direction:column; gap:6px; position:relative; }
   #sdMe.turn, #sdOpps .seat.turn { background:#fff1c9; box-shadow:0 0 0 4px var(--sun); }
   #sdMe .top { display:flex; align-items:center; gap:6px; } #sdMe .top .nm { font-size:17px; } #sdMe .top .sp { margin-left:auto; }
-  .sd-hand-row { display:flex; align-items:center; justify-content:center; gap:16px; }
+  .sd-row { display:flex; align-items:center; justify-content:center; gap:clamp(12px,3vw,36px); flex-wrap:wrap; min-height:calc(var(--hw2) * 1.3333 + 4px); --hw2:clamp(70px, min(13vw, 18vh), 128px); }
+  .sd-hand-row { display:flex; align-items:center; justify-content:center; gap:12px; }
+  .sd-acts:empty { display:none; }
   .sd-hand { display:flex; gap:10px; }
-  .sd-hand .ht { --w:clamp(70px, min(13vw, 15vh), 128px); }
-  .sd-hname { font-size:clamp(22px,4vw,32px); color:var(--coral); -webkit-text-stroke:4px var(--ink); paint-order:stroke fill; min-width:4em; text-align:center; }
+  .sd-hand .ht { --w:var(--hw2); }
+  .sd-hname { font-size:clamp(20px,3.4vw,30px); color:var(--coral); -webkit-text-stroke:4px var(--ink); paint-order:stroke fill; min-width:4em; text-align:center; white-space:nowrap; }
   .sd-hname.top { color:var(--sun); }
   .sd-hname img { display:block; height:clamp(48px,9vw,80px); width:auto; max-width:38vw; object-fit:contain; margin:0 auto; }
   @media (max-height:520px) { .sd-hname img { height:44px; } }
@@ -411,11 +413,11 @@
     .pot-pile { width:90px; height:36px; } .pot-pile .yp { font-size:18px; } .pot-n { font-size:24px; } .pot-lb { font-size:13px; }
     #sdMe { padding:3px 8px 5px; gap:3px; }
     #sdMe .av { width:26px; height:26px; }
-    .sd-hand .ht { --w:clamp(52px, 17vh, 76px); } .sd-hname { font-size:20px; min-width:3.4em; }
+    .sd-row { --hw2:clamp(52px, 17vh, 76px); } .sd-hname { font-size:20px; min-width:3.4em; }
     .sd-acts { gap:6px; } .sd-acts .game-btn { padding:4px 10px; font-size:15px; }
     #sdStatus { font-size:15px; min-height:24px; padding:2px 12px; }
   }
-  @media (max-width:640px) { .sd-hand .ht { --w:clamp(70px, 22vw, 96px); } #sdOpps .seat .sd-cards .ht { --w:40px; } .pot-pile{ width:110px; height:52px; } }
+  @media (max-width:640px) { .sd-row { --hw2:clamp(70px, 22vw, 96px); } #sdOpps .seat .sd-cards .ht { --w:40px; } .pot-pile{ width:110px; height:52px; } }
 
   .gi { width:1.15em; height:1.15em; vertical-align:-.2em; margin-right:2px; }
   .grp b .gi { width:14px; height:14px; margin-right:1px; vertical-align:-3px; }
@@ -481,11 +483,13 @@
   </div>
   <div id="sdMe">
     <div class="top"><span class="av" id="sdMeAv"></span><span class="nm" id="sdMeName"></span><span class="sd-bet" id="sdMeBet"></span><span class="sp"><span class="coinchip" id="sdCoin"></span></span></div>
-    <div class="sd-hand-row">
-      <div class="sd-hand" id="sdHand"></div>
-      <div class="sd-hname" id="sdHName"></div>
+    <div class="sd-row">
+      <div class="sd-hand-row">
+        <div class="sd-hand" id="sdHand"></div>
+        <div class="sd-hname" id="sdHName"></div>
+      </div>
+      <div class="sd-acts" id="sdActs"></div>
     </div>
-    <div class="sd-acts" id="sdActs"></div>
   </div>
 </div>
 <div id="charPop"></div>
