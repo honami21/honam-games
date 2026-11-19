@@ -1,0 +1,13 @@
+{
+  "name": "꽃들의 전쟁",
+  "short_name": "꽃들의 전쟁",
+  "start_url": "/hwatu/",
+  "scope": "/hwatu/",
+  "display": "browser",
+  "background_color": "#0b1640",
+  "theme_color": "#0b1640",
+  "icons": [
+    { "src": "/hwatu/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/hwatu/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
