@@ -390,7 +390,8 @@
   .sd-hand .ht { --w:var(--hw2); }
   .sd-hname { font-size:clamp(20px,3.4vw,30px); color:var(--coral); -webkit-text-stroke:4px var(--ink); paint-order:stroke fill; min-width:4em; text-align:center; white-space:nowrap; }
   .sd-hname.top { color:var(--sun); }
-  .sd-hname img { display:block; height:clamp(48px,9vw,80px); width:auto; max-width:38vw; object-fit:contain; margin:0 auto; }
+  .sd-hname:has(img) { width:clamp(120px,17vw,200px); min-width:0; }
+  .sd-hname img { display:block; height:clamp(48px,9vw,80px); width:100%; object-fit:contain; margin:0 auto; }
   @media (max-height:520px) { .sd-hname img { height:44px; } }
   /* 쪼기: 뒷면을 위로 밀어 올려 앞면을 조금씩 봐요 */
   .peel { position:relative; overflow:hidden; border-radius:calc(var(--w) * .08); touch-action:none; cursor:grab; }
