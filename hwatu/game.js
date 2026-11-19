@@ -113,6 +113,7 @@ function beep(k) {
     else if (k === 'turn') { tone(880, 0, .12, 'triangle', .18); tone(1320, .1, .18, 'triangle', .15); }
     else if (k === 'go') { noise(0, .05, .8, 1100); tone(392, 0, .14, 'sawtooth', .12); tone(523, .1, .14, 'sawtooth', .12); tone(784, .2, .3, 'sawtooth', .14); tone(784, .2, .3, 'triangle', .2); }
     else if (k === 'win') { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, i * .11, .32, 'triangle', .22)); }
+    else if (k === 'tense') { tone(98, 0, .35, 'sine', .6, 60); noise(0, .1, .6, 700); tone(98, .32, .35, 'sine', .6, 60); noise(.32, .1, .6, 700); [523, 554].forEach((f, i) => tone(f, .62 + i * .02, .5, 'sawtooth', .07)); }   // 둥둥 하는 짧은 긴장 효과음
     else if (k === 'lose') { [392, 330, 262].forEach((f, i) => tone(f, i * .16, .35, 'sine', .2)); }
     else if (k === 'coin') { const f = 2200 + Math.random() * 900; tone(f, 0, .09, 'triangle', .07); tone(f * 1.5, .02, .12, 'sine', .05); }   // 엽전 짤랑
     else if (k === 'tick') { tone(1800 + Math.random() * 300, 0, .03, 'square', .025); }
@@ -129,7 +130,7 @@ KBGM.button({ after: $('sndToggle'), icon: SVG_MUSIC });
 let mode = null;              // 'cpu' | 'online'
 let g = null, pendingG = null, animating = false;
 let room = null, code = '', ref = null, role = '', unsub = null, FB = null, busy = false;
-let shownCoin = null;
+let shownCoin = null, hotShown = '';
 let sel = -1, aiT = 0, shownRes = '', shownGs = '', ghostSet = new Set();
 const AI = [{ name: '깨비', av: 'avatar-ggaebisaem' }, { name: '깨순이', av: 'avatar-ggaesun' }];
 const PAL = ['#ee5a6f', '#3a83e8', '#38b468'];
@@ -475,8 +476,9 @@ function after() {
     if (shownGs !== k) { shownGs = k; bigPop(`${lg.n}고!`, 'red', `${nmS(lg.who, st)} ${lg.n}고를 외쳤어요`, ART['text-go' + lg.n] ? 'go' + lg.n : lg.n === 1 ? 'go' : ''); beep('go'); flash('red'); bubble(lg.who, `${lg.n}고!`); if (st.players[lg.who].ai) charPop('ggaebi-go'); }
   }
   // 긴장될 때 음악: 2고 넘었거나 누가 거의 다 났을 때
+  // 음악은 바꾸지 않고, 처음 긴장될 때 짧은 효과음만
   const hot = st.phase !== 'end' && st.players.some(q => q.go >= 2 || scoreOf(q.caps).total >= st.goal - 1);
-  setTrack(hot ? 'tense' : 'play');
+  const hk = `${st.gid}`; if (hot && hotShown !== hk) { hotShown = hk; beep('tense'); }
   if (st.phase === 'end') { showResult(); return; }
   if (st.phase === 'gostop' && st.turn === me) showGs(); else $('gsModal').classList.add('hidden');
   if (st.phase === 'pick' && st.turn === me) showPick(); else $('pickModal').classList.add('hidden');
@@ -786,7 +788,7 @@ function showResult() {
     else text = `${r.sum}점을 얻었어요.`;
   }
   if (r.why !== 'left' && !r.nagari) {
-    if (w === me) { beep('win'); KBGM.jingle(); } else if (me >= 0) { beep('lose'); img = 'ggaebi-win'; }
+    if (w === me) { beep('win'); } else if (me >= 0) { beep('lose'); img = 'ggaebi-win'; }
     bigPop(r.why === 'chongtong' ? '총통!' : r.why === 'ppuk3' ? '쓰리뻑!' : '스톱!', 'red', '', r.why === 'chongtong' ? 'chongtong' : r.why === 'ppuk3' ? 'ppuk3' : 'stop'); beep('stop'); flash('gold');
     if (r.rows.some(x => x.bak.includes('피박'))) setTimeout(() => { bigPop('피박!', 'red', '', 'pibak'); beep('ppuk'); }, 1100);
   }
