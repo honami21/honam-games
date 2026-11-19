@@ -18,7 +18,7 @@ const JBC = n => 'sd-' + (JBN[n] || (/^(\d)땡$/.test(n) ? 'ddang' + n[0] : /^(\
 const JBA = {};
 const JBI = n => { const c = JBC(n); return JBA[c] ? `img/${c}.webp` : ''; };
 let SDWIN = false; { const im = new Image(); im.onload = () => { SDWIN = true; }; im.src = 'img/ggaebi-sdwin.webp'; }   // 섯다용 깨비 승리 그림 (스톱 글자 없는 것)
-[...Object.values(JBN), ...[2, 3, 4, 5, 6, 7, 8, 9].map(k => 'ddang' + k), ...[1, 2, 3, 4, 5, 6, 7, 8].map(k => 'kkut' + k)].forEach(c => { const im = new Image(); im.onload = () => { JBA['sd-' + c] = true; }; im.src = `img/sd-${c}.webp`; });
+[...Object.values(JBN), ...[2, 3, 4, 5, 6, 7, 8, 9].map(k => 'ddang' + k), ...[1, 2, 3, 4, 5, 6, 7, 8].map(k => 'kkut' + k), ...[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(k => 'm' + k)].forEach(c => { const im = new Image(); im.onload = () => { JBA['sd-' + c] = true; }; im.src = `img/sd-${c}.webp`; });
 const SPECIAL = { '1-2': [706, '알리'], '1-4': [705, '독사'], '1-9': [704, '구삥'], '1-10': [703, '장삥'], '4-10': [702, '장사'], '4-6': [701, '세륙'] };
 function evalH(a, b) {
   const ma = MON(a), mb = MON(b), lo = Math.min(ma, mb), hi = Math.max(ma, mb);
@@ -87,7 +87,7 @@ async function startHand(regame) {
     st.players.forEach(p => { p.fold = false; p.paid = 0; });
   }
   st.players.forEach(p => { p.cards = []; p.bet = 0; p.acted = false; p.last = ''; p.peeled = !!p.ai; p.e = null; p.tag = ''; p.won = false; p.open = false; });
-  H.setTrack(regame ? 'tense' : 'play');
+  H.setTrack('play'); if (regame) beep('tense');
   st.maxBet = 0; st.raises = 0; st.phase = 'deal'; st.turn = -1; st.res = null; st.regame = regame;
   render();
   setStatus(regame ? '<b>재경기!</b> 판돈은 그대로, 패를 다시 받아요' : '판돈을 걸어요');
@@ -153,7 +153,7 @@ async function act(i, t) {
   if (t === 'die') { p.fold = true; beep('ppuk'); }
   else if (op.amt > 0) {
     pay(i, op.amt); p.bet += op.amt;
-    if (p.bet > st.maxBet) { st.maxBet = p.bet; st.raises++; if (st.raises >= 2) H.setTrack('tense'); st.players.forEach((q, k) => { if (k !== i) q.acted = false; }); }
+    if (p.bet > st.maxBet) { st.maxBet = p.bet; st.raises++; if (st.raises === 2) beep('tense'); st.players.forEach((q, k) => { if (k !== i) q.acted = false; }); }
     if (t === 'ddadang') { beep('go'); flash('red'); slam(centerOf($('sdPot')), 1.6, $('sdMid')); }
     else if (t === 'half') { beep('go'); slam(centerOf($('sdPot')), 1, $('sdMid')); }
     else beep('coin');
@@ -244,7 +244,7 @@ async function showdown(solo) {
   setTimeout(() => { beep('coin'); }, 700);
   st.net = H.coin - st.start;
   st.players.forEach((p, k) => { p.net += (wins.includes(k) ? share : 0) - p.paid; });
-  if (wins.includes(ME)) { try { KBGM.jingle(); } catch (e) {} beep('win'); H.charPop('ggaebi-lose'); } else { beep('lose'); if (SDWIN) H.charPop('ggaebi-sdwin'); }
+  if (wins.includes(ME)) { beep('win'); H.charPop('ggaebi-lose'); } else { beep('lose'); if (SDWIN) H.charPop('ggaebi-sdwin'); }
   H.setTrack('play');
   await sleep(900); if (my !== token) return;
   coinCount();
@@ -327,7 +327,7 @@ function render() {
   }
   const hn = $('sdHName');
   if (m.cards.length === 2 && m.peeled && m.e) { const c = JBC(m.e.n); if (JBA[c]) hn.innerHTML = `<img src="img/${c}.webp" alt="${esc(m.e.n)}">`; else hn.textContent = m.e.n; hn.classList.toggle('top', m.e.s >= 701 || m.e.tj || m.e.ah); }
-  else if (m.cards.length) { hn.textContent = `${MON(m.cards[0])}월`; hn.classList.remove('top'); }
+  else if (m.cards.length) { const mo = MON(m.cards[0]); if (JBA['sd-m' + mo]) hn.innerHTML = `<img src="img/sd-m${mo}.webp" alt="${mo}월">`; else hn.textContent = `${mo}월`; hn.classList.remove('top'); }
   else hn.textContent = '';
   if (m.won && st.phase === 'end') hn.classList.add('top');
   // 버튼
