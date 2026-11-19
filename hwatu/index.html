@@ -367,7 +367,7 @@
   #sdOpps .seat { max-width:420px; }
   .sd-cards { display:flex; gap:6px; justify-content:center; padding:2px 0 4px; min-height:calc(var(--sw,58px) * 1.3333 + 6px); }
   .sd-cards .ht { --w:var(--sw,58px); }
-  .seat.fold, #sdMe.fold { opacity:.55; }
+  .seat.fold { opacity:.55; } #sdMe.fold .top, #sdMe.fold .sd-hand-row { opacity:.55; }
   .seat .sd-bet, .sd-bet { font-size:14px; color:var(--ink2); white-space:nowrap; }
   .sd-tag { position:absolute; left:50%; bottom:-14px; transform:translateX(-50%); background:var(--ink); color:var(--sun); border-radius:12px; padding:1px 10px; font-size:15px; white-space:nowrap; z-index:3; }
   .sd-tag.win { background:var(--coral); color:#fff; }
@@ -378,15 +378,21 @@
   .pot-lb { color:#fff; font-size:16px; opacity:.85; }
   .pot-n { color:var(--sun); font-size:clamp(28px,5vw,40px); -webkit-text-stroke:4px var(--ink); paint-order:stroke fill; line-height:1; }
   .pot-n.bump { animation:pop .35s ease-out; }
-  #sdStatus { flex:none; align-self:center; background:rgba(10,30,20,.55); border-radius:14px; padding:3px 14px; min-height:28px; font-size:clamp(16px,2.6vw,19px); color:#fff; text-align:center; word-break:keep-all; }
+  #sdStatus:empty { visibility:hidden; }
+  #sdStatus { flex:none; align-self:center; margin-bottom:10px; background:rgba(10,30,20,.55); border-radius:14px; padding:3px 14px; min-height:28px; font-size:clamp(16px,2.6vw,19px); color:#fff; text-align:center; word-break:keep-all; }
   #sdMe { flex:none; background:rgba(255,246,236,.94); border:3px solid var(--ink); border-radius:16px; padding:6px 10px 8px; display:flex; flex-direction:column; gap:6px; position:relative; }
   #sdMe.turn, #sdOpps .seat.turn { background:#fff1c9; box-shadow:0 0 0 4px var(--sun); }
   #sdMe .top { display:flex; align-items:center; gap:6px; } #sdMe .top .nm { font-size:17px; } #sdMe .top .sp { margin-left:auto; }
-  .sd-hand-row { display:flex; align-items:center; justify-content:center; gap:16px; }
+  .sd-row { display:flex; align-items:center; justify-content:center; gap:clamp(12px,3vw,36px); flex-wrap:wrap; min-height:calc(var(--hw2) * 1.3333 + 4px); --hw2:clamp(70px, min(13vw, 18vh), 128px); }
+  .sd-hand-row { display:flex; align-items:center; justify-content:center; gap:12px; }
+  .sd-acts:empty { display:none; }
   .sd-hand { display:flex; gap:10px; }
-  .sd-hand .ht { --w:clamp(84px, 13vw, 128px); }
-  .sd-hname { font-size:clamp(22px,4vw,32px); color:var(--coral); -webkit-text-stroke:4px var(--ink); paint-order:stroke fill; min-width:4em; text-align:center; }
+  .sd-hand .ht { --w:var(--hw2); }
+  .sd-hname { font-size:clamp(20px,3.4vw,30px); color:var(--coral); -webkit-text-stroke:4px var(--ink); paint-order:stroke fill; min-width:4em; text-align:center; white-space:nowrap; }
   .sd-hname.top { color:var(--sun); }
+  .sd-hname:has(img) { width:clamp(120px,17vw,200px); min-width:0; }
+  .sd-hname img { display:block; height:clamp(48px,9vw,80px); width:100%; object-fit:contain; margin:0 auto; }
+  @media (max-height:520px) { .sd-hname img { height:44px; } }
   /* 쪼기: 뒷면을 위로 밀어 올려 앞면을 조금씩 봐요 */
   .peel { position:relative; overflow:hidden; border-radius:calc(var(--w) * .08); touch-action:none; cursor:grab; }
   .peel .ht { position:absolute; left:0; top:0; }
@@ -406,13 +412,13 @@
     #sdOpps .seat { padding:2px 8px; } #sdOpps .seat .av { width:26px; height:26px; }
     .sd-cards { --sw:30px; min-height:44px; padding:0; }
     .pot-pile { width:90px; height:36px; } .pot-pile .yp { font-size:18px; } .pot-n { font-size:24px; } .pot-lb { font-size:13px; }
-    #sdMe { display:grid; grid-template-columns:auto 1fr; grid-template-rows:auto auto; padding:3px 8px 5px; gap:2px 10px; }
-    #sdMe .top { grid-column:1 / -1; } #sdMe .av { width:26px; height:26px; }
-    .sd-hand .ht { --w:clamp(52px, 17vh, 76px); } .sd-hname { font-size:20px; min-width:3.4em; }
-    .sd-acts { align-self:center; justify-content:flex-end; gap:6px; } .sd-acts .game-btn { padding:5px 10px; font-size:15px; }
+    #sdMe { padding:3px 8px 5px; gap:3px; }
+    #sdMe .av { width:26px; height:26px; }
+    .sd-row { --hw2:clamp(52px, 17vh, 76px); } .sd-hname { font-size:20px; min-width:3.4em; }
+    .sd-acts { gap:6px; } .sd-acts .game-btn { padding:4px 10px; font-size:15px; }
     #sdStatus { font-size:15px; min-height:24px; padding:2px 12px; }
   }
-  @media (max-width:640px) { .sd-hand .ht { --w:clamp(70px, 22vw, 96px); } #sdOpps .seat .sd-cards .ht { --w:40px; } .pot-pile{ width:110px; height:52px; } }
+  @media (max-width:640px) { .sd-row { --hw2:clamp(70px, 22vw, 96px); } #sdOpps .seat .sd-cards .ht { --w:40px; } .pot-pile{ width:110px; height:52px; } }
 
   .gi { width:1.15em; height:1.15em; vertical-align:-.2em; margin-right:2px; }
   .grp b .gi { width:14px; height:14px; margin-right:1px; vertical-align:-3px; }
@@ -474,16 +480,17 @@
 <div id="sutda" class="hidden">
   <div id="sdOpps"></div>
   <div id="sdMid">
-    <div id="sdPot"><div class="pot-pile" id="sdPile"></div><div class="pot-lb">판돈</div><div class="pot-n" id="sdPotN">0냥</div></div>
+    <div id="sdPot"><div id="sdStatus"></div><div class="pot-pile" id="sdPile"></div><div class="pot-lb">판돈</div><div class="pot-n" id="sdPotN">0냥</div></div>
   </div>
-  <div id="sdStatus"></div>
   <div id="sdMe">
     <div class="top"><span class="av" id="sdMeAv"></span><span class="nm" id="sdMeName"></span><span class="sd-bet" id="sdMeBet"></span><span class="sp"><span class="coinchip" id="sdCoin"></span></span></div>
-    <div class="sd-hand-row">
-      <div class="sd-hand" id="sdHand"></div>
-      <div class="sd-hname" id="sdHName"></div>
+    <div class="sd-row">
+      <div class="sd-hand-row">
+        <div class="sd-hand" id="sdHand"></div>
+        <div class="sd-hname" id="sdHName"></div>
+      </div>
+      <div class="sd-acts" id="sdActs"></div>
     </div>
-    <div class="sd-acts" id="sdActs"></div>
   </div>
 </div>
 <div id="charPop"></div>

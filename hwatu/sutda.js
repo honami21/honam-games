@@ -12,6 +12,12 @@ const DECK = []; for (let m = 1; m <= 10; m++) DECK.push((m - 1) * 4, (m - 1) * 
 const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
 // ---------- 족보 ----------
+// 족보 이름 글자 그림 (img/sd-*.webp 가 있으면 그림으로)
+const JBN = { '38광땡': '38gwang', '18광땡': '18gwang', '13광땡': '13gwang', '장땡': 'jangddang', '삥땡': 'bbingddang', '알리': 'ali', '독사': 'doksa', '구삥': 'gubbing', '장삥': 'jangbbing', '장사': 'jangsa', '세륙': 'seryuk', '갑오': 'gabo', '망통': 'mangtong', '땡잡이': 'ddangjabi', '암행어사': 'amhaeng', '구사': 'gusa', '멍텅구리 구사': 'mgusa' };
+const JBC = n => 'sd-' + (JBN[n] || (/^(\d)땡$/.test(n) ? 'ddang' + n[0] : /^(\d)끗$/.test(n) ? 'kkut' + n[0] : 'x'));
+const JBA = {};
+let SDWIN = false; { const im = new Image(); im.onload = () => { SDWIN = true; }; im.src = 'img/ggaebi-sdwin.webp'; }   // 섯다용 깨비 승리 그림 (스톱 글자 없는 것)
+[...Object.values(JBN), ...[2, 3, 4, 5, 6, 7, 8, 9].map(k => 'ddang' + k), ...[1, 2, 3, 4, 5, 6, 7, 8].map(k => 'kkut' + k)].forEach(c => { const im = new Image(); im.onload = () => { JBA['sd-' + c] = true; }; im.src = `img/sd-${c}.webp`; });
 const SPECIAL = { '1-2': [706, '알리'], '1-4': [705, '독사'], '1-9': [704, '구삥'], '1-10': [703, '장삥'], '4-10': [702, '장사'], '4-6': [701, '세륙'] };
 function evalH(a, b) {
   const ma = MON(a), mb = MON(b), lo = Math.min(ma, mb), hi = Math.max(ma, mb);
@@ -237,7 +243,7 @@ async function showdown(solo) {
   setTimeout(() => { beep('coin'); }, 700);
   st.net = H.coin - st.start;
   st.players.forEach((p, k) => { p.net += (wins.includes(k) ? share : 0) - p.paid; });
-  if (wins.includes(ME)) { try { KBGM.jingle(); } catch (e) {} beep('win'); H.charPop('ggaebi-lose'); } else { beep('lose'); H.charPop('ggaebi-win'); }
+  if (wins.includes(ME)) { try { KBGM.jingle(); } catch (e) {} beep('win'); H.charPop('ggaebi-lose'); } else { beep('lose'); if (SDWIN) H.charPop('ggaebi-sdwin'); }
   H.setTrack('play');
   await sleep(900); if (my !== token) return;
   coinCount();
@@ -319,7 +325,7 @@ function render() {
     sizePeel();
   }
   const hn = $('sdHName');
-  if (m.cards.length === 2 && m.peeled && m.e) { hn.textContent = m.e.n; hn.classList.toggle('top', m.e.s >= 701 || m.e.tj || m.e.ah); }
+  if (m.cards.length === 2 && m.peeled && m.e) { const c = JBC(m.e.n); if (JBA[c]) hn.innerHTML = `<img src="img/${c}.webp" alt="${esc(m.e.n)}">`; else hn.textContent = m.e.n; hn.classList.toggle('top', m.e.s >= 701 || m.e.tj || m.e.ah); }
   else if (m.cards.length) { hn.textContent = `${MON(m.cards[0])}월`; hn.classList.remove('top'); }
   else hn.textContent = '';
   if (m.won && st.phase === 'end') hn.classList.add('top');
