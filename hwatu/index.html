@@ -94,6 +94,44 @@
   .mode-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .mode-row .game-btn { min-width:0; padding:10px 6px; font-size:clamp(15px,2.4vw,18px); white-space:normal; line-height:1.2; word-break:keep-all; }
   .mode-row .game-btn small { display:block; font-size:13px; opacity:.85; margin-top:2px; }
+
+  /* 시작 화면 고급 버튼 */
+  .mode-btn { position:relative; display:flex; align-items:center; justify-content:center; gap:10px; min-height:74px; padding:8px 14px;
+    border:3px solid var(--ink); border-radius:20px; cursor:pointer; color:#fff7e0; font-family:'Jua',sans-serif; overflow:hidden;
+    font-size:clamp(22px,3.4vw,27px); transition:transform .1s, filter .15s;
+    box-shadow:inset 0 0 0 3px #f3c75a, inset 0 0 0 5px rgba(60,20,10,.55), 0 6px 14px rgba(20,10,30,.22); }
+  .mode-btn::before { content:''; position:absolute; inset:0; pointer-events:none;
+    background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,0) 45%),
+      radial-gradient(circle at 12% 120%,rgba(255,220,120,.25),transparent 45%); }
+  .mode-btn .mt { position:relative; -webkit-text-stroke:4px var(--ink); paint-order:stroke fill; text-shadow:0 3px 0 var(--ink); letter-spacing:1px; }
+  .mode-btn .fan { position:relative; display:flex; flex:none; }
+  .mode-btn .fan img { width:34px; height:46px; border-radius:4px; border:2px solid var(--ink); background:#fff; box-shadow:0 2px 4px rgba(0,0,0,.3); }
+  .mode-btn .fan img + img { margin-left:-12px; }
+  .mode-btn .fan img:nth-child(1) { transform:rotate(-12deg) translateY(2px); }
+  .mode-btn .fan img:nth-child(2) { transform:rotate(0deg); }
+  .mode-btn .fan img:nth-child(3) { transform:rotate(12deg) translateY(2px); }
+  .mode-btn .fan img:last-child:nth-child(2) { transform:rotate(12deg) translateY(2px); }
+  .mode-btn:hover:not(:disabled) { filter:brightness(1.08); transform:translateY(-2px); }
+  .mode-btn:hover:not(:disabled) .fan img:first-child { transform:rotate(-18deg) translate(-2px,2px); }
+  .mode-btn:hover:not(:disabled) .fan img:last-child { transform:rotate(18deg) translate(2px,2px); }
+  .mode-btn .fan img { transition:transform .2s; }
+  .mode-btn:active:not(:disabled) { transform:scale(.97); }
+  .mode-btn:disabled { opacity:.5; cursor:not-allowed; filter:grayscale(.4); }
+  .mode-btn.wide { grid-column:1/-1; }
+  .m-ink { background:linear-gradient(160deg,#4b5fb8,#28306e); }
+  .m-pine { background:linear-gradient(160deg,#3d9a5c,#1d5a36); }
+  .m-red { background:linear-gradient(160deg,#e2475a,#97202f); }
+  .m-plum { background:linear-gradient(160deg,#9a5ab8,#55287a); min-height:58px; }
+  .seg-label { margin-top:14px; }
+  .seg-label .lb { display:inline-block; color:var(--coral-d); font-size:17px; padding:0 14px; position:relative; }
+  .seg-label .lb::before, .seg-label .lb::after { content:''; position:absolute; top:50%; width:8px; height:8px; margin-top:-4px; background:var(--sun-d); transform:rotate(45deg); border-radius:2px; }
+  .seg-label .lb::before { left:0; } .seg-label .lb::after { right:0; }
+  .seg button { background:linear-gradient(180deg,#fffdf7,#f6ead8); font-family:'Jua',sans-serif; transition:transform .1s; }
+  .seg button:hover:not(:disabled) { transform:translateY(-1px); }
+  .seg button.on { background:linear-gradient(180deg,#ffe58a,#f4b93a); box-shadow:inset 0 0 0 2px #fff4c8; }
+  #helpBtn { display:inline-block; margin-top:14px; padding:6px 18px; border:2.5px solid var(--ink); border-radius:16px; background:linear-gradient(180deg,#fffdf7,#f6ead8); color:var(--ink); text-decoration:none; font-family:'Jua',sans-serif; font-size:16px; }
+  @media (max-width:420px){ .seg.stake { flex-wrap:nowrap; gap:4px; } .seg.stake button { padding:5px 7px; font-size:14px; } .seg.stake button small { font-size:11px; } }
+  #joinBtn { background:linear-gradient(180deg,#ffe58a,#f4b93a); box-shadow:inset 0 0 0 2px #fff4c8; }
   @media (max-width:420px){ .mode-row{ grid-template-columns:1fr; } }
   .btn-row { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:12px; }
   .link-btn { background:none; border:none; color:var(--ink2); font-size:15px; text-decoration:underline; cursor:pointer; margin-top:10px; }
@@ -408,18 +446,18 @@
         </div>
         <div class="box">
           <div class="mode-row">
-            <button class="game-btn btn-sky" id="cpu2Btn">맞고<small>깨비와 둘이</small></button>
-            <button class="game-btn btn-mint" id="cpu3Btn">고스톱<small>깨비 둘과 셋이</small></button>
-            <button class="game-btn btn-primary" id="sutdaBtn" style="grid-column:1/-1">섯다<small>깨비 둘과 두 장 승부</small></button>
+            <button class="mode-btn m-ink" id="cpu2Btn"><span class="fan"><img src="img/m01-1.webp" alt=""><img src="img/m08-1.webp" alt=""></span><span class="mt">맞고</span></button>
+            <button class="mode-btn m-pine" id="cpu3Btn"><span class="fan"><img src="img/m03-1.webp" alt=""><img src="img/m11-1.webp" alt=""><img src="img/m12-1.webp" alt=""></span><span class="mt">고스톱</span></button>
+            <button class="mode-btn m-red wide" id="sutdaBtn"><span class="fan"><img src="img/m03-1.webp" alt=""><img src="img/m08-1.webp" alt=""></span><span class="mt">섯다</span></button>
           </div>
-          <div class="seg-label" style="margin-top:10px">판돈 <span class="wallet" id="walletStart"></span></div>
+          <div class="seg-label"><span class="lb">판돈</span> <span class="wallet" id="walletStart"></span></div>
           <div class="seg stake" id="stakeSeg"></div>
           <div class="refill hidden" id="refillBox"><button class="game-btn btn-primary" id="refillBtn">깨비에게 엽전 받기</button><p class="note" id="refillNote"></p></div>
-          <div class="seg-label" style="margin-top:10px">깨비 실력</div>
+          <div class="seg-label"><span class="lb">깨비 실력</span></div>
           <div class="seg" id="lvSeg"><button data-v="1">쉬움</button><button data-v="2">보통</button><button data-v="3">어려움</button></div>
         </div>
         <div class="box">
-          <div class="mode-row"><button class="game-btn btn-primary" id="createBtn" style="grid-column:1/-1">방 만들기<small>친구 2~3명</small></button></div>
+          <div class="mode-row"><button class="mode-btn m-plum wide" id="createBtn"><span class="mt">방 만들기</span></button></div>
           <div class="field" style="margin-top:10px">
             <input id="codeInput" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="0000" autocomplete="off">
             <button class="game-btn btn-info" id="joinBtn" style="min-width:0">들어가기</button>
