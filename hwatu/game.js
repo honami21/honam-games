@@ -138,10 +138,10 @@ function bigPop(text, cls = '', sub = '', img = '') {
   el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
 }
 function show(id) {
-  ['startScreen', 'waitScreen', 'game'].forEach(s => $(s).classList.toggle('hidden', s !== id));
+  ['startScreen', 'waitScreen', 'game', 'sutda'].forEach(s => $(s).classList.toggle('hidden', s !== id));
   $('sideRoom').classList.toggle('hidden', !(id === 'game' && mode === 'online'));
   if (id === 'startScreen') updStake();
-  if (id !== 'game') { KBGM.track('lobby'); KBGM.calm(); } else { KBGM.track('play'); KBGM.full(); }
+  if (id !== 'game' && id !== 'sutda') { KBGM.track('lobby'); KBGM.calm(); } else { KBGM.track('play'); KBGM.full(); }
 }
 function hideModals() { ['askModal', 'gsModal', 'pickModal', 'resultModal', 'confirmModal'].forEach(id => $(id).classList.add('hidden')); }
 function getName() {
@@ -327,14 +327,14 @@ function fly(id, from, to, opt = {}) {
     an.onfinish = () => { res(el); if (!opt.keep) el.remove(); };
   });
 }
-function slam(at, power = 1) {
+function slam(at, power = 1, shakeEl) {
   // 탁! 내려치는 순간: 충격 고리, 화면 울림
   const fx = document.createElement('div');
   fx.className = 'fx-ring' + (ART['fx-slam'] ? ' art' : '');
   const sz = at.w * (1.9 + power * .5);
   fx.style.cssText = `left:${at.x - sz / 2}px;top:${at.y - sz / 2}px;width:${sz}px;height:${sz}px`;
   document.body.appendChild(fx); setTimeout(() => fx.remove(), 500);
-  const m = $('mid'); m.classList.remove('shake', 'shake2'); void m.offsetWidth; m.classList.add(power > 1.5 ? 'shake2' : 'shake');
+  const m = shakeEl || $('mid'); m.classList.remove('shake', 'shake2'); void m.offsetWidth; m.classList.add(power > 1.5 ? 'shake2' : 'shake');
 }
 function sparkle(at, n = 8) {
   if (ART['fx-sparkle']) { const fx = document.createElement('div'); fx.className = 'fx-spk'; const sz = at.w * 2.4; fx.style.cssText = `left:${at.x - sz / 2}px;top:${at.y - sz / 2}px;width:${sz}px;height:${sz}px`; document.body.appendChild(fx); setTimeout(() => fx.remove(), 650); return; }
@@ -1055,7 +1055,11 @@ $('helpList').innerHTML = `
   <h3>박</h3>
   <p>이긴 사람이 피로 점수를 냈는데 진 사람 피가 7장 이하면 <b>피박</b>, 광으로 점수를 냈는데 진 사람 광이 없으면 <b>광박</b>, 이긴 사람 열끗이 7장 이상이면 <b>멍박</b>. 하나마다 두 배예요.</p>
   <h3>엽전</h3>
-  <p>처음에 1만 냥을 들고 시작해요. 진 사람은 <b>점수 × 점당 판돈</b>만큼 이긴 사람에게 엽전을 줘요. 점당 100냥 판은 3천 냥, 1,000냥 판은 3만 냥이 있어야 들어갈 수 있어요. 엽전이 다 떨어지면 깨비샘이 하루 한 번 5천 냥을 줘요. 엽전은 이 기기에만 저장되고, 진짜 돈이 아니에요.</p>`;
+  <p>처음에 1만 냥을 들고 시작해요. 진 사람은 <b>점수 × 점당 판돈</b>만큼 이긴 사람에게 엽전을 줘요. 점당 100냥 판은 3천 냥, 1,000냥 판은 3만 냥이 있어야 들어갈 수 있어요. 엽전이 다 떨어지면 깨비샘이 하루 한 번 5천 냥을 줘요. 엽전은 이 기기에만 저장되고, 진짜 돈이 아니에요.</p>
+  <h3>섯다</h3>
+  <p>1월부터 10월까지 20장으로 두 장씩 받아요. 두 번째 패는 손가락으로 밀어 올려 <b>쪼아</b> 봐요. 판돈은 점당 판돈의 10배를 먼저 걸고, 차례대로 <b>체크</b>, <b>삥</b>, <b>콜</b>, <b>하프</b>(판돈 절반 더), <b>따당</b>(앞 사람의 두 배), <b>다이</b>(포기) 중에 골라요.</p>
+  <p>족보: 38광땡 &gt; 18·13광땡 &gt; 장땡 &gt; 9땡 … 삥땡 &gt; 알리(1·2) &gt; 독사(1·4) &gt; 구삥(1·9) &gt; 장삥(1·10) &gt; 장사(10·4) &gt; 세륙(4·6) &gt; 갑오(9끗) … 망통(0끗).</p>
+  <p><b>땡잡이</b>(3광·7열끗)는 1~9땡을, <b>암행어사</b>(4·7 열끗)는 18·13광땡을 잡아요. <b>구사</b>(4·9)는 상대가 알리 이하면, <b>멍텅구리 구사</b>(4·9 열끗)는 9땡 이하면 다시 해요.</p>`;
 $('helpBtn').onclick = () => $('helpModal').classList.remove('hidden');
 $('helpClose').onclick = () => $('helpModal').classList.add('hidden');
 
@@ -1069,4 +1073,7 @@ $('helpClose').onclick = () => $('helpModal').classList.add('hidden');
 
 // 시험용
 window.__ht = { get g() { return g; }, startCpu, doMine };
+// 섯다(sutda.js)와 나눠 쓰는 것들
+window.HW = { $, esc, rnd, sleep, store, beep, bigPop, flash, sparkle, slam, toast, show, getName, confirmBox, cardH, backH, IMG, YP, fmt, AI, PAL, REFILL, today, refill, updStake,
+  get coin() { return coin; }, setCoin, get stake() { return stake; }, get level() { return level; }, hideModals };
 })();

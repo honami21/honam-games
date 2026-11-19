@@ -258,6 +258,59 @@
     #me { padding:3px 6px; border-radius:12px; }
     #status { font-size:15px; }
   }
+
+  /* 섯다 */
+  #sutda { position:fixed; inset:0; display:flex; flex-direction:column; padding:54px 8px 6px; gap:6px; }
+  #sdOpps { display:flex; gap:8px; justify-content:center; flex:none; }
+  #sdOpps .seat { max-width:420px; }
+  .sd-cards { display:flex; gap:6px; justify-content:center; padding:2px 0 4px; min-height:calc(var(--sw,58px) * 1.3333 + 6px); }
+  .sd-cards .ht { --w:var(--sw,58px); }
+  .seat.fold, #sdMe.fold { opacity:.55; }
+  .seat .sd-bet, .sd-bet { font-size:14px; color:var(--ink2); white-space:nowrap; }
+  .sd-tag { position:absolute; left:50%; bottom:-14px; transform:translateX(-50%); background:var(--ink); color:var(--sun); border-radius:12px; padding:1px 10px; font-size:15px; white-space:nowrap; z-index:3; }
+  .sd-tag.win { background:var(--coral); color:#fff; }
+  #sdMid { flex:1 1 auto; min-height:0; display:flex; align-items:center; justify-content:center; position:relative; }
+  #sdPot { display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .pot-pile { position:relative; width:150px; height:70px; }
+  .pot-pile .yp { position:absolute; font-size:26px; filter:drop-shadow(0 2px 1px rgba(0,0,0,.35)); }
+  .pot-lb { color:#fff; font-size:16px; opacity:.85; }
+  .pot-n { color:var(--sun); font-size:clamp(28px,5vw,40px); -webkit-text-stroke:4px var(--ink); paint-order:stroke fill; line-height:1; }
+  .pot-n.bump { animation:pop .35s ease-out; }
+  #sdStatus { flex:none; align-self:center; background:rgba(10,30,20,.55); border-radius:14px; padding:3px 14px; min-height:28px; font-size:clamp(16px,2.6vw,19px); color:#fff; text-align:center; word-break:keep-all; }
+  #sdMe { flex:none; background:rgba(255,246,236,.94); border:3px solid var(--ink); border-radius:16px; padding:6px 10px 8px; display:flex; flex-direction:column; gap:6px; position:relative; }
+  #sdMe.turn, #sdOpps .seat.turn { background:#fff1c9; box-shadow:0 0 0 4px var(--sun); }
+  #sdMe .top { display:flex; align-items:center; gap:6px; } #sdMe .top .nm { font-size:17px; } #sdMe .top .sp { margin-left:auto; }
+  .sd-hand-row { display:flex; align-items:center; justify-content:center; gap:16px; }
+  .sd-hand { display:flex; gap:10px; }
+  .sd-hand .ht { --w:clamp(84px, 13vw, 128px); }
+  .sd-hname { font-size:clamp(22px,4vw,32px); color:var(--coral); -webkit-text-stroke:4px var(--ink); paint-order:stroke fill; min-width:4em; text-align:center; }
+  .sd-hname.top { color:var(--sun); }
+  /* 쪼기: 뒷면을 위로 밀어 올려 앞면을 조금씩 봐요 */
+  .peel { position:relative; overflow:hidden; border-radius:calc(var(--w) * .08); touch-action:none; cursor:grab; }
+  .peel .ht { position:absolute; left:0; top:0; }
+  .peel .cover { position:absolute; left:0; top:0; width:100%; height:100%; background:url(img/card-back.webp) center/100% 100%; border-radius:inherit; box-shadow:0 6px 10px rgba(0,0,0,.35); will-change:transform; }
+  .peel .cover::after { content:''; position:absolute; left:0; right:0; bottom:0; height:16px; background:linear-gradient(to top, rgba(255,255,255,.45), transparent); border-radius:0 0 8px 8px; }
+  .peel.hint .cover { animation:peelHint 1.6s ease-in-out infinite; }
+  @keyframes peelHint { 0%,60%,100%{ transform:translateY(0) } 75%{ transform:translateY(-9%) rotate(-1.5deg) } }
+  .peel-tip { position:absolute; left:50%; bottom:-8px; transform:translate(-50%,100%); background:var(--sun); border:2px solid var(--ink); border-radius:10px; padding:0 8px; font-size:13px; white-space:nowrap; color:var(--ink); pointer-events:none; z-index:2; }
+  .sd-acts { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+  .sd-acts .game-btn { min-width:0; padding:8px 14px; font-size:clamp(15px,2.4vw,19px); line-height:1.15; display:flex; flex-direction:column; align-items:center; }
+  .sd-acts .game-btn small { font-size:12px; opacity:.85; }
+  .sd-acts .game-btn .kn { font-size:11px; opacity:.6; }
+  @media (hover:none) { .sd-acts .game-btn .kn { display:none; } }
+  #sdMid.shake { animation:shk .25s; } #sdMid.shake2 { animation:shk2 .45s; }
+  @media (max-height:520px) {
+    #sutda { padding-top:46px; gap:3px; }
+    #sdOpps .seat { padding:2px 8px; } #sdOpps .seat .av { width:26px; height:26px; }
+    .sd-cards { --sw:30px; min-height:44px; padding:0; }
+    .pot-pile { width:90px; height:36px; } .pot-pile .yp { font-size:18px; } .pot-n { font-size:24px; } .pot-lb { font-size:13px; }
+    #sdMe { display:grid; grid-template-columns:auto 1fr; grid-template-rows:auto auto; padding:3px 8px 5px; gap:2px 10px; }
+    #sdMe .top { grid-column:1 / -1; } #sdMe .av { width:26px; height:26px; }
+    .sd-hand .ht { --w:clamp(52px, 17vh, 76px); } .sd-hname { font-size:20px; min-width:3.4em; }
+    .sd-acts { align-self:center; justify-content:flex-end; gap:6px; } .sd-acts .game-btn { padding:5px 10px; font-size:15px; }
+    #sdStatus { font-size:15px; min-height:24px; padding:2px 12px; }
+  }
+  @media (max-width:640px) { .sd-hand .ht { --w:clamp(70px, 22vw, 96px); } #sdOpps .seat .sd-cards .ht { --w:40px; } .pot-pile{ width:110px; height:52px; } }
 </style>
 </head>
 <body>
@@ -305,6 +358,23 @@
     <div id="hand"></div>
   </div>
 </div>
+
+<!-- 섯다 -->
+<div id="sutda" class="hidden">
+  <div id="sdOpps"></div>
+  <div id="sdMid">
+    <div id="sdPot"><div class="pot-pile" id="sdPile"></div><div class="pot-lb">판돈</div><div class="pot-n" id="sdPotN">0냥</div></div>
+  </div>
+  <div id="sdStatus"></div>
+  <div id="sdMe">
+    <div class="top"><span class="av" id="sdMeAv"></span><span class="nm" id="sdMeName"></span><span class="sd-bet" id="sdMeBet"></span><span class="sp"><span class="coinchip" id="sdCoin"></span></span></div>
+    <div class="sd-hand-row">
+      <div class="sd-hand" id="sdHand"></div>
+      <div class="sd-hname" id="sdHName"></div>
+    </div>
+    <div class="sd-acts" id="sdActs"></div>
+  </div>
+</div>
 <div class="side-room hidden" id="sideRoom">방 코드<b id="sideCode"></b></div>
 
 <!-- 시작 화면 -->
@@ -320,6 +390,7 @@
           <div class="mode-row">
             <button class="game-btn btn-sky" id="cpu2Btn">맞고<small>깨비샘과 둘이</small></button>
             <button class="game-btn btn-mint" id="cpu3Btn">고스톱<small>깨비샘 둘과 셋이</small></button>
+            <button class="game-btn btn-primary" id="sutdaBtn" style="grid-column:1/-1">섯다<small>깨비샘 둘과 두 장 승부</small></button>
           </div>
           <div class="seg-label" style="margin-top:10px">판돈 <span class="wallet" id="walletStart"></span></div>
           <div class="seg stake" id="stakeSeg"></div>
@@ -424,6 +495,7 @@
 <script src="../audio/bgm.js"></script>
 <script src="engine.js"></script>
 <script src="game.js"></script>
+<script src="sutda.js"></script>
 <script src="../keynav.js"></script>
 <script src="../credit.js"></script>
 </body>
