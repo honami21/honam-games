@@ -52,6 +52,21 @@ function updStake() {
 $('stakeSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return; stake = +b.dataset.v; store('hwatu-stake', stake); updStake(); });
 function refill() { if (coin > 0 || store('hwatu-refill') === today()) return false; store('hwatu-refill', today()); setCoin(REFILL); beep('steal'); return true; }
 $('refillBtn').onclick = () => { if (refill()) updStake(); };
+// 엽전 충전 (비밀번호는 해시로만 비교해요)
+const CHARGE_H = '382cd54fdc4216ac44e0207aefde339195fcd4430f29c00dd970a97485ab584d';
+async function sha256(s) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); }
+let chargeV = 10000;
+$('chargeBtn').onclick = () => { $('chargePw').value = ''; $('chargeMsg').textContent = ''; $('chargeModal').classList.remove('hidden'); setTimeout(() => $('chargePw').focus(), 50); };
+$('chargeClose').onclick = () => $('chargeModal').classList.add('hidden');
+$('chargeAmt').onclick = e => { const b = e.target.closest('button'); if (!b) return; chargeV = +b.dataset.v; document.querySelectorAll('#chargeAmt button').forEach(x => x.classList.toggle('on', x === b)); };
+$('chargeOk').onclick = async () => {
+  let ok = false;
+  try { ok = await sha256('hwatu:' + $('chargePw').value.trim()) === CHARGE_H; } catch (e) {}
+  if (!ok) { $('chargeMsg').textContent = '비밀번호가 맞지 않아요.'; $('chargePw').select(); return; }
+  setCoin(coin + chargeV); updStake(); beep('steal');
+  $('chargeModal').classList.add('hidden');
+};
+$('chargePw').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); $('chargeOk').click(); } });
 updStake();
 
 // ---------- 소리 ----------
