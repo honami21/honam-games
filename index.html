@@ -85,7 +85,8 @@ h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
   display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:.55;transition:opacity .15s}
 .adm-btn:hover,.adm-btn:focus-visible,.adm-btn.kn-focus{opacity:1}
 .adm-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
-@media (max-width:760px){.adm-btn{display:none}}
+/* 휴대폰: 자물쇠는 맨 아래 구석에 작고 흐리게 (화면을 끝까지 내려야 보임) */
+@media (max-width:760px){.adm-btn{position:absolute;right:8px;bottom:8px;width:30px;height:30px;opacity:.3;border-width:1.5px}.adm-btn svg{width:14px;height:14px}}
 .adm-modal{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;background:rgba(20,16,60,.6);padding:16px}
 .adm-modal.on{display:flex}
 .adm-box{width:min(360px,100%);background:var(--cream);border:3px solid var(--line);border-radius:24px;padding:22px 22px 20px;text-align:center;box-shadow:0 14px 28px rgba(10,8,40,.45)}
@@ -127,6 +128,23 @@ body.adm-edit .adm-eye{display:inline-flex}
 .adm-num{position:absolute;left:-8px;top:-8px;z-index:2;min-width:34px;height:34px;border-radius:999px;background:var(--coral);color:#fff;border:3px solid var(--line);
   display:none;align-items:center;justify-content:center;font-size:17px;padding:0 6px}
 body.adm-edit .adm-num{display:flex}
+.adm-move{position:absolute;right:-8px;bottom:-8px;z-index:3;display:none;gap:6px}
+.adm-move button{width:44px;height:44px;border-radius:50%;background:var(--yellow);border:3px solid var(--line);color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;touch-action:manipulation}
+.adm-move button:disabled{opacity:.35;cursor:default}
+.adm-move svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.adm-tip-touch{display:none}
+/* 휴대폰·태블릿: 위아래 화살표로 순서 바꾸기 */
+@media (max-width:760px), (pointer:coarse){
+  body.adm-edit .adm-move{display:flex}
+  .adm-tip-mouse{display:none}.adm-tip-touch{display:inline}
+}
+@media (max-width:760px){
+  body.adm-edit .game{animation:none}
+  body.adm-edit{padding-top:118px}
+  .adm-bar{top:8px;gap:6px;padding:8px 10px;border-radius:18px}
+  .adm-bar span{flex-basis:100%;text-align:center;font-size:15px;margin:0}
+  .adm-bar .adm-b{font-size:14px;padding:4px 11px}
+}
 </style>
 </head>
 <body data-keynav>
@@ -315,7 +333,7 @@ KBGM.init({ key:'home', tracks:{ play:'audio/home-bgm.mp3' }, defaultOn:false, v
   </form>
 </div>
 <div class="adm-bar" id="adm-bar" data-keynav="off">
-  <span>카드를 끌어서 순서를 바꿔요</span>
+  <span><b class="adm-tip-mouse" style="font-weight:normal">카드를 끌어서 순서를 바꿔요</b><b class="adm-tip-touch" style="font-weight:normal">화살표로 순서를 바꿔요</b></span>
   <button class="adm-b gray" type="button" id="adm-reset">처음 순서로</button>
   <button class="adm-b gray" type="button" id="adm-cancel">취소</button>
   <button class="adm-b coral" type="button" id="adm-save">저장</button>
@@ -345,6 +363,21 @@ cards().forEach(c => {
   const b = document.createElement('button'); b.type = 'button'; b.className = 'adm-eye';
   b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); c.classList.toggle('adm-hid'); eyeLabel(c); });
   c.appendChild(b); eyeLabel(c);
+  // 휴대폰용 위아래 화살표
+  const m = document.createElement('span'); m.className = 'adm-move';
+  m.innerHTML = '<button type="button" data-d="-1" title="위로" aria-label="위로"><svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg></button>'
+    + '<button type="button" data-d="1" title="아래로" aria-label="아래로"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>';
+  m.addEventListener('click', e => {
+    e.preventDefault(); e.stopPropagation();
+    const btn = e.target.closest('button'); if (!btn || btn.disabled) return;
+    const list = cards(), i = list.indexOf(c), d = +btn.dataset.d, other = list[i + d];
+    if (!other) return;
+    const top = btn.getBoundingClientRect().top;
+    if (d < 0) grid.insertBefore(c, other); else grid.insertBefore(c, other.nextSibling);
+    number();
+    scrollBy(0, btn.getBoundingClientRect().top - top);   // 누른 화살표가 손가락 밑에 그대로 있게
+  });
+  c.appendChild(m);
 });
 const HTML_ORDER = window.homeOrderDefault;   // 처음 순서 (HTML에 적힌 순서)
 
@@ -390,7 +423,14 @@ $('adm-form').addEventListener('submit', async e => {
 });
 
 // ===== 순서 바꾸기 =====
-function number() { cards().forEach((c, i) => { c.querySelector('.adm-num').textContent = i + 1; }); }
+function number() {
+  const list = cards();
+  list.forEach((c, i) => {
+    c.querySelector('.adm-num').textContent = i + 1;
+    const [up, down] = c.querySelectorAll('.adm-move button');
+    up.disabled = i === 0; down.disabled = i === list.length - 1;
+  });
+}
 function startEdit() {
   before = ids(); beforeHid = hiddenIds(); adminSee(true);
   cards().forEach(eyeLabel);
@@ -422,7 +462,7 @@ $('adm-save').addEventListener('click', async () => {
   }
   b.disabled = false; b.textContent = '저장';
 });
-function alertBar(t) { const s = $('adm-bar').querySelector('span'), o = s.textContent; s.textContent = t; s.style.color = '#d2463d'; setTimeout(() => { s.textContent = o; s.style.color = ''; }, 3500); }
+function alertBar(t) { const s = $('adm-bar').querySelector('span'), o = s.innerHTML; s.textContent = t; s.style.color = '#d2463d'; setTimeout(() => { s.innerHTML = o; s.style.color = ''; }, 3500); }
 
 // 링크로 이동하지 않게
 grid.addEventListener('click', e => { if (document.body.classList.contains('adm-edit') && e.target.closest('.game')) e.preventDefault(); }, true);
@@ -433,7 +473,7 @@ grid.addEventListener('contextmenu', e => { if (document.body.classList.contains
 let drag = null, press = null;
 grid.addEventListener('pointerdown', e => {
   if (!document.body.classList.contains('adm-edit') || e.button > 0) return;
-  const card = e.target.closest('.game'); if (!card || e.target.closest('.adm-eye')) return;
+  const card = e.target.closest('.game'); if (!card || e.target.closest('.adm-eye,.adm-move')) return;
   if (e.pointerType === 'mouse') { e.preventDefault(); press = { card, x: e.clientX, y: e.clientY, id: e.pointerId, ready: true }; }
   else {
     press = { card, x: e.clientX, y: e.clientY, id: e.pointerId, ready: false };
