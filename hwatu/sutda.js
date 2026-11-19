@@ -305,7 +305,7 @@ function render() {
     const cards = p.cards.map(id => p.open ? cardH(id) : backH()).join('');
     return `<div class="seat ${st.turn === i ? 'turn' : ''} ${p.fold ? 'fold' : ''}" data-i="${i}">
       <div class="top">${avatar(i)}<span class="nm">${esc(p.name)}</span>${p.fold ? '<span class="pt">다이</span>' : ''}<span class="sd-bet" style="margin-left:auto">${p.paid ? `건 돈 ${fmt(p.paid)}냥` : ''}</span></div>
-      <div class="sd-cards">${cards}</div>${p.tag ? (JBI(p.tag) ? `<span class="sd-tag img ${p.won ? 'win' : ''}"><img src="${JBI(p.tag)}" alt="${esc(p.tag)}"></span>` : `<span class="sd-tag ${p.won ? 'win' : ''}">${esc(p.tag)}</span>`) : ''}</div>`;
+      <div class="sd-cards">${cards}</div>${p.tag ? `<span class="sd-tag ${p.won ? 'win' : ''}">${esc(p.tag)}</span>` : ''}</div>`;
   }).join('');
   // 나
   const m = meP();
