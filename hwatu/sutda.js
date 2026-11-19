@@ -18,7 +18,7 @@ const JBC = n => 'sd-' + (JBN[n] || (/^(\d)땡$/.test(n) ? 'ddang' + n[0] : /^(\
 const JBA = {};
 const JBI = n => { const c = JBC(n); return JBA[c] ? `img/${c}.webp` : ''; };
 let SDWIN = false; { const im = new Image(); im.onload = () => { SDWIN = true; }; im.src = 'img/ggaebi-sdwin.webp'; }   // 섯다용 깨비 승리 그림 (스톱 글자 없는 것)
-[...Object.values(JBN), ...[2, 3, 4, 5, 6, 7, 8, 9].map(k => 'ddang' + k), ...[1, 2, 3, 4, 5, 6, 7, 8].map(k => 'kkut' + k)].forEach(c => { const im = new Image(); im.onload = () => { JBA['sd-' + c] = true; }; im.src = `img/sd-${c}.webp`; });
+[...Object.values(JBN), ...[2, 3, 4, 5, 6, 7, 8, 9].map(k => 'ddang' + k), ...[1, 2, 3, 4, 5, 6, 7, 8].map(k => 'kkut' + k), ...[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(k => 'm' + k)].forEach(c => { const im = new Image(); im.onload = () => { JBA['sd-' + c] = true; }; im.src = `img/sd-${c}.webp`; });
 const SPECIAL = { '1-2': [706, '알리'], '1-4': [705, '독사'], '1-9': [704, '구삥'], '1-10': [703, '장삥'], '4-10': [702, '장사'], '4-6': [701, '세륙'] };
 function evalH(a, b) {
   const ma = MON(a), mb = MON(b), lo = Math.min(ma, mb), hi = Math.max(ma, mb);
@@ -327,7 +327,7 @@ function render() {
   }
   const hn = $('sdHName');
   if (m.cards.length === 2 && m.peeled && m.e) { const c = JBC(m.e.n); if (JBA[c]) hn.innerHTML = `<img src="img/${c}.webp" alt="${esc(m.e.n)}">`; else hn.textContent = m.e.n; hn.classList.toggle('top', m.e.s >= 701 || m.e.tj || m.e.ah); }
-  else if (m.cards.length) { hn.textContent = `${MON(m.cards[0])}월`; hn.classList.remove('top'); }
+  else if (m.cards.length) { const mo = MON(m.cards[0]); if (JBA['sd-m' + mo]) hn.innerHTML = `<img src="img/sd-m${mo}.webp" alt="${mo}월">`; else hn.textContent = `${mo}월`; hn.classList.remove('top'); }
   else hn.textContent = '';
   if (m.won && st.phase === 'end') hn.classList.add('top');
   // 버튼
