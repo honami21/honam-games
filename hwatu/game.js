@@ -857,7 +857,7 @@ async function fb() {
 }
 function errText(e) {
   const c = (e && (e.code || e.message)) || '';
-  if (String(c).includes('permission')) return '방 기능 설정이 아직 안 되어 있어요. 선생님께 알려 주세요.';
+  if (String(c).includes('permission')) return '방 기능을 아직 쓸 수 없어요. 잠시 뒤에 다시 해 주세요.';
   if (String(c).includes('unavailable') || !navigator.onLine) return '인터넷 연결을 확인해 주세요.';
   return '잠시 후 다시 해 주세요.';
 }
