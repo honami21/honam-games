@@ -1,4 +1,4 @@
-// 깨비샘의 화투: 화면, 깨비샘(컴퓨터), 방 코드 대결
+// 깨비샘의 꽃들의 전쟁: 화면, 깨비샘(컴퓨터), 방 코드 대결
 (() => {
 'use strict';
 const $ = id => document.getElementById(id);
@@ -17,7 +17,7 @@ $('nameInput').value = store('hwatu-name') || store('cards-name') || '';
 // 그림 파일이 있으면 씀 (로고, 배경)
 const ART = {};
 function probe(name, src, fn) { const im = new Image(); im.onload = () => { ART[name] = true; fn && fn(); }; im.src = src; }
-probe('logo', 'img/logo.png', () => { $('logoBox').innerHTML = '<img class="logo" src="img/logo.png" alt="깨비샘의 화투">'; });
+probe('logo', 'img/logo.png', () => { $('logoBox').innerHTML = '<img class="logo" src="img/logo.png" alt="깨비샘의 꽃들의 전쟁">'; });
 probe('bg', 'img/bg.jpg', () => document.body.classList.add('art'));
 const TXT = ['jjok', 'ppuk', 'ttadak', 'sweep', 'go', 'stop', 'shake', 'bomb', 'chongtong', 'nagari', 'pibak'];
 TXT.forEach(n => probe('text-' + n, `img/text-${n}.png`));
