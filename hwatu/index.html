@@ -385,7 +385,8 @@
   #sdStatus:empty { visibility:hidden; }
   #sdStatus { flex:none; align-self:center; margin-bottom:10px; background:rgba(10,30,20,.55); border-radius:14px; padding:3px 14px; min-height:28px; font-size:clamp(16px,2.6vw,19px); color:#fff; text-align:center; word-break:keep-all; }
   #sdMe { flex:none; background:rgba(255,246,236,.94); border:3px solid var(--ink); border-radius:16px; padding:6px 10px 8px; display:flex; flex-direction:column; gap:6px; position:relative; }
-  #sdMe.turn, #sdOpps .seat.turn { background:#fff1c9; box-shadow:0 0 0 4px var(--sun); }
+  #sdOpps .seat.turn { background:#fff1c9; box-shadow:0 0 0 4px var(--sun); }
+  #sdMe, #sdMe.turn { background:#fff1c9; box-shadow:0 0 0 4px var(--sun); }   /* 내 자리는 늘 같은 노란 배경 */
   #sdMe .top { display:flex; align-items:center; gap:6px; } #sdMe .top .nm { font-size:17px; } #sdMe .top .sp { margin-left:auto; }
   .sd-row { display:flex; align-items:center; justify-content:center; gap:clamp(12px,3vw,36px); flex-wrap:wrap; min-height:calc(var(--hw2) * 1.3333 + 4px); --hw2:clamp(70px, min(13vw, 18vh), 128px); }
   .sd-hand-row { display:flex; align-items:center; justify-content:center; gap:12px; }

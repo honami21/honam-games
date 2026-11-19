@@ -18,7 +18,7 @@ const JBC = n => 'sd-' + (JBN[n] || (/^(\d)땡$/.test(n) ? 'ddang' + n[0] : /^(\
 const JBA = {};
 const JBI = n => { const c = JBC(n); return JBA[c] ? `img/${c}.webp` : ''; };
 let SDWIN = false; { const im = new Image(); im.onload = () => { SDWIN = true; }; im.src = 'img/ggaebi-sdwin.webp'; }   // 섯다용 깨비 승리 그림 (스톱 글자 없는 것)
-[...Object.values(JBN), ...[2, 3, 4, 5, 6, 7, 8, 9].map(k => 'ddang' + k), ...[1, 2, 3, 4, 5, 6, 7, 8].map(k => 'kkut' + k), ...[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(k => 'm' + k)].forEach(c => { const im = new Image(); im.onload = () => { JBA['sd-' + c] = true; }; im.src = `img/sd-${c}.webp`; });
+[...Object.values(JBN), ...[2, 3, 4, 5, 6, 7, 8, 9].map(k => 'ddang' + k), ...[1, 2, 3, 4, 5, 6, 7, 8].map(k => 'kkut' + k), ...[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(k => 'm' + k), 'draw'].forEach(c => { const im = new Image(); im.onload = () => { JBA['sd-' + c] = true; }; im.src = `img/sd-${c}.webp`; });
 const SPECIAL = { '1-2': [706, '알리'], '1-4': [705, '독사'], '1-9': [704, '구삥'], '1-10': [703, '장삥'], '4-10': [702, '장사'], '4-6': [701, '세륙'] };
 function evalH(a, b) {
   const ma = MON(a), mb = MON(b), lo = Math.min(ma, mb), hi = Math.max(ma, mb);
@@ -249,7 +249,8 @@ async function showdown(solo) {
   }
   if (res.win.length > 1) {   // 비기면 판돈은 그대로, 비긴 사람끼리 다시 해요
     st.players.forEach((p, k) => { if (!p.fold && !res.win.includes(k)) { p.fold = true; p.out = true; } });
-    bigPop('무승부!', 'red', '비긴 사람끼리 재경기예요'); beep('shake'); flash('mint');
+    setStatus('');
+    bigPop('무승부!', 'mint', '비긴 사람끼리 재경기예요', JBA['sd-draw'] ? 'img/sd-draw.webp' : ''); beep('shake'); flash('mint');
     await sleep(1800); if (my !== token) return;
     startHand(true); return;
   }
