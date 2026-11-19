@@ -1095,7 +1095,7 @@ async function leaveOnline() {
 const row = ids => `<div class="row">${ids.map(id => cardH(id)).join('')}</div>`;
 const JBH = { '38광땡': '38gwang', '18광땡': '18gwang', '13광땡': '13gwang', '장땡': 'jangddang', '9땡 … 1땡': 'ddang9', '알리': 'ali', '독사': 'doksa', '구삥': 'gubbing', '장삥': 'jangbbing', '장사': 'jangsa', '세륙': 'seryuk', '갑오': 'gabo', '망통': 'mangtong', '땡잡이': 'ddangjabi', '암행어사': 'amhaeng', '구사': 'gusa', '멍텅구리 구사': 'mgusa' };
 const jbName = n => JBH[n] ? `<img class="jbn" src="img/sd-${JBH[n]}.webp" alt="${n}" onerror="this.outerHTML='<b>${n}</b>'">${n === '9땡 … 1땡' ? ' <b>… 1땡</b>' : ''}` : `<b>${n}</b>`;
-const jb = list => list.map(([ids, n, d]) => `<div class="jbi"><span class="pr">${ids.map(id => cardH(id)).join('')}</span><span>${jbName(n)}<br><small>${d}</small></span></div>`).join('');
+const jb = list => list.map(([ids, n, d]) => `<div class="jbi"><span class="pr">${ids.map(id => cardH(id)).join('')}</span><span><b>${n}</b><br><small>${d}</small></span></div>`).join('');
 const HELP = {
   matgo: `
 <h3>어떻게 해요?</h3>
