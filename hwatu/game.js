@@ -19,7 +19,7 @@ const ART = {};
 function probe(name, src, fn) { const im = new Image(); im.onload = () => { ART[name] = true; fn && fn(); }; im.src = src; }
 probe('logo', 'img/logo.webp', () => { $('logoBox').innerHTML = '<img class="logo" src="img/logo.webp" alt="깨비의 꽃들의 전쟁">'; });
 probe('bg', 'img/bg.jpg', () => document.body.classList.add('art'));
-const TXT = ['jjok', 'ppuk', 'ppukeat', 'jappuk', 'ttadak', 'sweep', 'go', 'stop', 'shake', 'bomb', 'chongtong', 'nagari', 'pibak'];
+const TXT = ['jjok', 'ppuk', 'ppukeat', 'jappuk', 'ttadak', 'sweep', 'go', 'stop', 'shake', 'bomb', 'chongtong', 'ppuk3', 'nagari', 'pibak'];
 TXT.forEach(n => probe('text-' + n, `img/text-${n}.webp`));
 for (let n = 1; n <= 9; n++) probe('text-go' + n, `img/text-go${n}.webp`);
 ['fx-slam', 'fx-sparkle', 'fx-wisp'].forEach(n => probe(n, `img/${n}.webp`));
@@ -737,11 +737,12 @@ function showResult() {
     title = w === me ? '내가 이겼어요!' : `${esc(st.players[w].name)} 승리!`;
     if (w !== me) img = me >= 0 ? 'ggaebi-win' : 'ggaebi-win';
     if (r.why === 'chongtong') text = `${r.chong}월 카드 넉 장! <b style="color:var(--coral-d);font-weight:normal">총통</b>으로 바로 이겨요.`;
+    else if (r.why === 'ppuk3') text = `뻑을 세 번! <b style="color:var(--coral-d);font-weight:normal">쓰리뻑</b>으로 바로 이겨요.`;
     else text = `${r.sum}점을 얻었어요.`;
   }
   if (r.why !== 'left' && !r.nagari) {
     if (w === me) { beep('win'); KBGM.jingle(); } else if (me >= 0) { beep('lose'); img = 'ggaebi-win'; }
-    bigPop(r.why === 'chongtong' ? '총통!' : '스톱!', 'red', '', r.why === 'chongtong' ? 'chongtong' : 'stop'); beep('stop'); flash('gold');
+    bigPop(r.why === 'chongtong' ? '총통!' : r.why === 'ppuk3' ? '쓰리뻑!' : '스톱!', 'red', '', r.why === 'chongtong' ? 'chongtong' : r.why === 'ppuk3' ? 'ppuk3' : 'stop'); beep('stop'); flash('gold');
     if (r.rows.some(x => x.bak.includes('피박'))) setTimeout(() => { bigPop('피박!', 'red', '', 'pibak'); beep('ppuk'); }, 1100);
   }
   $('resImg').src = `img/${w === me && mode === 'cpu' ? 'ggaebi-lose' : img}.webp`;
@@ -1070,9 +1071,11 @@ const HELP = {
   <p><b>흔들기</b> · 같은 달 석 장을 들고 있고 바닥에 그 달이 없을 때, 보여 주고 내면 이겼을 때 점수가 두 배예요.</p>
   <p><b>폭탄</b> · 같은 달 석 장을 들고 바닥에 한 장이 있으면 넉 장을 한꺼번에 가져와요. 점수가 두 배, 피도 한 장씩 받고, 다음 두 번은 더미만 뒤집어요.</p>
   <p><b>총통</b> · 처음 받은 카드에 같은 달 넉 장이 있으면 바로 이겨요 (10점).</p>
+  <p><b>쓰리뻑</b> · 한 판에 뻑을 세 번 싸면 바로 이겨요 (10점).</p>
   <p><b>나가리</b> · 아무도 나지 못하면 다음 판 점수가 두 배예요.</p>
+  <p>마지막 차례에는 쪽, 따닥, 뻑 먹기, 싹쓸이를 해도 피를 받지 않아요.</p>
   <h3>박</h3>
-  <p>이긴 사람이 피로 점수를 냈는데 진 사람 피가 7장 이하면 <b>피박</b>, 광으로 점수를 냈는데 진 사람 광이 없으면 <b>광박</b>, 이긴 사람 열끗이 7장 이상이면 <b>멍박</b>. 하나마다 두 배예요.</p>
+  <p>이긴 사람이 피로 점수를 냈는데 진 사람 피가 7장 이하면 <b>피박</b>, 광으로 점수를 냈는데 진 사람 광이 없으면 <b>광박</b>이에요. 이긴 사람이 열끗 7장 이상으로 나면 <b>멍따</b>예요. 하나마다 두 배예요.</p>
     <h3>엽전</h3>
   <p>처음에 1만 냥을 들고 시작해요. 진 사람은 <b>점수 × 점당 판돈</b>만큼 이긴 사람에게 엽전을 줘요. 점당 100냥 판은 3천 냥, 1,000냥 판은 3만 냥이 있어야 들어갈 수 있어요. 엽전이 다 떨어지면 깨비가 하루 한 번 5천 냥을 줘요. 엽전은 이 기기에만 저장되고, 진짜 돈이 아니에요.</p>`,
   gostop: `
@@ -1096,9 +1099,11 @@ const HELP = {
   <p><b>흔들기</b> · 같은 달 석 장을 들고 있고 바닥에 그 달이 없을 때, 보여 주고 내면 이겼을 때 점수가 두 배예요.</p>
   <p><b>폭탄</b> · 같은 달 석 장을 들고 바닥에 한 장이 있으면 넉 장을 한꺼번에 가져와요. 점수가 두 배, 피도 한 장씩 받고, 다음 두 번은 더미만 뒤집어요.</p>
   <p><b>총통</b> · 처음 받은 카드에 같은 달 넉 장이 있으면 바로 이겨요 (10점).</p>
+  <p><b>쓰리뻑</b> · 한 판에 뻑을 세 번 싸면 바로 이겨요 (10점).</p>
   <p><b>나가리</b> · 아무도 나지 못하면 다음 판 점수가 두 배예요.</p>
+  <p>마지막 차례에는 쪽, 따닥, 뻑 먹기, 싹쓸이를 해도 피를 받지 않아요.</p>
   <h3>박</h3>
-  <p>이긴 사람이 피로 점수를 냈는데 진 사람 피가 7장 이하면 <b>피박</b>, 광으로 점수를 냈는데 진 사람 광이 없으면 <b>광박</b>, 이긴 사람 열끗이 7장 이상이면 <b>멍박</b>. 하나마다 두 배예요.</p>
+  <p>이긴 사람이 피로 점수를 냈는데 진 사람 피가 5장 이하면 <b>피박</b>, 광으로 점수를 냈는데 진 사람 광이 없으면 <b>광박</b>이에요. 이긴 사람이 열끗 7장 이상으로 나면 <b>멍따</b>예요. 하나마다 두 배예요.</p>
     <h3>엽전</h3>
   <p>처음에 1만 냥을 들고 시작해요. 진 사람은 <b>점수 × 점당 판돈</b>만큼 이긴 사람에게 엽전을 줘요. 점당 100냥 판은 3천 냥, 1,000냥 판은 3만 냥이 있어야 들어갈 수 있어요. 엽전이 다 떨어지면 깨비가 하루 한 번 5천 냥을 줘요. 엽전은 이 기기에만 저장되고, 진짜 돈이 아니에요.</p>`,
   sutda: `

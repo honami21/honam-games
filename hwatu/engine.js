@@ -249,10 +249,15 @@ function resolve(g, now) {
   }
   if (pd.bombDone) ev.tags.unshift('bomb');
   if (!g.floor.length && (ev.caps.length || pd.bombDone) && (g.deck.length || g.players.some(q => q.hand.length))) { ev.tags.push('sweep'); doSteal++; }
+  // 마지막 차례에는 쪽·따닥·뻑 먹기·싹쓸이로 피를 받지 않아요
+  const lastTurn = !g.deck.length && !g.players.some(q => q.hand.length || q.dummy);
+  if (lastTurn) doSteal = 0;
   for (let k = 0; k < doSteal; k++) steal(g, who, ev);
   g.pend = null; g.phase = 'play';
   g.last = ev; g.log.push(ev);
   if (g.log.length > 12) g.log.shift();
+  // 쓰리뻑: 한 판에 뻑을 세 번 싸면 바로 이겨요
+  if (ev.tags.includes('ppuk') && p.ppuk >= 3) { ev.tags.push('ppuk3'); finish(g, who, 'ppuk3'); g.seq++; return null; }
   // 점수 확인
   p.score = scoreOf(p.caps).total;
   const left = g.players.some(q => q.hand.length || q.dummy) && g.deck.length;
@@ -284,6 +289,7 @@ function finish(g, winner, why, extra) {
   const w = g.players[winner];
   let base, detail = [];
   if (why === 'chongtong') { base = 10; res.chong = extra; detail.push('총통 10점'); }
+  else if (why === 'ppuk3') { base = 10; detail.push('쓰리뻑 10점'); }
   else {
     const s = scoreOf(w.caps);
     base = s.total;
@@ -297,8 +303,10 @@ function finish(g, winner, why, extra) {
   const sh = w.shake + w.bomb;
   if (sh) { mult *= Math.pow(2, sh); detail.push(`흔들기·폭탄 ×${Math.pow(2, sh)}`); }
   if (g.bonus > 1) { mult *= g.bonus; detail.push(`나가리 다음 판 ×${g.bonus}`); }
-  res.base = base; res.detail = detail;
   const ws = res.ws;
+  // 멍따: 열끗 7장 이상으로 나면 두 배
+  if (ws && ws.aN >= 7) { mult *= 2; detail.push('멍따 ×2'); }
+  res.base = base; res.detail = detail;
   let sum = 0;
   const goer = g.players.findIndex((q, i) => i !== winner && q.go > 0);
   g.players.forEach((q, i) => {
@@ -306,9 +314,8 @@ function finish(g, winner, why, extra) {
     let m = mult; const bak = [];
     if (ws) {
       const qs = scoreOf(q.caps);
-      if (ws.p > 0 && qs.pN > 0 && qs.pN <= 7) { m *= 2; bak.push('피박'); }
+      if (ws.p > 0 && qs.pN > 0 && qs.pN <= (g.n === 2 ? 7 : 5)) { m *= 2; bak.push('피박'); }
       if (ws.g > 0 && qs.gN === 0) { m *= 2; bak.push('광박'); }
-      if (ws.aN >= 7) { m *= 2; bak.push('멍박'); }
       if (g.n === 2 && q.go > 0) { m *= 2; bak.push('고박'); }
     }
     const pay = base * m;
