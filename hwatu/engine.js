@@ -88,7 +88,7 @@ function deal(g, now) {
     p.hand = deck.splice(0, handN).sort((a, b) => a - b);
     p.caps = []; p.go = 0; p.goAt = 0; p.shake = 0; p.bomb = 0; p.dummy = 0; p.ppuk = 0; p.score = 0; p.shown = [];
   });
-  g.floor = floor; g.deck = deck;
+  g.floor = floor; g.deck = deck; g.ppukBy = {};
   g.turn = g.starter % g.n; g.phase = 'play'; g.pend = null; g.last = null; g.res = null; g.turnAt = now || 0;
   g.log = [];
   // 총통: 손에 같은 달 4장
@@ -223,34 +223,41 @@ function flip(g, now) {
 function resolve(g, now) {
   const pd = g.pend, ev = pd.ev, who = g.turn, p = g.players[who];
   let doSteal = 0;
+  // 뻑 먹기: 내가 싼 뻑을 내가 먹으면 자뻑 (피 두 장씩)
+  const eatPpuk = m => { const by = g.ppukBy && g.ppukBy[m]; if (g.ppukBy) delete g.ppukBy[m]; if (by === who) { ev.tags.push('jappuk'); doSteal += 2; } else { ev.tags.push('ppukeat'); doSteal++; } };
   const hc = pd.hc, f = pd.f;
   const hm = hc != null ? MON(hc) : -1;
   const hk = pd.hm.length;
   if (hc != null && f != null && MON(f) === hm) {
     if (hk === 0) { take(g, who, []); p.caps.push(hc, f); ev.caps.push(hc, f); ev.tags.push('jjok'); doSteal++; }
-    else if (hk === 1) { g.floor.push(hc, f); ev.tags.push('ppuk'); p.ppuk++; ev.ppuk = hm; }
+    else if (hk === 1) { g.floor.push(hc, f); ev.tags.push('ppuk'); p.ppuk++; ev.ppuk = hm; (g.ppukBy = g.ppukBy || {})[hm] = who; }
     else if (hk === 2) { take(g, who, pd.hm); p.caps.push(hc, f); ev.caps.push(...pd.hm, hc, f); ev.tags.push('ttadak'); doSteal++; }
   } else {
     if (hc != null) {
       if (hk === 0) g.floor.push(hc);
       else if (hk === 1) { take(g, who, pd.hm); p.caps.push(hc); ev.caps.push(pd.hm[0], hc); }
       else if (hk === 2) { take(g, who, [pd.hPick]); p.caps.push(hc); ev.caps.push(pd.hPick, hc); }
-      else { take(g, who, pd.hm); p.caps.push(hc); ev.caps.push(...pd.hm, hc); ev.tags.push('ppukeat'); doSteal++; }
+      else { take(g, who, pd.hm); p.caps.push(hc); ev.caps.push(...pd.hm, hc); eatPpuk(hm); }
     }
     if (f != null) {
       const fm = pd.fm || [];
       if (fm.length === 0) g.floor.push(f);
       else if (fm.length === 1) { take(g, who, fm); p.caps.push(f); ev.caps.push(fm[0], f); }
       else if (fm.length === 2) { take(g, who, [pd.fPick]); p.caps.push(f); ev.caps.push(pd.fPick, f); }
-      else { take(g, who, fm); p.caps.push(f); ev.caps.push(...fm, f); ev.tags.push('ppukeat'); doSteal++; }
+      else { take(g, who, fm); p.caps.push(f); ev.caps.push(...fm, f); eatPpuk(MON(f)); }
     }
   }
   if (pd.bombDone) ev.tags.unshift('bomb');
   if (!g.floor.length && (ev.caps.length || pd.bombDone) && (g.deck.length || g.players.some(q => q.hand.length))) { ev.tags.push('sweep'); doSteal++; }
+  // 마지막 차례에는 쪽·따닥·뻑 먹기·싹쓸이로 피를 받지 않아요
+  const lastTurn = !g.deck.length && !g.players.some(q => q.hand.length || q.dummy);
+  if (lastTurn) doSteal = 0;
   for (let k = 0; k < doSteal; k++) steal(g, who, ev);
   g.pend = null; g.phase = 'play';
   g.last = ev; g.log.push(ev);
   if (g.log.length > 12) g.log.shift();
+  // 쓰리뻑: 한 판에 뻑을 세 번 싸면 바로 이겨요
+  if (ev.tags.includes('ppuk') && p.ppuk >= 3) { ev.tags.push('ppuk3'); finish(g, who, 'ppuk3'); g.seq++; return null; }
   // 점수 확인
   p.score = scoreOf(p.caps).total;
   const left = g.players.some(q => q.hand.length || q.dummy) && g.deck.length;
@@ -282,6 +289,7 @@ function finish(g, winner, why, extra) {
   const w = g.players[winner];
   let base, detail = [];
   if (why === 'chongtong') { base = 10; res.chong = extra; detail.push('총통 10점'); }
+  else if (why === 'ppuk3') { base = 10; detail.push('쓰리뻑 10점'); }
   else {
     const s = scoreOf(w.caps);
     base = s.total;
@@ -295,8 +303,10 @@ function finish(g, winner, why, extra) {
   const sh = w.shake + w.bomb;
   if (sh) { mult *= Math.pow(2, sh); detail.push(`흔들기·폭탄 ×${Math.pow(2, sh)}`); }
   if (g.bonus > 1) { mult *= g.bonus; detail.push(`나가리 다음 판 ×${g.bonus}`); }
-  res.base = base; res.detail = detail;
   const ws = res.ws;
+  // 멍따: 열끗 7장 이상으로 나면 두 배
+  if (ws && ws.aN >= 7) { mult *= 2; detail.push('멍따 ×2'); }
+  res.base = base; res.detail = detail;
   let sum = 0;
   const goer = g.players.findIndex((q, i) => i !== winner && q.go > 0);
   g.players.forEach((q, i) => {
@@ -304,9 +314,8 @@ function finish(g, winner, why, extra) {
     let m = mult; const bak = [];
     if (ws) {
       const qs = scoreOf(q.caps);
-      if (ws.p > 0 && qs.pN > 0 && qs.pN <= 7) { m *= 2; bak.push('피박'); }
+      if (ws.p > 0 && qs.pN > 0 && qs.pN <= (g.n === 2 ? 7 : 5)) { m *= 2; bak.push('피박'); }
       if (ws.g > 0 && qs.gN === 0) { m *= 2; bak.push('광박'); }
-      if (ws.aN >= 7) { m *= 2; bak.push('멍박'); }
       if (g.n === 2 && q.go > 0) { m *= 2; bak.push('고박'); }
     }
     const pay = base * m;
