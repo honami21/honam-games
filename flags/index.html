@@ -1342,15 +1342,21 @@ async function saveScore() {
   try {
     console.log('[SAVE] 전송 시작:', entry);
     console.log('[SAVE] 컬렉션:', COLLECTION_NAME);
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), entry);
-    console.log('[SAVE] 성공! 문서 ID:', docRef.id);
-
+    // 같은 학교·이름의 기록이 이미 있으면 더 높을 때만 새로 저장
+    let prev = null;
+    try { prev = KRANK.bestOf((await getDocs(query(collection(db, COLLECTION_NAME), where('name', '==', name)))).docs, school, name); } catch (e) { console.warn('[SAVE] 이전 기록 확인 실패', e); }
     localStorage.setItem('lastSchool', school);
     localStorage.setItem('lastName', name);
-    statusEl.textContent = '✓ 저장 완료!';
     statusEl.classList.remove('error');
-
-    submittedEntry = { ...entry, _id: docRef.id, createdAt: Date.now() };
+    if (prev && (prev.data().score || 0) >= entry.score) {
+      statusEl.textContent = '예전 최고 기록 ' + (prev.data().score || 0).toLocaleString() + '점이 그대로 남아요';
+      submittedEntry = { ...prev.data(), _id: prev.id };
+    } else {
+      const docRef = await addDoc(collection(db, COLLECTION_NAME), entry);
+      console.log('[SAVE] 성공! 문서 ID:', docRef.id);
+      statusEl.textContent = prev ? '✓ 최고 기록 갱신!' : '✓ 저장 완료!';
+      submittedEntry = { ...entry, _id: docRef.id, createdAt: Date.now() };
+    }
 
     setTimeout(() => {
       document.getElementById('save-form').classList.add('hidden');
@@ -1382,10 +1388,9 @@ async function showRanking() {
 
   try {
     // 점수 내림차순 정렬 (높을수록 1등)
-    const q = query(collection(db, COLLECTION_NAME), orderBy('score', 'desc'), limit(50));
+    const q = query(collection(db, COLLECTION_NAME), orderBy('score', 'desc'), limit(300));
     const snap = await getDocs(q);
-    const entries = [];
-    snap.forEach(doc => entries.push({ _id: doc.id, ...doc.data() }));
+    const entries = KRANK.dedupe(snap.docs).slice(0, 50).map(doc => ({ _id: doc.id, ...doc.data() }));
 
     if (entries.length === 0) {
       listEl.innerHTML = '<div class="ranking-empty">아직 기록이 없어요.<br>첫 번째 도전자가 되어보세요! 🎯</div>';
@@ -1438,11 +1443,7 @@ async function showRanking() {
       try {
         const allQ = query(collection(db, COLLECTION_NAME), orderBy('score', 'desc'));
         const allSnap = await getDocs(allQ);
-        let rank = 1;
-        allSnap.forEach(doc => {
-          const d = doc.data();
-          if ((d.score || 0) > me.score) rank++;
-        });
+        const rank = KRANK.rankOf(allSnap.docs, me.score);
         myNoteEl.innerHTML = `📍 내 등수: <b>${rank}위</b> · ${me.score}점 · ${escapeHTML(me.school)} / ${escapeHTML(me.name)}`;
         myNoteEl.classList.remove('hidden');
       } catch (e2) {
@@ -1870,6 +1871,7 @@ function animate(now) {
 }
 requestAnimationFrame(animate);
 </script>
+<script src="../rank.js"></script>
 <script src="../keynav.js"></script>
 <script src="../credit.js"></script>
 </body>
