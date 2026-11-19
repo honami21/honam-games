@@ -16,6 +16,7 @@ const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.r
 const JBN = { '38광땡': '38gwang', '18광땡': '18gwang', '13광땡': '13gwang', '장땡': 'jangddang', '삥땡': 'bbingddang', '알리': 'ali', '독사': 'doksa', '구삥': 'gubbing', '장삥': 'jangbbing', '장사': 'jangsa', '세륙': 'seryuk', '갑오': 'gabo', '망통': 'mangtong', '땡잡이': 'ddangjabi', '암행어사': 'amhaeng', '구사': 'gusa', '멍텅구리 구사': 'mgusa' };
 const JBC = n => 'sd-' + (JBN[n] || (/^(\d)땡$/.test(n) ? 'ddang' + n[0] : /^(\d)끗$/.test(n) ? 'kkut' + n[0] : 'x'));
 const JBA = {};
+const JBI = n => { const c = JBC(n); return JBA[c] ? `img/${c}.webp` : ''; };
 let SDWIN = false; { const im = new Image(); im.onload = () => { SDWIN = true; }; im.src = 'img/ggaebi-sdwin.webp'; }   // 섯다용 깨비 승리 그림 (스톱 글자 없는 것)
 [...Object.values(JBN), ...[2, 3, 4, 5, 6, 7, 8, 9].map(k => 'ddang' + k), ...[1, 2, 3, 4, 5, 6, 7, 8].map(k => 'kkut' + k)].forEach(c => { const im = new Image(); im.onload = () => { JBA['sd-' + c] = true; }; im.src = `img/sd-${c}.webp`; });
 const SPECIAL = { '1-2': [706, '알리'], '1-4': [705, '독사'], '1-9': [704, '구삥'], '1-10': [703, '장삥'], '4-10': [702, '장사'], '4-6': [701, '세륙'] };
@@ -221,7 +222,7 @@ async function showdown(solo) {
   let res = solo ? { win: [lv[0].i] } : judge(lv.map(x => ({ i: x.i, e: x.p.e })));
   if (res.regame) {
     const by = st.players[res.by];
-    bigPop(by.e.n + '!', 'red', '재경기예요'); beep('shake'); flash('mint');
+    bigPop(by.e.n + '!', 'red', '재경기예요', JBI(by.e.n)); beep('shake'); flash('mint');
     await sleep(1800); if (my !== token) return;
     startHand(true); return;
   }
@@ -231,7 +232,7 @@ async function showdown(solo) {
   const wp = st.players[wins[0]];
   if (!solo) {
     const tx = res.special || wp.e.n;
-    bigPop(tx + '!', 'red', `${wins.includes(ME) && wins.length === 1 ? '내가' : wName + (wins.length > 1 ? ' 함께' : '이(가)')} 이겼어요`);
+    bigPop(tx + '!', 'red', `${wins.includes(ME) && wins.length === 1 ? '내가' : wName + (wins.length > 1 ? ' 함께' : '이(가)')} 이겼어요`, JBI(tx));
     beep('stop'); flash('gold');
   }
   wins.forEach(k => { st.players[k].won = true; });
@@ -304,7 +305,7 @@ function render() {
     const cards = p.cards.map(id => p.open ? cardH(id) : backH()).join('');
     return `<div class="seat ${st.turn === i ? 'turn' : ''} ${p.fold ? 'fold' : ''}" data-i="${i}">
       <div class="top">${avatar(i)}<span class="nm">${esc(p.name)}</span>${p.fold ? '<span class="pt">다이</span>' : ''}<span class="sd-bet" style="margin-left:auto">${p.paid ? `건 돈 ${fmt(p.paid)}냥` : ''}</span></div>
-      <div class="sd-cards">${cards}</div>${p.tag ? `<span class="sd-tag ${p.won ? 'win' : ''}">${esc(p.tag)}</span>` : ''}</div>`;
+      <div class="sd-cards">${cards}</div>${p.tag ? (JBI(p.tag) ? `<span class="sd-tag img ${p.won ? 'win' : ''}"><img src="${JBI(p.tag)}" alt="${esc(p.tag)}"></span>` : `<span class="sd-tag ${p.won ? 'win' : ''}">${esc(p.tag)}</span>`) : ''}</div>`;
   }).join('');
   // 나
   const m = meP();
@@ -388,7 +389,7 @@ function setupPeel(pe) {
       m.peeled = true;
       beep('flip');
       const at = centerOf(pe);
-      if (m.e && (m.e.s >= 800)) { bigPop(m.e.n + '!', 'red', '', ''); flash('gold'); sparkle(at, 12); beep('ttadak'); }
+      if (m.e && (m.e.s >= 800)) { bigPop(m.e.n + '!', 'red', '', JBI(m.e.n)); flash('gold'); sparkle(at, 12); beep('ttadak'); }
       else if (m.e && (m.e.s >= 701 || m.e.tj || m.e.ah)) { sparkle(at, 8); beep('jjok'); }
       else if (m.e && m.e.s === 500) beep('ppuk');
       render();
