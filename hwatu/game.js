@@ -21,6 +21,7 @@ probe('logo', 'img/logo.webp', () => { $('logoBox').innerHTML = '<img class="log
 probe('bg', 'img/bg.jpg', () => document.body.classList.add('art'));
 const TXT = ['jjok', 'ppuk', 'ppukeat', 'ttadak', 'sweep', 'go', 'stop', 'shake', 'bomb', 'chongtong', 'nagari', 'pibak'];
 TXT.forEach(n => probe('text-' + n, `img/text-${n}.webp`));
+for (let n = 1; n <= 9; n++) probe('text-go' + n, `img/text-go${n}.webp`);
 ['fx-slam', 'fx-sparkle', 'fx-wisp'].forEach(n => probe(n, `img/${n}.webp`));
 
 // ---------- 고르기 ----------
@@ -455,7 +456,7 @@ function after() {
   const lg = st.log[st.log.length - 1];
   if (lg && lg.t === 'go') {
     const k = `${st.gid}-${st.seq}-go`;
-    if (shownGs !== k) { shownGs = k; bigPop(`${lg.n}고!`, 'red', `${nmS(lg.who, st)} ${lg.n}고를 외쳤어요`, lg.n === 1 ? 'go' : ''); beep('go'); flash('red'); bubble(lg.who, `${lg.n}고!`); if (st.players[lg.who].ai) charPop('ggaebi-go'); }
+    if (shownGs !== k) { shownGs = k; bigPop(`${lg.n}고!`, 'red', `${nmS(lg.who, st)} ${lg.n}고를 외쳤어요`, ART['text-go' + lg.n] ? 'go' + lg.n : lg.n === 1 ? 'go' : ''); beep('go'); flash('red'); bubble(lg.who, `${lg.n}고!`); if (st.players[lg.who].ai) charPop('ggaebi-go'); }
   }
   // 긴장될 때 음악: 2고 넘었거나 누가 거의 다 났을 때
   const hot = st.phase !== 'end' && st.players.some(q => q.go >= 2 || scoreOf(q.caps).total >= st.goal - 1);
