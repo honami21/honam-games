@@ -115,7 +115,7 @@ function show(id) {
   $('sideRoom').classList.toggle('hidden', !(id === 'game' && mode === 'online'));
   if (id !== 'game') { KBGM.track('lobby'); KBGM.calm(); } else { KBGM.track('play'); KBGM.full(); }
 }
-function hideModals() { ['askModal', 'gsModal', 'resultModal', 'confirmModal'].forEach(id => $(id).classList.add('hidden')); }
+function hideModals() { ['askModal', 'gsModal', 'pickModal', 'resultModal', 'confirmModal'].forEach(id => $(id).classList.add('hidden')); }
 function getName() {
   const n = $('nameInput').value.trim().replace(/\s+/g, ' ').slice(0, 8);
   if (!n) { $('startMsg').textContent = '먼저 내 이름을 적어 주세요.'; $('nameInput').focus(); return null; }
@@ -205,12 +205,13 @@ function render(view) {
     $('meCaps').innerHTML = capsHTML(myP.caps, v.got && v.who === me ? v.got : null);
     const hide = new Set(v.hide || []);
     const myTurn = st.turn === me && st.phase === 'play' && !animating && !v.floor;
-    $('hand').innerHTML = myP.hand.filter(id => !hide.has(id)).map(id => {
+    $('hand').classList.toggle('dim', myTurn);
+    $('hand').innerHTML = myP.hand.filter(id => !hide.has(id)).map((id, k) => {
       const m = MON(id), has = st.floor.some(x => MON(x) === m);
       let mk = '';
       if (myTurn && canBomb(st, myP, m)) mk = '<span class="mk">폭탄</span>';
       else if (myTurn && canShake(st, myP, id)) mk = '<span class="mk">흔들기</span>';
-      return `<i class="ht ${has && myTurn ? 'can' : ''} ${myTurn && !has ? '' : ''} ${id === sel ? 'sel' : ''}" data-id="${id}" style="background-image:url(${IMG(id)})">${mk}</i>`;
+      return `<i class="ht ${has && myTurn ? 'can' : ''} ${myTurn && !has ? '' : ''} ${id === sel ? 'sel' : ''}" data-id="${id}" style="background-image:url(${IMG(id)})">${myTurn && k < 10 ? `<span class="kn">${(k + 1) % 10}</span>` : ''}${mk}</i>`;
     }).join('');
     $('hand').classList.remove('watch');
   } else { $('me').classList.add('hidden'); }
@@ -419,6 +420,7 @@ function after() {
   }
   if (st.phase === 'end') { showResult(); return; }
   if (st.phase === 'gostop' && st.turn === me) showGs(); else $('gsModal').classList.add('hidden');
+  if (st.phase === 'pick' && st.turn === me) showPick(); else $('pickModal').classList.add('hidden');
   if (st.turn === me && st.phase === 'play') beepTurn();
   if (mode === 'cpu') aiTick();
 }
@@ -474,6 +476,60 @@ function ask(title, text, ids, btns) {
   $('askBtns').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('askModal').classList.add('hidden'); const fn = btns[+b.dataset.k][2]; if (fn) fn(); };
   $('askModal').classList.remove('hidden');
 }
+let shownPick = '';
+function showPick() {
+  const st = g, pd = st.pend, opts = pd.need === 'h' ? pd.hm : pd.fm;
+  const k = `${st.gid}-${st.seq}-${pd.need}`;
+  if (!$('pickModal').classList.contains('hidden') && shownPick === k) return;
+  shownPick = k;
+  $('pickCards').innerHTML = opts.map((id, i) => `<button data-id="${id}">${cardH(id)}<span>${i + 1}번</span></button>`).join('');
+  $('pickModal').classList.remove('hidden');
+  beep('flip');
+}
+$('pickCards').onclick = e => { const b = e.target.closest('button'); if (!b) return; choosePick(+b.dataset.id); };
+function choosePick(id) {
+  const st = g, me = meIdx(st);
+  if (!st || st.phase !== 'pick' || st.turn !== me || animating) return;
+  const pd = st.pend, opts = pd.need === 'h' ? pd.hm : pd.fm;
+  if (!opts.includes(id)) return;
+  $('pickModal').classList.add('hidden');
+  doMine({ t: 'pick', id });
+}
+
+// 키보드: 숫자로 바로 내기, 좌우 방향키로 고르고 엔터·스페이스로 내기
+const anyModal = () => [...document.querySelectorAll('.modal, .screen')].some(el => getComputedStyle(el).display !== 'none');
+addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const st = g; if (!st || animating) return;
+  const me = meIdx(st); if (me < 0 || st.turn !== me) return;
+  const t = e.target; if (t && t.matches && t.matches('input, textarea, select')) return;
+  if (st.phase === 'pick' && !$('pickModal').classList.contains('hidden')) {
+    if (/^[1-9]$/.test(e.key)) { const pd = st.pend, opts = pd.need === 'h' ? pd.hm : pd.fm, id = opts[+e.key - 1]; if (id != null) { e.preventDefault(); choosePick(id); } }
+    return;
+  }
+  if (st.phase !== 'play' || anyModal()) return;
+  const hand = st.players[me].hand;
+  if (/^[0-9]$/.test(e.key)) {
+    const i = e.key === '0' ? 9 : +e.key - 1;
+    if (hand[i] != null) { e.preventDefault(); tryPlay(hand[i]); }
+    return;
+  }
+  const k = e.key;
+  if (k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown') {
+    e.preventDefault(); if (!hand.length) return;
+    let i = hand.indexOf(sel);
+    if (i < 0) { const c = hand.findIndex(id => st.floor.some(x => MON(x) === MON(id))); i = c >= 0 ? c : 0; }
+    else i = (i + (k === 'ArrowLeft' || k === 'ArrowUp' ? -1 : 1) + hand.length) % hand.length;
+    sel = hand[i]; render(); return;
+  }
+  if (k === 'Enter' || k === ' ') {
+    e.preventDefault();
+    if (sel >= 0 && hand.includes(sel)) tryPlay(sel);
+    else if (st.players[me].dummy > 0) doMine({ t: 'flip' });
+    else if (hand.length) { sel = hand[0]; render(); }
+  }
+});
+
 function showGs() {
   const st = g, me = meIdx(st), p = st.players[me];
   const k = `${st.gid}-${st.seq}`;

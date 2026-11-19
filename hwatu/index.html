@@ -147,7 +147,7 @@
   @keyframes bub { 0%{opacity:0; transform:translateX(-50%) scale(.4)} 12%{opacity:1; transform:translateX(-50%) scale(1.1)} 20%{transform:translateX(-50%) scale(1)} 80%{opacity:1} 100%{opacity:0} }
 
   /* 먹은 카드 */
-  .caps { display:flex; gap:calc(var(--cw) * .45); min-height:calc(var(--cw) * 1.3333); align-items:flex-end; flex-wrap:nowrap; overflow:hidden; }
+  .caps { display:flex; gap:calc(var(--cw) * .45 + 4px); min-height:calc(var(--cw) * 1.3333 + 10px); align-items:flex-end; flex-wrap:nowrap; overflow:hidden; padding:10px 8px 0 0; }
   .grp { display:flex; align-items:flex-end; position:relative; flex:none; }
   .grp .ht { --w:var(--cw); margin-left:calc(var(--cw) * -.62); filter:drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
   .grp .ht:first-child { margin-left:0; }
@@ -181,8 +181,17 @@
   #me .top .sp { margin-left:auto; display:flex; gap:6px; align-items:center; }
   #hand { display:flex; flex-wrap:wrap; justify-content:center; gap:calc(var(--hw) * .12) calc(var(--hw) * .08); min-height:calc(var(--hw) * 1.3333); padding-bottom:6px; }
   #hand .ht { --w:var(--hw); cursor:pointer; transition:transform .12s; }
-  #hand .ht.can:hover, #hand .ht.sel { transform:translateY(-8px); }
-  #hand .ht.can::after { content:''; position:absolute; left:50%; bottom:-7px; width:30%; height:5px; border-radius:3px; background:var(--sun); transform:translateX(-50%); box-shadow:0 0 0 2px var(--ink); }
+  #hand .ht:hover, #hand .ht.sel { transform:translateY(-10px); }
+  #hand .ht.can { box-shadow:0 0 0 3px var(--sun), 0 0 14px 4px rgba(255,214,77,.85); animation:canGlow 1.4s ease-in-out infinite; }
+  @keyframes canGlow { 0%,100%{ box-shadow:0 0 0 3px var(--sun), 0 0 8px 2px rgba(255,214,77,.6) } 50%{ box-shadow:0 0 0 3px var(--sun), 0 0 18px 7px rgba(255,214,77,.95) } }
+  #hand .ht.sel { box-shadow:0 0 0 4px var(--coral), 0 0 16px 4px rgba(255,95,109,.7); animation:none; }
+  #hand .ht .kn { position:absolute; left:3px; top:3px; min-width:18px; height:18px; border-radius:9px; background:var(--ink); color:#fff; font-size:13px; line-height:18px; text-align:center; padding:0 3px; opacity:.85; pointer-events:none; }
+  #hand.dim .ht:not(.can) { filter:brightness(.82); }
+  @media (hover:none) { #hand .ht .kn { display:none; } }
+  .pick-row { display:flex; gap:14px; justify-content:center; margin:10px 0 4px; }
+  .pick-row button { background:none; border:0; padding:6px; border-radius:14px; cursor:pointer; position:relative; font-family:inherit; color:var(--ink); font-size:16px; display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .pick-row button .ht { --w:clamp(84px, 16vw, 120px); transition:transform .12s; }
+  .pick-row button:hover .ht, .pick-row button.kn-focus .ht { transform:translateY(-6px) scale(1.04); box-shadow:0 0 0 4px var(--sun), 0 0 16px 5px rgba(255,214,77,.9); }
   #hand .ht .mk { position:absolute; left:50%; top:-8px; transform:translateX(-50%); background:var(--sun); border:2px solid var(--ink); border-radius:10px; font-size:12px; padding:0 6px; white-space:nowrap; color:var(--ink); line-height:16px; }
   #hand.watch { display:none; }
 
@@ -333,6 +342,14 @@
     <p id="askText"></p>
     <div class="shake-show" id="askCards"></div>
     <div class="btn-row" id="askBtns"></div>
+  </div>
+</div>
+
+<!-- 같은 달 두 장 중 고르기 -->
+<div id="pickModal" class="modal hidden">
+  <div class="card">
+    <h2 style="margin-top:0">어느 카드를 가져갈까요?</h2>
+    <div class="pick-row" id="pickCards"></div>
   </div>
 </div>
 
