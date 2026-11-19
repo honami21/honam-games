@@ -214,8 +214,11 @@ function render(view) {
   floor.forEach(id => { (groups[MON(id)] = groups[MON(id)] || []).push(id); });
   const pickSet = new Set(st.phase === 'pick' && pd && st.turn === me ? (pd.need === 'h' ? pd.hm : pd.fm) : []);
   const hlM = sel >= 0 ? MON(sel) : -1;
+  const meP0 = me >= 0 ? st.players[me] : null;
+  const myTurnF = meP0 && st.turn === me && st.phase === 'play' && !animating && !v.floor;
+  const handM = new Set(myTurnF ? meP0.hand.map(MON) : []);
   $('floor').innerHTML = Object.keys(groups).sort((a, b) => a - b).map(m =>
-    `<span class="fg ${+m === hlM ? 'hl' : ''}" data-m="${m}">${groups[m].map(id => cardH(id, (ghostSet.has(id) ? 'ghost ' : fresh.has(id) ? 'new ' : '') + (pickSet.has(id) ? 'pickable' : ''))).join('')}</span>`).join('');
+    `<span class="fg ${+m === hlM ? 'hl' : ''}" data-m="${m}">${groups[m].map(id => cardH(id, (ghostSet.has(id) ? 'ghost ' : fresh.has(id) ? 'new ' : '') + (pickSet.has(id) ? 'pickable' : '') + (handM.has(+m) ? ' eat' : ''))).join('')}</span>`).join('');
   const dn = v.deckN != null ? v.deckN : st.deck.length;
   $('deckStack').innerHTML = dn ? backH() + (dn > 1 ? backH() : '') + (dn > 2 ? backH() : '') : '';
   $('deckN').textContent = dn ? `${dn}장` : '';
@@ -290,6 +293,7 @@ async function runPending() {
     } catch (e) { console.error(e); g = ng; render(); }
   }
   animating = false;
+  render();
   after();
 }
 const evKey = e => e ? JSON.stringify([e.who, e.hc, e.f, e.caps, e.tags, e.bomb]) : '';

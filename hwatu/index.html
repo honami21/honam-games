@@ -166,7 +166,7 @@
   @keyframes bub { 0%{opacity:0; transform:translateX(-50%) scale(.4)} 12%{opacity:1; transform:translateX(-50%) scale(1.1)} 20%{transform:translateX(-50%) scale(1)} 80%{opacity:1} 100%{opacity:0} }
 
   /* 먹은 카드 */
-  .caps { display:flex; gap:calc(var(--cw) * .45 + 4px); min-height:calc(var(--cw) * 1.3333 + 10px); align-items:flex-end; flex-wrap:nowrap; overflow:hidden; padding:10px 8px 0 0; }
+  .caps { display:flex; gap:calc(var(--cw) * .45 + 4px); min-height:calc(var(--cw) * 1.3333 + 10px); align-items:flex-end; flex-wrap:nowrap; overflow:hidden; padding:10px 8px 0 0; justify-content:center; }
   .grp { display:flex; align-items:flex-end; position:relative; flex:none; }
   .grp .ht { --w:var(--cw); margin-left:calc(var(--cw) * -.62); filter:drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
   .grp .ht:first-child { margin-left:0; }
@@ -198,9 +198,14 @@
   #me .top { display:flex; align-items:center; gap:6px; }
   #me .top .nm { font-size:17px; }
   #me .top .sp { margin-left:auto; display:flex; gap:6px; align-items:center; }
-  #hand { display:flex; flex-wrap:wrap; justify-content:center; gap:calc(var(--hw) * .12) calc(var(--hw) * .08); min-height:calc(var(--hw) * 1.3333); padding-bottom:6px; }
+  #hand { display:flex; flex-wrap:wrap; justify-content:center; gap:calc(var(--hw) * .12) calc(var(--hw) * .08); min-height:calc(var(--hw) * 1.3333); padding-bottom:6px; padding-top:14px; }
   #hand .ht { --w:var(--hw); cursor:pointer; transition:transform .12s; }
-  #hand .ht:hover, #hand .ht.sel { transform:translateY(-10px); }
+  #hand .ht:hover { transform:translateY(-6px); }
+  #hand .ht.can { transform:translateY(-12px) scale(1.06); z-index:1; }
+  #hand .ht.can:hover { transform:translateY(-16px) scale(1.08); }
+  #hand .ht.sel { transform:translateY(-18px) scale(1.1); z-index:2; }
+  #floor .ht.eat { box-shadow:0 0 0 3px var(--sun), 0 0 14px 4px rgba(255,214,77,.85); animation:canGlow 1.4s ease-in-out infinite; }
+  #floor .ht.eat::after { content:''; position:absolute; left:calc(50% - 7px); top:-14px; border:7px solid transparent; border-top:9px solid var(--sun); filter:drop-shadow(0 1px 0 var(--ink)); animation:bob 1s ease-in-out infinite; }
   #hand .ht.can { box-shadow:0 0 0 3px var(--sun), 0 0 14px 4px rgba(255,214,77,.85); animation:canGlow 1.4s ease-in-out infinite; }
   @keyframes canGlow { 0%,100%{ box-shadow:0 0 0 3px var(--sun), 0 0 8px 2px rgba(255,214,77,.6) } 50%{ box-shadow:0 0 0 3px var(--sun), 0 0 18px 7px rgba(255,214,77,.95) } }
   #hand .ht.sel { box-shadow:0 0 0 4px var(--coral), 0 0 16px 4px rgba(255,95,109,.7); animation:none; }
