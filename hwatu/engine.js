@@ -39,7 +39,7 @@ const same = (a, b) => kind(a) === kind(b) && piVal(a) === piVal(b) && worth(a) 
 // ---------- 점수 ----------
 function scoreOf(caps, opt) {
   const best = { total: -1 };
-  const tries = caps.includes(GUKJIN) ? [false, true] : [false];
+  const tries = !caps.includes(GUKJIN) ? [false] : opt && opt.kj != null ? [opt.kj] : [false, true];
   for (const kjPi of tries) {
     const s = { g: 0, a: 0, r: 0, p: 0, gN: 0, aN: 0, rN: 0, pN: 0, godori: false, hong: false, cheong: false, cho: false, kjPi };
     for (const id of caps) {
@@ -291,7 +291,10 @@ function finish(g, winner, why, extra) {
   if (why === 'chongtong') { base = 10; res.chong = extra; detail.push('총통 10점'); }
   else if (why === 'ppuk3') { base = 10; detail.push('쓰리뻑 10점'); }
   else {
-    const s = scoreOf(w.caps);
+    // 국진(9월 술잔): 이긴 사람은 받는 돈이 가장 커지는 쪽으로 쳐요
+    const val = x => x.total * (x.aN >= 7 ? 2 : 1);
+    let s = scoreOf(w.caps);
+    if (w.caps.includes(GUKJIN)) { const a = scoreOf(w.caps, { kj: false }), b = scoreOf(w.caps, { kj: true }); s = val(b) > val(a) ? b : a; }
     base = s.total;
     res.ws = s;
     if (w.go) {
@@ -313,7 +316,8 @@ function finish(g, winner, why, extra) {
     if (i === winner) return;
     let m = mult; const bak = [];
     if (ws) {
-      const qs = scoreOf(q.caps);
+      // 진 사람은 박을 피하는 쪽: 국진을 쌍피로 쳐요
+      const qs = scoreOf(q.caps, { kj: true });
       if (ws.p > 0 && qs.pN > 0 && qs.pN <= (g.n === 2 ? 7 : 5)) { m *= 2; bak.push('피박'); }
       if (ws.g > 0 && qs.gN === 0) { m *= 2; bak.push('광박'); }
       if (g.n === 2 && q.go > 0) { m *= 2; bak.push('고박'); }
