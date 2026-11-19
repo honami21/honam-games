@@ -19,7 +19,7 @@ const ART = {};
 function probe(name, src, fn) { const im = new Image(); im.onload = () => { ART[name] = true; fn && fn(); }; im.src = src; }
 probe('logo', 'img/logo.webp', () => { $('logoBox').innerHTML = '<img class="logo" src="img/logo.webp" alt="깨비의 꽃들의 전쟁">'; });
 probe('bg', 'img/bg.jpg', () => document.body.classList.add('art'));
-const TXT = ['jjok', 'ppuk', 'ttadak', 'sweep', 'go', 'stop', 'shake', 'bomb', 'chongtong', 'nagari', 'pibak'];
+const TXT = ['jjok', 'ppuk', 'ppukeat', 'ttadak', 'sweep', 'go', 'stop', 'shake', 'bomb', 'chongtong', 'nagari', 'pibak'];
 TXT.forEach(n => probe('text-' + n, `img/text-${n}.webp`));
 ['fx-slam', 'fx-sparkle', 'fx-wisp'].forEach(n => probe(n, `img/${n}.webp`));
 
@@ -259,7 +259,7 @@ function renderStatus(v) {
   else if (st.turn === me) {
     if (st.phase === 'pick') t = '<b>어느 카드를 가져갈까요?</b> 반짝이는 카드를 눌러요';
     else if (st.phase === 'gostop') t = '<b>고</b> 할까요, <b>스톱</b> 할까요?';
-    else t = '<b>내 차례</b> · 낼 카드를 골라요';
+    else t = '<b>내 차례</b>';
   } else t = `${esc(st.players[st.turn].name)} 차례<span class="dots"></span>`;
   $('status').innerHTML = t;
 }
@@ -417,7 +417,7 @@ async function animate(old, ng) {
     await sleep(330);
   }
   // 3) 큰 글자 (먹기 전에)
-  const TAG = { jjok: ['쪽!', '', 'jjok'], ppuk: ['뻑!', 'red', 'ppuk'], ttadak: ['따닥!', '', 'ttadak'], sweep: ['싹쓸이!', 'mint', 'sweep'], ppukeat: ['뻑 먹기!', 'mint', ''] };
+  const TAG = { jjok: ['쪽!', '', 'jjok'], ppuk: ['뻑!', 'red', 'ppuk'], ttadak: ['따닥!', '', 'ttadak'], sweep: ['싹쓸이!', 'mint', 'sweep'], ppukeat: ['뻑 먹기!', 'mint', 'ppukeat'] };
   const tags = ev.tags.filter(t => TAG[t]);
   for (const t of tags) {
     bigPop(TAG[t][0], TAG[t][1], t === 'ppuk' ? '' : (ev.stole.length ? '피를 한 장씩 가져와요' : ''), TAG[t][2]);

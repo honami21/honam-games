@@ -256,7 +256,7 @@
 
   #status { flex:none; align-self:center; background:rgba(10,30,20,.55); border-radius:14px; padding:3px 14px; min-height:28px; font-size:clamp(16px,2.6vw,19px); color:#fff; text-align:center; word-break:keep-all; }
   #status b { color:var(--sun); font-weight:normal; }
-  #actions { flex:none; display:flex; gap:10px; justify-content:center; flex-wrap:wrap; min-height:0; }
+  #actions { flex:none; display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap; min-height:0; margin:8px 4px 4px; }
   #actions:empty { display:none; }
   #actions .game-btn { padding:6px 16px; font-size:17px; min-width:0; }
   #me { flex:none; background:rgba(255,246,236,.94); border:3px solid var(--ink); border-radius:16px; padding:4px 8px; display:flex; flex-direction:column; gap:4px; }
@@ -327,6 +327,7 @@
   .side-room { position:fixed; left:12px; bottom:10px; z-index:30; background:rgba(255,246,236,.9); border:2px solid var(--ink); border-radius:14px; padding:2px 10px; font-size:14px; }
   .side-room b { font-weight:normal; color:var(--coral-d); margin-left:4px; }
 
+  @media (max-height:520px){ #actions { margin:0 4px; } #actions .game-btn { padding:3px 12px; font-size:15px; } }
   /* 휴대폰 세로 */
   @media (max-width:600px){
     #game { padding:50px 4px 4px; gap:3px; }
