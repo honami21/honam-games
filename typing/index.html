@@ -349,7 +349,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 import {
-  getFirestore, collection, addDoc, query, orderBy, limit, getDocs, serverTimestamp
+  getFirestore, collection, addDoc, query, where, orderBy, limit, getDocs, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -947,17 +947,26 @@ async function saveScore() {
   saveBtn.textContent = '⏳ 저장 중...';
   setStatus('');
   try {
-    const docRef = await addDoc(collection(db, SCORES_COLLECTION), {
-      name, school,
-      score:        Math.floor(score),
-      correctCount: Math.floor(correctCount),
-      stage:        Math.floor(stage),
-      totalTime:    elapsedTime,
-      createdAt:    serverTimestamp()
-    });
+    // 같은 학교·이름의 기록이 이미 있으면 더 높을 때만 새로 저장
+    let prev = null;
+    try { prev = KRANK.bestOf((await getDocs(query(collection(db, SCORES_COLLECTION), where('name', '==', name)))).docs, school, name); } catch (e) { console.warn('이전 기록 확인 실패', e); }
+    let id;
+    if (prev && (prev.data().score || 0) >= Math.floor(score)) {
+      id = prev.id;
+    } else {
+      const docRef = await addDoc(collection(db, SCORES_COLLECTION), {
+        name, school,
+        score:        Math.floor(score),
+        correctCount: Math.floor(correctCount),
+        stage:        Math.floor(stage),
+        totalTime:    elapsedTime,
+        createdAt:    serverTimestamp()
+      });
+      id = docRef.id;
+    }
     playSave();
     nameInput.value = '';
-    await showRanking(docRef.id);
+    await showRanking(id);
   } catch (e) {
     console.error(e);
     setStatus('저장하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.', true);
@@ -973,13 +982,14 @@ async function showRanking(highlightId = null) {
   rankingList.innerHTML = '<div class="ranking-empty">불러오는 중... ⏳</div>';
   if (!db) { rankingList.innerHTML = '<div class="ranking-empty">랭킹에 연결하지 못했어요.</div>'; return; }
   try {
-    const snapshot = await getDocs(query(collection(db, SCORES_COLLECTION), orderBy("score", "desc"), limit(50)));
-    if (snapshot.empty) {
+    const snapshot = await getDocs(query(collection(db, SCORES_COLLECTION), orderBy("score", "desc"), limit(300)));
+    const docs = KRANK.dedupe(snapshot.docs).slice(0, 50);
+    if (!docs.length) {
       rankingList.innerHTML = '<div class="ranking-empty">아직 기록이 없어요!<br>첫 번째 도전자가 되어 보세요!</div>';
       return;
     }
     rankingList.innerHTML = '';
-    snapshot.docs.forEach((doc, i) => {
+    docs.forEach((doc, i) => {
       const d = doc.data(), rank = i + 1;
       const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
       const row = document.createElement('div');
@@ -1032,6 +1042,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) last
 
 drawHearts(); updateHud();
 </script>
+<script src="../rank.js"></script>
 <script src="../keynav.js"></script>
 <script src="../credit.js"></script>
 </body>

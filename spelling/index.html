@@ -339,7 +339,7 @@
 // ============================================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 import {
-  getFirestore, collection, addDoc, query, orderBy, limit, getDocs, serverTimestamp
+  getFirestore, collection, addDoc, query, where, orderBy, limit, getDocs, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -1269,15 +1269,22 @@ async function saveScore() {
     console.log('[SAVE] 전송 시작:', entry);
     console.log('[SAVE] 컬렉션:', COLLECTION_NAME);
     console.log('[SAVE] 프로젝트:', firebaseConfig.projectId);
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), entry);
-    console.log('[SAVE] 성공! 문서 ID:', docRef.id);
+    // 같은 학교·이름의 기록이 이미 있으면 더 높을 때만 새로 저장
+    let prev = null;
+    try { prev = KRANK.bestOf((await getDocs(query(collection(db, COLLECTION_NAME), where('name', '==', name)))).docs, school, name); } catch (e) { console.warn('[SAVE] 이전 기록 확인 실패', e); }
     localStorage.setItem('lastSchool', school);
     localStorage.setItem('lastName', name);
-    statusEl.textContent = '✓ 저장 완료!';
     statusEl.classList.remove('error');
-
-    // Remember submitted entry for highlight in ranking
-    game.submittedEntry = { ...entry, _id: docRef.id, createdAt: Date.now() };
+    if (prev && (prev.data().score || 0) >= entry.score) {
+      statusEl.textContent = '예전 최고 기록 ' + (prev.data().score || 0).toLocaleString() + '점이 그대로 남아요';
+      game.submittedEntry = { ...prev.data(), _id: prev.id };
+    } else {
+      const docRef = await addDoc(collection(db, COLLECTION_NAME), entry);
+      console.log('[SAVE] 성공! 문서 ID:', docRef.id);
+      statusEl.textContent = prev ? '✓ 최고 기록 갱신!' : '✓ 저장 완료!';
+      // Remember submitted entry for highlight in ranking
+      game.submittedEntry = { ...entry, _id: docRef.id, createdAt: Date.now() };
+    }
 
     // Switch UI: form → after-save buttons
     setTimeout(() => {
@@ -1312,10 +1319,9 @@ async function showRanking() {
   fitOverlay();
 
   try {
-    const q = query(collection(db, COLLECTION_NAME), orderBy('score', 'desc'), limit(50));
+    const q = query(collection(db, COLLECTION_NAME), orderBy('score', 'desc'), limit(300));
     const snap = await getDocs(q);
-    const entries = [];
-    snap.forEach(doc => entries.push({ _id: doc.id, ...doc.data() }));
+    const entries = KRANK.dedupe(snap.docs).slice(0, 50).map(doc => ({ _id: doc.id, ...doc.data() }));
 
     if (entries.length === 0) {
       listEl.innerHTML = '<div class="ranking-empty">아직 기록이 없어요.<br>첫 번째 도전자가 되어보세요! 🎯</div>';
@@ -1355,11 +1361,7 @@ async function showRanking() {
         // Approximate: count how many scores are higher than mine
         const higherQ = query(collection(db, COLLECTION_NAME), orderBy('score', 'desc'));
         const allSnap = await getDocs(higherQ);
-        let rank = 1;
-        allSnap.forEach(doc => {
-          const d = doc.data();
-          if ((d.score || 0) > me.score) rank++;
-        });
+        const rank = KRANK.rankOf(allSnap.docs, me.score);
         myNoteEl.innerHTML = `📍 내 등수: <b>${rank}위</b> · ${(me.score).toLocaleString()}점 · ${me.school} / ${me.name}`;
         myNoteEl.classList.remove('hidden');
       } catch (e2) {
@@ -1957,6 +1959,7 @@ loop();
 
 document.addEventListener('contextmenu', e => e.preventDefault());
 </script>
+<script src="../rank.js"></script>
 <script src="../keynav.js"></script>
 <script src="../credit.js" data-spots="bottom q1 q3"></script>
 </body>

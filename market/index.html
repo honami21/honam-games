@@ -1105,17 +1105,23 @@ $('saveBtn').onclick = async () => {
   store('market-school', school);
   $('saveBtn').disabled = true; $('saveMsg').textContent = '저장 중…';
   try {
-    const r = await addDoc(collection(db, SCORES), { name, school, score: Math.floor(solo.score), count: Math.floor(solo.count), createdAt: serverTimestamp() });
-    $('soloModal').classList.add('hidden'); showRanking(r.id);
+    // 같은 학교·이름의 기록이 이미 있으면 더 높을 때만 새로 저장
+    let prev = null;
+    try { prev = KRANK.bestOf((await getDocs(query(collection(db, SCORES), where('name', '==', name)))).docs, school, name); } catch (e) { console.warn('이전 기록 확인 실패', e); }
+    let id;
+    if (prev && (prev.data().score || 0) >= Math.floor(solo.score)) id = prev.id;
+    else id = (await addDoc(collection(db, SCORES), { name, school, score: Math.floor(solo.score), count: Math.floor(solo.count), createdAt: serverTimestamp() })).id;
+    $('soloModal').classList.add('hidden'); showRanking(id);
   } catch (e) { console.error(e); $('saveMsg').textContent = '저장하지 못했어요. ' + errText(e); $('saveBtn').disabled = false; }
 };
 async function showRanking(hi) {
   $('rankModal').classList.remove('hidden');
   const L = $('rankList'); L.innerHTML = '<div class="ranking-empty">불러오는 중…</div>';
   try {
-    const snap = await getDocs(query(collection(db, SCORES), orderBy('score', 'desc'), limit(50)));
-    if (snap.empty) { L.innerHTML = '<div class="ranking-empty">아직 기록이 없어요!<br>첫 번째 도전자가 되어 보세요!</div>'; return; }
-    L.innerHTML = snap.docs.map((d, i) => { const v = d.data(); return `<div class="ranking-row${d.id === hi ? ' me' : ''}"><div class="rank-num">${i + 1}</div><div class="rank-name">${esc(v.name || '이름 없음')}<span class="school">${esc(v.school || '')}</span></div><div class="rank-score">${v.score || 0}<small>꼬치 ${v.count || 0}개</small></div></div>`; }).join('');
+    const snap = await getDocs(query(collection(db, SCORES), orderBy('score', 'desc'), limit(300)));
+    const docs = KRANK.dedupe(snap.docs).slice(0, 50);
+    if (!docs.length) { L.innerHTML = '<div class="ranking-empty">아직 기록이 없어요!<br>첫 번째 도전자가 되어 보세요!</div>'; return; }
+    L.innerHTML = docs.map((d, i) => { const v = d.data(); return `<div class="ranking-row${d.id === hi ? ' me' : ''}"><div class="rank-num">${i + 1}</div><div class="rank-name">${esc(v.name || '이름 없음')}<span class="school">${esc(v.school || '')}</span></div><div class="rank-score">${v.score || 0}<small>꼬치 ${v.count || 0}개</small></div></div>`; }).join('');
     const me = L.querySelector('.me'); if (me) setTimeout(() => me.scrollIntoView({ block: 'center' }), 100);
   } catch (e) { console.error(e); L.innerHTML = '<div class="ranking-empty">랭킹을 불러오지 못했어요.<br>' + errText(e) + '</div>'; }
 }
@@ -1312,6 +1318,7 @@ async function doLeave() {
 window.addEventListener('pointerdown', () => { if (actx && actx.state === 'suspended') actx.resume(); }, { passive: true });
 window.__market = { get room() { return room; }, get mode() { return mode; }, startCpu, startSolo, press, serve, get mySk() { return mySk; } };
 </script>
+<script src="../rank.js"></script>
 <script src="../keynav.js"></script>
 <script src="../credit.js"></script>
 </body>

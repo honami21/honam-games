@@ -2444,13 +2444,23 @@ $('save-btn').addEventListener('click', async () => {
   $('save-btn').disabled = true; setStatus('저장하는 중...');
   try {
     const { fs, db } = await getFb();
-    const ref = await fs.addDoc(fs.collection(db, SCORES_COLLECTION), {
-      school, name, score: r.score, kills: r.kills, totalTime: r.time, level: r.level, cleared: !!r.cleared, createdAt: fs.serverTimestamp()
-    });
+    // 같은 학교·이름의 기록이 이미 있으면 더 높을 때만 새로 저장
+    let prev = null;
+    try { prev = KRANK.bestOf((await fs.getDocs(fs.query(fs.collection(db, SCORES_COLLECTION), fs.where('name', '==', name)))).docs, school, name); } catch (e) { console.warn('이전 기록 확인 실패', e); }
+    let id;
+    if (prev && (prev.data().score || 0) >= r.score) {
+      id = prev.id;
+      setStatus('예전 최고 기록 ' + (prev.data().score || 0).toLocaleString() + '점이 그대로 남아요');
+    } else {
+      const ref = await fs.addDoc(fs.collection(db, SCORES_COLLECTION), {
+        school, name, score: r.score, kills: r.kills, totalTime: r.time, level: r.level, cleared: !!r.cleared, createdAt: fs.serverTimestamp()
+      });
+      id = ref.id;
+      setStatus(prev ? '최고 기록 갱신!' : '저장했어요!');
+    }
     try { localStorage.setItem('lastSchool', school); } catch (e) {}
     $('name-input').value = '';
-    setStatus('저장했어요!');
-    showRanking(ref.id);
+    showRanking(id);
   } catch (e) {
     console.error(e); $('save-btn').disabled = false;
     setStatus('저장하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.', true);
@@ -2462,10 +2472,11 @@ window.showRanking = async function (highlightId) {
   list.innerHTML = '<div class="ranking-empty">불러오는 중...</div>';
   try {
     const { fs, db } = await getFb();
-    const snap = await fs.getDocs(fs.query(fs.collection(db, SCORES_COLLECTION), fs.orderBy('score', 'desc'), fs.limit(50)));
-    if (snap.empty) { list.innerHTML = '<div class="ranking-empty">아직 기록이 없어요!<br>첫 번째 도깨비숲 지킴이가 되어 보세요!</div>'; return; }
+    const snap = await fs.getDocs(fs.query(fs.collection(db, SCORES_COLLECTION), fs.orderBy('score', 'desc'), fs.limit(300)));
+    const docs = KRANK.dedupe(snap.docs).slice(0, 50);
+    if (!docs.length) { list.innerHTML = '<div class="ranking-empty">아직 기록이 없어요!<br>첫 번째 도깨비숲 지킴이가 되어 보세요!</div>'; return; }
     list.innerHTML = '';
-    snap.docs.forEach((doc, i) => {
+    docs.forEach((doc, i) => {
       const d = doc.data(), rank = i + 1, medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
       const row = document.createElement('div');
       row.className = 'ranking-row' + (doc.id === highlightId ? ' me' : '');
@@ -2481,6 +2492,7 @@ window.showRanking = async function (highlightId) {
   }
 };
 </script>
+<script src="../rank.js"></script>
 <script src="../keynav.js"></script>
 <script src="../credit.js"></script>
 </body>
