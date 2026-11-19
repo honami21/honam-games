@@ -152,7 +152,7 @@
   .charge-btn { font-family:'Jua',sans-serif; font-size:14px; padding:2px 11px; border-radius:12px; cursor:pointer; color:#ffd25e; background:rgba(255,240,210,.08); border:1.5px solid rgba(233,185,73,.6); }
   .charge-btn:hover { background:rgba(255,210,94,.18); }
   #startScreen .wallet { background:#0d0a1e; border:1.5px solid rgba(233,185,73,.6); }
-  #startScreen .msg { color:#ff9aa6; min-height:0; margin-top:4px; }
+  #startScreen .msg { color:#ff9aa6; min-height:0; margin-top:4px; white-space:nowrap; }
   #startScreen .note { color:rgba(255,236,200,.75); }
   #startScreen #helpBtn { margin-top:8px; background:rgba(255,240,210,.08); color:#fff3d6; border:2px solid rgba(233,185,73,.6); padding:4px 16px; font-size:15px; }
   .mode-row.three { grid-template-columns:repeat(3,1fr); gap:8px; }
@@ -341,7 +341,8 @@
   #big { position:fixed; left:50%; top:44%; z-index:60; pointer-events:none; opacity:0; transform:translate(-50%,-50%); text-align:center; white-space:nowrap; }
   #big .tx { font-size:clamp(56px,13vw,120px); color:var(--sun); -webkit-text-stroke:6px var(--ink); paint-order:stroke fill; text-shadow:0 7px 0 var(--ink); letter-spacing:2px; }
   #big .tx.red { color:var(--coral); } #big .tx.mint { color:var(--mint); } #big .tx.sky { color:var(--sky); }
-  #big .sub { font-size:clamp(18px,3.4vw,26px); color:#fff; -webkit-text-stroke:4px var(--ink); paint-order:stroke fill; margin-top:4px; }
+  #big img { display:block; width:min(64vw,440px); height:min(34vh,300px); object-fit:contain; margin:0 auto; }
+  #big .sub { position:absolute; left:50%; top:100%; transform:translateX(-50%);  font-size:clamp(18px,3.4vw,26px); color:#fff; -webkit-text-stroke:4px var(--ink); paint-order:stroke fill; margin-top:4px; }
   #big.on { animation:bigpop 1.5s ease-out forwards; }
   @keyframes bigpop { 0%{opacity:0; transform:translate(-50%,-50%) scale(.3)} 14%{opacity:1; transform:translate(-50%,-50%) scale(1.12)} 24%{transform:translate(-50%,-50%) scale(1)} 78%{opacity:1} 100%{opacity:0; transform:translate(-50%,-60%) scale(1)} }
   .side-room { position:fixed; left:12px; bottom:10px; z-index:30; background:rgba(255,246,236,.9); border:2px solid var(--ink); border-radius:14px; padding:2px 10px; font-size:14px; }
