@@ -75,13 +75,30 @@ const SVG_SND_OFF = '<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><
 const SVG_MUSIC = '<svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg>';
 let soundOn = store('hwatu-sound') !== 'off';
 let actx = null, noiseBuf = null;
+// 전화·재난문자·다른 앱 소리 뒤에 효과음이 멈춰 있지 않게: 손을 댈 때마다 소리 장치를 다시 깨워요
+function newActx() { actx = new (window.AudioContext || window.webkitAudioContext)(); noiseBuf = null;
+  try { const b = actx.createBuffer(1, 1, 22050), s = actx.createBufferSource(); s.buffer = b; s.connect(actx.destination); s.start(0); } catch (e) {} }
+function wakeAudio(gesture) {
+  try {
+    if (!actx) { if (gesture) newActx(); return; }
+    if (actx.state === 'closed') { if (gesture) newActx(); else actx = null; return; }
+    if (actx.state !== 'running') {
+      const a = actx; a.resume().catch(() => {});
+      // 다시 깨워도 멈춰 있으면 새로 만들어요 (다음 손댐 때)
+      if (gesture) setTimeout(() => { if (actx === a && a.state !== 'running') { try { a.close(); } catch (e) {} actx = null; } }, 400);
+    }
+  } catch (e) {}
+}
+['pointerdown', 'keydown', 'touchend'].forEach(ev => addEventListener(ev, () => wakeAudio(true), { capture: true, passive: true }));
+addEventListener('visibilitychange', () => { if (!document.hidden) wakeAudio(false); });
+addEventListener('focus', () => wakeAudio(false));
 function updSnd() { $('sndToggle').innerHTML = soundOn ? SVG_SND_ON : SVG_SND_OFF; $('sndToggle').classList.toggle('muted', !soundOn); }
 updSnd();
 $('sndToggle').onclick = () => { soundOn = !soundOn; store('hwatu-sound', soundOn ? 'on' : 'off'); updSnd(); $('sndToggle').blur(); };
 function beep(k) {
   if (!soundOn) return;
   try {
-    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (!actx) newActx(); else if (actx.state !== 'running') wakeAudio(false);
     const t = actx.currentTime;
     const tone = (f, s, d, type = 'sine', v = .25, f2) => {
       const o = actx.createOscillator(), gn = actx.createGain();
