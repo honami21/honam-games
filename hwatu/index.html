@@ -47,7 +47,7 @@
   .logo { width:min(520px, 96%); display:block; margin:0 auto 4px; }
   .logo-text { font-size:clamp(46px,11vw,72px); line-height:1.05; margin:6px 0 4px; color:var(--coral); -webkit-text-stroke:5px var(--ink); paint-order:stroke fill;
     text-shadow:0 5px 0 var(--ink); white-space:nowrap; }
-  .logo-text .y { color:var(--sun); } .logo-text .w { color:#fff; font-size:.7em; }
+  .logo-text .l1 { font-size:.62em; } .logo-text .y { color:var(--sun); } .logo-text .w { color:#fff; font-size:.7em; }
   .start-wrap { position:relative; width:100%; }
   .start-ggaebi { position:absolute; width:190px; right:-175px; top:30px; pointer-events:none; filter:drop-shadow(0 4px 0 rgba(20,10,50,.25)); }
   @media (max-width:860px){ .start-ggaebi{ display:none; } }
@@ -63,6 +63,25 @@
   .seg button { border:2.5px solid var(--ink); background:#fff; color:var(--ink); border-radius:16px; padding:6px 12px; font-size:16px; cursor:pointer; white-space:nowrap; }
   .seg button.on { background:var(--sun); }
   .seg-label { font-size:17px; text-align:center; margin:2px 0 8px; color:var(--ink2); }
+  .wallet { display:inline-flex; align-items:center; gap:4px; background:var(--ink); color:var(--sun); border-radius:12px; padding:0 9px 0 4px; font-size:15px; margin-left:6px; vertical-align:1px; }
+  .yp { display:inline-block; width:1em; height:1em; border-radius:50%; flex:none; position:relative; vertical-align:-.12em;
+    background:radial-gradient(circle at 35% 30%, #fff6c4 0 12%, #ffd84d 30%, #e2a516 70%, #a96d07 100%); box-shadow:inset 0 0 0 1.5px #7a4c00; }
+  .yp::after { content:''; position:absolute; left:50%; top:50%; width:32%; height:32%; transform:translate(-50%,-50%); background:#3a2a10; border-radius:1px; box-shadow:0 0 0 1px #7a4c00; }
+  .seg.stake button { display:flex; flex-direction:column; align-items:center; line-height:1.15; padding:5px 12px; }
+  .seg.stake button small { font-size:12px; opacity:.75; }
+  .seg.stake button:disabled { opacity:.4; cursor:not-allowed; }
+  .refill { text-align:center; margin-top:8px; } .refill .note { margin:4px 0 0; font-size:14px; color:var(--ink2); }
+  .coinchip { display:inline-flex; align-items:center; gap:4px; background:var(--ink); color:var(--sun); border-radius:12px; padding:1px 9px 1px 4px; font-size:15px; white-space:nowrap; }
+  .coinchip.up { animation:cup .9s ease-out; } .coinchip.down { animation:cdown .9s ease-out; }
+  @keyframes cup { 0%{transform:scale(1)} 30%{transform:scale(1.3); background:#2f9e58} 100%{transform:scale(1)} }
+  @keyframes cdown { 0%{transform:scale(1)} 30%{transform:scale(1.2); background:var(--coral-d)} 100%{transform:scale(1)} }
+  .flycoin { position:fixed; z-index:75; width:26px; height:26px; pointer-events:none; font-size:26px; }
+  .res-coin { font-size:clamp(30px,6vw,44px); margin:6px 0 2px; display:flex; align-items:center; justify-content:center; gap:8px; -webkit-text-stroke:4px var(--ink); paint-order:stroke fill; }
+  .res-coin.plus { color:var(--sun); } .res-coin.minus { color:#ff8b95; } .res-coin .yp { font-size:.85em; -webkit-text-stroke:0; }
+  .res-coin.pop { animation:pop .5s ease-out; }
+  .res-wallet { font-size:15px; color:var(--ink2); margin-bottom:6px; }
+  .broke { margin:6px 0; color:var(--coral-d); font-size:17px; }
+  .gs-won { display:inline-flex; align-items:center; gap:5px; font-weight:normal; font-size:1.35em; color:var(--coral-d); }
   .msg { min-height:20px; font-size:15px; color:var(--coral-d); margin-top:8px; text-align:center; word-break:keep-all; }
   .note { font-size:14px; color:var(--ink2); margin-top:8px; text-align:center; word-break:keep-all; line-height:1.45; }
 
@@ -293,7 +312,7 @@
   <div class="section">
     <div class="start-wrap">
       <div class="card">
-        <div id="logoBox"><div class="logo-text"><span class="y">깨비샘</span><span class="w">의</span> 꽃들<span class="w">의</span> 전쟁</div></div>
+        <div id="logoBox"><div class="logo-text"><span class="l1"><span class="y">깨비샘</span><span class="w">의</span></span><br>꽃들<span class="w">의</span> 전쟁</div></div>
         <div class="box">
           <div class="field"><input id="nameInput" maxlength="8" placeholder="내 이름 (별명도 좋아요)" autocomplete="off"></div>
         </div>
@@ -302,6 +321,9 @@
             <button class="game-btn btn-sky" id="cpu2Btn">맞고<small>깨비샘과 둘이</small></button>
             <button class="game-btn btn-mint" id="cpu3Btn">고스톱<small>깨비샘 둘과 셋이</small></button>
           </div>
+          <div class="seg-label" style="margin-top:10px">판돈 <span class="wallet" id="walletStart"></span></div>
+          <div class="seg stake" id="stakeSeg"></div>
+          <div class="refill hidden" id="refillBox"><button class="game-btn btn-primary" id="refillBtn">깨비샘에게 엽전 받기</button><p class="note" id="refillNote"></p></div>
           <div class="seg-label" style="margin-top:10px">깨비샘 실력</div>
           <div class="seg" id="lvSeg"><button data-v="1">쉬움</button><button data-v="2">보통</button><button data-v="3">어려움</button></div>
         </div>
@@ -369,6 +391,8 @@
     <img class="res-img" id="resImg" src="../cards/img/ggaebi-win.png" alt="">
     <h2 id="resTitle"></h2>
     <p id="resText"></p>
+    <div class="res-coin hidden" id="resCoin"></div>
+    <div class="res-wallet" id="resWallet"></div>
     <div class="sc-lines" id="resLines"></div>
     <table class="score" id="resTable"></table>
     <div class="btn-row" id="resBtns"></div>

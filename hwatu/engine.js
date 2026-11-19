@@ -70,7 +70,7 @@ function newGame(players, opt, now) {
     v: 1, seq: 0, gid: Math.random().toString(36).slice(2, 9),
     n: players.length, goal: players.length === 2 ? 7 : 3,
     players: players.map(p => ({ id: p.id, name: p.name, ai: p.ai || 0, av: p.av || '', total: p.total || 0 })),
-    round: (opt && opt.round) || 1, starter: (opt && opt.starter) || 0, bonus: (opt && opt.bonus) || 1
+    round: (opt && opt.round) || 1, starter: (opt && opt.starter) || 0, bonus: (opt && opt.bonus) || 1, stake: (opt && opt.stake) || 10
   };
   deal(g, now);
   return g;
@@ -102,7 +102,7 @@ function deal(g, now) {
 function nextRound(g, now) {
   const r = g.res || {};
   const winner = r.winner >= 0 ? r.winner : g.starter;
-  const ng = newGame(g.players, { round: g.round + 1, starter: winner, bonus: r.nagari ? Math.min(8, g.bonus * 2) : 1 }, now);
+  const ng = newGame(g.players, { round: g.round + 1, starter: winner, bonus: r.nagari ? Math.min(8, g.bonus * 2) : 1, stake: g.stake || 10 }, now);
   ng.gid = Math.random().toString(36).slice(2, 9);
   return ng;
 }
