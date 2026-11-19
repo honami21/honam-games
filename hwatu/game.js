@@ -495,7 +495,36 @@ function bubble(i, text) {
 //  내 행동
 // ============================================================
 const isTouch = () => matchMedia('(hover: none)').matches;
+// 손패를 끌어서 판 위로 던지면 내요 (터치·마우스 모두)
+let drag = null, dragEnd = 0;
+$('hand').addEventListener('pointerdown', e => {
+  const c = e.target.closest('.ht'); if (!c || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  const st = g; if (!st || animating || st.turn !== meIdx(st) || st.phase !== 'play') return;
+  drag = { c, id: +c.dataset.id, x: e.clientX, y: e.clientY, pid: e.pointerId, on: false };
+});
+addEventListener('pointermove', e => {
+  if (!drag || e.pointerId !== drag.pid) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (!drag.on) { if (Math.hypot(dx, dy) < 12) return; drag.on = true; drag.c.classList.add('dragging'); }
+  e.preventDefault();
+  drag.c.style.transform = `translate(${dx}px,${dy}px) scale(1.12) rotate(${Math.max(-12, Math.min(12, dx / 12))}deg)`;
+  const top = $('hand').getBoundingClientRect().top;
+  drag.c.classList.toggle('throw', e.clientY < top - 16);
+}, { passive: false });
+function dropEnd(e) {
+  if (!drag || e.pointerId !== drag.pid) return;
+  const d = drag; drag = null;
+  if (!d.on) return;
+  dragEnd = Date.now();
+  const st = g, ok = e.type === 'pointerup' && e.clientY < $('hand').getBoundingClientRect().top - 16
+    && st && !animating && st.turn === meIdx(st) && st.phase === 'play';
+  d.c.classList.remove('throw');
+  const back = () => { if (!d.c.isConnected) return; d.c.classList.remove('dragging'); d.c.style.transform = ''; };
+  if (ok) { sel = d.id; tryPlay(d.id); setTimeout(back, 700); } else back();
+}
+addEventListener('pointerup', dropEnd); addEventListener('pointercancel', dropEnd);
 $('hand').addEventListener('click', e => {
+  if (Date.now() - dragEnd < 350) return;
   const c = e.target.closest('.ht'); if (!c) return;
   const st = g, me = meIdx(st);
   if (!st || animating || st.turn !== me || st.phase !== 'play') return;
