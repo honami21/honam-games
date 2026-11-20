@@ -225,6 +225,36 @@
   .ranking-empty { text-align:center; padding:30px 0; color:var(--ink2); }
   .clear-badge { color:#fff; background:var(--evo); border-radius:7px; font-size:11px; padding:0 5px; margin-left:4px; vertical-align:2px; }
 
+
+  /* 엽전 강화 상점 */
+  #shop .panel { width:min(860px,100%); }
+  .shop-head { display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap; }
+  .shop-coins { background:var(--ink); color:#fff; border-radius:16px; padding:3px 14px; font-size:20px; }
+  .shop-coins b { font-weight:normal; color:var(--sun); }
+  #up-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(112px,1fr)); gap:8px; margin-top:10px; }
+  .up { border:3px solid var(--edge); background:#fff; border-radius:16px; padding:6px 4px 5px; cursor:pointer; font-family:'Jua',sans-serif; color:var(--ink); font-size:15px; word-break:keep-all; }
+  .up .ic { margin:0 auto 3px; border-color:#c99a3a; }
+  .up.sel { border-color:var(--coral); background:#fff1ee; }
+  .up.max { background:#fff8d8; }
+  .up .pips { display:flex; justify-content:center; gap:3px; margin:3px 0 2px; }
+  .up .pips i { width:10px; height:10px; border-radius:3px; border:2px solid #c99a3a; background:#fff; }
+  .up .pips i.on { background:var(--sun); border-color:var(--sun-d); }
+  .up .cost { font-size:13px; color:var(--ink2); }
+  .up .cost.no { color:var(--coral-d); }
+  #up-info { margin-top:10px; background:#fff; border:2px dashed var(--edge); border-radius:14px; padding:8px 12px; font-size:15px; color:var(--ink2); text-align:left; min-height:60px; word-break:keep-all; line-height:1.5; }
+  #up-info b { color:var(--ink); font-weight:normal; font-size:18px; }
+  #up-info .now { color:var(--coral-d); }
+  #shop-msg, #code-msg { min-height:20px; font-size:14px; color:var(--mint-d); margin-top:6px; word-break:keep-all; }
+  #shop-msg.error, #code-msg.error { color:var(--coral-d); }
+  #savecode .panel { width:min(460px,100%); }
+  #code-show { font-family:'Fredoka',sans-serif; font-size:clamp(24px,6vw,34px); letter-spacing:2px; color:var(--ink); background:#fff; border:3px solid var(--ink); border-radius:16px; padding:8px 10px; margin:6px auto 10px; -webkit-user-select:text; user-select:text; }
+  #code-input { width:210px; text-transform:uppercase; font-family:'Fredoka','Jua',sans-serif; letter-spacing:1px; }
+  @media (max-width:760px), (pointer:coarse){
+    #up-grid { grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:5px; }
+    .up { font-size:13px; padding:5px 2px 4px; }
+    .up .pips i { width:8px; height:8px; }
+  }
+
   @keyframes spin { to { transform:rotate(360deg); } }
   @keyframes blink { 50% { opacity:.35; } }
   @keyframes shake { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-8deg)} 75%{transform:rotate(8deg)} }
@@ -367,6 +397,7 @@
       <button class="game-btn" id="start-btn" type="button">숲으로 출발!</button>
       <button class="game-btn sun" id="rank-btn" type="button"><img class="ico" src="img/icon-rank.png" alt="">랭킹</button>
       <button class="game-btn white" id="help-btn" type="button"><img class="ico" src="img/icon-book.png" alt="">조합표</button>
+      <button class="game-btn mint" id="shop-btn" type="button"><img class="ico" src="img/icon-shop.png" alt="" onerror="this.remove()">강화</button>
     </div>
   </div>
 </div>
@@ -425,6 +456,7 @@
       <span>잡은 요괴 <b id="r-kills">0</b></span>
       <span>레벨 <b id="r-level">1</b></span>
       <span>보스 보너스 <b id="r-boss">0</b></span>
+      <span>얻은 엽전 <b id="r-coins">0</b></span>
     </div>
     <p class="sub" style="font-size:13px;margin:0">점수 = 잡은 요괴 × 10 + 버틴 초 × 5 + 보스 보너스</p>
     <div class="save">
@@ -446,6 +478,38 @@
     <h2><img class="ico" src="img/icon-rank.png" alt="">랭킹 TOP 50</h2>
     <div id="ranking-list"></div>
     <div class="btns"><button class="game-btn" id="rank-close" type="button">닫기</button></div>
+  </div>
+</div>
+
+<!-- 엽전 강화 상점 -->
+<div class="ov hidden" id="shop">
+  <div class="panel">
+    <div class="shop-head">
+      <h2><img class="ico" src="img/icon-shop.png" alt="" onerror="this.remove()">엽전 강화</h2>
+      <div class="shop-coins"><img class="chip-ic" src="img/coin.png" alt="엽전"> <b id="shop-coins">0</b></div>
+    </div>
+    <div id="up-grid"></div>
+    <div id="up-info"></div>
+    <div class="btns">
+      <button class="game-btn" id="up-buy" type="button">강화하기</button>
+      <button class="game-btn white small" id="up-refund" type="button">모두 되돌리기</button>
+      <button class="game-btn white small" id="up-code" type="button">이어하기 코드</button>
+      <button class="game-btn sun small" id="shop-close" type="button">닫기</button>
+    </div>
+    <div id="shop-msg"></div>
+  </div>
+</div>
+<div class="ov hidden" id="savecode">
+  <div class="panel">
+    <h2>이어하기 코드</h2>
+    <p class="sub">다른 기기에서 이 코드를 넣으면 엽전과 강화가 그대로 와요.</p>
+    <div id="code-show"></div>
+    <div class="save">
+      <input id="code-input" maxlength="24" placeholder="코드 넣기" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <button class="game-btn mint small" id="code-load" type="button">불러오기</button>
+    </div>
+    <div id="code-msg"></div>
+    <div class="btns"><button class="game-btn sun" id="code-close" type="button">닫기</button></div>
   </div>
 </div>
 <script>
@@ -601,7 +665,8 @@ const IMG_NAMES = [
   'p-tooth','p-lamp','p-beans','p-straw','p-cloth','p-sundial','p-book','p-feather','p-pouch','p-yeot','p-ginseng','p-lid',
   'm-dust','m-bat','m-egg','m-broom','m-fox','m-scare','m-toad','m-cloud','m-jang',
   'b-gumiho','b-eodum','b-imugi-head','b-imugi-body',
-  'gem-blue','gem-green','gem-red','coin','coin-bundle','ricecake','bokjori','chest','lantern',
+  'gem-blue','gem-green','gem-red','coin','coin-bundle',
+  ...['might','armor','maxhp','regen','cd','area','pspd','dur','amount','speed','magnet','luck','growth','greed','revive','reroll'].map(k => 'up-' + k), 'icon-shop','icon-dice','ricecake','bokjori','chest','lantern',
   'ggobi-run2','ggobi-run3','ggobi-run4','ggobi-down1','ggobi-down2','ggobi-idle-down','ggobi-up1','ggobi-up2','ggobi-idle-up','ggobi-idle','ggobi-hurt','fx-slash','fx-ring','fx-bolt','fx-gust','fx-vortex','fx-crack','fx-poof','fx-sparkle','chest-open',
   'fx-wisp','fx-ewisp','fx-ink','fx-straw','fx-foxfire','fx-dark','fx-tornado','fx-magpie','fx-dart','fx-fireball',
   'd-tree','d-pine','d-rock','d-jar','d-tower','d-grass','d-flower','d-mush',
@@ -775,6 +840,64 @@ function inputDir() {
 }
 
 /* ---------- 게임 상태 ---------- */
+/* ---------- 엽전 강화 상점 (판이 끝나도 남는 영구 강화) ----------
+   비용: 단계 n을 사는 값 = base × n. 모두 사면 엽전 13,900개쯤 들어요.
+   (실제 기록으로 보면 보통 한 판에 엽전 50~150개, 아주 잘하면 1,000개 넘게 모여요.)
+   새 강화는 목록 맨 뒤에 붙여야 예전 이어하기 코드가 그대로 맞아요. */
+const UPS = [
+  { id:'might',  name:'공격력',        max:5, base:50,   fb:'p-tooth',    each:'공격력이 단계마다 5% 올라요.',           now:r => '+' + r * 5 + '%' },
+  { id:'armor',  name:'방어',          max:3, base:100,  fb:'p-lid',      each:'받는 피해가 단계마다 1 줄어요.',          now:r => '-' + r },
+  { id:'maxhp',  name:'최대 체력',     max:3, base:60,   fb:'p-ginseng',  each:'최대 체력이 단계마다 10% 늘어요.',        now:r => '+' + r * 10 + '%' },
+  { id:'regen',  name:'회복',          max:5, base:80,   fb:'ricecake',   each:'체력이 1초에 0.1씩 차요. 단계마다 더 빨라져요.', now:r => '1초에 ' + (r / 10).toFixed(1) },
+  { id:'cd',     name:'재사용 시간',   max:3, base:150,  fb:'p-sundial',  each:'무기를 단계마다 3% 더 자주 써요.',        now:r => '-' + r * 3 + '%' },
+  { id:'area',   name:'공격 범위',     max:2, base:120,  fb:'p-cloth',    each:'공격 범위가 단계마다 5% 넓어져요.',       now:r => '+' + r * 5 + '%' },
+  { id:'pspd',   name:'날아가는 속도', max:2, base:60,   fb:'p-feather',  each:'날아가는 무기가 단계마다 10% 빨라져요.',  now:r => '+' + r * 10 + '%' },
+  { id:'dur',    name:'지속 시간',     max:2, base:90,   fb:'p-lamp',     each:'무기가 단계마다 10% 더 오래 남아요.',     now:r => '+' + r * 10 + '%' },
+  { id:'amount', name:'무기 개수',     max:1, base:2500, fb:'p-beans',    each:'모든 무기의 개수가 1 늘어요.',            now:r => '+' + r },
+  { id:'speed',  name:'이동 속도',     max:2, base:60,   fb:'p-straw',    each:'이동 속도가 단계마다 5% 빨라져요.',       now:r => '+' + r * 5 + '%' },
+  { id:'magnet', name:'줍는 범위',     max:2, base:60,   fb:'p-yeot',     each:'구슬을 줍는 범위가 단계마다 25% 넓어져요.', now:r => '+' + r * 25 + '%' },
+  { id:'luck',   name:'행운',          max:3, base:120,  fb:'p-pouch',    each:'행운이 단계마다 10% 올라요.',             now:r => '+' + r * 10 + '%' },
+  { id:'growth', name:'경험치',        max:5, base:90,   fb:'p-book',     each:'경험치가 단계마다 3% 더 들어와요.',       now:r => '+' + r * 3 + '%' },
+  { id:'greed',  name:'엽전 욕심',     max:5, base:60,   fb:'coin',       each:'줍는 엽전이 단계마다 10% 늘어요.',        now:r => '+' + r * 10 + '%' },
+  { id:'revive', name:'부활',          max:1, base:3000, fb:'ggobi-levelup', each:'쓰러지면 한 번, 체력 절반으로 다시 일어나요.', now:r => r + '번' },
+  { id:'reroll', name:'다시 뽑기',     max:2, base:150,  fb:'icon-dice',  each:'레벨 업 다시 뽑기가 단계마다 1번 늘어요.', now:r => '+' + r + '번' },
+];
+const UP_BY = {}; UPS.forEach(u => UP_BY[u.id] = u);
+const SHOP = { wallet: 0, ranks: {} };
+try {
+  SHOP.wallet = Math.max(0, Math.floor(+localStorage.getItem('survivor-coins') || 0));
+  const r = JSON.parse(localStorage.getItem('survivor-ups') || '{}');
+  for (const u of UPS) SHOP.ranks[u.id] = Math.max(0, Math.min(u.max, Math.floor(+r[u.id] || 0)));
+} catch (e) {}
+function upRank(id) { return SHOP.ranks[id] || 0; }
+function upCost(u, rank) { return u.base * rank; }                 // rank 단계를 살 때 값
+function upSpent() { let t = 0; for (const u of UPS) for (let i = 1; i <= upRank(u.id); i++) t += upCost(u, i); return t; }
+function shopSave() { try { localStorage.setItem('survivor-coins', String(SHOP.wallet)); localStorage.setItem('survivor-ups', JSON.stringify(SHOP.ranks)); } catch (e) {} }
+function gainCoins(v) { G.coins += v * (S.greed || 1); }
+
+// 이어하기 코드: 남은 엽전 + 강화 단계를 숫자 하나로 묶고, 잘못 적으면 알아채는 확인 값을 붙여요.
+const CODE_ABC = '0123456789ABCDEFGHJKMNPQRSTVWXYZ', CODE_WCAP = 1n << 20n, CODE_CHK = 512n;
+function codeChk(v) { let h = 0x811c9dc5; for (const c of v.toString() + '/kkebi-forest') { h ^= c.charCodeAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return BigInt(h) % CODE_CHK; }
+function makeCode() {
+  let v = 0n, mul = 1n;
+  v += BigInt(Math.min(SHOP.wallet, Number(CODE_WCAP) - 1)); mul = CODE_WCAP;
+  for (const u of UPS) { v += BigInt(upRank(u.id)) * mul; mul *= BigInt(u.max + 1); }
+  let n = v * CODE_CHK + codeChk(v), out = '';
+  for (let i = 0; i < 12 || n > 0n; i++) { out = CODE_ABC[Number(n % 32n)] + out; n /= 32n; }
+  return out.match(/.{1,4}/g).join('-');
+}
+function readCode(str) {
+  const t = String(str).toUpperCase().replace(/[\s-]/g, '').replace(/O/g, '0').replace(/[IL]/g, '1');
+  if (t.length < 12 || !/^[0-9A-HJKMNP-TV-Z]+$/.test(t)) return null;
+  let n = 0n; for (const c of t) n = n * 32n + BigInt(CODE_ABC.indexOf(c));
+  const v = n / CODE_CHK; if (codeChk(v) !== n % CODE_CHK) return null;
+  let rest = v; const wallet = Number(rest % CODE_WCAP); rest /= CODE_WCAP;
+  const ranks = {};
+  for (const u of UPS) { const b = BigInt(u.max + 1); ranks[u.id] = Number(rest % b); rest /= b; }
+  if (rest !== 0n) return null;
+  return { wallet, ranks };
+}
+
 let G = null, S = {}, modal = null;
 
 function newGame(startWeapon) {
@@ -783,7 +906,7 @@ function newGame(startWeapon) {
     p: { x: 0, y: 0, r: 15, hp: 100, face: 1, fx: 1, fy: 0, inv: 0, lv: 1, xp: 0, need: 5, moving: false, hurtT: 0 },
     weapons: [], passives: {}, passiveOrder: [],
     enemies: [], projs: [], eb: [], gems: [], picks: [], areas: [], fx: [], texts: [], later: [],
-    kills: 0, coins: 0, bossBonus: 0, evIdx: 0, spawnAcc: 0, rerolls: 2, pendingLv: 0, chestQ: 0,
+    kills: 0, coins: 0, bossBonus: 0, evIdx: 0, spawnAcc: 0, rerolls: 2 + upRank('reroll'), revives: upRank('revive'), pendingLv: 0, chestQ: 0,
     boss: null, lanternT: 5, shake: 0, hurtFlash: 0, bossesDown: [],
   };
   calcStats();
@@ -794,19 +917,21 @@ function newGame(startWeapon) {
 
 function calcStats() {
   const L = k => G.passives[k] || 0;
-  S.might = 1 + .1 * L('tooth');
-  S.dur = 1 + .1 * L('lamp');
-  S.amount = L('beans');
-  S.speed = 1 + .1 * L('straw');
-  S.area = 1 + .1 * L('cloth');
-  S.cd = 1 - .08 * L('sundial');
-  S.growth = 1 + .1 * L('book');
-  S.pspd = 1 + .1 * L('feather');
-  S.luck = 1 + .1 * L('pouch');
-  S.magnet = 90 * (1 + .3 * L('yeot'));
-  S.maxHp = 120 + 20 * L('ginseng');
-  S.regen = .25 * L('ginseng');   // 기본 회복은 없고, 인삼이 있어야 조금씩 차요
-  S.armor = L('lid');
+  const U = upRank;   // 엽전 강화 상점에서 산 단계
+  S.might = 1 + .1 * L('tooth') + .05 * U('might');
+  S.dur = 1 + .1 * L('lamp') + .1 * U('dur');
+  S.amount = L('beans') + U('amount');
+  S.speed = 1 + .1 * L('straw') + .05 * U('speed');
+  S.area = 1 + .1 * L('cloth') + .05 * U('area');
+  S.cd = Math.max(.4, 1 - .08 * L('sundial') - .03 * U('cd'));
+  S.growth = 1 + .1 * L('book') + .03 * U('growth');
+  S.pspd = 1 + .1 * L('feather') + .1 * U('pspd');
+  S.luck = 1 + .1 * L('pouch') + .1 * U('luck');
+  S.magnet = 90 * (1 + .3 * L('yeot') + .25 * U('magnet'));
+  S.maxHp = Math.round(120 * (1 + .1 * U('maxhp'))) + 20 * L('ginseng');
+  S.regen = .25 * L('ginseng') + .1 * U('regen');   // 기본 회복은 없고, 인삼이나 강화가 있어야 조금씩 차요
+  S.armor = L('lid') + U('armor');
+  S.greed = 1 + .1 * U('greed');
 }
 
 function addWeapon(id) {
@@ -1001,6 +1126,11 @@ function damagePlayer(d) {
   d = Math.max(1, d * dmgMul() - S.armor);
   p.hp -= d; p.inv = G.t + .5; p.hurtT = .25; G.hurtFlash = .35; G.shake = Math.min(1, G.shake + .35);
   sfx('hurt');
+  if (p.hp <= 0 && G.revives > 0) {   // 강화 상점의 부활
+    G.revives--; p.hp = Math.round(S.maxHp * .5); p.inv = G.t + 3; G.hurtFlash = 0;
+    for (const e of G.enemies) if (!e.boss && !e.elite && !e.prop && Math.hypot(e.x - p.x, e.y - p.y) < 260) { e.x += (e.x - p.x) * 1.5; e.y += (e.y - p.y) * 1.5; }
+    burst(p.x, p.y, '#ffd25e', 30); sfx('level'); banner('다시 일어났어요!', '부활 · 3초 동안 무적'); return;
+  }
   if (p.hp <= 0) { p.hp = 0; G.over = true; sfx('over'); setTimeout(() => endGame(false), 900); }
 }
 function healP(n, quiet) {
@@ -1459,7 +1589,7 @@ function updatePickups(dt) {
     if (k.mag) { k.x += dx / d * 520 * dt; k.y += dy / d * 520 * dt; }
     if (d < p.r + 14) {
       k.dead = true;
-      if (k.type === 'coin') { G.coins += k.v || 1; sfx('pick'); addText(k.x, k.y - 10, '🪙+' + (k.v || 1), '#ffd25e'); }
+      if (k.type === 'coin') { gainCoins(k.v || 1); sfx('pick'); addText(k.x, k.y - 10, '+' + Math.max(1, Math.round((k.v || 1) * S.greed)), '#ffd25e'); }
       else if (k.type === 'heal') healP(30);
       else if (k.type === 'magnet') { G.gems.forEach(g => g.mag = true); sfx('pick'); banner('복조리로 구슬을 모두 모아요!'); }
       else if (k.type === 'chest') { G.chestQ++; G.chestBoss = G.chestBoss || k.boss; }
@@ -1923,7 +2053,7 @@ function updateHUD() {
   setText('timer', fmtTime(G.t));
   setText('lvl', 'Lv ' + p.lv);
   setText('kills', G.kills.toLocaleString());
-  setText('coins', G.coins.toLocaleString());
+  setText('coins', Math.floor(G.coins).toLocaleString());
   const xw = Math.min(100, p.xp / p.need * 100).toFixed(1) + '%';
   if (hudCache.xp !== xw) { hudCache.xp = xw; $('xpfill').style.width = xw; }
   if (G.boss) { const bw = Math.max(0, G.boss.hp / G.boss.maxHp * 100).toFixed(1) + '%'; if (hudCache.boss !== bw) { hudCache.boss = bw; $('bossfill').style.width = bw; } }
@@ -1973,7 +2103,7 @@ function cardHTML(o, i, forChest) {
     icon = iconHTML('e', o.id); title = W.evoName; tag = '<em class="e">조합!</em>'; desc = W.evoDesc;
     pair = `${W.name} + ${PASSIVES[W.pair].name}`;
   } else if (o.k === 'heal') { icon = `<div class="ic p">${IMG.ricecake ? '<img src="img/ricecake.png" alt="">' : '🍡'}</div>`; title = '쑥떡'; tag = ''; desc = '체력을 50 채워요.'; }
-  else { const ck = IMG['coin-bundle'] ? 'coin-bundle' : IMG.coin ? 'coin' : ''; icon = `<div class="ic p">${ck ? `<img src="img/${ck}.png" alt="">` : '🪙'}</div>`; title = '엽전 꾸러미'; tag = ''; desc = '엽전 30개를 얻어요.'; }
+  else { const ck = IMG['coin-bundle'] ? 'coin-bundle' : IMG.coin ? 'coin' : ''; icon = `<div class="ic p">${ck ? `<img src="img/${ck}.png" alt="">` : '🪙'}</div>`; title = '엽전 꾸러미'; tag = ''; desc = '엽전 70개를 얻어요.'; }
   return `<button class="card ${o.k === 'evo' ? 'evo' : ''} ${link ? 'linked' : ''}" type="button" data-i="${i}">${icon}<div><div class="t">${title}${tag}</div><div class="d">${desc}</div>${link ? `<div class="link">${link}</div>` : pair ? `<div class="pair">${pair}</div>` : ''}</div>${forChest ? '' : `<span class="key">${i + 1}</span>`}</button>`;
 }
 function openLevelUp() {
@@ -2005,7 +2135,7 @@ function applyChoice(o) {
     const oldMax = S.maxHp; calcStats(); if (S.maxHp > oldMax) G.p.hp += S.maxHp - oldMax;
   } else if (o.k === 'evo') { const w = weaponById(o.id); w.evo = true; w.t = .2; w.active = 0; }
   else if (o.k === 'heal') healP(50);
-  else G.coins += 30;
+  else gainCoins(70);
 }
 
 /* ---------- 보물상자 ---------- */
@@ -2096,7 +2226,7 @@ function statHTML() {
     <span>이동 속도 <b>${pc(S.speed - 1)}</b></span><span>날아가는 속도 <b>${pc(S.pspd - 1)}</b></span>
     <span>경험치 <b>${pc(S.growth - 1)}</b></span><span>행운 <b>${pc(S.luck - 1)}</b></span>
     <span>줍는 범위 <b>${Math.round(S.magnet)}</b></span><span>방어 <b>${S.armor}</b></span>
-    <span>다시 뽑기 <b>${G.rerolls}번</b></span><span>엽전 <b>${G.coins}</b></span></div>`;
+    <span>다시 뽑기 <b>${G.rerolls}번</b></span>${upRank('revive') ? `<span>부활 <b>${G.revives}번</b></span>` : ''}<span>엽전 <b>${Math.floor(G.coins)}</b></span></div>`;
 }
 let pauseFromMenu = false;
 function setTab(t) {
@@ -2153,13 +2283,89 @@ function endGame(cleared, gaveUp) {
   $('save-status').textContent = G.dev ? '개발자 모드라서 랭킹에 저장되지 않아요.' : ''; $('save-status').classList.remove('error'); $('save-btn').disabled = false;
   document.querySelector('#end .save').classList.toggle('hidden', !!G.dev);
   try { $('school-input').value = localStorage.getItem('lastSchool') || ''; } catch (e) {}
-  // 엽전은 이 기기에 모아 둬요 (나중에 성장 상점에서 쓸 예정)
-  if (!G.dev) try { localStorage.setItem('survivor-coins', String((+localStorage.getItem('survivor-coins') || 0) + G.coins)); } catch (e) {}
+  // 엽전은 이 기기에 모아 두고 강화 상점에서 써요
+  const got = Math.floor(G.coins);
+  if (!G.dev) { SHOP.wallet += got; shopSave(); }
+  $('r-coins').textContent = '+' + got.toLocaleString();
   modal = 'end';
   if (cleared) sfx('win');
   show('end');
 }
 $('again-btn').addEventListener('click', () => { hide('end'); G = null; modal = null; showStart(); });
+
+/* ---------- 엽전 강화 상점 화면 ---------- */
+let upSel = UPS[0].id, shopBack = 'start';
+function upIcon(u) { const k = IMG['up-' + u.id] ? 'up-' + u.id : u.fb; return `<div class="ic">${IMG[k] ? `<img src="img/${k}.png" alt="">` : ''}</div>`; }
+function shopMsg(t, err) { const m = $('shop-msg'); m.textContent = t || ''; m.classList.toggle('error', !!err); }
+function renderShop() {
+  $('shop-coins').textContent = SHOP.wallet.toLocaleString();
+  $('up-grid').innerHTML = UPS.map(u => {
+    const r = upRank(u.id), full = r >= u.max, c = upCost(u, r + 1);
+    return `<button type="button" class="up ${u.id === upSel ? 'sel' : ''} ${full ? 'max' : ''}" data-id="${u.id}">${upIcon(u)}${u.name}
+      <div class="pips">${Array.from({ length: u.max }, (_, i) => `<i class="${i < r ? 'on' : ''}"></i>`).join('')}</div>
+      <div class="cost ${!full && c > SHOP.wallet ? 'no' : ''}">${full ? '최고 단계' : c.toLocaleString() + ' 엽전'}</div></button>`;
+  }).join('');
+  const u = UP_BY[upSel], r = upRank(u.id), full = r >= u.max, c = upCost(u, r + 1);
+  $('up-info').innerHTML = `<b>${u.name}</b> · ${r} / ${u.max}단계${r ? ` · 지금 <span class="now">${u.now(r)}</span>` : ''}<br>${u.each}`;
+  const bb = $('up-buy');
+  bb.textContent = full ? '최고 단계' : `강화하기 (${c.toLocaleString()} 엽전)`;
+  bb.disabled = full || c > SHOP.wallet;
+  $('up-refund').disabled = upSpent() === 0;
+}
+function openShop(from) {
+  shopBack = from || modal || 'start'; modal = 'shop';
+  refundArm = false; $('up-refund').textContent = '모두 되돌리기'; shopMsg('');
+  renderShop(); show('shop');
+}
+function closeShop() { hide('shop'); modal = shopBack; }
+$('shop-btn').addEventListener('click', () => openShop('start'));
+$('shop-close').addEventListener('click', closeShop);
+$('up-grid').addEventListener('click', e => {
+  const b = e.target.closest('.up'); if (!b) return;
+  upSel = b.dataset.id; shopMsg(''); renderShop();
+  const nb = $('up-grid').querySelector(`.up[data-id="${upSel}"]`); if (nb) { if (b.classList.contains('padf')) nb.classList.add('padf'); nb.focus({ preventScroll: true }); }
+});
+$('up-buy').addEventListener('click', () => {
+  const u = UP_BY[upSel], r = upRank(u.id), c = upCost(u, r + 1);
+  if (r >= u.max) return;
+  if (c > SHOP.wallet) { shopMsg('엽전이 모자라요.', true); return; }
+  SHOP.wallet -= c; SHOP.ranks[u.id] = r + 1; shopSave(); sfx('level');
+  shopMsg(`${u.name} ${r + 1}단계가 되었어요.`); renderShop();
+});
+let refundArm = false, refundT = 0;
+$('up-refund').addEventListener('click', () => {
+  const spent = upSpent(); if (!spent) return;
+  if (!refundArm) {   // 실수로 누르지 않게 한 번 더 눌러야 해요
+    refundArm = true; $('up-refund').textContent = '한 번 더 누르면 되돌려요';
+    clearTimeout(refundT); refundT = setTimeout(() => { refundArm = false; $('up-refund').textContent = '모두 되돌리기'; }, 3000);
+    return;
+  }
+  refundArm = false; clearTimeout(refundT); $('up-refund').textContent = '모두 되돌리기';
+  SHOP.wallet += spent; for (const u of UPS) SHOP.ranks[u.id] = 0; shopSave(); sfx('pick');
+  shopMsg(`엽전 ${spent.toLocaleString()}개를 모두 돌려받았어요.`); renderShop();
+});
+let codeArm = null;
+function codeMsg(t, err) { const m = $('code-msg'); m.textContent = t || ''; m.classList.toggle('error', !!err); }
+$('up-code').addEventListener('click', () => {
+  modal = 'savecode'; codeArm = null; $('code-input').value = ''; $('code-load').textContent = '불러오기'; codeMsg('');
+  $('code-show').textContent = makeCode(); show('savecode');
+});
+$('code-close').addEventListener('click', () => { hide('savecode'); modal = 'shop'; renderShop(); });
+$('code-input').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') $('code-load').click(); });
+$('code-input').addEventListener('input', () => { codeArm = null; $('code-load').textContent = '불러오기'; });
+$('code-load').addEventListener('click', () => {
+  const d = readCode($('code-input').value);
+  if (!d) { codeMsg('코드가 맞지 않아요. 다시 확인해 주세요.', true); return; }
+  const total = d.wallet + UPS.reduce((t, u) => { for (let i = 1; i <= d.ranks[u.id]; i++) t += upCost(u, i); return t; }, 0);
+  if (codeArm !== $('code-input').value) {   // 이 기기의 기록을 덮어쓰니 한 번 더 확인해요
+    codeArm = $('code-input').value; $('code-load').textContent = '한 번 더 누르면 불러와요';
+    codeMsg(`이 코드는 엽전 ${total.toLocaleString()}개어치예요. 이 기기의 엽전과 강화가 코드 내용으로 바뀌어요.`);
+    return;
+  }
+  SHOP.wallet = d.wallet; SHOP.ranks = d.ranks; shopSave(); sfx('level');
+  codeArm = null; $('code-load').textContent = '불러오기'; $('code-input').value = '';
+  $('code-show').textContent = makeCode(); codeMsg('불러왔어요!');
+});
 
 /* ---------- 시작 화면 ---------- */
 let pickedWeapon = 'club';
@@ -2304,7 +2510,7 @@ function padFocus(el) {
   const old = document.querySelector('.padf'); if (old && old !== el) old.classList.remove('padf');
   if (!el) return; el.classList.add('padf'); el.focus({ preventScroll: true }); el.scrollIntoView({ block: 'nearest' });
 }
-const PAD_FIRST = { title: '#title-start', start: '.wp.on', levelup: '.card', chest: '#chest-ok', pause: '#resume-btn', end: '#again-btn', ranking: '#rank-close', dev: '#dev-go', devpw: '#devpw-ok' };
+const PAD_FIRST = { shop: '.up.sel', savecode: '#code-close', title: '#title-start', start: '.wp.on', levelup: '.card', chest: '#chest-ok', pause: '#resume-btn', end: '#again-btn', ranking: '#rank-close', dev: '#dev-go', devpw: '#devpw-ok' };
 function padCurrent(ov) {
   const f = document.querySelector('.padf');
   if (f && ov.contains(f) && f.getClientRects().length && !f.disabled) return f;
@@ -2329,6 +2535,8 @@ function padBack(ov) {
   const id = ov.id;
   if (id === 'pause') $('resume-btn').click();
   else if (id === 'ranking') $('rank-close').click();
+  else if (id === 'shop') $('shop-close').click();
+  else if (id === 'savecode') $('code-close').click();
   else if (id === 'dev') $('dev-close').click();
   else if (id === 'devpw') $('devpw-close').click();
   else if (id === 'chest' && !$('chest-ok').disabled) $('chest-ok').click();
