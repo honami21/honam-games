@@ -286,7 +286,7 @@ async function showdown(solo) {
   setTimeout(() => { beep('coin'); }, 700);
   st.net = H.coin - st.start;
   st.players.forEach((p, k) => { p.net += (wins.includes(k) ? share : 0) - p.paid + p.tt; });
-  if (wins.includes(ME)) { beep('win'); H.charPop('ggaebi-lose'); } else { beep('lose'); if (SDWIN) H.charPop('ggaebi-sdwin'); }
+  if (wins.includes(ME)) beep('win'); else beep('lose');   // 판 끝 깨비 그림은 뺐어요
   H.setTrack('play');
   await sleep(900); if (my !== token) return;
   coinCount();
