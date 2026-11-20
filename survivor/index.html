@@ -605,7 +605,7 @@ const MONSTERS = {
   jang:   { name:'장승',        hp:700, spd:46,  dmg:12, r:34, xp:40, kb:0,  color:'#a0703a', elite:true },
   gumiho: { name:'구미호',      hp:12000, spd:88,  dmg:16, r:44, xp:150, kb:0, color:'#fff0f5', boss:true, bonus:2000 },
   eodum:  { name:'어둑시니',    hp:28000, spd:78,  dmg:24, r:46, xp:300, kb:0, color:'#262040', boss:true, bonus:4000 },
-  imugi:  { name:'이무기',      hp:100000, spd:135, dmg:28, r:40, xp:0,   kb:0, color:'#3f8f7a', boss:true, bonus:10000 },
+  imugi:  { name:'이무기',      hp:250000, spd:135, dmg:28, r:40, xp:0,   kb:0, color:'#3f8f7a', boss:true, bonus:10000 },
   seg:    { name:'이무기 몸통', hp:1,     spd:0,   dmg:22, r:30, xp:0,   kb:0, color:'#3f8f7a' },
   lantern:{ name:'청사초롱',    hp:1,     spd:0,   dmg:0,  r:16, xp:0,   kb:0, color:'#e85050', prop:true },
 };
@@ -640,14 +640,20 @@ const EVENTS = [
   { at:210,  type:'elite' },
   { at:300,  type:'elite' },
   { at:330,  type:'ring', m:'egg', n:26 },
+  { at:375,  type:'elite' },
   { at:420,  type:'boss', m:'gumiho' },
+  { at:480,  type:'elite' },
   { at:510,  type:'swarm', m:'bat', n:60 },
   { at:570,  type:'elite' },
+  { at:630,  type:'elite' },
   { at:660,  type:'ring', m:'broom', n:34 },
   { at:720,  type:'elite' },
   { at:780,  type:'swarm', m:'fox', n:30 },
+  { at:800,  type:'elite' },
   { at:840,  type:'boss', m:'eodum' },
+  { at:900,  type:'elite' },
   { at:930,  type:'elite' },
+  { at:960,  type:'elite' },
   { at:990,  type:'ring', m:'cloud', n:30 },
   { at:1020, type:'swarm', m:'bat', n:90 },
   { at:1050, type:'elite' },
@@ -1082,7 +1088,7 @@ function banner(t, s) {
 function hitEnemy(e, dmg, kx, ky, kb, src) {
   if (e.dead) return;
   let tgt = e;
-  if (e.parent) { tgt = e.parent; dmg *= .8; e.flash = .1; }
+  if (e.parent) { tgt = e.parent; dmg *= .5; e.flash = .1; }   // 몸통은 18마디라 한꺼번에 많이 맞아서 반만 전해요
   if (tgt.dead) return;
   if (e.prop) { killEnemy(e, src); return; }
   dmg *= S.might * rnd(.9, 1.1);
@@ -2145,10 +2151,12 @@ function openChest() {
   const htmls = [];
   const take = o => { htmls.push(cardHTML(o, 0, true)); applyChoice(o); };
   const evos = G.weapons.filter(canEvolve);
-  if (evos.length) take({ k: 'evo', id: evos[0].id });
   let n = boss ? 3 : 1; const r = Math.random();
   if (!boss) { if (r < .06 * S.luck) n = 5; else if (r < .22 * S.luck) n = 3; }
-  if (evos.length) n = Math.max(0, n - 1);
+  // 조합할 무기가 여럿이고 상자에서 여러 개가 나오면, 나오는 개수만큼 조합을 먼저 해요
+  const nEvo = Math.min(evos.length, n);
+  for (let i = 0; i < nEvo; i++) take({ k: 'evo', id: evos[i].id });
+  n -= nEvo;
   for (let i = 0; i < n; i++) {
     const ups = [];
     for (const w of G.weapons) if (!w.evo && w.lv < 8) ups.push({ k: 'w', id: w.id });
@@ -2157,7 +2165,7 @@ function openChest() {
     take(ups[Math.floor(Math.random() * ups.length)]);
   }
   if (!htmls.length) { take({ k: 'heal' }); take({ k: 'coin' }); }
-  $('chest-title').textContent = evos.length ? '✨ 조합 성공! ✨' : n >= 5 ? '대박! 보물상자!' : '보물상자!';
+  $('chest-title').textContent = nEvo > 1 ? '조합 ' + nEvo + '개 성공!' : nEvo ? '조합 성공!' : htmls.length >= 5 ? '대박! 보물상자!' : '보물상자!';
   const box = $('chest-box');
   box.innerHTML = IMG.chest ? '<img src="img/chest.png" alt="">' : '🎁';
   box.className = 'box-anim shake';
