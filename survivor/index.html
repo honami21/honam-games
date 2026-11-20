@@ -505,7 +505,7 @@
     <p class="sub">다른 기기에서 이 코드를 넣으면 엽전과 강화가 그대로 와요.</p>
     <div id="code-show"></div>
     <div class="save">
-      <input id="code-input" maxlength="24" placeholder="코드 넣기" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <input id="code-input" maxlength="24" placeholder="코드 6글자" autocomplete="off" autocapitalize="characters" spellcheck="false">
       <button class="game-btn mint small" id="code-load" type="button">불러오기</button>
     </div>
     <div id="code-msg"></div>
@@ -872,7 +872,7 @@ try {
 function upRank(id) { return SHOP.ranks[id] || 0; }
 function upCost(u, rank) { return u.base * rank; }                 // rank 단계를 살 때 값
 function upSpent() { let t = 0; for (const u of UPS) for (let i = 1; i <= upRank(u.id); i++) t += upCost(u, i); return t; }
-function shopSave() { try { localStorage.setItem('survivor-coins', String(SHOP.wallet)); localStorage.setItem('survivor-ups', JSON.stringify(SHOP.ranks)); } catch (e) {} }
+function shopSave() { try { localStorage.setItem('survivor-coins', String(SHOP.wallet)); localStorage.setItem('survivor-ups', JSON.stringify(SHOP.ranks)); localStorage.setItem('survivor-save-at', String(Date.now())); } catch (e) {} if (typeof cloudPush === 'function') cloudPush(); }
 function gainCoins(v) { G.coins += v * (S.greed || 1); }
 
 // 이어하기 코드: 남은 엽전 + 강화 단계를 숫자 하나로 묶고, 잘못 적으면 알아채는 확인 값을 붙여요.
@@ -2316,6 +2316,7 @@ function openShop(from) {
   shopBack = from || modal || 'start'; modal = 'shop';
   refundArm = false; $('up-refund').textContent = '모두 되돌리기'; shopMsg('');
   renderShop(); show('shop');
+  cloudPull().then(ch => { if (ch && modal === 'shop') renderShop(); });
 }
 function closeShop() { hide('shop'); modal = shopBack; }
 $('shop-btn').addEventListener('click', () => openShop('start'));
@@ -2344,27 +2345,71 @@ $('up-refund').addEventListener('click', () => {
   SHOP.wallet += spent; for (const u of UPS) SHOP.ranks[u.id] = 0; shopSave(); sfx('pick');
   shopMsg(`엽전 ${spent.toLocaleString()}개를 모두 돌려받았어요.`); renderShop();
 });
-let codeArm = null;
+// 이어하기 코드 (6글자): 엽전과 강화는 인터넷(Firestore survivor-saves/코드)에 두고, 기기에는 코드만 기억해요.
+// 같은 코드를 쓰는 기기끼리는 한 저장을 함께 써요. 시작 화면이나 상점을 열 때 더 새 저장을 받아 오고, 바뀌면 올려요.
+// 예전 12글자 코드도 그대로 불러올 수 있어요.
+let codeArm = null, cloudT = 0;
 function codeMsg(t, err) { const m = $('code-msg'); m.textContent = t || ''; m.classList.toggle('error', !!err); }
-$('up-code').addEventListener('click', () => {
+function saveCode() { try { return localStorage.getItem('survivor-save-code') || ''; } catch (e) { return ''; } }
+function saveAt() { try { return +localStorage.getItem('survivor-save-at') || 0; } catch (e) { return 0; } }
+function setSaveAt(t) { try { localStorage.setItem('survivor-save-at', String(t)); } catch (e) {} }
+const fmtCode = c => c.slice(0, 3) + ' ' + c.slice(3);
+function cleanCode(str) { return String(str).toUpperCase().replace(/[\s-]/g, '').replace(/O/g, '0').replace(/[IL]/g, '1'); }
+function newCode() { let c = ''; for (let i = 0; i < 6; i++) c += CODE_ABC[1 + Math.floor(Math.random() * 31)]; return c; }   // 맨 앞이 0이어도 되지만 헷갈리지 않게 0은 빼요
+function cloudData() { return { w: Math.min(SHOP.wallet, 2000000), u: Object.assign({}, SHOP.ranks), t: saveAt() || Date.now() }; }
+function cloudPush() {
+  const c = saveCode(); if (!c || !window.SURVIVOR_CLOUD) return;
+  clearTimeout(cloudT); cloudT = setTimeout(() => window.SURVIVOR_CLOUD.put(c, cloudData()).catch(e => console.warn('엽전 저장 실패', e)), 600);
+}
+function adoptCloud(d) {
+  SHOP.wallet = Math.max(0, Math.floor(+d.w || 0));
+  for (const u of UPS) SHOP.ranks[u.id] = Math.max(0, Math.min(u.max, Math.floor(+(d.u || {})[u.id] || 0)));
+  try { localStorage.setItem('survivor-coins', String(SHOP.wallet)); localStorage.setItem('survivor-ups', JSON.stringify(SHOP.ranks)); } catch (e) {}
+  setSaveAt(+d.t || Date.now());
+}
+async function cloudPull() {   // 다른 기기에서 더 나중에 바뀐 저장이 있으면 받아 와요
+  const c = saveCode(); if (!c || !window.SURVIVOR_CLOUD) return false;
+  try { const d = await window.SURVIVOR_CLOUD.get(c); if (d && (+d.t || 0) > saveAt()) { adoptCloud(d); return true; } } catch (e) { console.warn('엽전 받아 오기 실패', e); }
+  return false;
+}
+function codeTotal(d) { return d.wallet + UPS.reduce((t, u) => { for (let i = 1; i <= (d.ranks[u.id] || 0); i++) t += upCost(u, i); return t; }, 0); }
+$('up-code').addEventListener('click', async () => {
   modal = 'savecode'; codeArm = null; $('code-input').value = ''; $('code-load').textContent = '불러오기'; codeMsg('');
-  $('code-show').textContent = makeCode(); show('savecode');
+  show('savecode');
+  let c = saveCode();
+  if (c) { $('code-show').textContent = fmtCode(c); return; }
+  $('code-show').textContent = '만드는 중...';
+  try {
+    for (let i = 0; i < 5 && !c; i++) { const t = newCode(); if (!(await window.SURVIVOR_CLOUD.get(t))) c = t; }
+    if (!c) throw new Error('no code');
+    setSaveAt(Date.now()); await window.SURVIVOR_CLOUD.put(c, cloudData());
+    try { localStorage.setItem('survivor-save-code', c); } catch (e) {}
+    $('code-show').textContent = fmtCode(c);
+  } catch (e) { console.warn(e); $('code-show').textContent = '------'; codeMsg('코드를 만들지 못했어요. 인터넷 연결을 확인해 주세요.', true); }
 });
 $('code-close').addEventListener('click', () => { hide('savecode'); modal = 'shop'; renderShop(); });
 $('code-input').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') $('code-load').click(); });
 $('code-input').addEventListener('input', () => { codeArm = null; $('code-load').textContent = '불러오기'; });
-$('code-load').addEventListener('click', () => {
-  const d = readCode($('code-input').value);
+$('code-load').addEventListener('click', async () => {
+  const raw = $('code-input').value, t = cleanCode(raw);
+  let d = null, cloud = null;
+  if (t.length === 6) {
+    if (t === saveCode()) { codeMsg('이 기기의 코드예요.'); return; }
+    codeMsg('찾는 중...');
+    try { cloud = await window.SURVIVOR_CLOUD.get(t); } catch (e) { codeMsg('불러오지 못했어요. 인터넷 연결을 확인해 주세요.', true); return; }
+    if (cloud) d = { wallet: Math.floor(+cloud.w || 0), ranks: cloud.u || {} };
+  } else d = readCode(raw);   // 예전 12글자 코드
   if (!d) { codeMsg('코드가 맞지 않아요. 다시 확인해 주세요.', true); return; }
-  const total = d.wallet + UPS.reduce((t, u) => { for (let i = 1; i <= d.ranks[u.id]; i++) t += upCost(u, i); return t; }, 0);
-  if (codeArm !== $('code-input').value) {   // 이 기기의 기록을 덮어쓰니 한 번 더 확인해요
-    codeArm = $('code-input').value; $('code-load').textContent = '한 번 더 누르면 불러와요';
-    codeMsg(`이 코드는 엽전 ${total.toLocaleString()}개어치예요. 이 기기의 엽전과 강화가 코드 내용으로 바뀌어요.`);
+  if (codeArm !== raw) {   // 이 기기의 기록을 덮어쓰니 한 번 더 확인해요
+    codeArm = raw; $('code-load').textContent = '한 번 더 누르면 불러와요';
+    codeMsg(`이 코드는 엽전 ${codeTotal(d).toLocaleString()}개어치예요. 이 기기의 엽전과 강화가 코드 내용으로 바뀌어요.`);
     return;
   }
-  SHOP.wallet = d.wallet; SHOP.ranks = d.ranks; shopSave(); sfx('level');
+  if (cloud) { adoptCloud(cloud); try { localStorage.setItem('survivor-save-code', t); } catch (e) {} }
+  else { SHOP.wallet = d.wallet; SHOP.ranks = d.ranks; shopSave(); }
+  sfx('level');
   codeArm = null; $('code-load').textContent = '불러오기'; $('code-input').value = '';
-  $('code-show').textContent = makeCode(); codeMsg('불러왔어요!');
+  const c = saveCode(); $('code-show').textContent = c ? fmtCode(c) : '------'; codeMsg('불러왔어요!');
 });
 
 /* ---------- 시작 화면 ---------- */
@@ -2404,7 +2449,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) { for
 function showTitle() { show('title'); hide('start'); hide('hud'); document.body.classList.remove('playing'); modal = 'title'; }
 $('title-start').addEventListener('click', () => { hide('title'); showStart(); });
 addEventListener('keydown', e => { if (modal === 'title' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); $('title-start').click(); } });
-function showStart() { buildPick(); show('start'); hide('hud'); document.body.classList.remove('playing'); modal = 'start'; }
+function showStart() { buildPick(); show('start'); hide('hud'); document.body.classList.remove('playing'); modal = 'start';  cloudPull(); }
 function startGame() {
   ensureAudio();
   hide('start'); modal = null; hudCache = {};
@@ -2631,6 +2676,11 @@ const firebaseConfig = {
   appId:             "1:251087835017:web:af1ce84cadb772bdca1b58"
 };
 const SCORES_COLLECTION = "survivor-scores";
+// 엽전 강화 저장 (6글자 이어하기 코드)
+window.SURVIVOR_CLOUD = {
+  async get(code) { const { fs, db } = await getFb(); const d = await fs.getDoc(fs.doc(db, 'survivor-saves', code)); return d.exists() ? d.data() : null; },
+  async put(code, data) { const { fs, db } = await getFb(); await fs.setDoc(fs.doc(db, 'survivor-saves', code), data); },
+};
 let fb = null;
 async function getFb() {
   if (fb) return fb;
