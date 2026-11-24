@@ -544,7 +544,7 @@ function nameOf(c) {
 }
 const whoTxt = c => role === 'cpu' && c !== room.hostColor ? '깨비샘' : nameOf(c) + '님';
 
-KBGM.init({ key:'treasure', tracks:{ lobby:'../words/audio/bgm-lobby.mp3', play:'../words/audio/bgm-play.mp3' }, start:'lobby' });
+KBGM.init({ key:'treasure', tracks:{ lobby:'audio/bgm-lobby.mp3', play:'audio/bgm-play.mp3' }, start:'lobby' });
 KBGM.button({ after: $('sndToggle'), icon: SVG_MUSIC });
 let bgmJingled = false;
 function show(id) {
