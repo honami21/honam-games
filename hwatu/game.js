@@ -654,7 +654,7 @@ $('stopBtn').onclick = () => { $('gsModal').classList.add('hidden'); doMine({ t:
 async function doMine(a) {
   sel = -1;
   if (mode === 'cpu') { doLocal(0, a); return; }
-  if (mode === 'online') { busy = true; const err = await onlineAct(a); busy = false; if (err && err !== 'net') { render(); } }
+  if (mode === 'online') { const err = await onlineAct(a); if (err && err !== 'net') { render(); } }
 }
 function doLocal(who, a) {
   const ng = clone(latest());
@@ -904,7 +904,10 @@ function askLeave() {
 // ============================================================
 const ROOMS = 'hwatu-rooms';
 const STALE_MS = 3 * 60 * 60 * 1000;
-async function fb() {
+let fbP = null;
+function fb() { return fbP || (fbP = fbLoad().catch(e => { fbP = null; throw e; })); }
+setTimeout(() => { fb().catch(() => {}); }, 2500);   // 방 기능을 처음 누를 때 기다리지 않게 미리 받아 둬요
+async function fbLoad() {
   if (FB) return FB;
   const [A, F] = await Promise.all([
     import('https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js'),
@@ -1071,21 +1074,34 @@ async function backToLobby() {
     });
   } catch (e) { console.error(e); toast('잠시 후 다시 해 주세요.', 2000); }
 }
+// 내 수는 내 화면에서 먼저 바로 움직이고(같은 규칙 계산), 서버에는 뒤에서 한 번에 저장해요.
+// 서버가 거절하면(순서가 어긋나면) 서버 상태로 되돌려요.
+// Firestore 규칙이 "판 번호(seq)가 1씩만 올라가야 저장"을 지켜 줘요.
+let sendQ = Promise.resolve();
 async function onlineAct(a) {
+  const base = latest();
+  if (!base || !ref) return 'nog';
+  const ng = clone(base);
+  const who = ng.players.findIndex(p => p.id === myId);
+  if (who < 0) return 'notme';
+  const err = HT.act(ng, who, a, Date.now());
+  if (err) return err;
+  receive(ng);
+  const rf = ref, snap = clone(ng);
+  sendQ = sendQ.then(async () => {
+    try { const F = await fb(); await F.updateDoc(rf, { g: snap, updatedAt: F.serverTimestamp() }); }
+    catch (e) { console.error(e); if (rf === ref) { toast(String(e && e.code || '').includes('permission') ? '순서가 엇갈려서 다시 맞췄어요.' : '보내지 못했어요. ' + errText(e), 2000); resync(); } }
+  });
+  return null;
+}
+async function resync() {
   try {
-    const F = await fb();
-    let err = null;
-    await F.runTransaction(F.db, async tx => {
-      const s = await tx.get(ref); const d = s.data();
-      if (!d || !d.g) { err = 'nog'; return; }
-      const ng = d.g;
-      const who = ng.players.findIndex(p => p.id === myId);
-      err = HT.act(ng, who, a, Date.now());
-      if (err) return;
-      tx.update(ref, { g: ng, updatedAt: F.serverTimestamp() });
-    });
-    return err;
-  } catch (e) { console.error(e); toast('보내지 못했어요. ' + errText(e), 2000); return 'net'; }
+    const F = await fb(); const rf = ref; if (!rf) return;
+    const s = await F.getDocFromServer(rf); if (rf !== ref || !s.exists()) return;
+    const sg = s.data().g; if (!sg) return;
+    while (animating) await sleep(60);
+    g = sg; pendingG = null; sel = -1; hideModals(); render(); after();
+  } catch (e) { console.error(e); }
 }
 async function leaveOnline() {
   const rf = ref, me = myId;
