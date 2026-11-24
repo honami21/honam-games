@@ -51,6 +51,15 @@ function judge(list) {   // list: [{i, e}]
   if (best === 890 || best === 900) { const t = list.filter(x => x.e.ah); if (t.length) return { win: t.map(x => x.i), special: '암행어사' }; }
   return { win: list.filter(x => x.e.s === best).map(x => x.i) };
 }
+// 판돈 나누기: 이긴 사람(w)은 자기가 건 만큼까지만 각자에게서 받아요.
+// 그보다 더 건 돈은 낸 사람에게 그대로 돌려줘요 (엽전이 모자라 다 건 사람이 이겼을 때).
+// list: [{ i, c(이번 판에 넣은 돈) }] → 사람마다 받는 돈
+function splitPot(list, w) {
+  const pay = {}; list.forEach(x => { pay[x.i] = 0; });
+  const cw = (list.find(x => x.i === w) || { c: 0 }).c;
+  list.forEach(x => { pay[w] += Math.min(x.c, cw); pay[x.i] += Math.max(0, x.c - cw); });
+  return pay;
+}
 // 깨비가 보는 패의 힘 (0~1)
 function power(e) {
   if (e.s >= 1000) return 1; if (e.s >= 890) return .97; if (e.s === 810) return .95;
@@ -81,6 +90,7 @@ const roundU = v => Math.max(unit(), Math.round(v / unit()) * unit());
 
 function newTable() {
   const name = H.getName(); if (!name) return;
+  OL = null;
   if (H.coin <= 0) { H.toast('엽전이 없어요. 처음 화면에서 엽전을 받아요.', 2200); return; }
   S = { players: [{ name, ai: 0, net: 0 }, { name: AI[0].name, ai: H.level, av: AI[0].av, net: 0 }, { name: AI[1].name, ai: H.level, av: AI[1].av, net: 0 }], dealer: Math.random() * 3 | 0, pot: 0, hand: 0 };
   show('sutda');
@@ -255,7 +265,8 @@ async function showdown(solo) {
     startHand(true); return;
   }
   st.phase = 'end'; st.res = res; st.lastWin = res.win[0];
-  const wins = res.win, share = st.pot;
+  const wins = res.win;
+  const pay = splitPot(st.players.map((p, i) => ({ i, c: p.paid })), wins[0]);
   const wName = wins.map(k => k === ME ? '내' : st.players[k].name).join(', ');
   const wp = st.players[wins[0]];
   // 땡값: 땡으로 이기면 다른 사람 모두(다이한 사람도)에게 기본 판돈의 몇 배를 더 받아요
@@ -279,13 +290,13 @@ async function showdown(solo) {
   wins.forEach(k => { st.players[k].won = true; });
   render();
   await sleep(solo ? 200 : 900); if (my !== token) return;
-  wins.forEach(k => flyCoins($('sdPile'), seatEl(k), 12, 55));
+  st.players.forEach((p, k) => { if (pay[k] > 0) flyCoins($('sdPile'), seatEl(k), k === w ? 12 : 6, 55); });
   if (mul) st.players.forEach((p, k) => { if (k !== w) flyCoins(seatEl(k), seatEl(w), 5, 60); });
-  if (wins.includes(ME)) H.setCoin(H.coin + share);
+  if (pay[ME]) H.setCoin(H.coin + pay[ME]);
   st.pot = 0; bumpPot();
   setTimeout(() => { beep('coin'); }, 700);
   st.net = H.coin - st.start;
-  st.players.forEach((p, k) => { p.net += (wins.includes(k) ? share : 0) - p.paid + p.tt; });
+  st.players.forEach((p, k) => { p.net += pay[k] - p.paid + p.tt; });
   if (wins.includes(ME)) beep('win'); else beep('lose');   // 판 끝 깨비 그림은 뺐어요
   H.setTrack('play');
   await sleep(900); if (my !== token) return;
@@ -337,12 +348,12 @@ function bubbleAt(i, text) {
 function avatar(i) {
   const p = S.players[i];
   if (p.ai) return `<span class="av ai"><img src="../cards/img/${p.av}.png" alt=""></span>`;
-  return `<span class="av" style="background:${PAL[0]}">${esc((p.name || '?').slice(0, 1))}</span>`;
+  return `<span class="av" style="background:${PAL[S.online ? i % PAL.length : 0]}">${esc((p.name || '?').slice(0, 1))}</span>`;
 }
 function render() {
   const st = S; if (!st) return;
   // 상대
-  $('sdOpps').innerHTML = [1, 2].map(i => {
+  $('sdOpps').innerHTML = [1, 2].filter(i => st.players[i]).map(i => {
     const p = st.players[i];
     const cards = p.cards.map(id => p.open ? cardH(id) : backH()).join('');
     return `<div class="seat ${st.turn === i ? 'turn' : ''} ${p.fold ? 'fold' : ''}" data-i="${i}">
@@ -361,7 +372,7 @@ function render() {
   const want = m.cards.map((id, k) => `${id}:${k === 1 && !m.peeled ? 'p' : 'o'}`).join(',');
   if (hand.dataset.k !== want) {
     hand.dataset.k = want;
-    hand.innerHTML = m.cards.map((id, k) => k === 1 && !m.peeled
+    hand.innerHTML = st.watch ? m.cards.map(() => backH()).join('') : m.cards.map((id, k) => k === 1 && !m.peeled
       ? `<div class="peel ht-wrap hint" id="sdPeel" style="--w:var(--pw)">${cardH(id)}<div class="cover"></div><span class="peel-tip">밀어 올려 쪼기</span></div>`
       : cardH(id)).join('');
     const pe = $('sdPeel'); if (pe) setupPeel(pe);
@@ -377,7 +388,7 @@ function render() {
   if (st.phase === 'bet' && st.turn === ME) {
     if (!m.peeled && m.cards.length === 2) { h = ''; setStatus('<b>내 차례</b> · 먼저 두 번째 패를 쪼아 봐요'); }
     else {
-      const o = options(ME);
+      const o = OL ? SE.options(OL.g, OL.me) : options(ME);
       const cls = { check: 'btn-sky', ppying: 'btn-mint', call: 'btn-sky', half: 'btn-info', ddadang: 'btn-primary', die: 'btn-secondary' };
       h = o.map((x, k) => `<button class="game-btn ${cls[x.t]}" data-t="${x.t}"><span>${x.label}</span><small>${x.amt ? fmt(x.amt) + '냥' : x.t === 'die' ? '포기' : '그냥 넘기기'}</small><span class="kn">${k + 1}</span></button>`).join('');
       setStatus(`<b>내 차례</b>${st.round === 1 ? ' · 한 장 보고 걸기' : ''}${st.maxBet - m.bet > 0 ? ` · 따라가려면 ${fmt(st.maxBet - m.bet)}냥` : ''}`);
@@ -388,11 +399,18 @@ function render() {
     const net = st.net;
     if (net != null) setStatus(net >= 0 ? `<b>+${fmt(net)}냥</b> 땄어요` : `<b>${fmt(-net)}냥</b> 잃었어요`);
     const broke = H.coin <= 0, canRefill = broke && H.store('hwatu-refill') !== H.today();
+    if (OL) {   // 방 대결: 다음 판은 방장이 열어요
+      const host = H.online.role === 'host';
+      if (OL.g.res && OL.g.res.none) setStatus('함께할 사람이 모자라요. 엽전이 있는 사람이 둘 이상이어야 해요.');
+      h = '<button class="game-btn btn-secondary" data-t="quit">나가기</button>' + (host ? '<button class="game-btn btn-secondary" data-t="lobby">대기실로</button><button class="game-btn btn-primary" data-t="next">다음 판</button>' : '');
+      if (!host && !(OL.g.res && OL.g.res.none)) setStatus(`${net != null ? (net >= 0 ? `<b>+${fmt(net)}냥</b> 땄어요` : `<b>${fmt(-net)}냥</b> 잃었어요`) + ' · ' : ''}방장이 다음 판을 열어요<span class="dots"></span>`);
+      $('sdActs').innerHTML = h; return;
+    }
     h = '<button class="game-btn btn-secondary" data-t="quit">그만하기</button>' +
       (!broke ? '<button class="game-btn btn-primary" data-t="next">다음 판</button>' : canRefill ? `<button class="game-btn btn-primary" data-t="refill">엽전 ${fmt(H.REFILL)}냥 받고 다음 판</button>` : '');
     if (broke && !canRefill) setStatus('엽전이 다 떨어졌어요. 내일 다시 받을 수 있어요.');
   }
-  if (st.phase !== 'end' && !(st.phase === 'bet' && st.turn === ME)) h = h || '<button class="game-btn btn-secondary" data-t="quit">그만하기</button>';
+  if (st.phase !== 'end' && !(st.phase === 'bet' && st.turn === ME)) h = h || `<button class="game-btn btn-secondary" data-t="quit">${OL ? '나가기' : '그만하기'}</button>`;
   $('sdActs').innerHTML = h;
 }
 function sizePeel() {
@@ -406,6 +424,12 @@ addEventListener('resize', () => { if (S) sizePeel(); });
 $('sdActs').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   const t = b.dataset.t;
+  if (OL) {
+    if (t === 'quit') { H.online.ask(); return; }
+    if (t === 'lobby') { H.online.lobby(); return; }
+    if (t === 'next') { olDo(ng => SE.nextHand(ng)); return; }
+    olDo(ng => SE.act(ng, OL.me, { t })); return;
+  }
   if (t === 'quit') { H.confirmBox('그만할까요?', S && S.phase === 'bet' && !meP().fold ? '지금 판은 다이로 끝나요.' : '처음 화면으로 돌아가요.', '그만하기', quit); return; }
   if (t === 'next') { startHand(false); return; }
   if (t === 'refill') { if (H.refill()) startHand(false); return; }
@@ -428,7 +452,7 @@ function setupPeel(pe) {
     done = true; pe.classList.remove('hint');
     cover.animate([{ transform: cover.style.transform }, { transform: 'translateY(-115%) rotate(-12deg)' }], { duration: 220, fill: 'forwards' }).onfinish = () => {
       const m = meP(); if (!m) return;
-      m.peeled = true;
+      m.peeled = true; if (OL) OL.peeled = olKey();
       beep('flip');
       const at = centerOf(pe);
       if (m.e && (m.e.s >= 800)) { bigPop(m.e.n + '!', 'red', '', JBI(m.e.n)); flash('gold'); sparkle(at, 12); beep('ttadak'); }
@@ -483,5 +507,248 @@ addEventListener('keydown', e => {
   if (e.key === 'Enter' && S.phase === 'end') { const b = btns.find(x => x.dataset.t === 'next' || x.dataset.t === 'refill'); if (b) { e.preventDefault(); b.click(); } }
 });
 
-window.__sd = { get S() { return S; }, evalH, judge, act, newTable, showdown };
+// ============================================================
+//  방 대결 (Firebase 방 하나를 맞고·고스톱과 같이 써요)
+//  판 상태 g 하나에 모든 것이 들어 있고, 같은 g와 같은 행동이면 누가 계산해도 같은 결과예요.
+//  행동 하나마다 g.seq가 1씩 올라가요 (Firestore 규칙이 이걸 확인해요).
+// ============================================================
+const SE = {};
+SE.newGame = (members, stake) => {
+  const g = { kind: 'sutda', v: 1, gid: Math.random().toString(36).slice(2, 9), seq: 0, stake, ante: stake * 10, hand: 0, rg: 0,
+    dealer: Math.random() * Math.min(3, members.length) | 0, lastWin: null, evs: [],
+    players: members.slice(0, 3).map(m => ({ id: m.id, name: m.name, bank: Math.max(0, Math.round(+m.coin || 0)) })) };
+  seStart(g, false);
+  return g;
+};
+function seStart(g, regame) {
+  const n = g.players.length;
+  if (!regame) {
+    g.hand++; g.rg = 0; g.res = null; g.pot = 0;
+    if (g.lastWin != null) g.dealer = g.lastWin;
+    g.players.forEach(p => { p.fold = !!p.left || p.bank <= 0; p.out = p.fold; p.paid = 0; p.tt = 0; p.delta = 0; });
+    if (g.players.filter(p => !p.fold).length < 2) { g.phase = 'end'; g.turn = -1; g.res = { none: true }; g.players.forEach(p => { p.cards = []; p.bet = 0; p.last = ''; }); return; }
+    g.players.forEach(p => { if (p.fold) return; const a = Math.min(g.ante, p.bank); p.bank -= a; p.paid += a; g.pot += a; });
+    g.evs.push({ t: 'ante' });
+  } else g.rg++;
+  g.players.forEach(p => { p.cards = []; p.bet = 0; p.acted = false; p.last = ''; });
+  g.deck = shuffle(DECK.slice()); g.round = 0; g.phase = 'bet';
+  seDeal(g);
+}
+function seDeal(g) {
+  const n = g.players.length; g.round++;
+  for (let k = 1; k <= n; k++) { const i = (g.dealer + k) % n; if (!g.players[i].fold) g.players[i].cards.push(g.deck.pop()); }
+  g.players.forEach(p => { p.bet = 0; p.acted = false; });
+  g.maxBet = 0; g.raises = 0;
+  for (let k = 0; k < n; k++) { const i = (g.dealer + k) % n; if (!g.players[i].fold) { g.sun = i; break; } }
+  g.turn = g.sun;
+  if (!sePending(g, g.turn)) seAdvance(g);
+}
+function sePending(g, k) { const p = g.players[k]; return !p.fold && !(p.acted && (p.bet === g.maxBet || p.bank <= 0)); }
+SE.options = (g, i) => {
+  const p = g.players[i]; if (!p) return [];
+  const toCall = g.maxBet - p.bet, cap = p.bet + p.bank, o = [], canRaise = g.raises < 5;
+  const U = Math.max(10, g.stake), rU = v => Math.max(U, Math.round(v / U) * U);
+  const add = (t, label, total) => { total = Math.min(total, cap); if (total <= g.maxBet) return; o.push({ t, label, amt: total - p.bet }); };
+  if (toCall <= 0) {
+    o.push({ t: 'check', label: '체크', amt: 0 });
+    if (canRaise) { if (i === g.sun) add('ppying', '삥', g.maxBet + rU(g.ante)); add('half', '하프', g.maxBet + rU(g.pot / 2)); }
+  } else {
+    o.push({ t: 'call', label: '콜', amt: Math.min(toCall, p.bank) });
+    if (canRaise) { add('half', '하프', g.maxBet + rU((g.pot + toCall) / 2)); add('ddadang', '따당', g.maxBet * 2); }
+  }
+  o.push({ t: 'die', label: '다이', amt: 0 });
+  return o;
+};
+SE.act = (g, who, a) => {
+  const p = g.players[who]; if (!p) return 'who';
+  g.evs = [];
+  if (a.t === 'leave') {
+    if (p.left) return 'left';
+    p.left = true; g.evs.push({ t: 'leave', who });
+    if (g.phase === 'bet' && !p.fold) { p.fold = true; p.last = '나감'; if (g.players.filter(q => !q.fold).length <= 1) seFinish(g, true); else if (g.turn === who) seAdvance(g); }
+    g.seq++; return null;
+  }
+  if (g.phase !== 'bet' || g.turn !== who) return 'turn';
+  const op = SE.options(g, who).find(x => x.t === a.t); if (!op) return 'bad';
+  p.last = op.label;
+  if (a.t === 'die') p.fold = true;
+  else if (op.amt > 0) {
+    p.bank -= op.amt; p.paid += op.amt; p.bet += op.amt; g.pot += op.amt;
+    if (p.bet > g.maxBet) { g.maxBet = p.bet; g.raises++; g.players.forEach((q, k) => { if (k !== who) q.acted = false; }); }
+  }
+  p.acted = true;
+  g.evs.push({ t: 'act', who, k: a.t, label: op.label, amt: op.amt, raises: g.raises });
+  seAdvance(g);
+  g.seq++; return null;
+};
+SE.nextHand = g => { if (g.phase !== 'end') return 'phase'; g.evs = []; seStart(g, false); g.seq++; return null; };
+function seAdvance(g) {
+  const n = g.players.length;
+  if (g.players.filter(p => !p.fold).length <= 1) { seFinish(g, true); return; }
+  for (let d = 1; d <= n; d++) { const k = (g.turn + d) % n; if (sePending(g, k)) { g.turn = k; return; } }
+  if (g.round === 1) { g.evs.push({ t: 'deal2' }); seDeal(g); return; }
+  seShow(g);
+}
+function seShow(g) {
+  const lv = g.players.map((p, i) => ({ p, i, e: evalH(p.cards[0], p.cards[1]) })).filter(x => !x.p.fold);
+  const res = judge(lv.map(x => ({ i: x.i, e: x.e })));
+  const reveal = lv.map(x => ({ i: x.i, c: x.p.cards.slice(), n: x.e.n }));
+  if (res.regame || res.win.length > 1) {
+    const by = res.regame ? lv.find(x => x.i === res.by).e.n : '';
+    if (!res.regame) g.players.forEach((p, k) => { if (!p.fold && !res.win.includes(k)) { p.fold = true; p.out = true; } });
+    g.evs.push({ t: 'regame', by, reveal });
+    seStart(g, true); return;
+  }
+  seFinish(g, false, res, reveal);
+}
+function seFinish(g, solo, res, reveal) {
+  const w = solo ? g.players.findIndex(p => !p.fold) : res.win[0], wp = g.players[w];
+  const special = (!solo && res.special) || '';
+  const e = solo ? null : evalH(wp.cards[0], wp.cards[1]);
+  const pot = g.pot;   // 판돈 먼저 나누고(더 건 돈은 돌려주기), 그다음 땡값
+  const pay = splitPot(g.players.map((p, i) => ({ i, c: p.paid })), w);
+  g.players.forEach((p, k) => { p.bank += pay[k]; });
+  let mul = 0, tt = 0;
+  if (!solo && !special) {
+    mul = ttMul(e.s);
+    if (mul) { g.players.forEach((p, k) => { if (k === w || p.left) return; const a = Math.min(g.ante * mul, p.bank); p.bank -= a; p.tt -= a; tt += a; }); wp.tt += tt; wp.bank += tt; }
+  }
+  g.players.forEach((p, k) => { p.delta = pay[k] - p.paid + p.tt; });
+  g.res = { w, solo, special, name: solo ? '' : (special || e.n), mul, tt, pot, reveal: reveal || [] };
+  g.pot = 0; g.phase = 'end'; g.turn = -1; g.lastWin = w;
+  g.evs.push({ t: 'end' });
+}
+
+// ---------- 방 대결 화면 ----------
+let OL = null;   // { g, me, peeled, pend, busy }
+const olKey = () => OL && OL.g ? `${OL.g.gid}-${OL.g.hand}-${OL.g.rg}` : '';
+const olLatest = () => OL && (OL.pend || OL.g);
+function olView(g) {
+  const n = g.players.length, me = OL.me >= 0 ? OL.me : 0, real = k => (k + me) % n, vi = i => i < 0 ? -1 : (i - me + n) % n;
+  const end = g.phase === 'end' && g.res && !g.res.none && !g.res.solo;
+  const players = [];
+  for (let k = 0; k < n; k++) {
+    const i = real(k), p = g.players[i], isMe = k === 0 && OL.me >= 0;
+    const shown = end && !p.fold && p.cards.length === 2;
+    const e = p.cards.length === 2 && (isMe || shown) ? evalH(p.cards[0], p.cards[1]) : null;
+    players.push({ name: p.name + (p.left ? ' (나감)' : ''), ai: 0, net: 0, cards: p.cards.slice(), fold: !!p.fold, out: !!p.out, paid: p.paid || 0, bet: p.bet || 0, acted: !!p.acted, last: p.last || '',
+      peeled: isMe ? (p.cards.length < 2 || OL.peeled === olKey() || g.phase === 'end') : true, e, tag: shown && e ? e.n : '', won: g.phase === 'end' && g.res && g.res.w === i, open: shown || isMe });
+  }
+  const mp = OL.me >= 0 ? g.players[OL.me] : null;
+  return { online: true, watch: OL.me < 0, players, pot: g.pot || 0, dealer: vi(g.dealer), sun: g.phase === 'end' ? vi(g.lastWin ?? g.dealer) : vi(g.sun), turn: g.phase === 'bet' ? vi(g.turn) : -1,
+    phase: g.phase, round: g.round, maxBet: g.maxBet || 0, ante: g.ante, raises: g.raises, hand: g.hand, regame: g.rg > 0,
+    net: g.phase === 'end' && mp && g.res && !g.res.none ? mp.delta : null, start: mp ? mp.bank - (mp.delta || 0) + (mp.paid || 0) : 0 };
+}
+function olSetCoin(g) { if (OL.me >= 0) { const b = g.players[OL.me].bank; if (b !== H.coin) H.setCoin(b); } }
+function olReceive(ng) {
+  if (!ng) return;
+  const cur = olLatest();
+  if (cur && cur.gid === ng.gid && ng.seq <= cur.seq) return;
+  OL.pend = ng;
+  if (!OL.busy) olRun();
+}
+async function olRun() {
+  OL.busy = true;
+  const my = token;
+  while (OL && OL.pend) {
+    const ng = OL.pend; OL.pend = null;
+    try { await olApply(OL.g, ng, my); } catch (e) { console.error(e); OL.g = ng; S = olView(ng); render(); }
+    if (my !== token || !OL) return;
+  }
+  if (OL) { OL.busy = false; S = olView(OL.g); render(); }
+}
+const vIdx = i => (i - (OL.me >= 0 ? OL.me : 0) + OL.g.players.length) % OL.g.players.length;
+async function olApply(old, ng, my) {
+  const sameGame = old && old.gid === ng.gid;
+  const evs = sameGame && ng.seq === old.seq + 1 ? (ng.evs || []) : [];
+  OL.g = ng;
+  // 행동 말풍선·소리
+  for (const e of evs) {
+    if (e.t === 'act') {
+      const k = vIdx(e.who);
+      if (e.k === 'die') beep('ppuk'); else if (e.k === 'half' || e.k === 'ddadang') { beep('go'); if (e.k === 'ddadang') flash('red'); } else if (e.amt) beep('coin'); else beep('flip');
+      if (e.raises === 2 && (e.k === 'half' || e.k === 'ddadang' || e.k === 'ppying')) beep('tense');
+      setTimeout(() => bubbleAt(k, e.label + (e.amt ? ` ${fmt(e.amt)}냥` : '')), 30);
+      if (e.amt && old) setTimeout(() => flyCoins(seatEl(k), $('sdPile'), Math.min(10, 3 + Math.round(Math.log10(Math.max(10, e.amt)))), 45), 30);
+    }
+    if (e.t === 'leave') H.toast(`${esc(ng.players[e.who].name)} 님이 나갔어요`, 1800);
+    if (e.t === 'regame') {
+      // 잠깐 모두의 패를 열어 보여 주고 재경기
+      const v = olView(old && old.gid === ng.gid ? old : ng);
+      e.reveal.forEach(r => { const p = v.players[vIdx(r.i)]; if (p) { p.cards = r.c; p.open = true; p.tag = r.n; p.peeled = true; p.e = evalH(r.c[0], r.c[1]); } });
+      v.phase = 'show'; v.turn = -1; S = v; render(); setStatus('<b>패를 엽니다!</b>');
+      await sleep(900); if (my !== token) return;
+      setStatus('');
+      if (e.by) bigPop(e.by + '!', 'red', '재경기예요', JBI(e.by)); else bigPop('무승부!', 'mint', '비긴 사람끼리 재경기예요', JBA['sd-draw'] ? 'img/sd-draw.webp' : '');
+      beep('shake'); flash('mint');
+      await sleep(1800); if (my !== token) return;
+      beep('tense');
+    }
+  }
+  const prevView = S;
+  olSetCoin(ng);
+  S = olView(ng); render();
+  // 새 판이면 판돈 엽전
+  if (!sameGame || !old || old.hand !== ng.hand) {
+    if (ng.phase === 'bet') { S.players.forEach((p, k) => { if (p.paid) flyCoins(seatEl(k), $('sdPile'), 4, 40); }); beep('coin'); }
+    bumpPot();
+  } else if (old.pot !== ng.pot) bumpPot();
+  // 새로 받은 패
+  const oldN = k => (sameGame && old && old.hand === ng.hand && old.rg === ng.rg) ? ((old.players[(k + (OL.me >= 0 ? OL.me : 0)) % ng.players.length] || {}).cards || []).length : 0;
+  for (let round = 0; round < 2; round++) {
+    let any = false;
+    for (let k = 0; k < S.players.length; k++) if (S.players[k].cards.length > round && oldN(k) <= round) { dealFx(k, round); any = true; await sleep(150); if (my !== token) return; }
+    if (any) await sleep(100);
+  }
+  // 판 끝
+  if (ng.phase === 'end' && ng.res && !ng.res.none && (!old || old.phase !== 'end' || old.hand !== ng.hand)) {
+    const r = ng.res, wk = vIdx(r.w), meWin = OL.me === r.w;
+    if (!r.solo) {
+      setStatus('<b>패를 엽니다!</b>');
+      for (const x of r.reveal) {
+        const k = vIdx(x.i), c = seatEl(k) && seatEl(k).querySelector('.sd-cards, .sd-hand');
+        const s0 = evalH(x.c[0], x.c[1]).s;
+        if (c) { const at = centerOf(c); slam(at, s0 >= 800 ? 1.6 : 1, $('sdMid')); if (s0 >= 800) sparkle(at, 10); }
+        beep(s0 >= 800 ? 'match' : 'tak');
+        await sleep(500); if (my !== token) return;
+      }
+      bigPop(r.name + '!', 'red', `${meWin ? '내가' : esc(ng.players[r.w].name) + ' 님이'} 이겼어요${r.mul ? ` · 땡값 ${fmt(r.tt)}냥` : ''}`, JBI(r.name));
+      beep('stop'); flash('gold');
+      await sleep(900); if (my !== token) return;
+    }
+    ng.players.forEach((p, i) => { if (p.delta + p.paid - p.tt > 0) flyCoins($('sdPile'), seatEl(vIdx(i)), i === r.w ? 12 : 6, 55); });
+    setTimeout(() => beep('coin'), 700);
+    if (OL.me >= 0) { if (meWin) beep('win'); else beep('lose'); }
+    S = olView(ng); render();
+    if (OL.me >= 0) coinCount();
+  }
+}
+async function olDo(fn) {
+  if (!OL || OL.me < 0) return;
+  const ng = JSON.parse(JSON.stringify(olLatest()));
+  const err = fn(ng);
+  if (err) { S = olView(OL.g); render(); return; }
+  olReceive(ng);
+  H.online.push(ng);
+}
+const SD = window.SD = {
+  newGame: SE.newGame,
+  act: (g, i, a) => SE.act(g, i, a),
+  onRoom(room) {
+    const g = room.g, me = g.players.findIndex(p => p.id === H.online.myId);
+    if (!OL || OL.gid !== g.gid) {
+      token++; clearTimeout(aiT);
+      OL = { g: null, gid: g.gid, me, peeled: '', pend: null, busy: false };
+      H.hideModals(); show('sutda');
+      $('sdHand').dataset.k = '';
+    }
+    if ($('sutda').classList.contains('hidden')) show('sutda');
+    OL.me = me;
+    olReceive(g);
+  },
+  force(g) { if (!OL) return; OL.pend = null; OL.g = g; olSetCoin(g); S = olView(g); render(); },
+  reset() { if (OL) { token++; OL = null; S = null; } },
+};
+
+window.__sd = { get S() { return S; }, get OL() { return OL; }, evalH, judge, act, newTable, showdown, SE };
 })();

@@ -146,6 +146,7 @@ KBGM.button({ after: $('sndToggle'), icon: SVG_MUSIC });
 // ---------- 상태 ----------
 let mode = null;              // 'cpu' | 'online'
 let g = null, pendingG = null, animating = false;
+let coinSync = false;
 let room = null, code = '', ref = null, role = '', unsub = null, FB = null, busy = false;
 let shownCoin = null, hotShown = '';
 let sel = -1, aiT = 0, shownRes = '', shownGs = '', ghostSet = new Set();
@@ -884,6 +885,7 @@ $('cpu2Btn').onclick = () => startCpu(2);
 $('cpu3Btn').onclick = () => startCpu(3);
 function leaveLocal() {
   clearTimeout(aiT);
+  if (window.SD) window.SD.reset();
   if (unsub) { unsub(); unsub = null; }
   mode = null; g = null; pendingG = null; room = null; ref = null; code = ''; sstore('hwatu-room', null);
   hideModals(); show('startScreen');
@@ -952,7 +954,7 @@ $('createBtn').onclick = async () => {
           const d = s.data(), age = Date.now() - (d.updatedAt ? d.updatedAt.toMillis() : 0);
           if (d.status !== 'closed' && age < STALE_MS) return null;
         }
-        tx.set(r, { code: c, status: 'waiting', hostId: myId, members: [{ id: myId, name }], g: null, createdAt: F.serverTimestamp(), updatedAt: F.serverTimestamp() });
+        tx.set(r, { code: c, status: 'waiting', hostId: myId, members: [{ id: myId, name, coin }], g: null, createdAt: F.serverTimestamp(), updatedAt: F.serverTimestamp() });
         return c;
       });
     }
@@ -986,8 +988,8 @@ async function joinRoom(c, name) {
     if (d.status === 'closed' || age > STALE_MS) throw new Error('closed');
     const ms = d.members || [];
     const at = ms.findIndex(m => m.id === myId);
-    if (at >= 0) { if (name && ms[at].name !== name && d.status === 'waiting') { ms[at].name = name; tx.update(r, { members: ms, updatedAt: F.serverTimestamp() }); } return 'player'; }
-    if (d.status === 'waiting' && ms.length < 3 && name) { ms.push({ id: myId, name }); tx.update(r, { members: ms, updatedAt: F.serverTimestamp() }); return 'player'; }
+    if (at >= 0) { if (d.status === 'waiting' && ((name && ms[at].name !== name) || ms[at].coin !== coin)) { if (name) ms[at].name = name; ms[at].coin = coin; tx.update(r, { members: ms, updatedAt: F.serverTimestamp() }); } return 'player'; }
+    if (d.status === 'waiting' && ms.length < 3 && name) { ms.push({ id: myId, name, coin }); tx.update(r, { members: ms, updatedAt: F.serverTimestamp() }); return 'player'; }
     return 'watch';
   });
 }
@@ -1009,8 +1011,13 @@ function onRoom(snap) {
   role = room.hostId === myId ? 'host' : ms.some(m => m.id === myId) ? 'player' : 'watch';
   if (room.status === 'waiting') {
     if (prev && prev.members && ms.length > prev.members.length) beep('join');
-    g = null; pendingG = null; hideModals(); showWait(); return;
+    if (window.SD) window.SD.reset();
+    g = null; pendingG = null; hideModals(); showWait();
+    const mine = ms.find(m => m.id === myId);
+    if (mine && mine.coin !== coin && !coinSync) { coinSync = true; joinRoom(code, '').catch(() => {}).finally(() => { coinSync = false; }); }   // 대기실에선 내 엽전을 방에 알려 둬요 (섯다 시작 때 씀)
+    return;
   }
+  if (room.g && room.g.kind === 'sutda') { g = null; pendingG = null; if (window.SD) window.SD.onRoom(room); return; }
   if ($('game').classList.contains('hidden')) show('game');
   if (room.g) {
     const cur = latest();
@@ -1023,11 +1030,11 @@ function showWait() {
   $('codeBig').innerHTML = code.split('').map(ch => `<span>${ch}</span>`).join('');
   const ms = room.members || [];
   $('memberList').innerHTML = ms.map(m => `<span class="${m.id === myId ? 'me' : ''}">${esc(m.name)}${m.id === room.hostId ? '<small>방장</small>' : ''}</span>`).join('');
-  $('waitTags').innerHTML = `<span class="tag">${ms.length === 3 ? '고스톱 (3명)' : '맞고 (2명)'}</span><span class="tag">${ms.length}/3명</span>`;
+  $('waitTags').innerHTML = `<span class="tag">${ms.length === 3 ? '고스톱·섯다 (3명)' : '맞고·섯다 (2명)'}</span><span class="tag">${ms.length}/3명</span>`;
   let lead, b = '';
   if (role === 'host') {
-    lead = ms.length < 2 ? '친구에게 이 번호를 알려 주세요.<br><span class="dots">친구를 기다리는 중</span>' : ms.length === 2 ? '둘이면 맞고, 한 명 더 오면 고스톱이에요.' : '모두 모였어요!';
-    b = `<button class="game-btn btn-secondary" id="wClose">방 없애기</button><button class="game-btn btn-primary" id="wStart" ${ms.length < 2 ? 'disabled' : ''}>시작! (${ms.length}명)</button>`;
+    lead = ms.length < 2 ? '친구에게 이 번호를 알려 주세요.<br><span class="dots">친구를 기다리는 중</span>' : ms.length === 2 ? '둘이면 맞고나 섯다, 한 명 더 오면 고스톱이나 섯다를 해요.' : '모두 모였어요! 고스톱이나 섯다를 골라요.';
+    b = `<button class="game-btn btn-secondary" id="wClose">방 없애기</button><button class="game-btn btn-primary" id="wStart" ${ms.length < 2 ? 'disabled' : ''}>${ms.length === 3 ? '고스톱' : '맞고'} 시작</button><button class="game-btn btn-info" id="wSutda" ${ms.length < 2 ? 'disabled' : ''}>섯다 시작</button>`;
   } else if (role === 'player') {
     lead = '방장이 시작하길 기다려요<span class="dots"></span>';
     b = '<button class="game-btn btn-secondary" id="wLeave">나가기</button>';
@@ -1039,17 +1046,18 @@ function showWait() {
   $('waitBtns').innerHTML = b;
   const on = (id, fn) => { const x = $(id); if (x) x.onclick = fn; };
   on('wClose', async () => { try { const F = await fb(); await F.updateDoc(ref, { status: 'closed', updatedAt: F.serverTimestamp() }); } catch (e) {} leaveLocal(); });
-  on('wStart', startOnline);
+  on('wStart', () => startOnline());
+  on('wSutda', () => startOnline('sutda'));
   on('wLeave', leaveOnline);
   on('wJoin', async () => { const n = store('hwatu-name') || $('nameInput').value.trim().slice(0, 8) || '친구'; try { await joinRoom(code, n); } catch (e) { toast('참가하지 못했어요. ' + errText(e), 2500); } });
 }
-async function startOnline() {
+async function startOnline(kind) {
   try {
     const F = await fb();
     await F.runTransaction(F.db, async tx => {
       const s = await tx.get(ref); const d = s.data();
       if (!d || d.status !== 'waiting' || d.hostId !== myId || (d.members || []).length < 2) return;
-      const ng = HT.newGame(d.members.slice(0, 3).map(m => ({ id: m.id, name: m.name })), { stake }, Date.now());
+      const ng = kind === 'sutda' ? window.SD.newGame(d.members.map(m => m.id === myId ? Object.assign({}, m, { coin }) : m), stake) : HT.newGame(d.members.slice(0, 3).map(m => ({ id: m.id, name: m.name })), { stake }, Date.now());
       tx.update(ref, { status: 'playing', g: ng, updatedAt: F.serverTimestamp() });
     });
   } catch (e) { console.error(e); toast('시작하지 못했어요. ' + errText(e), 2500); }
@@ -1094,11 +1102,19 @@ async function onlineAct(a) {
   });
   return null;
 }
+function pushG(ng) {   // 섯다 방 대결이 쓰는 저장 (내 화면은 이미 바뀐 뒤)
+  const rf = ref, snap = clone(ng);
+  sendQ = sendQ.then(async () => {
+    try { const F = await fb(); await F.updateDoc(rf, { g: snap, updatedAt: F.serverTimestamp() }); }
+    catch (e) { console.error(e); if (rf === ref) { toast(String(e && e.code || '').includes('permission') ? '순서가 엇갈려서 다시 맞췄어요.' : '보내지 못했어요. ' + errText(e), 2000); resync(); } }
+  });
+}
 async function resync() {
   try {
     const F = await fb(); const rf = ref; if (!rf) return;
     const s = await F.getDocFromServer(rf); if (rf !== ref || !s.exists()) return;
     const sg = s.data().g; if (!sg) return;
+    if (sg.kind === 'sutda') { if (window.SD) window.SD.force(sg); return; }
     while (animating) await sleep(60);
     g = sg; pendingG = null; sel = -1; hideModals(); render(); after();
   } catch (e) { console.error(e); }
@@ -1117,7 +1133,7 @@ async function leaveOnline() {
       if (d.hostId === me) { if (ms.length) up.hostId = ms[0].id; else up.status = 'closed'; }
       if (d.g) {
         const ng = d.g, i = ng.players.findIndex(p => p.id === me);
-        if (i >= 0 && !HT.act(ng, i, { t: 'leave' }, Date.now())) up.g = ng;
+        if (i >= 0 && !(ng.kind === 'sutda' ? window.SD.act(ng, i, { t: 'leave' }) : HT.act(ng, i, { t: 'leave' }, Date.now()))) up.g = ng;
       }
       tx.update(rf, up);
     });
@@ -1235,5 +1251,6 @@ $('helpClose').onclick = () => $('helpModal').classList.add('hidden');
 window.__ht = { get g() { return g; }, startCpu, doMine };
 // 섯다(sutda.js)와 나눠 쓰는 것들
 window.HW = { $, esc, setTrack, charPop, rnd, sleep, store, beep, bigPop, flash, sparkle, slam, toast, show, getName, confirmBox, cardH, backH, IMG, YP, fmt, AI, PAL, REFILL, today, refill, updStake,
-  get coin() { return coin; }, setCoin, get stake() { return stake; }, get level() { return level; }, hideModals };
+  get coin() { return coin; }, setCoin, get stake() { return stake; }, get level() { return level; }, hideModals,
+  online: { get myId() { return myId; }, get role() { return role; }, get room() { return room; }, push: pushG, ask: askLeave, lobby: backToLobby } };
 })();
