@@ -41,7 +41,7 @@
       s['b' + lv] = d.slice(0, 4); s['d' + lv] = d.slice(4);
     });
     s.guests = shuffle(GUESTS.map(g => g.id)).slice(0, nPlayers + 1);
-    s.p = { b: newPlayer(), w: newPlayer() };
+    s.p = []; for (let i = 0; i < nPlayers; i++) s.p.push(newPlayer());
     return s;
   }
   function bonus(pl) { const b = [0, 0, 0, 0, 0]; pl.cards.forEach(id => b[CARDS[id].c]++); return b; }
@@ -130,14 +130,15 @@
     if (pl.res.some(id => payFor(pl, id))) return true;
     return [1, 2, 3].some(lv => s['b' + lv].some(id => id >= 0 && payFor(pl, id)));
   }
-  // 끝났는지 ('b'가 먼저 하므로 'w' 차례가 끝날 때 확인)
+  // 이긴 사람 (자리 번호) - 점수가 같으면 카드를 적게 산 사람, 그래도 같으면 'draw'
   function result(s) {
-    const sb = score(s.p.b), sw = score(s.p.w);
-    if (sb === sw) {
-      const cb = s.p.b.cards.length, cw = s.p.w.cards.length;
-      return cb === cw ? 'draw' : cb < cw ? 'b' : 'w';
-    }
-    return sb > sw ? 'b' : 'w';
+    let best = [];
+    s.p.forEach((pl, i) => {
+      if (!best.length) { best = [i]; return; }
+      const a = s.p[best[0]], d = score(pl) - score(a) || a.cards.length - pl.cards.length;
+      if (d > 0) best = [i]; else if (d === 0) best.push(i);
+    });
+    return best.length === 1 ? best[0] : 'draw';
   }
 
   // ---------- 깨비샘 (컴퓨터) ----------
@@ -170,7 +171,9 @@
       const ms = allMoves(s, by).filter(m => m.t !== 'res' || Math.random() < 0.3);
       if (ms.length) { const want = [0, 0, 0, 0, 0]; return finish(s, by, ms[Math.floor(Math.random() * ms.length)], want); }
     }
-    const pl = s.p[by], op = s.p[by === 'b' ? 'w' : 'b'];
+    const pl = s.p[by];
+    const opps = s.p.filter((_, i) => i !== by);
+    const op = opps.reduce((a, x) => score(x) > score(a) ? x : a, opps[0]);
     const b = bonus(pl), myScore = score(pl), opScore = score(op);
     const cands = boardCards(s).map(x => Object.assign(x, { r: null })).concat(pl.res.map((id, r) => ({ id, r, lv: CARDS[id].lv })));
     // 카드 가치: 점수 + 손님에 도움 + 앞으로 자주 쓰일 색
@@ -207,7 +210,7 @@
     targets.slice(0, 3).forEach((x, k) => x.m.forEach((n, i) => { want[i] += n * (k === 0 ? 3 : 1); }));
     // 어려움: 상대가 다음 차례에 이길 카드를 사면 찜해서 막기
     if (level === 3 && pl.res.length < MAX_RES) {
-      const danger = boardCards(s).find(x => payFor(op, x.id) && score(op) + CARDS[x.id].p >= GOAL);
+      const danger = boardCards(s).find(x => opps.some(o => payFor(o, x.id) && score(o) + CARDS[x.id].p >= GOAL));
       if (danger) return finish(s, by, { t: 'res', lv: danger.lv, i: danger.i }, want);
     }
     // 3) 보물 가져오기
