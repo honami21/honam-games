@@ -51,27 +51,13 @@ function judge(list) {   // list: [{i, e}]
   if (best === 890 || best === 900) { const t = list.filter(x => x.e.ah); if (t.length) return { win: t.map(x => x.i), special: '암행어사' }; }
   return { win: list.filter(x => x.e.s === best).map(x => x.i) };
 }
-// 따로 판돈: 엽전이 모자라 다 건 사람은 자기가 건 만큼까지만 겨뤄요.
-// list: [{ i, c(이번 판에 넣은 돈), live(다이 안 함), e(패) }] → 사람마다 받는 돈
-function splitPot(list) {
+// 판돈 나누기: 이긴 사람(w)은 자기가 건 만큼까지만 각자에게서 받아요.
+// 그보다 더 건 돈은 낸 사람에게 그대로 돌려줘요 (엽전이 모자라 다 건 사람이 이겼을 때).
+// list: [{ i, c(이번 판에 넣은 돈) }] → 사람마다 받는 돈
+function splitPot(list, w) {
   const pay = {}; list.forEach(x => { pay[x.i] = 0; });
-  const lvls = [...new Set(list.filter(x => x.live).map(x => x.c))].sort((a, b) => a - b);
-  let prev = 0;
-  for (const L of lvls) {
-    let slice = 0; list.forEach(x => { slice += Math.max(0, Math.min(x.c, L) - prev); });
-    const el = list.filter(x => x.live && x.c >= L);
-    let win;
-    if (el.length === 1) win = [el[0].i];
-    else {
-      const r = judge(el.map(x => ({ i: x.i, e: x.e })));
-      if (r.regame || !r.win) { const b = Math.max(...el.map(x => x.e.s)); win = el.filter(x => x.e.s === b).map(x => x.i); } else win = r.win;
-    }
-    const sh = Math.floor(slice / win.length);
-    win.forEach((k, j) => { pay[k] += sh + (j === 0 ? slice - sh * win.length : 0); });
-    prev = L;
-  }
-  // 아무도 따라오지 못한 웃돈은 낸 사람에게 돌려줘요
-  list.forEach(x => { if (x.c > prev) pay[x.i] += x.c - prev; });
+  const cw = (list.find(x => x.i === w) || { c: 0 }).c;
+  list.forEach(x => { pay[w] += Math.min(x.c, cw); pay[x.i] += Math.max(0, x.c - cw); });
   return pay;
 }
 // 깨비가 보는 패의 힘 (0~1)
@@ -280,7 +266,7 @@ async function showdown(solo) {
   }
   st.phase = 'end'; st.res = res; st.lastWin = res.win[0];
   const wins = res.win;
-  const pay = splitPot(st.players.map((p, i) => ({ i, c: p.paid, live: !p.fold, e: p.e })));
+  const pay = splitPot(st.players.map((p, i) => ({ i, c: p.paid })), wins[0]);
   const wName = wins.map(k => k === ME ? '내' : st.players[k].name).join(', ');
   const wp = st.players[wins[0]];
   // 땡값: 땡으로 이기면 다른 사람 모두(다이한 사람도)에게 기본 판돈의 몇 배를 더 받아요
@@ -619,8 +605,8 @@ function seFinish(g, solo, res, reveal) {
   const w = solo ? g.players.findIndex(p => !p.fold) : res.win[0], wp = g.players[w];
   const special = (!solo && res.special) || '';
   const e = solo ? null : evalH(wp.cards[0], wp.cards[1]);
-  const pot = g.pot;   // 판돈 먼저 나누고(따로 판돈), 그다음 땡값
-  const pay = splitPot(g.players.map((p, i) => ({ i, c: p.paid, live: !p.fold, e: p.cards.length === 2 ? evalH(p.cards[0], p.cards[1]) : null })));
+  const pot = g.pot;   // 판돈 먼저 나누고(더 건 돈은 돌려주기), 그다음 땡값
+  const pay = splitPot(g.players.map((p, i) => ({ i, c: p.paid })), w);
   g.players.forEach((p, k) => { p.bank += pay[k]; });
   let mul = 0, tt = 0;
   if (!solo && !special) {
