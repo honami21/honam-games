@@ -2,7 +2,8 @@
    - 게임을 끝까지 해서 끝나면 1점
    - 하루에 모을 수 있는 포인트는 5점까지, 한 번 받으면 1분 뒤에 다시 받을 수 있음
    - 한국 시간 자정이 지나면 0점으로 돌아감
-   - 도깨비숲 생존기 한 판에 COST점을 씀 (생존기 엽전과는 따로) */
+   - 도깨비숲 생존기 한 판에 COST점을 씀 (생존기 엽전과는 따로)
+   - 관리자 모드에서 이 기기에 포인트를 줄 수 있음 (give) */
 (function () {
   var KEY = 'kpoint', CAP = 5, GAP = 60 * 1000;
   var base = (function () {
@@ -51,7 +52,7 @@
 
   window.KPOINT = {
     CAP: CAP,
-    COST: 3,   // 도깨비숲 생존기 한 판에 쓰는 포인트
+    COST: 1,   // 도깨비숲 생존기 한 판에 쓰는 포인트 (다른 게임 1판 = 생존기 1판)
     info: info,
     // 게임 한 판이 끝까지 끝났을 때 부름. key는 같은 판이 두 번 세지지 않게 하는 이름.
     earn: function (key) {
@@ -72,6 +73,10 @@
       var d = load();
       if (d.p < n) return false;
       d.p -= n; save(d); return true;
+    },
+    // 관리자가 이 기기에 포인트 주기(빼기는 음수). 하루 상한(오늘 모은 점수)에는 세지 않음
+    give: function (n) {
+      var d = load(); d.p = Math.max(0, d.p + (n | 0)); save(d); return d.p;
     },
     toast: toast
   };

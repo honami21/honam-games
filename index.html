@@ -195,7 +195,7 @@ body.adm-edit .adm-num{display:flex}
     document.getElementById('pt-day').textContent='오늘 '+k.earned+'/'+k.cap;
     document.getElementById('pt-box').hidden=false;
   }
-  upd(); setInterval(upd,30000);
+  window.homePointUpd=upd; upd(); setInterval(upd,30000);
   document.addEventListener('visibilitychange',function(){ if(!document.hidden) upd(); });
   window.addEventListener('pageshow',upd);
   document.addEventListener('DOMContentLoaded',function(){ var c=document.getElementById('pt-cost'); if(c) c.textContent=KPOINT.COST; });
@@ -253,7 +253,7 @@ body.adm-edit .adm-num{display:flex}
     <a class="game" href="survivor/">
       <span class="adm-num"></span>
       <img src="survivor/thumb.jpg?v=4" alt="도깨비숲 생존기 게임 화면">
-      <span class="cost"><img src="img/point.png" alt="" onerror="this.remove()"><span id="pt-cost">3</span>포인트</span>
+      <span class="cost"><img src="img/point.png" alt="" onerror="this.remove()"><span id="pt-cost">1</span>포인트</span>
       <div class="title"><b class="spend">도깨비숲 생존기</b></div>
       <p>몰려오는 숲속 요괴를 피해 20분! 무기를 키우고 조합해요.</p>
     </a>
@@ -368,7 +368,21 @@ KBGM.init({ key:'home', tracks:{ play:'audio/home-bgm.mp3' }, defaultOn:false, v
   <button class="adm-b gray" type="button" id="adm-reset">처음 순서로</button>
   <button class="adm-b gray" type="button" id="adm-cancel">취소</button>
   <button class="adm-b coral" type="button" id="adm-save">저장</button>
+  <button class="adm-b" type="button" id="adm-pt">포인트 주기</button>
   <button class="adm-b gray" type="button" id="adm-out">로그아웃</button>
+</div>
+<div class="adm-modal modal" id="pt-modal">
+  <div class="adm-box">
+    <h2>포인트 주기</h2>
+    <p>이 기기의 포인트를 바꿔요. 지금 <b id="pt-now" style="font-weight:normal;color:#e0523f">0</b>점<br>하루 5점 상한과 따로 주고, 자정에는 0점이 돼요.</p>
+    <input id="pt-amt" type="number" min="1" max="99" value="1" inputmode="numeric" aria-label="줄 포인트">
+    <div class="adm-msg" id="pt-msg"></div>
+    <div class="adm-row">
+      <button class="adm-b gray" type="button" id="pt-close">닫기</button>
+      <button class="adm-b gray" type="button" id="pt-minus">빼기</button>
+      <button class="adm-b coral" type="button" id="pt-plus">주기</button>
+    </div>
+  </div>
 </div>
 <script type="module">
 // 관리자: 로그인 (Firebase 이메일 로그인, 비밀번호 = 관리자 코드) 뒤 카드 끌어서 순서 바꾸기
@@ -493,6 +507,18 @@ $('adm-save').addEventListener('click', async () => {
   }
   b.disabled = false; b.textContent = '저장';
 });
+// 관리자: 이 기기에 포인트 주기
+function ptShow() { $('pt-now').textContent = window.KPOINT ? KPOINT.info().pts : 0; if (window.homePointUpd) window.homePointUpd(); }
+$('adm-pt').addEventListener('click', () => { if (!window.KPOINT) return; $('pt-msg').textContent = ''; ptShow(); $('pt-modal').classList.add('on'); setTimeout(() => $('pt-amt').select(), 30); });
+$('pt-close').addEventListener('click', () => $('pt-modal').classList.remove('on'));
+$('pt-modal').addEventListener('click', e => { if (e.target === $('pt-modal')) $('pt-modal').classList.remove('on'); });
+function ptGive(sign) {
+  const n = Math.min(99, Math.max(1, parseInt($('pt-amt').value, 10) || 1));
+  KPOINT.give(sign * n); ptShow();
+  $('pt-msg').style.color = '#2c8a4a'; $('pt-msg').textContent = sign > 0 ? n + '점을 주었어요.' : n + '점을 뺐어요.';
+}
+$('pt-plus').addEventListener('click', () => ptGive(1));
+$('pt-minus').addEventListener('click', () => ptGive(-1));
 function alertBar(t) { const s = $('adm-bar').querySelector('span'), o = s.innerHTML; s.textContent = t; s.style.color = '#d2463d'; setTimeout(() => { s.innerHTML = o; s.style.color = ''; }, 3500); }
 
 // 링크로 이동하지 않게
