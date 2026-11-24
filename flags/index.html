@@ -1230,6 +1230,7 @@ function calculateFinalScore() {
 // ============================================================
 function endGame() {
   gameState = 'over';
+  window.KPOINT && KPOINT.earn();
   if (respawnTimerId) { clearInterval(respawnTimerId); respawnTimerId = null; }
   countdownEl.classList.add('hidden');
   if (pointerLocked) document.exitPointerLock?.();
@@ -1873,6 +1874,7 @@ requestAnimationFrame(animate);
 </script>
 <script src="../rank.js"></script>
 <script src="../keynav.js"></script>
+<script src="../points.js"></script>
 <script src="../credit.js"></script>
 </body>
 </html>

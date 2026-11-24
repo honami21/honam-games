@@ -951,7 +951,7 @@ async function greet(who) {
 }
 
 // 방이 바뀔 때 (온라인·깨비샘과 하기 같이 씀)
-let lastKey = '', shownResult = '', autoT = 0;
+let lastKey = '', shownResult = '', autoT = 0, pointDone = false;
 function onRoom(snap) {
   if (!snap.exists()) { toast('방이 사라졌어요.', 2500); leaveLocal(); return; }
   const prev = room; room = snap.data();
@@ -969,7 +969,7 @@ function onRoom(snap) {
   }
   render();
   if (room.status === 'done') { setTimeout(() => { if (room && room.status === 'done') showResult(); }, room.phase === 'crow' ? 2200 : 1400); }
-  else { $('resultModal').classList.add('hidden'); shownResult = ''; }
+  else { $('resultModal').classList.add('hidden'); shownResult = ''; pointDone = false; }
 }
 function onPhase(prev) {
   const d = room, me = ME();
@@ -1250,6 +1250,7 @@ function showResult() {
   else if (winId === me) { title = mode === 'cpu' ? '깨비샘을 이겼어요!' : '최고의 꼬치 장수!'; text = d.endReason === 'tie' ? '엽전이 같아서 겨룬 마지막 꼬치 대결에서 이겼어요!' : '엽전을 가장 많이 모았어요!'; img = 'ggaebi-win'; if (first) { beep('win'); KBGM.jingle && KBGM.jingle(); } }
   else { title = '아쉽게 졌어요'; text = d.endReason === 'tie' ? `엽전이 같아서 겨룬 마지막 꼬치 대결에서 ${pname(d, winId)}님이 이겼어요.` : `${pname(d, winId)}님이 엽전을 가장 많이 모았어요.`; img = 'ggaebi-lose'; if (first) beep('lose'); }
   if (d.endReason === 'leave') text = '친구들이 나가서 장사가 끝났어요.';
+  if (!pointDone && !watch && ps.some(p => p.id === me) && d.endReason !== 'leave' && window.KPOINT) { pointDone = true; KPOINT.earn(); }   // 끝까지 한 판이면 포인트 1점
   $('resImg').src = `img/${img}.png`; $('resTitle').textContent = title; $('resText').textContent = text;
   let h = '<button class="game-btn btn-secondary" id="seeBtn">판 보기</button>';
   if (mode === 'cpu') h += '<button class="game-btn btn-primary" id="againBtn">한 판 더</button>';
@@ -1320,6 +1321,7 @@ window.__market = { get room() { return room; }, get mode() { return mode; }, st
 </script>
 <script src="../rank.js"></script>
 <script src="../keynav.js"></script>
+<script src="../points.js"></script>
 <script src="../credit.js"></script>
 </body>
 </html>

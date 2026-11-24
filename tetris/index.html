@@ -1226,6 +1226,7 @@ function finishGame(cleared){
   if(cleared) audio.gameClear();
   else audio.gameOver();
   showGameOverModal();
+  window.KPOINT && KPOINT.earn();
 }
 
 // ============================================================
@@ -1677,6 +1678,7 @@ draw();
 </script>
 <script src="../rank.js"></script>
 <script src="../keynav.js"></script>
+<script src="../points.js"></script>
 <script src="../credit.js"></script>
 </body>
 </html>

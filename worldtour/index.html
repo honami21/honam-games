@@ -1362,6 +1362,7 @@ function finish() {
   const rank = G.players.slice().sort((a, b) => (b.alive - a.alive) || (assets(b) - assets(a))), w = rank[0];
   beep('win'); if (NET.on ? w.uid === myId : (!w.ai || G.players.every(p => p.ai))) KBGM.jingle(); else KBGM.calm();
   NET.shownOver = true;
+  if (window.KPOINT && (NET.on ? NET.role !== 'watch' : !G.players.every(p => p.ai))) KPOINT.earn('worldtour-' + G.startAt);
   say('🏆 ' + pn(w) + ' 우승!');
   showModal((IMG['ggobi-win'] ? '<img class="res-img" src="' + IMG['ggobi-win'] + '" alt="">' : '<div class="big">🏆</div>') + '<h2>' + esc(w.name) + ' 우승!</h2><p>' +
     (alive().length < 2 ? '마지막까지 남은 여행왕이에요.' : G.mode === 'time' ? '시간이 다 됐어요. 재산이 가장 많아요.' : '정한 바퀴를 다 돌았어요. 재산이 가장 많아요.') + '</p>' +
@@ -1792,6 +1793,7 @@ function showSticker(st) {
 layout();
 </script>
 <script src="../keynav.js"></script>
+<script src="../points.js"></script>
 <script src="../credit.js"></script>
 </body>
 </html>
