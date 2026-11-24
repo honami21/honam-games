@@ -51,6 +51,29 @@ function judge(list) {   // list: [{i, e}]
   if (best === 890 || best === 900) { const t = list.filter(x => x.e.ah); if (t.length) return { win: t.map(x => x.i), special: '암행어사' }; }
   return { win: list.filter(x => x.e.s === best).map(x => x.i) };
 }
+// 따로 판돈: 엽전이 모자라 다 건 사람은 자기가 건 만큼까지만 겨뤄요.
+// list: [{ i, c(이번 판에 넣은 돈), live(다이 안 함), e(패) }] → 사람마다 받는 돈
+function splitPot(list) {
+  const pay = {}; list.forEach(x => { pay[x.i] = 0; });
+  const lvls = [...new Set(list.filter(x => x.live).map(x => x.c))].sort((a, b) => a - b);
+  let prev = 0;
+  for (const L of lvls) {
+    let slice = 0; list.forEach(x => { slice += Math.max(0, Math.min(x.c, L) - prev); });
+    const el = list.filter(x => x.live && x.c >= L);
+    let win;
+    if (el.length === 1) win = [el[0].i];
+    else {
+      const r = judge(el.map(x => ({ i: x.i, e: x.e })));
+      if (r.regame || !r.win) { const b = Math.max(...el.map(x => x.e.s)); win = el.filter(x => x.e.s === b).map(x => x.i); } else win = r.win;
+    }
+    const sh = Math.floor(slice / win.length);
+    win.forEach((k, j) => { pay[k] += sh + (j === 0 ? slice - sh * win.length : 0); });
+    prev = L;
+  }
+  // 아무도 따라오지 못한 웃돈은 낸 사람에게 돌려줘요
+  list.forEach(x => { if (x.c > prev) pay[x.i] += x.c - prev; });
+  return pay;
+}
 // 깨비가 보는 패의 힘 (0~1)
 function power(e) {
   if (e.s >= 1000) return 1; if (e.s >= 890) return .97; if (e.s === 810) return .95;
@@ -256,7 +279,8 @@ async function showdown(solo) {
     startHand(true); return;
   }
   st.phase = 'end'; st.res = res; st.lastWin = res.win[0];
-  const wins = res.win, share = st.pot;
+  const wins = res.win;
+  const pay = splitPot(st.players.map((p, i) => ({ i, c: p.paid, live: !p.fold, e: p.e })));
   const wName = wins.map(k => k === ME ? '내' : st.players[k].name).join(', ');
   const wp = st.players[wins[0]];
   // 땡값: 땡으로 이기면 다른 사람 모두(다이한 사람도)에게 기본 판돈의 몇 배를 더 받아요
@@ -280,13 +304,13 @@ async function showdown(solo) {
   wins.forEach(k => { st.players[k].won = true; });
   render();
   await sleep(solo ? 200 : 900); if (my !== token) return;
-  wins.forEach(k => flyCoins($('sdPile'), seatEl(k), 12, 55));
+  st.players.forEach((p, k) => { if (pay[k] > 0) flyCoins($('sdPile'), seatEl(k), k === w ? 12 : 6, 55); });
   if (mul) st.players.forEach((p, k) => { if (k !== w) flyCoins(seatEl(k), seatEl(w), 5, 60); });
-  if (wins.includes(ME)) H.setCoin(H.coin + share);
+  if (pay[ME]) H.setCoin(H.coin + pay[ME]);
   st.pot = 0; bumpPot();
   setTimeout(() => { beep('coin'); }, 700);
   st.net = H.coin - st.start;
-  st.players.forEach((p, k) => { p.net += (wins.includes(k) ? share : 0) - p.paid + p.tt; });
+  st.players.forEach((p, k) => { p.net += pay[k] - p.paid + p.tt; });
   if (wins.includes(ME)) beep('win'); else beep('lose');   // 판 끝 깨비 그림은 뺐어요
   H.setTrack('play');
   await sleep(900); if (my !== token) return;
@@ -595,13 +619,15 @@ function seFinish(g, solo, res, reveal) {
   const w = solo ? g.players.findIndex(p => !p.fold) : res.win[0], wp = g.players[w];
   const special = (!solo && res.special) || '';
   const e = solo ? null : evalH(wp.cards[0], wp.cards[1]);
+  const pot = g.pot;   // 판돈 먼저 나누고(따로 판돈), 그다음 땡값
+  const pay = splitPot(g.players.map((p, i) => ({ i, c: p.paid, live: !p.fold, e: p.cards.length === 2 ? evalH(p.cards[0], p.cards[1]) : null })));
+  g.players.forEach((p, k) => { p.bank += pay[k]; });
   let mul = 0, tt = 0;
   if (!solo && !special) {
     mul = ttMul(e.s);
     if (mul) { g.players.forEach((p, k) => { if (k === w || p.left) return; const a = Math.min(g.ante * mul, p.bank); p.bank -= a; p.tt -= a; tt += a; }); wp.tt += tt; wp.bank += tt; }
   }
-  const pot = g.pot; wp.bank += pot;
-  g.players.forEach((p, k) => { p.delta = (k === w ? pot : 0) - p.paid + p.tt; });
+  g.players.forEach((p, k) => { p.delta = pay[k] - p.paid + p.tt; });
   g.res = { w, solo, special, name: solo ? '' : (special || e.n), mul, tt, pot, reveal: reveal || [] };
   g.pot = 0; g.phase = 'end'; g.turn = -1; g.lastWin = w;
   g.evs.push({ t: 'end' });
@@ -704,7 +730,7 @@ async function olApply(old, ng, my) {
       beep('stop'); flash('gold');
       await sleep(900); if (my !== token) return;
     }
-    flyCoins($('sdPile'), seatEl(wk), 12, 55);
+    ng.players.forEach((p, i) => { if (p.delta + p.paid - p.tt > 0) flyCoins($('sdPile'), seatEl(vIdx(i)), i === r.w ? 12 : 6, 55); });
     setTimeout(() => beep('coin'), 700);
     if (OL.me >= 0) { if (meWin) beep('win'); else beep('lose'); }
     S = olView(ng); render();
