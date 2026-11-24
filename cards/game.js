@@ -902,6 +902,7 @@ function showResult() {
   else { title = end ? '아쉽게 졌어요' : `${P[w].name} 승리`; text = `${P[w].name}님이 카드를 먼저 다 냈어요. 다음엔 꼭 이겨요!`; img = 'ggaebi-lose'; }
   if (end && g.target) text += ` ${g.target}점에 먼저 도착했어요!`;
   if (!end) text += ` 아직 ${g.target}점에 아무도 못 갔어요. 다음 판을 해요.`;
+  if (first && end && g.res && (mode === 'local' || me >= 0) && window.KPOINT) KPOINT.earn('cards-' + g.gid);
   if (first) {
     if (w === me || mode === 'local') { beep('win'); if (end) KBGM.jingle(); } else if (me >= 0) beep('lose');
   }

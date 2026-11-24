@@ -488,6 +488,7 @@ function beep(kind) {
 let code = null, ref = null, unsub = null, room = null, role = null; // role: 'host' | 'guest' | 'watch' | 'local' | 'cpu'
 let tickKey = '', tickStart = 0, passSent = '', otherHb = null, otherSeenAt = 0;
 let picked = [], busy = false, hbTimer = null, shownResultFor = '', lastMoveSeen = '';
+let pointDone = false;
 
 const other = c => c === 'b' ? 'w' : 'b';
 const keyOf = d => `${d.round || 0}-${d.tick || 0}`;
@@ -675,7 +676,7 @@ function onRoom(snap) {
   if ($('game').classList.contains('hidden')) show('game');
   render();
   if (room.status === 'done') showResult();
-  else { $('resultModal').classList.add('hidden'); shownResultFor = ''; }
+  else { $('resultModal').classList.add('hidden'); shownResultFor = ''; pointDone = false; }
   if (room.status === 'choosing' && (role === 'host' || offline())) showChoose();
   else $('chooseModal').classList.add('hidden');
   maybeAiMove();
@@ -1047,6 +1048,7 @@ function showResult() {
   shownResultFor = key;
   const mine = myColor(), w = room.winner;
   if (!bgmJingled && w && w !== 'draw' && (role === 'local' || w === mine)) { bgmJingled = true; KBGM.jingle(); }
+  if (!pointDone && mine && room.endReason !== 'leave' && window.KPOINT) { pointDone = true; KPOINT.earn(); }   // 끝까지 한 판이면 포인트 1점
   let img = 'ggaebi-hello', title, text;
   const nb = R.sum(hand('b')), nw = R.sum(hand('w'));
   const reason = room.endReason === 'leave' ? '친구가 나가서 끝났어요.'
@@ -1134,6 +1136,7 @@ window.addEventListener('pointerdown', () => { if (actx && actx.state === 'suspe
 window.__words = { get room() { return room; }, R };
 </script>
 <script src="../keynav.js"></script>
+<script src="../points.js"></script>
 <script src="../credit.js"></script>
 </body>
 </html>

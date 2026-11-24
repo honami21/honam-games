@@ -385,6 +385,7 @@ let code = null, ref = null, unsub = null, room = null, role = null; // role: 'h
 let tickKey = '', tickStart = 0, passSent = '', lastSeenKey = '', otherHb = null, otherSeenAt = 0;
 let selected = -1, hover = -1, busy = false;
 let hbTimer = null, shownResultFor = '', lastMoveSeen = '';
+let pointDone = false;
 
 const other = c => c === 'b' ? 'w' : 'b';
 const keyOf = d => `${d.round || 0}-${d.tick || 0}`;
@@ -574,7 +575,7 @@ function onRoom(snap) {
   if (!$('game').classList.contains('hidden') === false) show('game');
   render();
   if (room.status === 'done') { if (anim) setTimeout(() => { if (room && room.status === 'done') showResult(); }, 1100); else showResult(); }
-  else { $('resultModal').classList.add('hidden'); shownResultFor = ''; }
+  else { $('resultModal').classList.add('hidden'); shownResultFor = ''; pointDone = false; }
   // 선 정하기: 방장(한 화면 모드는 이 기기)이 고름
   if (room.status === 'choosing' && (role === 'host' || (role === 'local' || role === 'cpu'))) showChoose();
   else $('chooseModal').classList.add('hidden');
@@ -1028,6 +1029,7 @@ function showResult() {
   shownResultFor = key;
   const mine = myColor(), w = room.winner;
   if (!bgmJingled && w && w !== 'draw' && (role === 'local' || w === mine)) { bgmJingled = true; KBGM.jingle(); }
+  if (!pointDone && mine && room.endReason !== 'leave' && window.KPOINT) { pointDone = true; KPOINT.earn(); }   // 끝까지 한 판이면 포인트 1점
   let img = 'ggaebi-hello', title, text;
   const loserName = w && w !== 'draw' ? nameOf(other(w)) : '';
   const reason = room.endReason === 'leave' ? '친구가 나가서 끝났어요.' : room.endReason === 'gift' ? `${loserName}님이 밀다가 상대 줄을 만들어 줬어요.` : '다섯 개를 한 줄로 만들었어요!';
@@ -1111,6 +1113,7 @@ $('cfYes').onclick = async () => {
 window.addEventListener('pointerdown', () => { if (actx && actx.state === 'suspended') actx.resume(); }, { passive: true });
 </script>
 <script src="../keynav.js"></script>
+<script src="../points.js"></script>
 <script src="../credit.js"></script>
 </body>
 </html>

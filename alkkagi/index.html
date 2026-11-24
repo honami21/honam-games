@@ -578,6 +578,7 @@ function ggobiOops() { $('sideGgobi').src = 'img/ggobi-oops.png'; clearTimeout(o
 let code = null, ref = null, unsub = null, room = null, role = null; // role: 'host' | 'guest' | 'watch' | 'local' | 'cpu'
 let tickKey = '', tickStart = 0, passSent = '', otherHb = null, otherSeenAt = 0;
 let busy = false, hbTimer = null, shownResultFor = '';
+let pointDone = false;
 let aim = null;           // { i, ang, stage:'aim'|'power'|'acc', t0, power, dragging }
 let anim = null;          // { key, res, t0, done, fx }
 let shownVar = '', lastPlayersH = 0, playedKey = '', finalizing = '', cpuBusy = false, cpuShow = null, streak = 0;
@@ -837,7 +838,7 @@ function render() {
   const ph = $('players').offsetHeight + '/' + VAR;
   if (ph !== lastPlayersH) { lastPlayersH = ph; layout(); }
   if (room.status === 'done' && !animBusy()) showResult();
-  else if (room.status !== 'done') { $('resultModal').classList.add('hidden'); shownResultFor = ''; }
+  else if (room.status !== 'done') { $('resultModal').classList.add('hidden'); shownResultFor = ''; pointDone = false; }
 }
 function esc(s) { return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 let lastStatus = '';
@@ -1584,6 +1585,7 @@ function showResult() {
   shownResultFor = key;
   const mine = myColor(), w = room.winner;
   if (!bgmJingled && w && w !== 'draw' && (role === 'local' || w === mine)) { bgmJingled = true; KBGM.jingle(); }
+  if (!pointDone && mine && room.endReason !== 'leave' && window.KPOINT) { pointDone = true; KPOINT.earn(); }   // 끝까지 한 판이면 포인트 1점
   let img = 'ggobi-trophy', title, text;
   const reason = room.endReason === 'leave' ? '친구가 나가서 끝났어요.' : '상대 알을 모두 떨어뜨렸어요!';
   const left = w === 'b' || w === 'w' ? countAlive(room.pos, w) : 0;
@@ -1686,6 +1688,7 @@ window.addEventListener('pointerdown', () => { if (actx && actx.state === 'suspe
 window.__alk = { simulate, toS, get room() { return room; }, get aim() { return aim; }, get anim() { return anim; } };
 </script>
 <script src="../keynav.js"></script>
+<script src="../points.js"></script>
 <script src="../credit.js"></script>
 </body>
 </html>

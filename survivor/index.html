@@ -138,6 +138,12 @@
   .wp { border:3px solid var(--edge); background:#fff; border-radius:16px; padding:8px 4px 6px; cursor:pointer; font-family:'Jua',sans-serif; color:var(--ink); font-size:15px; }
   .wp .ic { margin:0 auto 4px; border:1.5px solid #222; }
   @media (min-width:760px) { #start .panel { width:min(760px,100%); } }
+  /* 포인트: 한 판에 KPOINT.COST점 */
+  #pt-line { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:12px; font-size:17px; color:#fff; text-shadow:0 2px 0 rgba(8,12,30,.9), 0 0 8px rgba(8,12,30,.9); word-break:keep-all; }
+  #pt-line img { width:30px; height:30px; flex:none; }
+  #pt-line b { font-weight:normal; color:#ffd75e; }
+  #pt-line.low { color:#ffd0c8; }
+  #start-btn.low { filter:grayscale(.7) brightness(.9); }
   #start { flex-direction:column; justify-content:flex-start; gap:6px; }
   #start > * { flex:none; }
   #start > .panel { margin:0 auto auto; }
@@ -294,6 +300,7 @@
     .card .ic { margin:auto; }
   }
 </style>
+<script src="../points.js"></script>
 </head>
 <body class="menu">
 <div class="topbar">
@@ -393,6 +400,7 @@
     <div class="pick-title"><span style="display:inline-block;padding:6px 26px;border-radius:999px;background:rgba(8,12,30,.55);border:2px solid rgba(255,255,255,.6);font-size:clamp(20px,2.6vw,26px)">무기 선택</span></div>
     <div id="weapon-pick"></div>
     <div id="wp-desc"></div>
+    <div id="pt-line"></div>
     <div class="btns">
       <button class="game-btn" id="start-btn" type="button">숲으로 출발!</button>
       <button class="game-btn sun" id="rank-btn" type="button"><img class="ico" src="img/icon-rank.png" alt="">랭킹</button>
@@ -2457,8 +2465,19 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) { for
 function showTitle() { show('title'); hide('start'); hide('hud'); document.body.classList.remove('playing'); modal = 'title'; }
 $('title-start').addEventListener('click', () => { hide('title'); showStart(); });
 addEventListener('keydown', e => { if (modal === 'title' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); $('title-start').click(); } });
-function showStart() { buildPick(); show('start'); hide('hud'); document.body.classList.remove('playing'); modal = 'start';  cloudPull(); }
+function showStart() { buildPick(); show('start'); hide('hud'); document.body.classList.remove('playing'); modal = 'start';  cloudPull(); ptLine(); }
+// 포인트: 다른 게임을 끝까지 하면 1점씩 모이고, 생존기 한 판에 KPOINT.COST점을 써요
+function ptLine(warn) {
+  const el = $('pt-line'); if (!window.KPOINT) { el.textContent = ''; return; }
+  const k = KPOINT.info(), low = k.pts < KPOINT.COST;
+  el.classList.toggle('low', low); $('start-btn').classList.toggle('low', low);
+  el.innerHTML = '<img src="../img/point.png" alt="" onerror="this.remove()"><span>' + (low && warn
+    ? '포인트가 모자라요. 다른 게임을 끝까지 하면 1점씩 모여요. (오늘 ' + k.earned + '/' + k.cap + ')'
+    : '내 포인트 <b>' + k.pts + '점</b> · 한 판에 ' + KPOINT.COST + '점') + '</span>';
+  if (warn) { el.animate && el.animate([{ transform: 'translateX(-8px)' }, { transform: 'translateX(8px)' }, { transform: 'none' }], { duration: 260, iterations: 2 }); }
+}
 function startGame() {
+  if (window.KPOINT && !KPOINT.spend(KPOINT.COST)) { ptLine(true); return; }
   ensureAudio();
   hide('start'); modal = null; hudCache = {};
   newGame(pickedWeapon);
