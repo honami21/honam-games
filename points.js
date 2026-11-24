@@ -1,6 +1,7 @@
 /* 포인트 공용 도우미 (로그인 없이 이 기기에만 저장)
    - 게임을 끝까지 해서 끝나면 1점
    - 하루에 모을 수 있는 포인트는 5점까지, 한 번 받으면 1분 뒤에 다시 받을 수 있음
+   - 한 게임에서는 하루에 1점만 (게임 폴더 이름으로 구분)
    - 한국 시간 자정이 지나면 0점으로 돌아감
    - 도깨비숲 생존기 한 판에 COST점을 씀 (생존기 엽전과는 따로)
    - 관리자 모드에서 이 기기에 포인트를 줄 수 있음 (give) */
@@ -17,7 +18,8 @@
   function load() {
     var d = null;
     try { d = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
-    if (!d || d.d !== today()) d = { d: today(), p: 0, e: 0, t: 0 };
+    if (!d || d.d !== today()) d = { d: today(), p: 0, e: 0, t: 0, g: [] };
+    if (!d.g) d.g = [];
     if (d.t > Date.now()) d.t = 0;   // 기기 시계가 되돌아간 경우
     return d;
   }
@@ -59,12 +61,14 @@
       if (key) { if (seen[key]) return 'dup'; seen[key] = 1; }
       var d = load(), now = Date.now();
       if (d.e >= CAP) { toast('오늘 모을 수 있는 포인트 ' + CAP + '점을 다 모았어요'); return 'cap'; }
+      var game = (location.pathname.match(/([^\/]+)\/(index\.html)?$/) || [])[1] || 'home';
+      if (d.g.indexOf(game) >= 0) { toast('이 게임은 오늘 포인트를 받았어요. 다른 게임을 끝까지 하면 받을 수 있어요'); return 'game'; }
       if (now - d.t < GAP) {
         var s = Math.ceil((d.t + GAP - now) / 1000);
         toast('포인트는 <b>' + s + '초</b> 뒤에 끝난 게임부터 다시 받아요');
         return 'wait';
       }
-      d.p += 1; d.e += 1; d.t = now; save(d);
+      d.p += 1; d.e += 1; d.t = now; d.g.push(game); save(d);
       toast('<b>+1 포인트!</b> 내 포인트 ' + d.p + '점 (오늘 ' + d.e + '/' + CAP + ')');
       return 'ok';
     },
