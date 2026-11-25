@@ -55,28 +55,33 @@ const MONS = {
   general: { name: '대나무 장군',   lv: 22, hp: 2500, ac: -6, dmg: [15, 22], exp: 1500, h: 146, aggro: 1, step: .55, boss: 1 },
 };
 
-// 한 장으로 이어진 넓은 세계 (서쪽 마을 → 동쪽으로 들판 → 대나무 숲). 아직 안 연 3~5지역은 길이 막혀 있어요.
-const WORLD = { w: 168, h: 60 };
-// x0~x1: 지역이 차지하는 가로 칸, spawn: 리스폰 지점(길 안내 도사가 서 있는 곳)
+// 도깨비섬: 바다로 둘러싸인 섬 하나. 가운데 마을, 둘레 들판, 서쪽 논밭, 동쪽 대나무 숲, 남쪽 깊은 대숲, 북쪽 뿔 곶 두 개
+const WORLD = { w: 258, h: 218, cx: 129, cy: 126, k: 1.4 };   // k: 섬 크기 배율
+// tile: 바닥 그림, mons: [몬스터, 비율], count: 몬스터 수, road: 리스폰 지점이 놓이는 길 방향(도)과 거리
 const ZONES = [
-  { id: 'town', name: '도깨비 마을', lv: '', x0: 0, x1: 36, tile: 'tile-town', town: true, spawn: [17, 30] },
-  { id: 'field', name: '마을 앞 들판', lv: '1~10', x0: 36, x1: 102, tile: 'tile-field', tier: 1, spawn: [41, 30], count: 70, boss: 'kscare',
-    // [몬스터, 지역 서쪽에서 떨어진 정도(0 가까움 ~ 1 멂) 범위, 비율]
-    mons: [['dust', 0, .45, 3], ['rat', .1, .65, 3], ['acorn', .35, .9, 3], ['scare', .55, 1, 3]],
-    drop: { w: .002, a: .004, gear: .005, coin: [1, 3] } },
-  { id: 'bamboo', name: '대나무 숲', lv: '10~20', x0: 102, x1: 168, tile: 'tile-bamboo', tier: 2, spawn: [107, 30], count: 72, boss: 'general',
-    mons: [['shoot', 0, .45, 3], ['tanuki', .1, .7, 3], ['bghost', .35, .95, 3], ['broom', .55, 1, 3]],
-    drop: { w: .005, a: .01, gear: .005, coin: [3, 8] } },
+  { id: 'town', name: '도깨비 마을', lv: '', tile: 'tile-town', town: true, color: '#c99b5e' },
+  { id: 'near', name: '마을 앞 들판', lv: '1~5', tile: 'tile-field', tier: 1, road: [-90, 17], count: 85,
+    mons: [['dust', 5], ['rat', 4]], drop: { w: .002, a: .004, gear: .004, coin: [1, 2] } },
+  { id: 'paddy', name: '허수아비 논밭', lv: '5~10', tile: 'tile-paddy', tier: 1, road: [180, 31], count: 75, boss: 'kscare',
+    mons: [['rat', 1], ['acorn', 4], ['scare', 4]], drop: { w: .003, a: .006, gear: .006, coin: [2, 4] } },
+  { id: 'bamboo', name: '대나무 숲', lv: '10~15', tile: 'tile-bamboo', tier: 2, road: [0, 35], count: 75,
+    mons: [['shoot', 5], ['tanuki', 4]], drop: { w: .004, a: .008, gear: .004, coin: [3, 6] } },
+  { id: 'deep', name: '깊은 대숲', lv: '15~20', tile: 'tile-deep', tier: 2, road: [90, 30], count: 75, boss: 'general',
+    mons: [['tanuki', 1], ['bghost', 4], ['broom', 4]], drop: { w: .006, a: .012, gear: .006, coin: [5, 9] } },
+  { id: 'beach', name: '도깨비섬 바닷가', lv: '', tile: 'tile-sand', tier: 1 },
+  { id: 'hornL', name: '왼뿔 곶', lv: '', tile: 'tile-rock', tier: 1 },
+  { id: 'hornR', name: '오른뿔 곶', lv: '', tile: 'tile-rock', tier: 1 },
 ];
 const ZONE = Object.fromEntries(ZONES.map(z => [z.id, z]));
-// 길 안내 도사 목록 (아직 안 연 지역은 준비 중)
+// 길 안내 도사 목록 (아직 안 연 곳은 준비 중)
 const REGIONS = [
   { id: 'town', name: '도깨비 마을', lv: '', open: true },
-  { id: 'field', name: '마을 앞 들판', lv: '1~10', open: true },
-  { id: 'bamboo', name: '대나무 숲', lv: '10~20', open: true },
-  { id: 'forest', name: '도깨비 숲', lv: '20~30' },
-  { id: 'moon', name: '달빛 고개', lv: '30~40' },
-  { id: 'cave', name: '이무기 동굴', lv: '40~50' },
+  { id: 'near', name: '마을 앞 들판', lv: '1~5', open: true },
+  { id: 'paddy', name: '허수아비 논밭', lv: '5~10', open: true },
+  { id: 'bamboo', name: '대나무 숲', lv: '10~15', open: true },
+  { id: 'deep', name: '깊은 대숲', lv: '15~20', open: true },
+  { id: 'cave', name: '왼뿔 곶 도깨비 동굴', lv: '20~30' },
+  { id: 'ship', name: '배 타고 새 섬으로', lv: '30~' },
 ];
 const BOSS_FIRST = 180, BOSS_AGAIN = 300;   // 사냥터에서 3분 뒤 첫 우두머리, 쓰러뜨리면 5분 뒤 다시
 const HUNT_MS = 10 * 60 * 1000;              // 1포인트 = 사냥 10분
@@ -88,10 +93,17 @@ const PROPS = {
   't-jangseung': { w: 96, fw: 2, fh: 1 }, 't-portal': { w: 120, fw: 2, fh: 1 },
   'f-tree1': { w: 170, fw: 2, fh: 1 }, 'f-tree2': { w: 110, fw: 1, fh: 1 }, 'f-bush': { w: 80, fw: 1, fh: 1 },
   'f-rock1': { w: 110, fw: 2, fh: 1 }, 'f-rocks': { w: 80, fw: 1, fh: 1 }, 'f-hay': { w: 76, fw: 1, fh: 1 },
-  'f-sign': { w: 72, fw: 1, fh: 1 }, 'f-flowers': { w: 78, fw: 0, fh: 0 },
+  'f-sign': { w: 72, fw: 1, fh: 1 }, 'f-flowers': { w: 78, fw: 0, fh: 0, flat: 1 },
   'b-bamboo1': { w: 120, fw: 2, fh: 1 }, 'b-bamboo2': { w: 92, fw: 1, fh: 1 }, 'b-rock': { w: 110, fw: 2, fh: 1 },
   'b-fallen': { w: 110, fw: 2, fh: 1 }, 'b-tower': { w: 70, fw: 1, fh: 1 }, 'b-sasa': { w: 84, fw: 1, fh: 1 },
   'b-pond': { w: 150, fw: 3, fh: 2 }, 'b-lantern': { w: 72, fw: 1, fh: 1 },
+  // 바닷가·섬 안쪽 (flat: 땅에 붙은 그림이라 캐릭터가 위로 지나가요)
+  'c-pine': { w: 150, fw: 1, fh: 1 }, 'c-rock': { w: 130, fw: 2, fh: 1 }, 'c-shells': { w: 70, fw: 0, fh: 0, flat: 1 },
+  'c-dock': { w: 190, fw: 0, fh: 0, flat: 1 }, 'c-boat': { w: 150, fw: 2, fh: 1 }, 'c-lighthouse': { w: 130, fw: 2, fh: 1 },
+  'c-cave': { w: 190, fw: 3, fh: 1 }, 'c-drift': { w: 100, fw: 2, fh: 1 },
+  'l-bridge': { w: 200, fw: 0, fh: 0, flat: 1 }, 'l-cliff': { w: 170, fw: 3, fh: 1 }, 'l-wall': { w: 110, fw: 2, fh: 1 },
+  'l-sign': { w: 76, fw: 1, fh: 1 }, 'l-stones': { w: 150, fw: 0, fh: 0, flat: 1 }, 'l-pine': { w: 170, fw: 2, fh: 1 },
+  'l-pavilion': { w: 200, fw: 3, fh: 2 }, 'l-reed': { w: 86, fw: 1, fh: 1 },
 };
 
 // 레벨업에 필요한 경험치 (레벨³, 처음 두 단계는 10)
