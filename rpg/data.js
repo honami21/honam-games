@@ -61,7 +61,7 @@ const WORLD = { w: 258, h: 218, cx: 129, cy: 126, k: 1.4 };   // k: 섬 크기 �
 // tile: 바닥 그림, mons: [몬스터, 비율], count: 몬스터 수, road: 리스폰 지점이 놓이는 길 방향(도)과 거리
 const ZONES = [
   { id: 'town', name: '도깨비 마을', lv: '', tile: 'tile-town', town: true, color: '#c99b5e' },
-  { id: 'near', name: '마을 앞 들판', lv: '1~5', tile: 'tile-field', tier: 1, road: [-90, 17], count: 85,
+  { id: 'near', name: '마을 앞 들판', lv: '1~5', tile: 'tile-field', tier: 1, road: [-90, 17], count: 110,
     mons: [['dust', 5], ['rat', 4]], drop: { w: .002, a: .004, gear: .004, coin: [1, 2] } },
   { id: 'paddy', name: '허수아비 논밭', lv: '5~10', tile: 'tile-paddy', tier: 1, road: [180, 31], count: 75, boss: 'kscare',
     mons: [['rat', 1], ['acorn', 4], ['scare', 4]], drop: { w: .003, a: .006, gear: .006, coin: [2, 4] } },

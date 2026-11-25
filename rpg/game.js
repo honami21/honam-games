@@ -185,7 +185,7 @@ function placeProp(name, cx, cy, force) {   // cx,cy = 밑동 가운데 칸
   return true;
 }
 // 마을 울타리 (네모, 동서남북에 문)
-const TOWN_HX = 28, TOWN_HY = 17;
+const TOWN_HX = 10, TOWN_HY = 7;   // 한 화면에 들어오는 작은 마을
 function buildTownWall(cx, cy) {
   const FS = .167, GS = 56 / 250, top = cy - TOWN_HY, bot = cy + TOWN_HY, lef = cx - TOWN_HX, rig = cx + TOWN_HX;
   const add = (name, x, y, sc) => { const im = IMG[name]; if (!im) return; M.props.push({ kind: 'prop', name, x, y, w: im.width * sc, h: im.height * sc, fade: 1 }); };
@@ -207,7 +207,7 @@ function buildTownWall(cx, cy) {
   }
   for (const [c, r] of [[lef, top], [rig, top], [lef, bot], [rig, bot]]) add('fence-corner', X(c), Y(r) + 2, .17);
   // 문 안쪽 등불, 문 바깥 장승
-  for (const [c, r] of [[cx + 3, top + 1], [cx + 3, bot - 1], [lef + 1, cy - 3], [rig - 1, cy - 3]]) { add('fence-lamp', X(c), Y(r), .19); shut(c, r); }
+  for (const [c, r] of [[cx + 2, top + 1], [cx - 2, bot - 1], [lef + 1, cy - 2], [rig - 1, cy + 2]]) { add('fence-lamp', X(c), Y(r), .19); shut(c, r); }
   for (const [c, r] of [[cx - 3, top - 2], [cx + 4, top - 2], [cx - 3, bot + 3], [cx + 4, bot + 3], [lef - 2, cy - 3], [lef - 2, cy + 4], [rig + 3, cy - 3], [rig + 3, cy + 4]]) placeProp('t-jangseung', c, r, 1);
   for (let x = cx - 1; x <= cx + 1; x++) for (const y of [top - 1, top + 1, bot - 1, bot + 1]) if (inMap(x, y)) M.keep[idx(x, y)] = 1;
 }
@@ -311,10 +311,11 @@ function buildWorld() {
   for (const z of ZONES) if (z.spawn) keepClear(z.spawn[0] - 3, z.spawn[1] - 3, z.spawn[0] + 3, z.spawn[1] + 3);
   // 8) 마을
   keepClear(cx - 4, cy - 2, cx + 4, cy + 5);
-  for (const [n, dx, dy] of [['t-house2', -13, -6], ['t-house1', -6, -8], ['t-house2', 7, -8], ['t-house1', 14, -6], ['t-house1', -13, 8], ['t-house2', -6, 10], ['t-house1', 7, 10], ['t-house2', 14, 8], ['t-house1', -18, -10], ['t-house2', 18, 9]]) placeProp(n, ...T(dx, dy), 1);
-  placeProp('t-stall', cx - 6, cy - 3, 1); placeProp('t-jars', ...T(-10, 3), 1); placeProp('t-well', cx + 6, cy + 4, 1); placeProp('t-portal', cx + 6, cy - 3, 1);
-  M.npcs.push({ kind: 'npc', role: 'shop', name: '상점 할머니', img: 'npc-shop', x: cx - 6, y: cy - 2, h: 92 * UK });
-  M.npcs.push({ kind: 'npc', role: 'guide', name: '길 안내 부엉이 도사', img: 'npc-guide', x: cx + 2, y: cy + 2, h: 96 * UK });
+  // 네 귀퉁이에 집 한 채씩, 가운데 십자 길을 비우고 상점·순간이동·우물
+  for (const [n, dx, dy] of [['t-house1', -7, -3], ['t-house2', 7, -3], ['t-house2', -7, 5], ['t-house1', 7, 5]]) placeProp(n, cx + dx, cy + dy, 1);
+  placeProp('t-stall', cx - 4, cy - 3, 1); placeProp('t-portal', cx + 4, cy - 3, 1); placeProp('t-well', cx - 4, cy + 4, 1); placeProp('t-jars', cx + 4, cy + 4, 1);
+  M.npcs.push({ kind: 'npc', role: 'shop', name: '상점 할머니', img: 'npc-shop', x: cx - 4, y: cy - 2, h: 92 * UK });
+  M.npcs.push({ kind: 'npc', role: 'guide', name: '길 안내 부엉이 도사', img: 'npc-guide', x: cx + 3, y: cy + 2, h: 96 * UK });
   // 마을 문 장승 (길이 마을 밖으로 나가는 곳 양옆)
   buildTownWall(cx, cy);
   // 9) 길 안내 도사 (사냥터마다 리스폰 지점) + 갈림길 이정표
@@ -653,7 +654,7 @@ function onMove(e) {
   if (pointer.down && !tgt) { const [wx, wy] = screenToWorld(e.clientX, e.clientY); setGoal(wx, wy); }
   const [wx, wy] = screenToWorld(e.clientX, e.clientY);
   const hov = unitAt(wx, wy, ['mon', 'npc']);
-  cv.style.cursor = hov ? (hov.kind === 'mon' ? 'crosshair' : 'pointer') : 'default';
+  cv.style.cursor = hov ? (hov.kind === 'mon' ? SWORD_CURSOR : 'pointer') : 'default';
 }
 function overBar(x, y) { const r = $('bar').getBoundingClientRect(); return y >= r.top - 6 && x >= r.left && x <= r.right; }
 function onUp(e) {
@@ -1138,6 +1139,8 @@ function nameTag(t, x, y, col) {
   g.font = '15px Jua, sans-serif'; g.textAlign = 'center'; g.lineWidth = 4; g.strokeStyle = 'rgba(20,14,40,.85)'; g.strokeText(t, x, y); g.fillStyle = col; g.fillText(t, x, y);
 }
 let hoverMon = null;
+// 몬스터 위에 올리면 칼 모양 마우스 (칼끝이 누르는 자리)
+const SWORD_CURSOR = "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><g stroke='%233a2412' stroke-width='1.6' stroke-linejoin='round' stroke-linecap='round'><path d='M2 2 L7 3 L21 17 L17 21 L3 7 Z' fill='%23eef3f8'/><path d='M5 5 L19 19' stroke='%23b8c4d0' stroke-width='1.2'/><path d='M15 23 L23 15 L25 17 L17 25 Z' fill='%23e0a43a'/><path d='M21 21 L28 28' stroke='%23a0612a' stroke-width='4'/><circle cx='29' cy='29' r='2.2' fill='%23e0a43a'/></g></svg>\") 2 2, crosshair";
 function drawNpc(n) {
   const x = n.px, y = n.py + CELL * .32;
   shadow(x, y, 26 * UK);
