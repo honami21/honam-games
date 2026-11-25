@@ -2466,13 +2466,13 @@ function showTitle() { show('title'); hide('start'); hide('hud'); document.body.
 $('title-start').addEventListener('click', () => { hide('title'); showStart(); });
 addEventListener('keydown', e => { if (modal === 'title' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); $('title-start').click(); } });
 function showStart() { buildPick(); show('start'); hide('hud'); document.body.classList.remove('playing'); modal = 'start';  cloudPull(); ptLine(); }
-// 포인트: 다른 게임을 끝까지 하면 1점씩 모이고, 생존기 한 판에 KPOINT.COST점을 써요
+// 포인트: 맞춤법·영어 타자·국기·블록 쌓기를 끝까지 하면 1점씩 모이고, 생존기 한 판에 KPOINT.COST점을 써요
 function ptLine(warn) {
   const el = $('pt-line'); if (!window.KPOINT) { el.textContent = ''; return; }
   const k = KPOINT.info(), low = k.pts < KPOINT.COST;
   el.classList.toggle('low', low); $('start-btn').classList.toggle('low', low);
   el.innerHTML = '<img src="../img/point.png" alt="" onerror="this.remove()"><span>' + (low && warn
-    ? '포인트가 모자라요. 다른 게임을 끝까지 하면 1점씩 모여요. (오늘 ' + k.earned + '/' + k.cap + ')'
+    ? '포인트가 모자라요. 맞춤법, 영어 타자, 국기, 블록 쌓기를 끝까지 하면 1점씩 모여요. (오늘 ' + k.earned + '/' + k.cap + ')'
     : '내 포인트 <b>' + k.pts + '점</b> · 한 판에 ' + KPOINT.COST + '점') + '</span>';
   if (warn) { el.animate && el.animate([{ transform: 'translateX(-8px)' }, { transform: 'translateX(8px)' }, { transform: 'none' }], { duration: 260, iterations: 2 }); }
 }

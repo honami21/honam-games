@@ -38,6 +38,7 @@ h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .title b.spend{background:#9fd4ff;box-shadow:inset 0 -3px 0 rgba(40,110,190,.25)}
 /* 포인트: 노란 제목 = 끝까지 하면 포인트 1점, 파란 제목 = 포인트를 쓰는 게임 */
 .cost{position:absolute;right:24px;top:24px;z-index:1;display:flex;align-items:center;gap:4px;background:#9fd4ff;border:3px solid var(--line);border-radius:999px;padding:3px 12px 1px 6px;font-size:16px}
+.cost.earn{background:var(--yellow)}
 .cost img,.pt img{width:26px;height:26px}
 .topbar .pt{pointer-events:auto;margin-right:auto;display:inline-flex;align-items:center;gap:6px;border:3px solid var(--line);border-radius:999px;padding:4px 16px 2px 8px;font-size:17px;color:var(--ink);background:var(--cream)}
 .topbar .pt[hidden]{display:none}
@@ -198,7 +199,7 @@ body.adm-edit .adm-num{display:flex}
   window.homePointUpd=upd; upd(); setInterval(upd,30000);
   document.addEventListener('visibilitychange',function(){ if(!document.hidden) upd(); });
   window.addEventListener('pageshow',upd);
-  document.addEventListener('DOMContentLoaded',function(){ var c=document.getElementById('pt-cost'); if(c) c.textContent=KPOINT.COST; });
+  document.addEventListener('DOMContentLoaded',function(){ var c=document.getElementById('pt-cost'); if(c) c.textContent='-'+KPOINT.COST; });
 })();
 </script>
 
@@ -216,24 +217,28 @@ body.adm-edit .adm-num{display:flex}
   <div class="grid">
     <a class="game" href="tetris/">
       <span class="adm-num"></span>
+      <span class="cost earn"><img src="img/point.png" alt="" onerror="this.remove()">+1 포인트</span>
       <img src="tetris/thumb.jpg?v=5" alt="블록 쌓기 게임 화면">
       <div class="title"><b>블록 쌓기</b></div>
       <p>10단계까지 완주하고 랭킹 TOP 50에 도전!</p>
     </a>
     <a class="game" href="spelling/">
       <span class="adm-num"></span>
+      <span class="cost earn"><img src="img/point.png" alt="" onerror="this.remove()">+1 포인트</span>
       <img src="spelling/thumb.jpg?v=3" alt="한글 맞춤법 대소동 게임 화면">
       <div class="title"><b>한글 맞춤법 대소동</b></div>
       <p>낱말과 빈칸 문장, 옳은 맞춤법 블록을 톡! 50문제에 도전!</p>
     </a>
     <a class="game" href="typing/">
       <span class="adm-num"></span>
+      <span class="cost earn"><img src="img/point.png" alt="" onerror="this.remove()">+1 포인트</span>
       <img src="typing/thumb.jpg?v=3" alt="영어 타자 연습 게임 화면">
       <div class="title"><b>영어 타자 연습</b></div>
       <p>내려오는 영어 단어를 키보드로 톡톡! 컴퓨터에서 즐겨요.</p>
     </a>
     <a class="game" href="flags/">
       <span class="adm-num"></span>
+      <span class="cost earn"><img src="img/point.png" alt="" onerror="this.remove()">+1 포인트</span>
       <img src="flags/thumb.jpg?v=2" alt="국기 맞히기 게임 화면">
       <div class="title"><b>국기 맞히기</b></div>
       <p>국기에 맞는 나라의 유리 다리로 폴짝! 세계 여행을 떠나요.</p>
@@ -253,7 +258,7 @@ body.adm-edit .adm-num{display:flex}
     <a class="game" href="survivor/">
       <span class="adm-num"></span>
       <img src="survivor/thumb.jpg?v=4" alt="도깨비숲 생존기 게임 화면">
-      <span class="cost"><img src="img/point.png" alt="" onerror="this.remove()"><span id="pt-cost">1</span>포인트</span>
+      <span class="cost"><img src="img/point.png" alt="" onerror="this.remove()"><span id="pt-cost">-1</span> 포인트</span>
       <div class="title"><b class="spend">도깨비숲 생존기</b></div>
       <p>몰려오는 숲속 요괴를 피해 20분! 무기를 키우고 조합해요.</p>
     </a>
@@ -380,7 +385,7 @@ KBGM.init({ key:'home', tracks:{ play:'audio/home-bgm.mp3' }, defaultOn:false, v
 <div class="adm-modal modal" id="pt-modal">
   <div class="adm-box">
     <h2>포인트 주기</h2>
-    <p>이 기기의 포인트를 바꿔요. 지금 <b id="pt-now" style="font-weight:normal;color:#e0523f">0</b>점<br>하루 5점 상한과 따로 주고, 자정에는 0점이 돼요.</p>
+    <p>이 기기의 포인트를 바꿔요. 지금 <b id="pt-now" style="font-weight:normal;color:#e0523f">0</b>점<br>하루 상한과 따로 주고, 자정에는 0점이 돼요.</p>
     <input id="pt-amt" type="number" min="1" max="99" value="1" inputmode="numeric" aria-label="줄 포인트">
     <div class="adm-msg" id="pt-msg"></div>
     <div class="adm-row">
