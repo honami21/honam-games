@@ -35,6 +35,7 @@ const SLOT_NAME = { weapon: '무기', helm: '투구', armor: '갑옷', cloak: '�
 // 쌓이는 아이템
 const ITEMS = {
   potion:  { name: '빨간 물약',       img: 'i-potion',  price: 15, sell: 3, heal: 40 },
+  haste:   { name: '초록 물약',       img: 'i-haste',   price: 40, sell: 8, sec: 300 },   // 5분 동안 걷기·공격이 빨라져요
   wscroll: { name: '무기 강화 부적',   img: 'i-wscroll', sell: 20 },
   ascroll: { name: '방어구 강화 부적', img: 'i-ascroll', sell: 15 },
 };

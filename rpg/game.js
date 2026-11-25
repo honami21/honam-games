@@ -14,10 +14,10 @@ const IMG = {}, WHITE = {};
 const IMG_LIST = ['fence-h', 'fence-post', 'fence-corner', 'gate-front', 'gate-side', 'gate-side-l', 'fence-side', 'fence-lamp', 'p-idle', 'p-walk-0', 'p-walk-1', 'p-walk-2', 'p-walk-3', 'p-walk-4', 'p-walk-5', 'p-wind', 'p-swing', 'p-hurt', 'p-dead', 'p-win', 'npc-shop', 'npc-guide',
   ...Object.keys(MONS).flatMap(k => ['m-' + k + '-0', 'm-' + k + '-1']),
   ...Object.keys(WEAPONS).map(k => 'w-' + k), ...Object.keys(ARMORS).map(k => 'a-' + k),
-  'i-potion', 'i-wscroll', 'i-ascroll', 'i-coin', 'i-coins', 'i-box', ...Object.keys(PROPS)];
+  'i-potion', 'i-haste', 'i-wscroll', 'i-ascroll', 'i-coin', 'i-coins', 'i-box', ...Object.keys(PROPS)];
 function loadImages() {
   const jobs = IMG_LIST.map(n => new Promise(res => { const im = new Image(); im.onload = () => { IMG[n] = im; res(); }; im.onerror = res; im.src = 'img/' + n + '.png?v=1'; }));
-  ['tile-town', 'tile-field', 'tile-bamboo', 'tile-sand', 'tile-paddy', 'tile-deep', 'tile-rock', 'tile-sea'].forEach(n => jobs.push(new Promise(res => { const im = new Image(); im.onload = () => { IMG[n] = im; res(); }; im.onerror = res; im.src = 'img/' + n + '.jpg?v=1'; })));
+  ['tile-town', 'tile-field', 'tile-bamboo', 'tile-sand', 'tile-paddy', 'tile-deep', 'tile-rock', 'tile-sea'].forEach(n => jobs.push(new Promise(res => { const im = new Image(); im.onload = () => { IMG[n] = im; res(); }; im.onerror = res; im.src = 'img/' + n + '.jpg?v=2'; })));
   return Promise.all(jobs);
 }
 function white(n) {   // 맞았을 때 하얗게 번쩍이는 그림
@@ -607,7 +607,7 @@ function glideUpdate(u, dt) {
 // 마을 문: 사냥 시간이 없으면 1포인트를 써야 나갈 수 있어요
 let gateAsked = 0;
 function gateOK(nx, ny) {
-  if (!zoneAt(player.x, player.y).town || zoneAt(nx, ny).town || P.hunt > 0) return true;
+  if (!zoneAt(player.x, player.y).town || zoneAt(nx, ny).town || P.hunt > 0 || isAdmin()) return true;
   if (performance.now() - gateAsked > 800) { gateAsked = performance.now(); openWin('gate'); }
   moveGoal = null; moveGoalPt = null; player.path = null; player.glide = null;
   return false;
@@ -615,6 +615,11 @@ function gateOK(nx, ny) {
 
 /* ================= 플레이어 조작 ================= */
 let tgt = null, moveGoal = null, moveGoalPt = null, goalKey = '', planT = 0, held = false, auto = false, pending = 0, pointer = { x: 0, y: 0, down: false, onMon: null, drag: false };
+// 관리자 모드: 이 기기에서 포인트 없이 사냥 시간 무한
+function isAdmin() { try { return localStorage.getItem('rpg-admin') === '1'; } catch (e) { return false; } }
+// 초록 물약: 걷기 1.33배, 공격 1.33배 빠르게
+const HASTE = 1 / 1.33;
+function hasted() { return P && P.haste > 0; }
 let atkCD = 0, atkAnim = null, hurtT = 0, winT = 0, idleT = 0, regenT = 0, dead = false;
 
 function screenToWorld(sx, sy) { return [(sx - VW / 2) / zoom + cam.x, (sy - VH / 2) / zoom + cam.y]; }
@@ -704,7 +709,7 @@ function faceTo(u, t) { if (t.x !== u.x) u.face = t.x > u.x ? 1 : -1; }
 
 // 공격: 휘두르기 준비 → 때리는 순간 판정 → 마무리
 function startAttack(m) {
-  const w = W_OF(); const spd = w ? w.spd : .7;
+  const w = W_OF(); const spd = (w ? w.spd : .7) * (hasted() ? HASTE : 1);
   atkCD = spd; atkAnim = { t: 0, hit: false, m, type: w ? w.type : 'sword', wind: Math.min(.09, spd * .25) };
   if (pending > 0) pending--;
 }
@@ -754,6 +759,7 @@ function dropLoot(m) {
     if (Math.random() < dr.a) bag.push({ item: { i: 'ascroll', n: 1 }, rare: 1 });
     if (Math.random() < dr.gear) bag.push(gearOf());
     if (Math.random() < .03) bag.push({ item: { i: 'potion', n: 1 } });
+    if (Math.random() < .015) bag.push({ item: { i: 'haste', n: 1 }, rare: 1 });
   }
   bag.forEach((b, i) => {
     const spot = i === 0 ? [m.x, m.y] : (findDropSpot(m.x, m.y) || [m.x, m.y]);
@@ -883,6 +889,7 @@ function giveItem(it) {
 function useItem(ix) {
   const it = P.inv[ix]; if (!it) return;
   if (it.i === 'potion') return drinkPotion();
+  if (it.i === 'haste') return drinkHaste();
   if (it.i === 'wscroll' || it.i === 'ascroll') { startEnchantPick(it.i); return; }
   if (it.g) equip(ix);
 }
@@ -901,6 +908,22 @@ function unequip(slot) {
   if (!P.eq[slot] || slot === 'weapon') return;   // 검은 뺄 수 없어요
   if (P.inv.length >= INV_MAX) { log('가방이 가득 찼어요', 'warn'); return; }
   P.inv.push(P.eq[slot]); P.eq[slot] = null; SND.ui(); dirty = true; renderInv(); updateHUD();
+}
+let hasteShow = 0;
+function drinkHaste() {
+  const s = P.inv.find(x => x.i === 'haste');
+  if (!s || dead) { log('초록 물약이 없어요', 'warn'); return; }
+  s.n--; if (s.n <= 0) P.inv.splice(P.inv.indexOf(s), 1);
+  P.haste = ITEMS.haste.sec * 1000;
+  SND.potion(); addNum(player.px, player.py - 40, '빨라졌어요!', 'heal');
+  fx.push({ k: 'heal', x: player.px, y: player.py, t: 0, d: .6 });
+  log('초록 물약을 마셨어요. 5분 동안 걷기와 공격이 빨라져요', 'sys');
+  dirty = true; updateHUD(); if (winOpen === 'inv') renderInv();
+}
+function updateHaste() {
+  const b = $('b-haste'); if (!b || !P) return;
+  b.classList.toggle('on', hasted());
+  $('hastet').textContent = hasted() ? fmtTime(P.haste) : '';
 }
 function drinkPotion() {
   const s = P.inv.find(x => x.i === 'potion');
@@ -973,7 +996,7 @@ function openWin(w) {
 function closeWin(quiet) { if (!winOpen) return; $('w-' + winOpen).classList.add('hidden'); winOpen = null; document.body.classList.remove('win-open'); cancelEnchant(); hideTip(); if (!quiet) SND.ui(); }
 
 function gearInfo(it) {
-  if (it.i) { const d = ITEMS[it.i]; return `<b>${d.name}</b>` + (it.i === 'potion' ? `<br>HP ${d.heal} 회복 (단축키 1)` : `<br>${it.i === 'wscroll' ? '무기' : '방어구'}를 한 단계 강화해요`); }
+  if (it.i) { const d = ITEMS[it.i]; return `<b>${d.name}</b>` + (it.i === 'potion' ? `<br>HP ${d.heal} 회복 (단축키 1)` : it.i === 'haste' ? '<br>5분 동안 걷기와 공격이 빨라져요 (단축키 2)' : `<br>${it.i === 'wscroll' ? '무기' : '방어구'}를 한 단계 강화해요`); }
   if (it.g === 'w') {
     const d = WEAPONS[it.k], [a, b] = weaponRange(it);
     return `<b>${itemName(it)}</b><br>${WTYPE[d.type]} · ${d.tier}단계<br>데미지 ${a === b ? a : a + '~' + b} · 한 대 ${d.spd}초` +
@@ -1004,7 +1027,7 @@ function renderChar() {
     `<div class="dim small">잡은 몬스터 ${P.kills.toLocaleString()} · 쓰러진 횟수 ${P.deaths}</div>`;
   $('b-char').classList.toggle('alert', P.pts > 0);
 }
-const SHOP_LIST = [{ i: 'potion' }, ...Object.keys(ARMORS).filter(k => ARMORS[k].price).map(k => ({ g: 'a', k }))];
+const SHOP_LIST = [{ i: 'potion' }, { i: 'haste' }, ...Object.keys(ARMORS).filter(k => ARMORS[k].price).map(k => ({ g: 'a', k }))];
 let shopTab = 'buy';
 function priceOf(it) { return it.i ? ITEMS[it.i].price : (it.g === 'w' ? WEAPONS : ARMORS)[it.k].price; }
 function sellOf(it) {
@@ -1026,13 +1049,15 @@ let sellArm = -1;
 function renderGuide() {
   const k = window.KPOINT ? KPOINT.info() : null;
   const left = P.hunt;
+  $('guide-admin').innerHTML = isAdmin() ? '<span class="dim">관리자 모드 · 사냥 시간 무한</span> <button class="lnk" id="adm-off" type="button">끄기</button>' : '<button class="lnk" id="adm-open" type="button">관리자</button>';
+  if (isAdmin()) { $('guide-time').innerHTML = '사냥 시간 <b>무한</b>'; } else
   $('guide-time').innerHTML = left > 0 ? `남은 사냥 시간 <b>${fmtTime(left)}</b>` : `사냥 시간이 없어요 · 1포인트 = 10분` + (k ? ` <span class="dim">(내 포인트 ${k.pts}점)</span>` : '');
   $('guide-list').innerHTML = REGIONS.map(r => `<button class="reg ${r.open ? '' : 'lock'}" data-reg="${r.id}" ${r.open ? '' : 'disabled'}><b>${r.name}</b><span>${!r.open ? '준비 중' : r.lv ? '권장 Lv ' + r.lv : '상점·쉬는 곳'}</span></button>`).join('');
 }
 function fmtTime(ms) { const s = Math.ceil(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
 function goRegion(id) {
   if (!ZONE[id]) return;
-  if (!ZONE[id].town && P.hunt <= 0) {
+  if (!ZONE[id].town && P.hunt <= 0 && !isAdmin()) {
     if (window.KPOINT && !KPOINT.spend(KPOINT.COST || 1)) { $('guide-time').innerHTML = '<span class="bad">포인트가 모자라요.</span> <span class="dim">+1 포인트 게임을 끝까지 하면 모여요</span>'; return; }
     P.hunt = HUNT_MS; log('1포인트를 써서 사냥 시간 10분을 받았어요', 'sys');
   }
@@ -1060,6 +1085,7 @@ function updateHUD() {
   $('lv').textContent = P.lv;
   $('coins').textContent = P.coins.toLocaleString();
   const pot = P.inv.find(x => x.i === 'potion'); $('potn').textContent = pot ? pot.n : 0;
+  const hp2 = P.inv.find(x => x.i === 'haste'); $('hasten').textContent = hp2 ? hp2.n : 0; updateHaste();
   $('acv').textContent = playerAC();
   $('b-town').classList.toggle('hidden', !curZone || !!curZone.town);
   if (winOpen === 'char') renderChar();
@@ -1416,17 +1442,25 @@ function update(dt) {
     const cover = p.y > player.py + CELL * .32 && Math.abs(p.x - player.px) < p.w * .42 && player.py + CELL * .32 > p.y - p.h * .95 && player.py < p.y;
     p.fade += ((cover ? .5 : 1) - p.fade) * Math.min(1, dt * 10);
   }
+  // 초록 물약 시간
+  if (P.haste > 0 && !dead) {
+    P.haste -= dt * 1000;
+    if (P.haste <= 0) { P.haste = 0; log('초록 물약 효과가 끝났어요', 'sys'); }
+    hasteShow -= dt; if (hasteShow <= 0) { hasteShow = .5; updateHaste(); }
+  }
+  player.step = hasted() ? .36 * HASTE : .36;
   // 사냥 시간·우두머리
   if (!dead) setZone(zoneAt(player.x, player.y));
   const Z = curZone;
   if (!Z.town && !dead) {
-    P.hunt -= dt * 1000;
+    if (isAdmin()) P.hunt = Math.max(P.hunt, HUNT_MS);
+    else P.hunt -= dt * 1000;
     if (P.hunt <= 0) { P.hunt = 0; tgt = null; auto = false; goTown('사냥 시간이 끝났어요<small>길 안내 도사에게 가면 다시 사냥할 수 있어요</small>'); }
     if (Z.boss && !Z.bossAlive) {
       Z.bossTimer -= dt;
       if (Z.bossTimer <= 0) { const b = spawnMonster(Z, Z.boss); if (b) { Z.bossAlive = true; b.angry = false; SND.boss(); banner(`${josa(b.d.name, '이가')} 나타났어요!`, 2.2); log(`<b>${josa(b.d.name, '이가')}</b> 나타났어요! 화살표를 따라가 보세요`, 'boss'); } else Z.bossTimer = 10; }
     }
-    $('htime').textContent = fmtTime(P.hunt);
+    $('htime').textContent = isAdmin() ? '무한' : fmtTime(P.hunt);
     $('htime').classList.toggle('low', P.hunt < 60000);
   }
   saveClock += dt;
@@ -1470,6 +1504,7 @@ function bindUI() {
     if (e.target.tagName === 'INPUT') return;
     const k = e.key.toLowerCase();
     if (k === '1') { drinkPotion(); e.preventDefault(); }
+    if (k === '2') { drinkHaste(); e.preventDefault(); }
     else if (k === 'i' || k === 'ㅑ') openWin('inv');
     else if (k === 'c' || k === 'ㅊ') openWin('char');
     else if (k === 'escape') { if (enchantPick) cancelEnchant(); else closeWin(); }
@@ -1477,6 +1512,21 @@ function bindUI() {
   addEventListener('pagehide', () => save(true));
   document.addEventListener('visibilitychange', () => { if (document.hidden) save(true); });
   $('b-pot').addEventListener('click', drinkPotion);
+  $('b-haste').addEventListener('click', drinkHaste);
+  $('w-guide').addEventListener('click', e => {
+    if (e.target.id === 'adm-open') { $('adm-row').classList.remove('hidden'); $('adm-code').value = ''; $('adm-msg').textContent = ''; $('adm-code').focus(); }
+    if (e.target.id === 'adm-off') { try { localStorage.removeItem('rpg-admin'); } catch (er) {} P.hunt = 0; log('관리자 모드를 껐어요', 'sys'); renderGuide(); }
+  });
+  const admGo = async () => {
+    const code = $('adm-code').value.trim(); if (!code) return;
+    $('adm-msg').textContent = '확인하는 중...';
+    let ok = false; try { ok = window.RPG_CLOUD && await RPG_CLOUD.admin(code); } catch (er) { ok = false; }
+    if (!ok) { $('adm-msg').textContent = '코드가 맞지 않아요'; return; }
+    try { localStorage.setItem('rpg-admin', '1'); } catch (er) {}
+    $('adm-row').classList.add('hidden'); log('관리자 모드: 포인트 없이 사냥할 수 있어요', 'sys'); SND.coin(); renderGuide();
+  };
+  $('adm-go').addEventListener('click', admGo);
+  $('adm-code').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') admGo(); });
   $('b-inv').addEventListener('click', () => openWin('inv'));
   $('b-char').addEventListener('click', () => openWin('char'));
   $('b-town').addEventListener('click', () => { if (!dead) goTown(); });
