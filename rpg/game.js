@@ -11,7 +11,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 
 /* ================= 그림 ================= */
 const IMG = {}, WHITE = {};
-const IMG_LIST = ['fence-h', 'fence-post', 'fence-corner', 'gate-front', 'gate-side', 'gate-side-l', 'fence-side', 'fence-lamp', 'p-idle', 'p-walk-0', 'p-walk-1', 'p-walk-2', 'p-walk-3', 'p-walk-4', 'p-walk-5', 'p-wind', 'p-swing', 'p-hurt', 'p-dead', 'p-win', 'npc-shop', 'npc-guide',
+const IMG_LIST = ['a-idle', 'a-walk1', 'a-walk2', 'a-wind', 'a-swing', 'a-hurt', 'a-dead', 'a-win', 'arrow', 'fence-h', 'fence-post', 'fence-corner', 'gate-front', 'gate-side', 'gate-side-l', 'fence-side', 'fence-lamp', 'p-idle', 'p-walk-0', 'p-walk-1', 'p-walk-2', 'p-walk-3', 'p-walk-4', 'p-walk-5', 'p-wind', 'p-swing', 'p-hurt', 'p-dead', 'p-win', 'npc-shop', 'npc-guide',
   ...Object.keys(MONS).flatMap(k => ['m-' + k + '-0', 'm-' + k + '-1']),
   ...Object.keys(WEAPONS).map(k => 'w-' + k), ...Object.keys(ARMORS).map(k => 'a-' + k),
   'i-potion', 'i-haste', 'i-wscroll', 'i-ascroll', 'i-coin', 'i-coins', 'i-box', ...Object.keys(PROPS)];
@@ -82,6 +82,7 @@ const SND = (() => {
     coin() { tone('square', 1320, 1320, .05, .12); tone('square', 1760, 1760, .08, .12, .05); },
     pick() { tone('triangle', 660, 990, .12, .3); },
     level() { [523, 659, 784, 1046].forEach((f, i) => tone('triangle', f, f, .22, .35, i * .09)); },
+    shoot() { tone('triangle', 520, 1400, .1, .2); noise(.12, .18, 'bandpass', 2500, 900, 2); },
     potion() { tone('sine', 400, 900, .25, .3); noise(.2, .15, 'bandpass', 1500, 3000, 3); },
     ok() { [784, 1046, 1318, 1568].forEach((f, i) => tone('sine', f, f, .4, .3, i * .06)); noise(.5, .15, 'highpass', 4000, 8000); },
     fail() { noise(.6, .8, 'highpass', 3000, 600); tone('sawtooth', 300, 60, .5, .35); [1800, 2400, 3100].forEach((f, i) => tone('triangle', f, f * .9, .08, .12, .05 + i * .07)); },
@@ -97,9 +98,9 @@ const SND = (() => {
 /* ================= 저장 ================= */
 const SAVE_KEY = 'rpg-save';
 let P = null;   // 저장되는 캐릭터 정보
-function newChar(str, dex, con) {
-  return { v: 1, lv: 1, exp: 0, hp: 30, str, dex, con, pts: 0, coins: 50, hunt: 0,
-    inv: [{ i: 'potion', n: 5 }], eq: { weapon: { g: 'w', k: 'sword1', en: 0 }, armor: { g: 'a', k: 'armor1', en: 0 } },
+function newChar(str, dex, con, cls) {
+  return { v: 1, cls: cls === 'bow' ? 'bow' : 'sword', lv: 1, exp: 0, hp: 30, str, dex, con, pts: 0, coins: 50, hunt: 0,
+    inv: [{ i: 'potion', n: 5 }], eq: { weapon: { g: 'w', k: cls === 'bow' ? 'bow1' : 'sword1', en: 0 }, armor: { g: 'a', k: 'armor1', en: 0 } },
     kills: 0, deaths: 0, t: Date.now() };
 }
 function loadSave() { try { const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); return d && d.v === 1 ? d : null; } catch (e) { return null; } }
@@ -118,6 +119,9 @@ function cloudCode() { try { return localStorage.getItem('rpg-save-code') || '';
 
 /* ================= 능력치 계산 ================= */
 const W_OF = () => P.eq.weapon ? WEAPONS[P.eq.weapon.k] : null;
+const isBow = () => !!P && P.cls === 'bow';
+const reach = () => { const w = W_OF(); return w && w.range || 1; };
+const HERO = () => isBow() ? '깨순이' : '깨비샘';
 function maxHP() { return 30 + (P.lv - 1) * 8 + (P.con - 10) * (P.lv + 2); }
 function playerAC() {
   let ac = 10;
@@ -356,7 +360,7 @@ function findFree(cx, cy, maxR = 8) {
 
 let curZone = null;
 function enterWorld() {
-  units = []; drops = []; fx = []; nums = []; chunkCache.clear(); curZone = null;
+  units = []; shots = []; drops = []; fx = []; nums = []; chunkCache.clear(); curZone = null;
   buildWorld();
   const [ex, ey] = findFree(...ZONE.town.spawn);
   player = addUnit({ kind: 'player', x: ex, y: ey, step: .36 });
@@ -690,7 +694,7 @@ function playerThink(dt) {
   if (tgt) {
     const want = held || auto || pending > 0;
     if (!want) { tgt = null; return; }
-    if (cheb(p.x, p.y, tgt.x, tgt.y) <= 1) {
+    if (cheb(p.x, p.y, tgt.x, tgt.y) <= reach()) {
       if (settle()) { faceTo(p, tgt); if (atkCD <= 0 && !atkAnim) startAttack(tgt); }
     } else if (planT <= 0 || !p.moving) { planT = .25; planGlide(p, tgt.x, tgt.y, true); }
     return;
@@ -710,8 +714,30 @@ function faceTo(u, t) { if (t.x !== u.x) u.face = t.x > u.x ? 1 : -1; }
 // 공격: 휘두르기 준비 → 때리는 순간 판정 → 마무리
 function startAttack(m) {
   const w = W_OF(); const spd = (w ? w.spd : .7) * (hasted() ? HASTE : 1);
-  atkCD = spd; atkAnim = { t: 0, hit: false, m, type: w ? w.type : 'sword', wind: Math.min(.09, spd * .25) };
+  atkCD = spd; atkAnim = { t: 0, hit: false, m, type: w ? w.type : 'sword', wind: w && w.type === 'bow' ? Math.min(.28, spd * .4) : Math.min(.09, spd * .25) };
   if (pending > 0) pending--;
+}
+// 화살: 활 시위를 놓으면 날아가서 닿을 때 맞아요
+let shots = [];
+function shoot(m) {
+  const x = player.px + player.face * 14, y = player.py - 24;
+  const tx = m.px, ty = m.py + CELL * .32 - m.d.h * .45;
+  shots.push({ m, x0: x, y0: y, tx, ty, t: 0, d: Math.max(.08, Math.hypot(tx - x, ty - y) / 900) });
+  SND.shoot();
+}
+function updateShots(dt) {
+  for (const s of shots) {
+    s.t += dt;
+    if (!s.m.dying && units.includes(s.m)) { s.tx = s.m.px; s.ty = s.m.py + CELL * .32 - s.m.d.h * .45; }
+    if (s.t >= s.d) { s.done = true; if (!s.m.dying && units.includes(s.m)) doHit(s.m, 'dagger'); }
+  }
+  shots = shots.filter(s => !s.done);
+}
+function drawShot(s) {
+  const k = Math.min(1, s.t / s.d), x = s.x0 + (s.tx - s.x0) * k, y = s.y0 + (s.ty - s.y0) * k - Math.sin(k * Math.PI) * 10;
+  const im = IMG['arrow']; if (!im) return;
+  const w = 46 * UK * 1.4, hh = w * im.height / im.width;
+  g.save(); g.translate(x, y); g.rotate(Math.atan2(s.ty - s.y0, s.tx - s.x0)); g.drawImage(im, -w / 2, -hh / 2, w, hh); g.restore();
 }
 function doHit(m, type) {
   const r = rollAttack(playerAttacker(), { ac: m.d.ac, lv: m.d.lv });
@@ -895,7 +921,7 @@ function useItem(ix) {
 }
 function equip(ix) {
   const it = P.inv[ix]; if (!it || !it.g) return;
-  if (it.g === 'w') { log('깨비샘은 자기 검만 쓸 수 있어요', 'warn'); return; }
+  if (it.g === 'w') { log(`${HERO()}는 자기 무기만 쓸 수 있어요`, 'warn'); return; }
   const slot = it.g === 'w' ? 'weapon' : ARMORS[it.k].slot;
   if (slot === 'shield' && P.eq.weapon && WEAPONS[P.eq.weapon.k].two) { log('방망이는 양손 무기라 방패를 들 수 없어요', 'warn'); return; }
   P.inv.splice(ix, 1);
@@ -1101,7 +1127,8 @@ function resize() {
 }
 const PSCALE = 92 / 300 * UK;   // 깨비샘 그림 크기
 // 프레임마다 몸 가운데 위치(그림 너비 비율): 검이 한쪽으로 뻗어도 몸이 흔들리지 않게
-const PANCHOR = { 'p-walk-0': .486, 'p-walk-1': .488, 'p-walk-2': .485, 'p-walk-3': .481, 'p-walk-4': .483, 'p-walk-5': .478, 'p-idle': .49, 'p-walk1': .534, 'p-walk2': .539, 'p-wind': .64, 'p-swing': .385, 'p-hurt': .515, 'p-dead': .5, 'p-win': .542 };
+const PANCHOR = { 'p-walk-0': .486, 'p-walk-1': .488, 'p-walk-2': .485, 'p-walk-3': .481, 'p-walk-4': .483, 'p-walk-5': .478, 'p-idle': .49, 'p-walk1': .534, 'p-walk2': .539, 'p-wind': .64, 'p-swing': .385, 'p-hurt': .515, 'p-dead': .5, 'p-win': .542,
+  'a-idle': .49, 'a-walk1': .485, 'a-walk2': .484, 'a-wind': .407, 'a-swing': .451, 'a-hurt': .506, 'a-dead': .442, 'a-win': .493 };
 function drawSprite(name, x, y, h, flip, opts = {}) {
   const im = IMG[name]; if (!im) return;
   const s = h / im.height * (opts.scale || 1), w = im.width * s, hh = im.height * s;
@@ -1117,7 +1144,16 @@ function shadow(x, y, r) { g.fillStyle = 'rgba(20,30,10,.28)'; g.beginPath(); g.
 
 // 걷기 6장: 한 걸음 주기 (걸은 거리에 맞춰 넘겨요)
 const WALK = ['p-walk-0', 'p-walk-1', 'p-walk-2', 'p-walk-3', 'p-walk-4', 'p-walk-5'];
+const AWALK = ['a-walk1', 'a-idle', 'a-walk2', 'a-idle'];
 function playerFrame() {
+  if (isBow()) {
+    if (dead) return 'a-dead';
+    if (hurtT > 0 && !atkAnim) return 'a-hurt';
+    if (atkAnim) return atkAnim.t < atkAnim.wind ? 'a-wind' : 'a-swing';
+    if (player.moving) return AWALK[Math.floor((player.dist || 0) / (CELL * .3)) % 4];
+    if (winT > 0) return 'a-win';
+    return 'a-idle';
+  }
   if (dead) return 'p-dead';
   if (hurtT > 0 && !atkAnim) return 'p-hurt';
   if (atkAnim) return atkAnim.t < atkAnim.wind ? 'p-wind' : 'p-swing';
@@ -1287,6 +1323,7 @@ function render() {
     else if (o.kind === 'mon') drawMon(o);
     else if (o.kind === 'npc') drawNpc(o);
   }
+  for (const s of shots) drawShot(s);
   for (const f of fx) drawFx(f);
   for (const n of nums) drawNum(n);
   // 드래그 중: 몬스터에서 커서까지 줄
@@ -1393,7 +1430,7 @@ function closeIn(dt) {
   const k = Math.min(1, dt * 10);
   for (const u of units) {
     let o = null;
-    if (u === player) { if (tgt && tgt.kind === 'mon' && !tgt.dying && !u.moving && cheb(u.x, u.y, tgt.x, tgt.y) <= 1) o = tgt; }
+    if (u === player) { if (tgt && tgt.kind === 'mon' && !tgt.dying && !u.moving && !isBow() && cheb(u.x, u.y, tgt.x, tgt.y) <= 1) o = tgt; }
     else if (u.kind === 'mon' && u.angry && !u.dying && !u.moving && !dead && cheb(u.x, u.y, player.x, player.y) <= 1) o = player;
     const gx = o ? (o.px - u.px) * .22 : 0, gy = o ? (o.py - u.py) * .22 : 0;
     u.ox = (u.ox || 0) + (gx - (u.ox || 0)) * k; u.oy = (u.oy || 0) + (gy - (u.oy || 0)) * k;
@@ -1421,7 +1458,8 @@ function update(dt) {
   atkCD -= dt; hurtT -= dt; winT -= dt;
   if (atkAnim) {
     atkAnim.t += dt;
-    if (!atkAnim.hit && atkAnim.t >= atkAnim.wind) { atkAnim.hit = true; const m = atkAnim.m; if (!m.dying && units.includes(m) && cheb(player.x, player.y, m.x, m.y) <= 1) doHit(m, atkAnim.type); }
+    if (!atkAnim.hit && atkAnim.t >= atkAnim.wind) { atkAnim.hit = true; const m = atkAnim.m; if (!m.dying && units.includes(m) && cheb(player.x, player.y, m.x, m.y) <= reach() + 1) { if (atkAnim.type === 'bow') shoot(m); else doHit(m, atkAnim.type); } }
+    if (atkAnim && atkAnim.type === 'bow' && atkAnim.t > atkAnim.wind + .22) atkAnim = null;
     if (atkAnim.t > atkAnim.wind + .16) atkAnim = null;
   }
   glideUpdate(player, dt);
@@ -1431,6 +1469,7 @@ function update(dt) {
   if (regenT >= 2 && !dead) { regenT = 0; const mh = maxHP(); if (P.hp < mh) { P.hp = Math.min(mh, P.hp + regenAmt() * (idleT > 3 && !atkAnim ? 3 : 1)); updateHUD(); } }
   if (atkAnim || player.moving) idleT = 0;
   // 효과
+  updateShots(dt);
   for (const f of fx) f.t += dt; fx = fx.filter(f => f.t < f.d);
   for (const n of nums) n.t += dt; nums = nums.filter(n => n.t < .9);
   for (const d of drops) d.t += dt; drops = drops.filter(d => d.t < d.life); autoLoot();
@@ -1469,7 +1508,7 @@ function update(dt) {
 let paused = false;
 
 /* ================= 시작 ================= */
-let createPts = 5, cStats = { str: 10, dex: 10, con: 10 };
+let createPts = 5, cStats = { str: 10, dex: 10, con: 10 }, cCls = 'sword';
 function renderCreate() {
   $('c-left').textContent = createPts;
   for (const k of ['str', 'dex', 'con']) $('c-' + k).textContent = cStats[k];
@@ -1478,9 +1517,10 @@ function renderCreate() {
 // 예전 저장: 다른 무기는 엽전으로 바꾸고, 낀 무기 강화 단계는 깨비샘의 검으로 옮겨요
 function migrateWeapons() {
   const w = P.eq.weapon;
-  if (!w || w.k !== 'sword1') P.eq.weapon = { g: 'w', k: 'sword1', en: w ? w.en : 0 };
+  const want = isBow() ? 'bow1' : 'sword1';
+  if (!w || w.k !== want) P.eq.weapon = { g: 'w', k: want, en: w ? w.en : 0 };
   let c = 0; P.inv = P.inv.filter(it => { if (it.g === 'w') { c += sellOf(it); return false; } return true; });
-  if (c) { P.coins += c; log(`이제 깨비샘은 자기 검만 써요. 가방의 다른 무기는 엽전 ${c}냥으로 바꿨어요`, 'sys'); }
+  if (c) { P.coins += c; log(`이제 ${HERO()}는 자기 무기만 써요. 가방의 다른 무기는 엽전 ${c}냥으로 바꿨어요`, 'sys'); }
 }
 function startGame() {
   migrateWeapons();
@@ -1595,7 +1635,8 @@ function bindUI() {
     SND.ui(); renderCreate();
   });
   $('c-back').addEventListener('click', () => { $('create').classList.add('hidden'); $('title').classList.remove('hidden'); });
-  $('c-go').addEventListener('click', () => { P = newChar(cStats.str, cStats.dex, cStats.con); P.hp = maxHP(); save(); SND.unlock(); startGame(); });
+  $('c-cls').addEventListener('click', e => { const b = e.target.closest('.cls'); if (!b) return; cCls = b.dataset.cls; document.querySelectorAll('.cls').forEach(x => x.classList.toggle('on', x === b)); SND.ui(); });
+  $('c-go').addEventListener('click', () => { P = newChar(cStats.str, cStats.dex, cStats.con, cCls); P.hp = maxHP(); save(); SND.unlock(); startGame(); });
   bindCode();
 }
 

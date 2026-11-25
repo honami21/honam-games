@@ -49,6 +49,11 @@
   .panel { background:var(--cream); border:4px solid var(--line); border-radius:26px; padding:20px 22px; width:min(460px,100%); text-align:center; }
   .panel h2 { font-weight:normal; font-size:28px; color:var(--coral-d); margin-bottom:10px; }
   #create { justify-content:center; }
+  #c-cls { display:flex; gap:12px; justify-content:center; margin:4px 0 10px; }
+  .cls { flex:1; max-width:170px; display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 6px; border:3px solid var(--ink2); border-radius:14px; background:#fff; cursor:pointer; font:inherit; opacity:.6; }
+  .cls.on { opacity:1; border-color:var(--coral-d); background:#fff3e6; }
+  .cls img { height:84px; } .cls b { font-size:20px; font-weight:normal; } .cls em { font-style:normal; font-size:13px; color:var(--ink2); word-break:keep-all; }
+  .h2s { font-size:20px; margin-top:4px; }
   .cst { display:grid; grid-template-columns:70px 44px 60px 44px 1fr; align-items:center; gap:8px; margin:8px 0; font-size:20px; text-align:left; }
   .cst b { font-family:Fredoka,sans-serif; font-size:26px; text-align:center; }
   .cst em { font-style:normal; font-size:14px; color:var(--ink2); word-break:keep-all; }
@@ -309,7 +314,9 @@
 
 <div class="screen hidden" id="create">
   <div class="panel">
-    <h2>능력치 정하기</h2>
+    <h2>캐릭터 고르기</h2>
+    <div id="c-cls"><button class="cls on" data-cls="sword" type="button"><img src="img/p-idle.png" alt=""><b>깨비샘</b><em>검 · 가까이서 세게</em></button><button class="cls" data-cls="bow" type="button"><img src="img/a-idle.png" alt=""><b>깨순이</b><em>활 · 멀리서 쏘기</em></button></div>
+    <h2 class="h2s">능력치 정하기</h2>
     <div class="cst"><span>힘</span><button class="rb" data-c="str:-" type="button">-</button><b id="c-str">10</b><button class="rb" data-c="str:+" type="button">+</button><em>더 세게 때려요</em></div>
     <div class="cst"><span>민첩</span><button class="rb" data-c="dex:-" type="button">-</button><b id="c-dex">10</b><button class="rb" data-c="dex:+" type="button">+</button><em>잘 맞히고 치명타</em></div>
     <div class="cst"><span>체력</span><button class="rb" data-c="con:-" type="button">-</button><b id="c-con">10</b><button class="rb" data-c="con:+" type="button">+</button><em>HP가 많아요</em></div>
