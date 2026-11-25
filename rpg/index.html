@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<link rel="apple-touch-icon" href="/icons/icon-180.png"/>
+<link rel="icon" type="image/png" href="/icons/icon-192.png"/>
+<link rel="manifest" href="/manifest.webmanifest"/>
+<meta name="apple-mobile-web-app-title" content="깨비샘과 쉬는 시간"/>
+<meta name="theme-color" content="#1d2a1a"/>
+<title>깨비샘의 도깨비 대모험 - 깨비샘과 쉬는 시간</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Jua&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#fff6ec; --cream2:#f1e2d2; --edge:#ecc9b0; --ink:#2c2950; --ink2:#6f6585; --line:#3a2b33;
+    --coral:#ee5a6f; --coral-d:#c8455a; --sun:#ffd25e; --mint:#7ccf74; --sky:#9fd4ff; --night:#1d2a1a;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html, body { width:100%; height:100%; overflow:hidden; background:var(--night); font-family:'Jua','Apple SD Gothic Neo','Malgun Gothic',sans-serif; color:var(--ink); }
+  body { -webkit-user-select:none; user-select:none; touch-action:none; }
+  .hidden { display:none !important; }
+  #cv { position:fixed; inset:0; width:100%; height:100%; display:block; }
+  .dim { color:var(--ink2); }
+  .bad { color:var(--coral-d); }
+
+  /* 상단 바 (쉬는 시간 / 전체화면) */
+  .topbar{position:fixed;top:12px;left:12px;right:12px;z-index:60;display:flex;justify-content:space-between;pointer-events:none}
+  .topbar a,.topbar button{pointer-events:auto;display:inline-flex;align-items:center;gap:6px;border:2px solid var(--edge);border-radius:20px;padding:6px 13px;
+    font-family:'Jua',sans-serif;font-size:16px;color:var(--ink);background:rgba(255,248,238,.94);text-decoration:none;cursor:pointer}
+  .topbar svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+  body.playing .topbar{opacity:.6}
+  body.playing .topbar:hover{opacity:1}
+
+  /* 시작 화면 */
+  .screen { position:fixed; inset:0; z-index:40; display:flex; flex-direction:column; align-items:center; justify-content:space-between;
+    padding:max(70px,8vh) 16px max(30px,7vh); background:linear-gradient(rgba(10,6,30,.05), rgba(10,6,30,0) 45%, rgba(10,6,30,.5)), url(img/start-bg.jpg?v=1) center/cover no-repeat #2a1d40; }
+  #logo { width:min(900px,92vw); max-height:30vh; object-fit:contain; filter:drop-shadow(0 6px 12px rgba(20,10,40,.6)); animation:float 3.2s ease-in-out infinite; }
+  @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }
+  .tbtns { display:flex; flex-direction:column; align-items:center; gap:12px; }
+  .game-btn { padding:11px 26px; font-size:clamp(17px,2.4vw,22px); border-radius:40px; border:3px solid var(--line); color:var(--ink); background:var(--coral);
+    cursor:pointer; min-width:160px; font-family:'Jua',sans-serif; transition:transform .08s; }
+  .game-btn:active { transform:scale(.97); }
+  .game-btn.sun { background:var(--sun); } .game-btn.white { background:#fff; } .game-btn.sky { background:var(--sky); }
+  .game-btn.small { padding:7px 16px; font-size:16px; min-width:0; }
+  .game-btn:disabled { opacity:.45; cursor:not-allowed; }
+  #t-new.big, #t-continue { font-size:clamp(24px,3.6vw,34px); padding:14px 50px; }
+
+  .panel { background:var(--cream); border:4px solid var(--line); border-radius:26px; padding:20px 22px; width:min(460px,100%); text-align:center; }
+  .panel h2 { font-weight:normal; font-size:28px; color:var(--coral-d); margin-bottom:10px; }
+  #create { justify-content:center; }
+  .cst { display:grid; grid-template-columns:70px 44px 60px 44px 1fr; align-items:center; gap:8px; margin:8px 0; font-size:20px; text-align:left; }
+  .cst b { font-family:Fredoka,sans-serif; font-size:26px; text-align:center; }
+  .cst em { font-style:normal; font-size:14px; color:var(--ink2); word-break:keep-all; }
+  .rb { width:44px; height:44px; border-radius:50%; border:3px solid var(--line); background:var(--sun); font-family:Fredoka,sans-serif; font-size:24px; line-height:1; cursor:pointer; color:var(--ink); }
+  .cleft { margin:10px 0 4px; font-size:18px; } .cleft b { font-family:Fredoka,sans-serif; color:var(--coral-d); font-size:24px; }
+  .btns { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:14px; }
+
+  #codebox { position:fixed; inset:0; z-index:70; display:flex; align-items:center; justify-content:center; background:rgba(10,8,30,.6); padding:16px; }
+  #code-show { font-family:Fredoka,sans-serif; font-size:40px; letter-spacing:6px; margin:6px 0 12px; color:var(--ink); }
+  #code-input { width:100%; font-family:Fredoka,sans-serif; font-size:24px; text-align:center; letter-spacing:5px; padding:8px; border:3px solid var(--line); border-radius:14px; text-transform:uppercase; }
+  #code-msg { min-height:22px; font-size:15px; margin-top:8px; word-break:keep-all; }
+  .small { font-size:14px; }
+
+  /* 게임 중 화면 정보 */
+  #hud { position:fixed; inset:0; pointer-events:none; z-index:20; }
+  #topinfo { position:absolute; top:12px; left:50%; transform:translateX(-50%); display:flex; gap:8px; align-items:center; }
+  .chip { background:rgba(20,14,40,.68); color:#fff; border-radius:16px; padding:5px 14px 3px; font-size:18px; white-space:nowrap; }
+  #htimeC { font-family:Fredoka,sans-serif; }
+  #htime.low { color:#ff8f8f; }
+  body.in-town #htimeC { display:none; }
+
+  #bar { position:absolute; left:50%; bottom:10px; transform:translateX(-50%); width:min(980px,calc(100% - 20px)); pointer-events:auto;
+    display:flex; align-items:center; gap:10px; background:rgba(255,246,236,.95); border:3px solid var(--line); border-radius:22px; padding:8px 12px; transition:box-shadow .15s, background .15s; }
+  #bar.drop { background:#fff2b8; box-shadow:0 0 0 4px #ffcf3e, 0 0 24px #ffcf3e; }
+  #bar.drop::after { content:'놓으면 자동 공격'; position:absolute; left:50%; top:-36px; transform:translateX(-50%); background:#ffcf3e; border:3px solid var(--line); border-radius:999px; padding:3px 14px 1px; font-size:16px; white-space:nowrap; }
+  #lvbox { width:54px; height:54px; flex:none; border-radius:50%; background:var(--sun); border:3px solid var(--line); display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1; }
+  #lvbox small { font-size:11px; } #lv { font-family:Fredoka,sans-serif; font-size:22px; }
+  .bars { flex:1; display:flex; flex-direction:column; gap:5px; min-width:120px; }
+  .gauge { position:relative; height:20px; border-radius:10px; background:#3a2b33; overflow:hidden; border:2px solid var(--line); }
+  .gauge.xp { height:14px; }
+  .gauge i { position:absolute; inset:0 auto 0 0; display:block; transition:width .15s; }
+  #hpfill { background:linear-gradient(#ff7b7b,#e0414f); } #xpfill { background:linear-gradient(#ffe27a,#f0b21c); }
+  .gauge span { position:absolute; inset:0; text-align:center; color:#fff; font-family:Fredoka,sans-serif; font-size:14px; line-height:16px; text-shadow:0 1px 2px #000; }
+  .gauge.xp span { font-size:11px; line-height:11px; }
+  .stat { display:flex; flex-direction:column; align-items:center; font-size:12px; color:var(--ink2); line-height:1.1; min-width:44px; }
+  .stat b { font-family:Fredoka,sans-serif; font-size:19px; color:var(--ink); font-weight:600; }
+  .stat img { width:22px; height:22px; }
+  .bbtn { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; min-width:56px; height:54px; border:3px solid var(--line); border-radius:16px; background:#fff;
+    font-family:'Jua',sans-serif; font-size:13px; color:var(--ink); cursor:pointer; padding:2px 6px; }
+  .bbtn:hover { background:#fff3d6; }
+  .bbtn img { width:28px; height:28px; object-fit:contain; }
+  .bbtn svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+  .bbtn kbd { position:absolute; left:4px; top:2px; font-family:Fredoka,sans-serif; font-size:11px; color:var(--ink2); }
+  .bbtn .n { position:absolute; right:4px; bottom:2px; font-family:Fredoka,sans-serif; font-size:13px; }
+  .bbtn.alert { background:var(--sun); animation:pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 50% { transform:scale(1.07); } }
+  #b-snd.off svg .w { display:none; }
+  #b-snd.off { opacity:.55; }
+  #b-town { background:var(--sky); }
+
+  #log { position:absolute; left:14px; bottom:96px; width:min(420px,60vw); display:flex; flex-direction:column; gap:2px; }
+  #log .ln { font-size:15px; color:#fff; text-shadow:0 1px 2px #000, 0 0 6px rgba(0,0,0,.6); transition:opacity 1.2s; word-break:keep-all; }
+  #log .ln.old { opacity:0; }
+  #log b { font-weight:normal; color:#ffe27a; }
+  #log .warn { color:#ffb3b3; } #log .item b { color:#9fffb4; } #log .boss { color:#ffcf5a; } #log .sys { color:#cfe6ff; }
+  #log .dim { color:#d8d2e8; }
+
+  #banner { position:fixed; left:0; right:0; top:28%; text-align:center; z-index:25; pointer-events:none; font-size:clamp(28px,5vw,48px); color:#fff;
+    text-shadow:0 4px 0 #3a2b33, 0 0 20px rgba(255,200,80,.6); opacity:0; transform:scale(.9); transition:opacity .25s, transform .25s; }
+  #banner.show { opacity:1; transform:scale(1); }
+  #banner small { display:block; font-size:.42em; color:#ffe9b0; margin-top:8px; text-shadow:0 2px 0 #3a2b33; }
+  #hurtv { position:fixed; inset:0; pointer-events:none; z-index:19; box-shadow:inset 0 0 120px rgba(220,30,40,.65); opacity:0; }
+  #hurtv.on { animation:hurt .35s ease-out; }
+  @keyframes hurt { 0% { opacity:1; } 100% { opacity:0; } }
+  #fade { position:fixed; inset:0; background:#0c0a18; opacity:0; pointer-events:none; z-index:50; transition:opacity .25s; }
+  #fade.on { opacity:1; }
+
+  /* 창 */
+  .win { position:fixed; z-index:30; right:16px; top:60px; width:min(380px,calc(100% - 32px)); max-height:calc(100% - 170px); overflow:auto; pointer-events:auto;
+    background:var(--cream); border:3px solid var(--line); border-radius:20px; padding:14px 14px 16px; box-shadow:0 12px 28px rgba(10,8,30,.45); }
+  .win h3 { font-weight:normal; font-size:22px; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+  .win h3 .sp { flex:1; }
+  .win .x { width:34px; height:34px; border-radius:50%; border:2px solid var(--line); background:#fff; font-size:20px; line-height:1; cursor:pointer; font-family:Fredoka,sans-serif; color:var(--ink); }
+  .coins { display:inline-flex; align-items:center; gap:4px; font-family:Fredoka,sans-serif; font-size:17px; }
+  .coins img { width:22px; height:22px; }
+  #eq-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-bottom:10px; }
+  .eqc { display:flex; flex-direction:column; align-items:center; gap:2px; font-size:12px; color:var(--ink2); }
+  #inv-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:5px; }
+  .slot { position:relative; aspect-ratio:1; width:100%; border-radius:12px; background:#f3e4d3; border:2px solid #d9bfa6; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .slot.empty { cursor:default; }
+  .slot:not(.empty):hover { border-color:var(--coral); background:#fff; }
+  .slot img { width:82%; height:82%; object-fit:contain; pointer-events:none; }
+  .slot .en { position:absolute; left:2px; top:1px; font-style:normal; font-family:Fredoka,sans-serif; font-size:13px; color:#fff; background:#5a3fc0; border-radius:6px; padding:0 4px; line-height:1.35; }
+  .slot.hot { box-shadow:0 0 0 2px #ff6ad5, 0 0 10px #ff6ad5; }
+  .slot .cnt { position:absolute; right:3px; bottom:1px; font-style:normal; font-family:Fredoka,sans-serif; font-size:13px; color:var(--ink); }
+  #inv-hint { min-height:22px; text-align:center; color:var(--coral-d); font-size:16px; margin:4px 0; }
+  body.picking .slot:not(.empty) { animation:wob .6s ease-in-out infinite; }
+  @keyframes wob { 50% { transform:translateY(-2px); } }
+  #tip { position:fixed; z-index:80; pointer-events:none; background:#2c2950; color:#fff; border-radius:12px; padding:8px 12px; font-size:15px; line-height:1.45; max-width:240px; word-break:keep-all; }
+  #tip b { font-weight:normal; color:#ffe27a; font-size:16px; } #tip .dim { color:#c9c2e0; font-size:13px; }
+
+  .lvline { font-size:22px; margin-bottom:8px; } .lvline span { font-size:14px; color:var(--ink2); margin-left:8px; }
+  .st { display:grid; grid-template-columns:48px 40px 40px 1fr; align-items:center; gap:6px; padding:6px 0; border-top:2px dashed #e6d3bf; font-size:18px; }
+  .st b { font-family:Fredoka,sans-serif; font-size:22px; } .st em { font-style:normal; font-size:14px; color:var(--ink2); }
+  .st .plus { width:34px; height:34px; border-radius:50%; border:2px solid var(--line); background:var(--sun); font-family:Fredoka,sans-serif; font-size:20px; cursor:pointer; color:var(--ink); }
+  .st:not(:has(.plus)) { grid-template-columns:48px 40px 1fr; }
+  .ptsline { color:var(--coral-d); margin:6px 0; }
+  .sum { display:flex; gap:8px; margin:10px 0 8px; }
+  .sum div { flex:1; background:#fff; border:2px solid #e2cbb4; border-radius:14px; padding:6px 4px; text-align:center; }
+  .sum span { display:block; font-size:13px; color:var(--ink2); } .sum b { font-family:Fredoka,sans-serif; font-size:20px; }
+
+  .tabs { display:flex; gap:6px; margin-bottom:10px; }
+  .tab { flex:1; padding:7px; border-radius:14px; border:2px solid var(--line); background:#fff; font-family:'Jua',sans-serif; font-size:17px; cursor:pointer; color:var(--ink); }
+  .tab.on { background:var(--sun); }
+  #shop-list { display:flex; flex-direction:column; gap:6px; }
+  .shop-it { display:flex; align-items:center; gap:10px; padding:5px 10px; border-radius:14px; border:2px solid #e2cbb4; background:#fff; font-family:'Jua',sans-serif; font-size:16px; color:var(--ink); cursor:pointer; text-align:left; }
+  .shop-it:hover:not(:disabled) { border-color:var(--coral); }
+  .shop-it:disabled { opacity:.45; cursor:not-allowed; }
+  .shop-it img { width:36px; height:36px; object-fit:contain; }
+  .shop-it span { flex:1; } .shop-it b { font-family:Fredoka,sans-serif; font-weight:600; color:#b07a10; }
+  #guide-time { margin-bottom:10px; font-size:16px; word-break:keep-all; } #guide-time b { font-family:Fredoka,sans-serif; font-size:20px; color:var(--coral-d); }
+  #guide-list { display:flex; flex-direction:column; gap:7px; }
+  .reg { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-radius:16px; border:3px solid var(--line); background:var(--mint); font-family:'Jua',sans-serif; font-size:19px; color:var(--ink); cursor:pointer; }
+  .reg b { font-weight:normal; } .reg span { font-size:14px; }
+  .reg.lock { background:#e6dccf; border-color:#b9a99a; color:#8d8275; cursor:not-allowed; }
+
+  /* 강화 연출 */
+  #ench { position:fixed; inset:0; z-index:90; display:none; align-items:center; justify-content:center; flex-direction:column; gap:14px; background:rgba(10,6,24,.72); pointer-events:auto; }
+  #ench.on { display:flex; }
+  #ench .glow { position:relative; width:180px; height:180px; display:flex; align-items:center; justify-content:center; }
+  #ench .glow::before { content:''; position:absolute; inset:0; border-radius:50%; background:radial-gradient(circle, rgba(255,240,170,.85), rgba(255,200,80,0) 68%); opacity:.3; transform:scale(.6); }
+  #ench-img { width:140px; height:140px; object-fit:contain; position:relative; }
+  #ench.risky #ench-img { animation:shiver .09s linear infinite; }
+  #ench.risky .glow::before { animation:gather 1.5s ease-in forwards; }
+  #ench.safe .glow::before { opacity:.7; transform:scale(1); }
+  @keyframes shiver { 0% { transform:translate(-2px,1px) rotate(-2deg); } 50% { transform:translate(2px,-1px) rotate(2deg); } 100% { transform:translate(-2px,1px) rotate(-2deg); } }
+  @keyframes gather { from { opacity:.2; transform:scale(1.6); } to { opacity:1; transform:scale(.7); } }
+  #ench.ok #ench-img { animation:pop .4s ease-out; filter:drop-shadow(0 0 18px #fff3a0) brightness(1.25); }
+  #ench.ok .glow::before { animation:burst .6s ease-out forwards; }
+  @keyframes pop { 0% { transform:scale(1.5); } 100% { transform:scale(1); } }
+  @keyframes burst { from { opacity:1; transform:scale(.6); } to { opacity:0; transform:scale(2.4); } }
+  #ench.fail #ench-img { animation:shatter .7s ease-in forwards; }
+  #ench.fail .glow::before { background:radial-gradient(circle, rgba(255,90,90,.8), rgba(255,60,60,0) 68%); animation:burst .5s ease-out forwards; }
+  @keyframes shatter { 0% { transform:scale(1.1); filter:brightness(2); } 30% { transform:scale(1.15) rotate(6deg); } 100% { transform:scale(.4) rotate(-30deg) translateY(80px); opacity:0; filter:grayscale(1); } }
+  #ench-txt { color:#fff; font-size:26px; text-align:center; text-shadow:0 3px 0 #2c2950; }
+  #ench-txt small { display:block; font-size:16px; color:#ffd9a0; margin-top:4px; }
+  #ench-txt .good { font-weight:normal; color:#ffe46b; font-size:34px; } #ench-txt .bad { font-weight:normal; color:#ff8080; font-size:34px; }
+
+  @media (max-width:760px), (max-height:520px) {
+    .topbar a .t, .topbar button .t { display:none; }
+    .bbtn { min-width:44px; height:46px; font-size:0; } .bbtn kbd { display:none; }
+    #lvbox { width:44px; height:44px; } .stat { min-width:34px; } .stat.hide-s { display:none; }
+    #log { bottom:84px; } #log .ln { font-size:13px; }
+    .win { top:52px; right:8px; width:calc(100% - 16px); max-height:calc(100% - 140px); }
+  }
+</style>
+<script src="../points.js"></script>
+</head>
+<body>
+<div class="topbar">
+  <a href="../" id="home-link" title="깨비샘과 쉬는 시간으로"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">쉬는 시간</span></a>
+  <button id="fs-btn" type="button" title="전체화면"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="t" id="fs-txt">전체화면</span></button>
+</div>
+<script>
+(function(){
+  var b=document.getElementById('fs-btn'),t=document.getElementById('fs-txt'),d=document,el=d.documentElement;
+  var can=d.fullscreenEnabled||d.webkitFullscreenEnabled;
+  var framed=false;try{framed=window.top!==window;}catch(e){framed=true;}
+  if(!can){
+    if(framed){t.textContent='새 창으로';b.title='새 창으로 크게 열기';b.addEventListener('click',function(){window.open(location.href,'_blank');});}
+    else b.style.display='none';
+    return;
+  }
+  var cur=function(){return d.fullscreenElement||d.webkitFullscreenElement;};
+  b.addEventListener('click',function(){
+    if(cur()){(d.exitFullscreen||d.webkitExitFullscreen).call(d);}
+    else{var pr=(el.requestFullscreen||el.webkitRequestFullscreen).call(el);if(pr&&pr.catch)pr.catch(function(){});}
+    b.blur();
+  });
+  var upd=function(){t.textContent=cur()?'나가기':'전체화면';};
+  d.addEventListener('fullscreenchange',upd);d.addEventListener('webkitfullscreenchange',upd);
+})();
+</script>
+
+<canvas id="cv"></canvas>
+<div id="hurtv"></div>
+
+<div id="hud" class="hidden">
+  <div id="topinfo"><span class="chip" id="mapname">도깨비 마을</span><span class="chip" id="htimeC">사냥 <span id="htime">10:00</span></span></div>
+  <div id="log"></div>
+  <div id="bar">
+    <div id="lvbox"><small>Lv</small><span id="lv">1</span></div>
+    <div class="bars">
+      <div class="gauge"><i id="hpfill"></i><span id="hptxt">30 / 30</span></div>
+      <div class="gauge xp"><i id="xpfill"></i><span id="xptxt">0%</span></div>
+    </div>
+    <div class="stat"><span>AC</span><b id="acv">10</b></div>
+    <div class="stat hide-s"><img src="img/i-coin.png" alt=""><b id="coins">0</b></div>
+    <button class="bbtn" id="b-pot" type="button" title="빨간 물약 (1)"><kbd>1</kbd><img src="img/i-potion.png" alt=""><span class="n" id="potn">0</span></button>
+    <button class="bbtn" id="b-inv" type="button" title="가방 (I)"><kbd>I</kbd><svg viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>가방</button>
+    <button class="bbtn" id="b-char" type="button" title="능력치 (C)"><kbd>C</kbd><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>능력치</button>
+    <button class="bbtn hidden" id="b-town" type="button" title="마을로 돌아가기"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M6 10v10h12V10"/><path d="M10 20v-6h4v6"/></svg>마을로</button>
+    <button class="bbtn" id="b-snd" type="button" title="효과음 켜기/끄기"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="w" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>소리</button>
+  </div>
+</div>
+<div id="banner"></div>
+<div id="fade"></div>
+<div id="tip" class="hidden"></div>
+
+<div class="win hidden" id="w-inv">
+  <h3>가방 <span class="sp"></span><span class="coins"><img src="img/i-coin.png" alt=""><span id="inv-coins">0</span></span><button class="x" type="button">×</button></h3>
+  <div id="eq-grid"></div>
+  <div id="inv-hint"></div>
+  <div id="inv-grid"></div>
+</div>
+<div class="win hidden" id="w-char">
+  <h3>능력치 <span class="sp"></span><button class="x" type="button">×</button></h3>
+  <div id="char-body"></div>
+</div>
+<div class="win hidden" id="w-shop">
+  <h3>상점 할머니 <span class="sp"></span><span class="coins"><img src="img/i-coin.png" alt=""><span id="shop-coins">0</span></span><button class="x" type="button">×</button></h3>
+  <div class="tabs"><button class="tab on" data-tab="buy" type="button">사기</button><button class="tab" data-tab="sell" type="button">팔기</button></div>
+  <div id="shop-list"></div>
+</div>
+<div class="win hidden" id="w-guide">
+  <h3>길 안내 부엉이 도사 <span class="sp"></span><button class="x" type="button">×</button></h3>
+  <div id="guide-time"></div>
+  <div id="guide-list"></div>
+</div>
+
+<div id="ench"><div class="glow"><img id="ench-img" alt=""></div><div id="ench-txt"></div></div>
+
+<div class="screen" id="title">
+  <img id="logo" src="img/logo.png?v=1" alt="깨비샘의 도깨비 대모험">
+  <div class="tbtns">
+    <button class="game-btn sun hidden" id="t-continue" type="button">이어하기</button>
+    <button class="game-btn" id="t-new" type="button">시작하기</button>
+    <button class="game-btn white small" id="t-code" type="button">이어하기 코드</button>
+  </div>
+</div>
+
+<div class="screen hidden" id="create">
+  <div class="panel">
+    <h2>능력치 정하기</h2>
+    <div class="cst"><span>힘</span><button class="rb" data-c="str:-" type="button">-</button><b id="c-str">10</b><button class="rb" data-c="str:+" type="button">+</button><em>더 세게 때려요</em></div>
+    <div class="cst"><span>민첩</span><button class="rb" data-c="dex:-" type="button">-</button><b id="c-dex">10</b><button class="rb" data-c="dex:+" type="button">+</button><em>잘 맞히고 치명타</em></div>
+    <div class="cst"><span>체력</span><button class="rb" data-c="con:-" type="button">-</button><b id="c-con">10</b><button class="rb" data-c="con:+" type="button">+</button><em>HP가 많아요</em></div>
+    <div class="cleft">남은 점수 <b id="c-left">5</b></div>
+    <div class="btns"><button class="game-btn white small" id="c-back" type="button">뒤로</button><button class="game-btn sun" id="c-go" type="button" disabled>모험 시작</button></div>
+  </div>
+</div>
+
+<div id="codebox" class="hidden">
+  <div class="panel">
+    <h2>이어하기 코드</h2>
+    <div class="dim small">이 기기의 코드</div>
+    <div id="code-show">------</div>
+    <input id="code-input" maxlength="8" placeholder="다른 기기의 코드" autocomplete="off">
+    <div id="code-msg"></div>
+    <div class="btns"><button class="game-btn white small" id="code-close" type="button">닫기</button><button class="game-btn sun small" id="code-load" type="button">불러오기</button></div>
+  </div>
+</div>
+
+<script src="data.js?v=1"></script>
+<script src="game.js?v=1"></script>
+<script type="module">
+/* 이어하기 코드 저장 (Firebase Firestore rpg-saves/코드) */
+const firebaseConfig = {
+  apiKey:            "AIzaSyDw2EvTh7PVBrPnkii2F1kPGcqbzcIo41s",
+  authDomain:        "honamsaem-class-games.firebaseapp.com",
+  projectId:         "honamsaem-class-games",
+  storageBucket:     "honamsaem-class-games.firebasestorage.app",
+  messagingSenderId: "251087835017",
+  appId:             "1:251087835017:web:af1ce84cadb772bdca1b58"
+};
+let fb = null;
+async function getFb() {
+  if (fb) return fb;
+  const app = await import("https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js");
+  const fs = await import("https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js");
+  fb = { fs, db: fs.getFirestore(app.initializeApp(firebaseConfig)) };
+  return fb;
+}
+window.RPG_CLOUD = {
+  async get(code) { const { fs, db } = await getFb(); const d = await fs.getDoc(fs.doc(db, 'rpg-saves', code)); return d.exists() ? d.data() : null; },
+  async put(code, data) { const { fs, db } = await getFb(); await fs.setDoc(fs.doc(db, 'rpg-saves', code), data); },
+};
+</script>
+<script src="../keynav.js"></script>
+<script src="../credit.js"></script>
+</body>
+</html>
