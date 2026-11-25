@@ -593,7 +593,8 @@ function unitAt(wx, wy, kinds) {
   for (const u of units) {
     if (!kinds.includes(u.kind) || u.dying) continue;
     const h = u.kind === 'mon' ? u.d.h : u.h || 88 * UK, w = Math.max(h * .8, 30);
-    if (wx > u.px - w / 2 && wx < u.px + w / 2 && wy > u.py + CELL * .3 - Math.max(h, 36) && wy < u.py + CELL * .35) if (!best || u.py > best.py) best = u;
+    const ux = u.px + (u.ox || 0), uy = u.py + (u.oy || 0);
+    if (wx > ux - w / 2 && wx < ux + w / 2 && wy > uy + CELL * .3 - Math.max(h, 36) && wy < uy + CELL * .35) if (!best || u.py > best.py) best = u;
   }
   return best;
 }
@@ -679,7 +680,7 @@ function startAttack(m) {
 }
 function doHit(m, type) {
   const r = rollAttack(playerAttacker(), { ac: m.d.ac, lv: m.d.lv });
-  const mx = m.px, my = m.py - m.d.h * .45;
+  const mx = m.px + (m.ox || 0), my = m.py + (m.oy || 0) - m.d.h * .45;
   const dir = Math.sign(m.px - player.px) || player.face;
   if (r.miss) { addNum(mx, my - 10, '빗나감', 'miss'); SND.miss(); fx.push({ k: 'whiff', x: mx - dir * 10, y: my, dir, t: 0, d: .18 }); return; }
   if (r.block) { addNum(mx, my - 10, '막음', 'block'); SND.block(); fx.push({ k: 'spark', x: mx - dir * 14, y: my, t: 0, d: .2, n: 5, col: '#bfe6ff' }); m.flash = .05; freeze = Math.max(freeze, .03); return; }
@@ -1069,7 +1070,7 @@ function playerFrame() {
   return 'p-idle';
 }
 function drawPlayer() {
-  const x = player.px, y = player.py + CELL * .32;
+  const x = player.px + (player.ox || 0), y = player.py + (player.oy || 0) + CELL * .32;
   shadow(x, y, 22 * UK);
   const fr = playerFrame(), im = IMG[fr]; if (!im) return;
   const s = PSCALE, w = im.width * s, h = im.height * s, flip = player.face < 0;
@@ -1088,7 +1089,7 @@ function drawPlayer() {
   g.restore();
 }
 function drawMon(m) {
-  const d = m.d; let x = m.px + m.kx, y = m.py + CELL * .32 + m.ky;
+  const d = m.d; let x = m.px + m.kx + (m.ox || 0), y = m.py + CELL * .32 + m.ky + (m.oy || 0);
   if (m.lunge > 0) x += m.face * 5 * Math.sin((1 - m.lunge / .2) * Math.PI);
   shadow(x, y, d.h * .3);
   const fr = 'm-' + m.type + '-' + ((m.moving ? m.walk : Math.floor(performance.now() / 600 + m.id)) % 2);
@@ -1213,7 +1214,7 @@ function render() {
   for (const d of drops) if (Math.abs(d.x * CELL - cam.x) < VW / zoom) drawDrop(d);
   // 공격 대상 표시
   if (tgt && tgt.kind === 'mon' && !tgt.dying) {
-    const x = tgt.px, y = tgt.py + CELL * .32, r = tgt.d.h * .34 + 6;
+    const x = tgt.px + (tgt.ox || 0), y = tgt.py + (tgt.oy || 0) + CELL * .32, r = tgt.d.h * .34 + 6;
     g.strokeStyle = auto ? '#ffcf3e' : '#ff6b5b'; g.lineWidth = 3; g.setLineDash([8, 6]); g.lineDashOffset = -performance.now() / 40;
     g.beginPath(); g.ellipse(x, y, r, r * .4, 0, 0, Math.PI * 2); g.stroke(); g.setLineDash([]);
   }
@@ -1329,8 +1330,20 @@ function frame(now) {
   render();
   if (M && P) drawMini(rdt);
 }
+// 싸울 때 서로 조금 다가붙어 보이게 (칸은 그대로, 그림만 가까이)
+function closeIn(dt) {
+  const k = Math.min(1, dt * 10);
+  for (const u of units) {
+    let o = null;
+    if (u === player) { if (tgt && tgt.kind === 'mon' && !tgt.dying && !u.moving && cheb(u.x, u.y, tgt.x, tgt.y) <= 1) o = tgt; }
+    else if (u.kind === 'mon' && u.angry && !u.dying && !u.moving && !dead && cheb(u.x, u.y, player.x, player.y) <= 1) o = player;
+    const gx = o ? (o.px - u.px) * .22 : 0, gy = o ? (o.py - u.py) * .22 : 0;
+    u.ox = (u.ox || 0) + (gx - (u.ox || 0)) * k; u.oy = (u.oy || 0) + (gy - (u.oy || 0)) * k;
+  }
+}
 function update(dt) {
   updateMusic(dt);
+  if (player) closeIn(dt);
   // 이동 보간
   for (const u of units) {
     if (u.mv) {
