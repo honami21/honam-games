@@ -322,12 +322,12 @@ function enterWorld() {
   cam.x = player.px; cam.y = player.py;
   resetControl(); setZone(zoneAt(player.x, player.y), true);
 }
-function resetControl() { tgt = null; moveGoal = null; held = false; auto = false; pending = 0; player.path = null; }
+function resetControl() { tgt = null; moveGoal = null; moveGoalPt = null; held = false; auto = false; pending = 0; player.path = null; player.glide = null; player.moving = false; }
 // 지역(리스폰 지점)으로 순간 이동
 function teleport(id) {
   const z = ZONE[id], spot = findFree(...z.spawn); if (!spot) return;
   M.occ[idx(player.x, player.y)] = 0;
-  player.x = spot[0]; player.y = spot[1]; player.mv = null;
+  player.x = spot[0]; player.y = spot[1]; player.mv = null; player.glide = null;
   player.px = player.x * CELL + CELL / 2; player.py = player.y * CELL + CELL / 2;
   M.occ[idx(player.x, player.y)] = player.id;
   cam.x = player.px; cam.y = player.py;
@@ -507,17 +507,68 @@ function walkTo(tx, ty) {
   p.path = null;   // 길이 막혔으면 다음에 다시 찾아요
   return stepToward(p, tx, ty, false);
 }
+// 360도 걷기: 칸 길찾기 결과를 곧은 선으로 펴서 어느 방향으로든 미끄러지듯 걸어요 (칸 막기는 그대로)
+const PSPEED = CELL / .26;
+function losClear(ax, ay, bx, by) {   // 픽셀 좌표 두 점 사이를 몸 폭만큼 지나갈 수 있는지
+  const L = Math.hypot(bx - ax, by - ay); if (L < 1) return true;
+  const n = Math.ceil(L / (CELL * .34)), ox = -(by - ay) / L, oy = (bx - ax) / L;
+  for (let i = 1; i <= n; i++) {
+    const t = i / n;
+    for (const o of [-.26, 0, .26]) {
+      const cx = Math.floor((ax + (bx - ax) * t + ox * o * CELL) / CELL), cy = Math.floor((ay + (by - ay) * t + oy * o * CELL) / CELL);
+      if (blocked(cx, cy)) return false;
+      const oc = M.occ[idx(cx, cy)]; if (oc && oc !== player.id && cheb(cx, cy, player.x, player.y) <= 3) return false;
+    }
+  }
+  return true;
+}
+function planGlide(tx, ty, adj, goalPt) {
+  const p = player, end = goalPt || [tx * CELL + CELL / 2, ty * CELL + CELL / 2];
+  if (!adj && losClear(p.px, p.py, end[0], end[1])) { p.glide = [end]; return true; }
+  const path = findPath(p.x, p.y, tx, ty, adj, p.id, 40000);
+  if (!path || !path.length) { p.glide = null; return false; }
+  const pts = path.map(([x, y]) => [x * CELL + CELL / 2, y * CELL + CELL / 2]);
+  if (!adj && goalPt) { const [lx, ly] = path[path.length - 1]; if (lx === tx && ly === ty) pts[pts.length - 1] = goalPt; }
+  const out = []; let cx = p.px, cy = p.py, i = 0;
+  while (i < pts.length) {
+    let j = Math.min(pts.length - 1, i + 30);
+    while (j > i && !losClear(cx, cy, pts[j][0], pts[j][1])) j--;
+    out.push(pts[j]); [cx, cy] = pts[j]; i = j + 1;
+  }
+  p.glide = out; return true;
+}
+function glideUpdate(dt) {
+  const p = player;
+  if (!p.glide || !p.glide.length || dead) { p.moving = false; return; }
+  let budget = PSPEED * dt;
+  while (budget > 0 && p.glide && p.glide.length) {
+    const [tx, ty] = p.glide[0], dx = tx - p.px, dy = ty - p.py, d = Math.hypot(dx, dy);
+    if (d < .5) { p.glide.shift(); continue; }
+    const st = Math.min(d, budget), nx = p.px + dx / d * st, ny = p.py + dy / d * st;
+    const cx = Math.floor(nx / CELL), cy = Math.floor(ny / CELL);
+    if (cx !== p.x || cy !== p.y) {
+      const oc = inMap(cx, cy) ? M.occ[idx(cx, cy)] : 1;
+      if (blocked(cx, cy) || (oc && oc !== p.id) || !gateOK(cx, cy)) { p.glide = null; planT = .2; break; }
+      M.occ[idx(p.x, p.y)] = 0; M.occ[idx(cx, cy)] = p.id; p.x = cx; p.y = cy; pickupAt(cx, cy);
+    }
+    if (Math.abs(dx) > 3) p.face = dx > 0 ? 1 : -1;
+    p.px = nx; p.py = ny; p.dist = (p.dist || 0) + st; budget -= st;
+    if (st >= d) p.glide.shift();
+  }
+  p.moving = !!(p.glide && p.glide.length);
+  p.walk = Math.floor((p.dist || 0) / (CELL * .55));
+}
 // 마을 문: 사냥 시간이 없으면 1포인트를 써야 나갈 수 있어요
 let gateAsked = 0;
 function gateOK(nx, ny) {
   if (!zoneAt(player.x, player.y).town || zoneAt(nx, ny).town || P.hunt > 0) return true;
   if (performance.now() - gateAsked > 800) { gateAsked = performance.now(); openWin('gate'); }
-  moveGoal = null; player.path = null;
+  moveGoal = null; moveGoalPt = null; player.path = null; player.glide = null;
   return false;
 }
 
 /* ================= 플레이어 조작 ================= */
-let tgt = null, moveGoal = null, held = false, auto = false, pending = 0, pointer = { x: 0, y: 0, down: false, onMon: null, drag: false };
+let tgt = null, moveGoal = null, moveGoalPt = null, goalKey = '', planT = 0, held = false, auto = false, pending = 0, pointer = { x: 0, y: 0, down: false, onMon: null, drag: false };
 let atkCD = 0, atkAnim = null, hurtT = 0, winT = 0, idleT = 0, regenT = 0, dead = false;
 
 function screenToWorld(sx, sy) { return [(sx - VW / 2) / zoom + cam.x, (sy - VH / 2) / zoom + cam.y]; }
@@ -547,7 +598,7 @@ function onDown(e) {
 }
 function setGoal(wx, wy) {
   const cx = clamp(Math.floor(wx / CELL), 0, M.w - 1), cy = clamp(Math.floor(wy / CELL), 0, M.h - 1);
-  moveGoal = [cx, cy];
+  moveGoal = [cx, cy]; moveGoalPt = blocked(cx, cy) ? null : [wx, wy];
 }
 function onMove(e) {
   pointer.x = e.clientX; pointer.y = e.clientY;
@@ -573,28 +624,34 @@ function talk(npc) {
   if (npc.role === 'shop') openWin('shop'); else openWin('guide');
 }
 
-function playerThink() {
+function playerThink(dt) {
   if (dead) return;
+  const p = player;
+  planT -= dt;
   if (tgt && (tgt.dead || tgt.dying || !units.includes(tgt))) { tgt = null; auto = false; held = false; pending = 0; }
+  const settle = () => { const c = [p.x * CELL + CELL / 2, p.y * CELL + CELL / 2]; if (Math.hypot(c[0] - p.px, c[1] - p.py) > 1) { p.glide = [c]; return false; } p.glide = null; return true; };
   if (tgt && tgt.kind === 'npc') {
-    if (cheb(player.x, player.y, tgt.x, tgt.y) <= 1) { faceTo(player, tgt); const n = tgt; talk(n); return; }
-    if (!player.mv) stepToward(player, tgt.x, tgt.y, true);
+    if (cheb(p.x, p.y, tgt.x, tgt.y) <= 1) { if (settle()) { faceTo(p, tgt); talk(tgt); } return; }
+    if (planT <= 0 || !p.moving) { planT = .3; planGlide(tgt.x, tgt.y, true); }
     return;
   }
   if (tgt) {
     const want = held || auto || pending > 0;
     if (!want) { tgt = null; return; }
-    if (cheb(player.x, player.y, tgt.x, tgt.y) <= 1) {
-      if (!player.mv) { faceTo(player, tgt); if (atkCD <= 0 && !atkAnim) startAttack(tgt); }
-    } else if (!player.mv) {
-      if (!stepToward(player, tgt.x, tgt.y, true)) { /* 막혀 있으면 잠깐 기다려요 */ }
-    }
+    if (cheb(p.x, p.y, tgt.x, tgt.y) <= 1) {
+      if (settle()) { faceTo(p, tgt); if (atkCD <= 0 && !atkAnim) startAttack(tgt); }
+    } else if (planT <= 0 || !p.moving) { planT = .25; planGlide(tgt.x, tgt.y, true); }
     return;
   }
-  if (moveGoal && !player.mv) {
-    if (player.x === moveGoal[0] && player.y === moveGoal[1]) { if (!pointer.down) moveGoal = null; return; }
-    if (!walkTo(moveGoal[0], moveGoal[1])) { if (!pointer.down) moveGoal = null; }
-  }
+  if (moveGoal) {
+    const key = moveGoal + '|' + moveGoalPt;
+    if (key !== goalKey && planT <= 0) { goalKey = key; planT = .1; if (!planGlide(moveGoal[0], moveGoal[1], false, moveGoalPt) && !pointer.down) moveGoal = null; return; }
+    if (!p.moving && key === goalKey) {
+      const end = moveGoalPt || [moveGoal[0] * CELL + CELL / 2, moveGoal[1] * CELL + CELL / 2];
+      if (Math.hypot(end[0] - p.px, end[1] - p.py) < 3 || (p.x === moveGoal[0] && p.y === moveGoal[1] && !moveGoalPt)) { if (!pointer.down) moveGoal = null; return; }
+      if (planT <= 0) { planT = .3; if (!planGlide(moveGoal[0], moveGoal[1], false, moveGoalPt) && !pointer.down) moveGoal = null; }
+    }
+  } else if (p.moving && !atkAnim) { /* 목표가 없어지면 그 자리에 멈춰요 */ p.glide = null; p.moving = false; }
 }
 function faceTo(u, t) { if (t.x !== u.x) u.face = t.x > u.x ? 1 : -1; }
 
@@ -991,7 +1048,7 @@ function playerFrame() {
   if (dead) return 'p-dead';
   if (hurtT > 0 && !atkAnim) return 'p-hurt';
   if (atkAnim) return atkAnim.t < atkAnim.wind ? 'p-wind' : 'p-swing';
-  if (player.mv) return player.walk % 2 ? 'p-walk1' : 'p-walk2';
+  if (player.moving) return player.walk % 2 ? 'p-walk1' : 'p-walk2';
   if (winT > 0) return 'p-win';
   return 'p-idle';
 }
@@ -1245,7 +1302,7 @@ function miniClick(e) {
   let cx = Math.floor((e.clientX - r.left) / r.width * M.w), cy = Math.floor((e.clientY - r.top) / r.height * M.h);
   cx = clamp(cx, 1, M.w - 2); cy = clamp(cy, 1, M.h - 2);
   if (blocked(cx, cy)) { let best = null; for (let rr = 1; rr < 6 && !best; rr++) for (let y = cy - rr; y <= cy + rr; y++) for (let x = cx - rr; x <= cx + rr; x++) if (!best && !blocked(x, y)) best = [x, y]; if (!best) return; [cx, cy] = best; }
-  tgt = null; auto = false; held = false; pending = 0; moveGoal = [cx, cy]; player.path = null; SND.ui();
+  tgt = null; auto = false; held = false; pending = 0; moveGoal = [cx, cy]; moveGoalPt = null; player.path = null; SND.ui();
   e.stopPropagation();
 }
 
@@ -1290,11 +1347,12 @@ function update(dt) {
     if (!atkAnim.hit && atkAnim.t >= atkAnim.wind) { atkAnim.hit = true; const m = atkAnim.m; if (!m.dying && units.includes(m) && cheb(player.x, player.y, m.x, m.y) <= 1) doHit(m, atkAnim.type); }
     if (atkAnim.t > atkAnim.wind + .16) atkAnim = null;
   }
-  playerThink();
+  glideUpdate(dt);
+  playerThink(dt);
   // 회복: 가만히 있으면 더 빨리
   idleT += dt; regenT += dt;
   if (regenT >= 2 && !dead) { regenT = 0; const mh = maxHP(); if (P.hp < mh) { P.hp = Math.min(mh, P.hp + regenAmt() * (idleT > 3 && !atkAnim ? 3 : 1)); updateHUD(); } }
-  if (atkAnim || player.mv) idleT = 0;
+  if (atkAnim || player.moving) idleT = 0;
   // 효과
   for (const f of fx) f.t += dt; fx = fx.filter(f => f.t < f.d);
   for (const n of nums) n.t += dt; nums = nums.filter(n => n.t < .9);
