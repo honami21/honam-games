@@ -1549,9 +1549,9 @@ function renderSelect() {
   const all = loadAll(), out = [];
   for (let i = 0; i < MAX_CHARS; i++) {
     const c = all.chars[i];
-    if (c) { const bow = c.cls === 'bow'; out.push(`<div class="slotw"><button class="slot" data-slot="${i}" type="button"><img src="img/${bow ? 'a' : 'p'}-idle.png" alt=""><b>${bow ? '깨순이' : '깨비샘'}</b><span>Lv ${c.lv}</span></button><button class="sdel" data-del="${i}" type="button">지우기</button></div>`); }
-    else if (i === all.chars.length) out.push(`<div class="slotw"><button class="slot empty" data-new type="button"><i>+</i><b>새 캐릭터</b></button></div>`);
-    else out.push(`<div class="slotw"><div class="slot none"></div></div>`);
+    if (c) { const bow = c.cls === 'bow'; out.push(`<div class="cslotw"><button class="cslot" data-slot="${i}" type="button"><img src="img/${bow ? 'a' : 'p'}-idle.png" alt=""><b>${bow ? '깨순이' : '깨비샘'}</b><span>Lv ${c.lv}</span></button><button class="sdel" data-del="${i}" type="button">지우기</button></div>`); }
+    else if (i === all.chars.length) out.push(`<div class="cslotw"><button class="cslot empty" data-new type="button"><i>+</i><b>새 캐릭터</b></button></div>`);
+    else out.push(`<div class="cslotw"><div class="cslot none"></div></div>`);
   }
   $('sel-list').innerHTML = out.join('');
 }
@@ -1679,7 +1679,7 @@ function bindUI() {
       if (window.RPG_CLOUD && cloudCode()) window.RPG_CLOUD.put(cloudCode(), { s: JSON.stringify(all), t: all.t }).catch(() => {});
       SND.ui(); renderSelect(); return;
     }
-    const b = e.target.closest('.slot'); if (!b) return;
+    const b = e.target.closest('.cslot'); if (!b) return;
     if (b.dataset.new != null) { $('select').classList.add('hidden'); $('create').classList.remove('hidden'); createPts = 5; cStats = { str: 10, dex: 10, con: 10 }; renderCreate(); return; }
     const all = loadAll(); slot = +b.dataset.slot; P = all.chars[slot]; if (!P) return;
     if (P.hp <= 0) P.hp = maxHP(); startGame();
