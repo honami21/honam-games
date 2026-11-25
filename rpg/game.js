@@ -656,7 +656,8 @@ function onDown(e) {
   const npc = unitAt(wx, wy, ['npc']);
   if (npc) { tgt = npc; moveGoal = null; held = false; auto = false; pending = 0; pointer.onMon = null; return; }
   const m = unitAt(wx, wy, ['mon']);
-  if (m) { tgt = m; moveGoal = null; held = true; auto = false; pending = 1; pointer.onMon = m; pointer.drag = true; return; }
+  // 몬스터를 한 번 누르면 쓰러질 때까지 자동으로 공격해요 (컴퓨터·휴대폰 같음)
+  if (m) { tgt = m; moveGoal = null; held = false; auto = true; pending = 0; pointer.onMon = m; return; }
   // 땅: 그쪽으로 걸어가기 (누르고 있으면 계속 따라감)
   tgt = null; auto = false; held = false; pending = 0; pointer.onMon = null;
   setGoal(wx, wy);
