@@ -1043,11 +1043,13 @@ function drawSprite(name, x, y, h, flip, opts = {}) {
 }
 function shadow(x, y, r) { g.fillStyle = 'rgba(20,30,10,.28)'; g.beginPath(); g.ellipse(x, y, r, r * .38, 0, 0, Math.PI * 2); g.fill(); }
 
+// 걷기 4박자: 왼발 → 모으기 → 오른발 → 모으기 (그림 2장 + 서 있는 그림으로)
+const WALK4 = ['p-walk1', 'p-idle', 'p-walk2', 'p-idle'];
 function playerFrame() {
   if (dead) return 'p-dead';
   if (hurtT > 0 && !atkAnim) return 'p-hurt';
   if (atkAnim) return atkAnim.t < atkAnim.wind ? 'p-wind' : 'p-swing';
-  if (player.moving) return player.walk % 2 ? 'p-walk1' : 'p-walk2';
+  if (player.moving) return WALK4[Math.floor((player.dist || 0) / (CELL * .36)) % 4];
   if (winT > 0) return 'p-win';
   return 'p-idle';
 }
@@ -1058,6 +1060,11 @@ function drawPlayer() {
   const s = PSCALE, w = im.width * s, h = im.height * s, flip = player.face < 0;
   const ax = (PANCHOR[fr] || .5) * w, it = P.eq.weapon;
   g.save(); g.translate(x, y); if (flip) g.scale(-1, 1);
+  if (player.moving && !atkAnim && !dead) {   // 걸을 때 통통 튀고 살짝 앞으로 기울어요
+    const ph = (player.dist || 0) / (CELL * .72) * Math.PI;
+    g.translate(0, -Math.abs(Math.sin(ph)) * 5); g.rotate(.05);
+    const sq = 1 - Math.abs(Math.cos(ph)) * .035; g.scale(2 - sq, sq);
+  }
   if (it && it.en >= 7 && !dead) { g.shadowColor = it.en >= 9 ? '#ff6ad5' : '#7fd8ff'; g.shadowBlur = 8 + (it.en - 7) * 4; }   // 높게 강화한 검은 빛나요
   g.drawImage(im, -ax, -h, w, h);
   g.shadowBlur = 0;
