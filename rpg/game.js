@@ -103,16 +103,25 @@ function newChar(str, dex, con, cls) {
     inv: [{ i: 'potion', n: 5 }], eq: { weapon: { g: 'w', k: cls === 'bow' ? 'bow1' : 'sword1', en: 0 }, armor: { g: 'a', k: 'armor1', en: 0 } },
     kills: 0, deaths: 0, t: Date.now() };
 }
-function loadSave() { try { const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); return d && d.v === 1 ? d : null; } catch (e) { return null; } }
+// 저장: 캐릭터 여러 명 { v: 2, chars: [캐릭터...], t } (예전 한 명 저장 v1도 읽어요)
+const MAX_CHARS = 4;
+let slot = 0;
+function normAll(d) {
+  if (d && d.v === 1) return { v: 2, chars: [d], t: d.t || 0 };
+  if (d && d.v === 2 && Array.isArray(d.chars)) return d;
+  return { v: 2, chars: [], t: 0 };
+}
+function loadAll() { try { return normAll(JSON.parse(localStorage.getItem(SAVE_KEY) || 'null')); } catch (e) { return normAll(null); } }
 let saveT = 0, cloudAt = 0;
 function save(now) {
   if (!P) return; P.t = Date.now();
-  const s = JSON.stringify(P);
+  const all = loadAll(); all.chars[slot] = P; all.t = P.t;
+  const s = JSON.stringify(all);
   try { localStorage.setItem(SAVE_KEY, s); } catch (e) {}
   // 인터넷 저장은 아껴서: 마을로 올 때·창을 닫을 때(now)나 2분에 한 번만
   if (window.RPG_CLOUD && cloudCode() && (now || Date.now() - cloudAt > 120000)) {
     cloudAt = Date.now(); clearTimeout(saveT);
-    saveT = setTimeout(() => window.RPG_CLOUD.put(cloudCode(), { s: JSON.stringify(P), t: P.t }).catch(e => console.warn('저장 올리기 실패', e)), 300);
+    saveT = setTimeout(() => window.RPG_CLOUD.put(cloudCode(), { s, t: all.t }).catch(e => console.warn('저장 올리기 실패', e)), 300);
   }
 }
 function cloudCode() { try { return localStorage.getItem('rpg-save-code') || ''; } catch (e) { return ''; } }
@@ -1016,7 +1025,7 @@ function openWin(w) {
   if (winOpen === w) { closeWin(); return; }
   closeWin(true);
   winOpen = w; $('w-' + w).classList.remove('hidden'); SND.ui();
-  if (w === 'inv') renderInv(); if (w === 'char') renderChar(); if (w === 'shop') renderShop(); if (w === 'guide') renderGuide(); if (w === 'gate') renderGate();
+  if (w === 'inv') renderInv(); if (w === 'char') renderChar(); if (w === 'shop') { closeBuy(); renderShop(); } if (w === 'guide') renderGuide(); if (w === 'gate') renderGate();
   document.body.classList.add('win-open');
 }
 function closeWin(quiet) { if (!winOpen) return; $('w-' + winOpen).classList.add('hidden'); winOpen = null; document.body.classList.remove('win-open'); cancelEnchant(); hideTip(); if (!quiet) SND.ui(); }
@@ -1071,7 +1080,33 @@ function renderShop() {
     $('shop-list').innerHTML = list.length ? list.map(([it, i]) => `<button class="shop-it" data-sell="${i}"><img src="img/${gearImg(it)}.png" alt=""><span>${esc(itemName(it))}</span><b>${sellOf(it)}${it.n > 1 ? ' /개' : ''}</b></button>`).join('') : '<p class="dim">팔 물건이 없어요</p>';
   }
 }
-let sellArm = -1;
+let sellArm = -1, buyIx = -1, buyN = 1;
+function buyMax(it) {
+  const byCoin = Math.floor(P.coins / priceOf(it));
+  const free = INV_MAX - P.inv.length;
+  const room = it.i ? (P.inv.some(x => x.i === it.i) || free > 0 ? 999 : 0) : free;
+  return Math.max(0, Math.min(byCoin, room, 99));
+}
+function openBuy(i) { buyIx = i; buyN = 1; $('buyq').classList.remove('hidden'); renderBuy(); }
+function closeBuy() { buyIx = -1; $('buyq').classList.add('hidden'); }
+function renderBuy() {
+  const it = SHOP_LIST[buyIx]; if (!it) return closeBuy();
+  const mx = buyMax(it); buyN = clamp(buyN, mx ? 1 : 0, mx);
+  const name = it.i ? ITEMS[it.i].name : (it.g === 'w' ? WEAPONS : ARMORS)[it.k].name;
+  $('bq-img').src = `img/${gearImg(it)}.png`; $('bq-name').textContent = name;
+  $('bq-n').textContent = buyN; $('bq-sum').textContent = (buyN * priceOf(it)).toLocaleString();
+  $('bq-ok').disabled = buyN < 1; $('bq-msg').textContent = mx ? `최대 ${mx}개` : (P.coins < priceOf(it) ? '엽전이 모자라요' : '가방이 가득 찼어요');
+}
+function doBuy() {
+  const it = SHOP_LIST[buyIx]; if (!it || buyN < 1) return;
+  let got = 0;
+  if (it.i) { if (giveItem({ i: it.i, n: buyN })) got = buyN; }
+  else for (let k = 0; k < buyN; k++) { if (!giveItem({ g: it.g, k: it.k, en: 0 })) break; got++; }
+  if (!got) { log('가방이 가득 찼어요', 'warn'); return; }
+  P.coins -= got * priceOf(it); SND.coin();
+  log(`<b>${esc(it.i ? ITEMS[it.i].name : (it.g === 'w' ? WEAPONS : ARMORS)[it.k].name)}</b> ${got}개를 샀어요`, 'item');
+  closeBuy(); dirty = true; renderShop(); updateHUD();
+}
 function renderGuide() {
   const k = window.KPOINT ? KPOINT.info() : null;
   const left = P.hunt;
@@ -1509,6 +1544,17 @@ let paused = false;
 
 /* ================= 시작 ================= */
 let createPts = 5, cStats = { str: 10, dex: 10, con: 10 }, cCls = 'sword';
+function openSelect() { $('select').classList.remove('hidden'); renderSelect(); }
+function renderSelect() {
+  const all = loadAll(), out = [];
+  for (let i = 0; i < MAX_CHARS; i++) {
+    const c = all.chars[i];
+    if (c) { const bow = c.cls === 'bow'; out.push(`<div class="slotw"><button class="slot" data-slot="${i}" type="button"><img src="img/${bow ? 'a' : 'p'}-idle.png" alt=""><b>${bow ? '깨순이' : '깨비샘'}</b><span>Lv ${c.lv}</span></button><button class="sdel" data-del="${i}" type="button">지우기</button></div>`); }
+    else if (i === all.chars.length) out.push(`<div class="slotw"><button class="slot empty" data-new type="button"><i>+</i><b>새 캐릭터</b></button></div>`);
+    else out.push(`<div class="slotw"><div class="slot none"></div></div>`);
+  }
+  $('sel-list').innerHTML = out.join('');
+}
 function renderCreate() {
   $('c-left').textContent = createPts;
   for (const k of ['str', 'dex', 'con']) $('c-' + k).textContent = cStats[k];
@@ -1524,7 +1570,7 @@ function migrateWeapons() {
 }
 function startGame() {
   migrateWeapons();
-  $('title').classList.add('hidden'); $('create').classList.add('hidden');
+  $('title').classList.add('hidden'); $('create').classList.add('hidden'); $('select').classList.add('hidden');
   document.body.classList.add('playing');
   $('hud').classList.remove('hidden');
   enterWorld();
@@ -1552,7 +1598,12 @@ function bindUI() {
   addEventListener('pagehide', () => save(true));
   document.addEventListener('visibilitychange', () => { if (document.hidden) save(true); });
   $('b-pot').addEventListener('click', drinkPotion);
+  $('buyq').addEventListener('click', e => {
+    const b = e.target.closest('[data-q]'); if (b) { const q = b.dataset.q; buyN = q === 'max' ? 999 : buyN + (+q); SND.ui(); renderBuy(); return; }
+    if (e.target.id === 'bq-ok') doBuy(); if (e.target.id === 'bq-no') closeBuy();
+  });
   $('b-haste').addEventListener('click', drinkHaste);
+  $('b-switch').addEventListener('click', () => { save(true); $('b-switch').disabled = true; setTimeout(() => location.reload(), 700); });
   $('w-guide').addEventListener('click', e => {
     if (e.target.id === 'adm-open') { $('adm-row').classList.remove('hidden'); $('adm-code').value = ''; $('adm-msg').textContent = ''; $('adm-code').focus(); }
     if (e.target.id === 'adm-off') { try { localStorage.removeItem('rpg-admin'); } catch (er) {} P.hunt = 0; log('관리자 모드를 껐어요', 'sys'); renderGuide(); }
@@ -1602,10 +1653,7 @@ function bindUI() {
   $('shop-list').addEventListener('click', e => {
     const b = e.target.closest('.shop-it'); if (!b) return;
     if (b.dataset.buy != null) {
-      const it = SHOP_LIST[+b.dataset.buy], p = priceOf(it);
-      if (P.coins < p) return;
-      if (!giveItem(it.i ? { i: it.i, n: 1 } : { g: it.g, k: it.k, en: 0 })) { log('가방이 가득 찼어요', 'warn'); return; }
-      P.coins -= p; SND.coin(); log(`<b>${josa(esc(it.i ? ITEMS[it.i].name : (it.g === 'w' ? WEAPONS : ARMORS)[it.k].name), '을를')}</b> 샀어요`, 'item');
+      openBuy(+b.dataset.buy); return;
     } else {
       const i = +b.dataset.sell, it = P.inv[i]; if (!it) return;
       if (it.g && it.en >= 1 && sellArm !== i) { sellArm = i; b.querySelector('b').textContent = '한 번 더'; return; }
@@ -1618,15 +1666,24 @@ function bindUI() {
   // 길 안내
   $('guide-list').addEventListener('click', e => { const b = e.target.closest('.reg'); if (b && !b.disabled) goRegion(b.dataset.reg); });
   // 시작 화면
-  const saved = loadSave();
-  $('t-continue').classList.toggle('hidden', !saved);
-  $('t-new').textContent = saved ? '새로 시작' : '시작하기';
-  let newArm = false;
-  $('t-new').addEventListener('click', () => {
-    if (loadSave() && !newArm) { newArm = true; $('t-new').textContent = '한 번 더 누르면 처음부터'; return; }
-    $('title').classList.add('hidden'); $('create').classList.remove('hidden'); createPts = 5; cStats = { str: 10, dex: 10, con: 10 }; renderCreate();
+  $('t-new').addEventListener('click', () => { SND.unlock(); $('title').classList.add('hidden'); openSelect(); });
+  $('s-back').addEventListener('click', () => { $('select').classList.add('hidden'); $('title').classList.remove('hidden'); });
+  let delArm = -1;
+  $('sel-list').addEventListener('click', e => {
+    const del = e.target.closest('[data-del]');
+    if (del) {
+      const i = +del.dataset.del;
+      if (delArm !== i) { delArm = i; del.textContent = '한 번 더 누르면 지워요'; return; }
+      delArm = -1; const all = loadAll(); all.chars.splice(i, 1); all.t = Date.now();
+      try { localStorage.setItem(SAVE_KEY, JSON.stringify(all)); } catch (er) {}
+      if (window.RPG_CLOUD && cloudCode()) window.RPG_CLOUD.put(cloudCode(), { s: JSON.stringify(all), t: all.t }).catch(() => {});
+      SND.ui(); renderSelect(); return;
+    }
+    const b = e.target.closest('.slot'); if (!b) return;
+    if (b.dataset.new != null) { $('select').classList.add('hidden'); $('create').classList.remove('hidden'); createPts = 5; cStats = { str: 10, dex: 10, con: 10 }; renderCreate(); return; }
+    const all = loadAll(); slot = +b.dataset.slot; P = all.chars[slot]; if (!P) return;
+    if (P.hp <= 0) P.hp = maxHP(); startGame();
   });
-  $('t-continue').addEventListener('click', () => { P = loadSave(); if (!P) return; if (P.hp <= 0) P.hp = maxHP(); SND.unlock(); startGame(); });
   $('create').addEventListener('click', e => {
     const b = e.target.closest('[data-c]'); if (!b) return;
     const [k, d] = b.dataset.c.split(':');
@@ -1634,9 +1691,9 @@ function bindUI() {
     if (d === '-' && cStats[k] > 10) { cStats[k]--; createPts++; }
     SND.ui(); renderCreate();
   });
-  $('c-back').addEventListener('click', () => { $('create').classList.add('hidden'); $('title').classList.remove('hidden'); });
+  $('c-back').addEventListener('click', () => { $('create').classList.add('hidden'); openSelect(); });
   $('c-cls').addEventListener('click', e => { const b = e.target.closest('.cls'); if (!b) return; cCls = b.dataset.cls; document.querySelectorAll('.cls').forEach(x => x.classList.toggle('on', x === b)); SND.ui(); });
-  $('c-go').addEventListener('click', () => { P = newChar(cStats.str, cStats.dex, cStats.con, cCls); P.hp = maxHP(); save(); SND.unlock(); startGame(); });
+  $('c-go').addEventListener('click', () => { const all = loadAll(); if (all.chars.length >= MAX_CHARS) return; slot = all.chars.length; P = newChar(cStats.str, cStats.dex, cStats.con, cCls); P.hp = maxHP(); save(true); SND.unlock(); startGame(); });
   bindCode();
 }
 
@@ -1650,8 +1707,8 @@ function bindCode() {
     $('codebox').classList.remove('hidden'); msg(''); $('code-input').value = ''; arm = null; $('code-load').textContent = '불러오기';
     let c = cloudCode();
     if (c) { $('code-show').textContent = fmt(c); return; }
-    const local = loadSave();
-    if (!local) { $('code-show').textContent = '------'; msg('캐릭터를 만들면 코드가 생겨요'); return; }
+    const local = loadAll();
+    if (!local.chars.length) { $('code-show').textContent = '------'; msg('캐릭터를 만들면 코드가 생겨요'); return; }
     $('code-show').textContent = '만드는 중...';
     try {
       for (let i = 0; i < 5 && !c; i++) { let t = ''; for (let j = 0; j < 6; j++) t += CODE_ABC[1 + Math.floor(Math.random() * (CODE_ABC.length - 1))]; if (!(await window.RPG_CLOUD.get(t))) c = t; }
@@ -1670,18 +1727,18 @@ function bindCode() {
     let d = null; msg('찾는 중...');
     try { d = await window.RPG_CLOUD.get(t); } catch (e) { msg('불러오지 못했어요. 인터넷 연결을 확인해 주세요.', true); return; }
     let data = null; try { data = d && JSON.parse(d.s); } catch (e) {}
-    if (!data || data.v !== 1) { msg('코드가 맞지 않아요', true); return; }
-    if (arm !== t) { arm = t; $('code-load').textContent = '한 번 더 누르면 불러와요'; msg(`Lv ${data.lv} 캐릭터예요. 이 기기의 캐릭터가 바뀌어요.`); return; }
+    const dall = data && normAll(data);
+    if (!dall || !dall.chars.length) { msg('코드가 맞지 않아요', true); return; }
+    if (arm !== t) { arm = t; $('code-load').textContent = '한 번 더 누르면 불러와요'; msg(`캐릭터 ${dall.chars.length}명 (${dall.chars.map(c => 'Lv ' + c.lv).join(', ')})이에요. 이 기기의 캐릭터가 바뀌어요.`); return; }
     try { localStorage.setItem(SAVE_KEY, d.s); localStorage.setItem('rpg-save-code', t); } catch (e) {}
     msg('불러왔어요!'); $('code-show').textContent = fmt(t);
-    $('t-continue').classList.remove('hidden'); $('t-new').textContent = '새로 시작';
   });
 }
 async function pullCloud() {   // 다른 기기에서 더 나중에 저장한 게 있으면 받아 와요
   const c = cloudCode(); if (!c || !window.RPG_CLOUD) return;
   try {
-    const d = await window.RPG_CLOUD.get(c); const local = loadSave();
-    if (d && d.s && (!local || (+d.t || 0) > (local.t || 0))) { localStorage.setItem(SAVE_KEY, d.s); $('t-continue').classList.remove('hidden'); $('t-new').textContent = '새로 시작'; }
+    const d = await window.RPG_CLOUD.get(c); const local = loadAll();
+    if (d && d.s && (!local.chars.length || (+d.t || 0) > (local.t || 0))) { localStorage.setItem(SAVE_KEY, d.s); if (!$('select').classList.contains('hidden')) renderSelect(); }
   } catch (e) { console.warn('저장 받아 오기 실패', e); }
 }
 

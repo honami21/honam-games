@@ -48,7 +48,8 @@
 
   .panel { background:var(--cream); border:4px solid var(--line); border-radius:26px; padding:20px 22px; width:min(460px,100%); text-align:center; }
   .panel h2 { font-weight:normal; font-size:28px; color:var(--coral-d); margin-bottom:10px; }
-  #create { justify-content:center; }
+  #create, #select { justify-content:center; }
+  #t-new { font-size:clamp(24px,3.6vw,34px); padding:14px 50px; }
   #c-cls { display:flex; gap:12px; justify-content:center; margin:4px 0 10px; }
   .cls { flex:1; max-width:170px; display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 6px; border:3px solid var(--ink2); border-radius:14px; background:#fff; cursor:pointer; font:inherit; opacity:.6; }
   .cls.on { opacity:1; border-color:var(--coral-d); background:#fff3e6; }
@@ -172,6 +173,23 @@
   .tabs { display:flex; gap:6px; margin-bottom:10px; }
   .tab { flex:1; padding:7px; border-radius:14px; border:2px solid var(--line); background:#fff; font-family:'Jua',sans-serif; font-size:17px; cursor:pointer; color:var(--ink); }
   .tab.on { background:var(--sun); }
+  #buyq { position:fixed; inset:0; z-index:60; background:rgba(40,30,20,.35); display:flex; align-items:center; justify-content:center; }
+  .bq-box { background:var(--cream); border:3px solid var(--line); border-radius:18px; padding:14px 16px; width:min(320px,92%); text-align:center; }
+  .bq-box > img { height:56px; display:block; margin:0 auto 4px; } .bq-box > b { font-size:20px; font-weight:normal; }
+  .bq-row { display:flex; align-items:center; justify-content:center; gap:6px; margin:10px 0 6px; }
+  .bq-row .rb { white-space:nowrap; min-width:40px; height:36px; padding:0 6px; font-size:15px; border-radius:12px; }
+  #bq-n { min-width:40px; font-family:Fredoka,sans-serif; font-size:24px; }
+  .bq-sum { display:flex; align-items:center; justify-content:center; gap:6px; font-family:Fredoka,sans-serif; font-size:20px; } .bq-sum img { width:22px; }
+  .bq-box .btns { display:flex; gap:8px; justify-content:center; margin-top:10px; }
+  #sel-list { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin:8px 0 14px; }
+  .slotw { display:flex; flex-direction:column; gap:4px; }
+  .slot { height:150px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; border:3px solid var(--ink2); border-radius:16px; background:#fff; cursor:pointer; font:inherit; }
+  .slot:hover { border-color:var(--coral-d); background:#fff3e6; }
+  .slot img { height:86px; } .slot b { font-size:19px; font-weight:normal; } .slot span { font-family:Fredoka,sans-serif; font-size:15px; color:var(--ink2); }
+  .slot.empty { border-style:dashed; opacity:.8; } .slot.empty i { font-style:normal; font-size:40px; line-height:1; color:var(--ink2); }
+  .slot.none { height:150px; box-sizing:border-box; border:3px dashed var(--ink2); opacity:.25; cursor:default; background:transparent; }
+  .sdel { background:none; border:0; font:inherit; font-size:13px; color:var(--ink2); opacity:.7; cursor:pointer; text-decoration:underline; }
+  #b-switch { margin-top:10px; }
   #shop-list { display:flex; flex-direction:column; gap:6px; }
   .shop-it { display:flex; align-items:center; gap:10px; padding:5px 10px; border-radius:14px; border:2px solid #e2cbb4; background:#fff; font-family:'Jua',sans-serif; font-size:16px; color:var(--ink); cursor:pointer; text-align:left; }
   .shop-it:hover:not(:disabled) { border-color:var(--coral); }
@@ -279,8 +297,16 @@
 <div class="win hidden" id="w-char">
   <h3>능력치 <span class="sp"></span><button class="x" type="button">×</button></h3>
   <div id="char-body"></div>
+  <button class="game-btn white small" id="b-switch" type="button">캐릭터 선택으로</button>
 </div>
 <div class="win hidden" id="w-shop">
+  <div id="buyq" class="hidden"><div class="bq-box">
+    <img id="bq-img" alt=""><b id="bq-name"></b>
+    <div class="bq-row"><button class="rb" data-q="-10" type="button">-10</button><button class="rb" data-q="-1" type="button">-</button><b id="bq-n">1</b><button class="rb" data-q="1" type="button">+</button><button class="rb" data-q="10" type="button">+10</button><button class="rb" data-q="max" type="button">최대</button></div>
+    <div class="bq-sum"><img src="img/i-coin.png" alt=""><span id="bq-sum">0</span></div>
+    <div class="dim small" id="bq-msg"></div>
+    <div class="btns"><button class="game-btn white small" id="bq-no" type="button">취소</button><button class="game-btn sun small" id="bq-ok" type="button">사기</button></div>
+  </div></div>
   <h3>상점 할머니 <span class="sp"></span><span class="coins"><img src="img/i-coin.png" alt=""><span id="shop-coins">0</span></span><button class="x" type="button">×</button></h3>
   <div class="tabs"><button class="tab on" data-tab="buy" type="button">사기</button><button class="tab" data-tab="sell" type="button">팔기</button></div>
   <div id="shop-list"></div>
@@ -306,9 +332,16 @@
 <div class="screen" id="title">
   <img id="logo" src="img/logo.png?v=1" alt="깨비샘의 도깨비 대모험">
   <div class="tbtns">
-    <button class="game-btn sun hidden" id="t-continue" type="button">이어하기</button>
-    <button class="game-btn" id="t-new" type="button">시작하기</button>
+    <button class="game-btn sun" id="t-new" type="button">시작하기</button>
     <button class="game-btn white small" id="t-code" type="button">이어하기 코드</button>
+  </div>
+</div>
+
+<div class="screen hidden" id="select">
+  <div class="panel">
+    <h2>캐릭터 선택</h2>
+    <div id="sel-list"></div>
+    <div class="btns"><button class="game-btn white small" id="s-back" type="button">뒤로</button></div>
   </div>
 </div>
 
