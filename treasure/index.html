@@ -139,13 +139,15 @@
   body.narrow .pcard .who { max-width:70%; }
   body.narrow .pcard .inv { order:3; flex-basis:100%; }
   /* 넓은 화면: 상대는 왼쪽·위·오른쪽, 보물은 판 아래 한 줄, 나는 아래 */
-  body.wide #game { display:grid; grid-template-columns:1fr auto 1fr; grid-template-rows:auto auto auto auto auto;
-    grid-template-areas:"t t t" "st st st" "l tb r" "mi mi mi" "ac ac ac"; justify-items:center; align-items:center; column-gap:14px; row-gap:6px; align-content:center; }
+  body.wide #game { display:grid; grid-template-columns:1fr auto 1fr; grid-template-rows:auto auto auto auto;
+    grid-template-areas:"t t t" "st st st" "l tb r" ". mi ."; justify-items:center; align-items:center; column-gap:14px; row-gap:6px; align-content:center; }
   body.wide #players { display:contents; }
   body.wide #status { grid-area:st; }
   body.wide #table { grid-area:tb; }
   body.wide #mine { grid-area:mi; }
-  body.wide #actions { grid-area:ac; }
+  body.wide #side { position:relative; align-self:stretch; justify-content:flex-start; }
+  body.wide #mine { justify-self:end; margin-right:calc(var(--sidew, 0px) + 12px); }
+  body.wide #side > #actions { position:absolute; left:0; top:calc(100% + 10px); flex-wrap:nowrap; justify-content:flex-start; zoom:var(--pz, 1); }
   body.wide .pcard.pos-t { grid-area:t; width:min(440px, 100%); flex:none; }
   body.wide .pcard.pos-b { grid-area:mi; width:min(440px, 100%); flex:none; }
   body.wide .pcard.pos-l, body.wide .pcard.pos-r { flex:none; width:132px; flex-direction:column; align-items:center; gap:6px; padding:10px 8px 12px; }
@@ -1411,10 +1413,13 @@ function fit() {
   document.body.classList.toggle('wide', wide);
   const bankHome = wide ? $('boardCol') : $('side');
   if ($('bank').parentNode !== bankHome) bankHome.appendChild($('bank'));
+  const actHome = wide ? $('side') : $('game');
+  if ($('actions').parentNode !== actHome) actHome.appendChild($('actions'));
   const root = document.documentElement;
   let lo = 34, hi = 240;
   const ok = cw => {
     root.style.setProperty('--cw', cw + 'px');
+    if (wide) root.style.setProperty('--sidew', $('side').offsetWidth + 'px');
     root.style.setProperty('--pz', wide ? Math.min(1.35, Math.max(1, cw / 115)).toFixed(3) : 1);
     $('myRes').style.setProperty('--rw', Math.round(Math.max(34, cw * .55)) + 'px');
     const g = $('game');
