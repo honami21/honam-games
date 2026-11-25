@@ -85,7 +85,7 @@
   #game { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; padding:54px 8px 8px; gap:6px; }
   #game > * { flex:none; }
   body.narrow #game { justify-content:center; }
-  #players { display:grid; grid-template-columns:repeat(var(--np, 2), minmax(0, 1fr)); gap:8px; width:100%; max-width:1100px; }
+  #players { display:grid; grid-template-columns:repeat(var(--np, 2), minmax(0, 1fr)); gap:8px; width:100%; max-width:min(1100px, calc(var(--np, 2) * 440px)); }
   body.narrow #players { grid-template-columns:repeat(2, minmax(0, 1fr)); gap:5px; }
   .dot.c0 { background:#bfe3ff; } .dot.c1 { background:#ffc9d6; } .dot.c2 { background:#c9f0b8; } .dot.c3 { background:#e3d4ff; }
   .pcard .cpu { font-size:11px; background:var(--ink2); color:#fff; border-radius:8px; padding:0 5px; margin-left:3px; vertical-align:2px; }
@@ -125,7 +125,7 @@
   .row { display:flex; gap:calc(var(--cw) * .07); }
   #side { display:flex; flex-direction:column; gap:8px; align-items:center; }
   #guests { display:flex; flex-direction:column; gap:calc(var(--cw) * .06); }
-  #bank { display:grid; grid-template-columns:repeat(2, auto); gap:6px 8px; background:rgba(40,22,40,.45); border-radius:16px; padding:8px; }
+  #bank { display:grid; grid-template-columns:repeat(3, auto); gap:6px 8px; background:rgba(40,22,40,.45); border-radius:16px; padding:8px; }
   body.narrow #table { flex-direction:column; align-items:center; }
   body.narrow #side { flex-direction:column; align-items:center; }
   body.narrow #guests { flex-direction:row; }
@@ -160,6 +160,9 @@
   body.short.many .pcard .tm { display:none; }
   body.short.many .iv .tn { width:17px; height:17px; } body.short.many .iv .bn { width:17px; height:13px; font-size:10px; line-height:9px; }
   body.short #mine { padding:4px 6px; border-radius:12px; }
+  body.short #myWho { border-right:none; border-bottom:2px dashed var(--cream2); padding:0 0 4px; justify-content:center; }
+  body.short #myInv { gap:6px; } body.short #myInv .iv .tn { width:30px; height:30px; } body.short #myInv .iv .bn { width:30px; height:20px; font-size:14px; line-height:15px; }
+  body.short #myInv .iv .tn i { font-size:12px; min-width:16px; line-height:calc(14px - .12em); }
   body.short #actions .game-btn { padding:3px 10px; font-size:13px; }
 
   /* 카드 */
@@ -249,11 +252,24 @@
 
   /* 내 자리 */
   #mine { width:100%; max-width:980px; background:var(--cream); border:3px solid var(--ink); border-radius:18px; padding:6px 10px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:center; }
-  #mine .lbl { font-size:14px; color:var(--ink2); }
-  #myInv { display:flex; gap:6px; align-items:flex-end; }
-  #myInv .iv .bn { width:30px; height:20px; font-size:14px; line-height:16px; }
-  #myInv .iv .tn { width:30px; height:30px; }
-  #myInv .iv .tn i { font-size:13px; min-width:17px; line-height:calc(16px - .12em); }
+  #mine .lbl { font-size:15px; color:var(--ink2); line-height:1.25; }
+  #mine.turn { background:#fff1c9; box-shadow:0 0 0 4px var(--sun); }
+  #myWho { display:flex; align-items:center; gap:8px; padding-right:12px; border-right:2px dashed var(--cream2); }
+  #myWho .dot { width:18px; height:18px; flex:none; border-radius:50%; border:3px solid var(--ink); }
+  #myWho .nm { font-size:18px; white-space:nowrap; max-width:7em; overflow:hidden; text-overflow:ellipsis; }
+  #myWho .pts { font-size:15px; color:var(--ink2); white-space:nowrap; line-height:1; }
+  #myWho .pts b { font-size:30px; color:var(--coral-d); font-weight:normal; }
+  #myWho .tm { font-size:20px; color:var(--coral-d); min-width:24px; }
+  #myWho .tm:empty { display:none; }
+  #myWho .tm.low { animation:blink .5s steps(2) infinite; }
+  #myInv { display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; justify-content:center; }
+  #myInv .iv { gap:4px; }
+  #myInv .iv .bn { width:44px; height:28px; font-size:19px; line-height:22px; border-radius:6px; }
+  #myInv .iv .tn { width:44px; height:44px; }
+  #myInv .iv .tn i { font-size:17px; min-width:22px; line-height:calc(20px - .12em); right:-7px; bottom:-5px; border-radius:11px; border-width:2px; }
+  #myInv .xchip { font-size:15px; }
+  #myInv .lbl { display:flex; flex-direction:column; gap:4px; text-align:right; }
+  #myInv .lbl span { height:28px; line-height:28px; } #myInv .lbl span + span { height:44px; line-height:44px; }
   #myRes { display:flex; gap:6px; align-items:center; }
   #myRes .cd { --cw:calc(var(--rw, 54px)); }
   #pickBar { display:flex; gap:6px; align-items:center; }
@@ -317,7 +333,10 @@
     .pcard .nm { font-size:15px; } .pcard .pts b { font-size:18px; }
     .iv .tn { width:18px; height:18px; } .iv .bn { width:18px; height:14px; font-size:11px; line-height:10px; }
     #mine { padding:4px 6px; gap:6px; border-radius:14px; }
-    #myInv .iv .tn { width:26px; height:26px; } #myInv .iv .bn { width:26px; }
+    #myInv { gap:7px; } #myInv .iv .tn { width:32px; height:32px; } #myInv .iv .bn { width:32px; height:22px; font-size:15px; line-height:17px; }
+    #myInv .iv .tn i { font-size:14px; min-width:18px; line-height:calc(16px - .12em); }
+    #myInv .lbl span { height:22px; line-height:22px; } #myInv .lbl span + span { height:32px; line-height:32px; }
+    #myWho { padding-right:6px; gap:5px; } #myWho .nm { font-size:15px; } #myWho .pts b { font-size:22px; }
     #actions .game-btn { padding:4px 10px; font-size:13px; }
   }
   .game-btn, .topbar a, .topbar button { box-shadow:none !important; }
@@ -363,6 +382,7 @@
     <div id="side"><div id="guests"></div><div id="bank"></div></div>
   </div>
   <div id="mine">
+    <div id="myWho"></div>
     <div id="myInv"></div>
     <div id="myRes"></div>
     <div id="pickBar" class="hidden"></div>
@@ -978,14 +998,16 @@ function extraHtml(pl, i, mine) {
 }
 function renderPlayers() {
   const st = seats(), me = mySeat(), playing = room.status === 'playing', inGame = room.status !== 'waiting' && room.p && room.p.length === st.length;
-  document.documentElement.style.setProperty('--np', Math.max(2, st.length));
+  const shown = st.length - (me == null || !inGame ? 0 : 1);
+  document.documentElement.style.setProperty('--np', Math.max(1, shown));
   document.body.classList.toggle('many', st.length > 2);
   let h = '';
   st.forEach((x, i) => {
     const pl = inGame ? room.p[i] : null;
     const tag = i === me && x.name !== '나' ? '<span class="me">나</span>' : (x.left || (x.cpu && !offline())) ? '<span class="cpu">컴퓨터</span>' : '';
     const off = !offline() && role !== 'watch' && !x.cpu && !x.left && x.id !== myId && Date.now() - (hbSeen[x.id] || Date.now()) > 75000 ? '<span class="off">연결 끊김?</span>' : '';
-    const showInv = pl && (i !== me);
+    if (pl && i === me) return; // 내 자리는 아래 내 칸에 크게 보여요
+    const showInv = !!pl;
     const inv = showInv ? invHtml(pl) + (pl.res.length ? `<span class="rescnt">찜 ${pl.res.length}</span>` : '') + (pl.guests.length ? `<span class="rescnt">손님 ${pl.guests.length}</span>` : '') + extraHtml(pl, i) : '';
     h += `<div class="pcard${playing && room.turn === i ? ' turn' : ''}"><span class="dot c${x.col}"></span><div class="who"><div class="nm">${esc(x.name)}${tag}</div><div class="pts"><b>${pl ? G.score(pl) : 0}</b>점</div></div><div class="inv">${inv}</div><div class="tm" data-tm="${i}"></div>${off}</div>`;
   });
@@ -1066,8 +1088,11 @@ function renderMine() {
   const me = mySeat();
   $('mine').classList.toggle('hidden', me == null);
   if (me == null) return;
-  const pl = room.p[me], can = myTurn() && !pend;
-  const ih = `<span class="lbl">내 보물<br>할인</span>` + invHtml(pl) + (pl.guests.length ? `<span class="rescnt">손님 ${pl.guests.length}명</span>` : '') + extraHtml(pl, me);
+  const pl = room.p[me], can = myTurn() && !pend, x = seats()[me];
+  $('mine').classList.toggle('turn', room.status === 'playing' && room.turn === me);
+  const wh = `<span class="dot c${x.col}"></span><div><div class="nm">${esc(x.name)}</div><div class="pts"><b>${G.score(pl)}</b>점</div></div><div class="tm" data-tm="${me}"></div>`;
+  if ($('myWho').dataset.h !== wh) { $('myWho').innerHTML = wh; $('myWho').dataset.h = wh; }
+  const ih = `<span class="lbl"><span>할인</span><span>보물</span></span>` + invHtml(pl) + (pl.guests.length ? `<span class="rescnt">손님 ${pl.guests.length}명</span>` : '') + extraHtml(pl, me);
   if ($('myInv').dataset.h !== ih) { $('myInv').innerHTML = ih; $('myInv').dataset.h = ih; }
   let rh = pl.res.length ? '<span class="lbl">찜</span>' : '';
   pl.res.forEach((id, r) => { rh += cardHtml(id, can ? 'click' + (G.payFor(pl, id) ? ' can' : '') : '', `data-r="${r}"`); });
@@ -1469,10 +1494,10 @@ async function txRun(fn) {
 
 // ---------- 시간 제한 ----------
 function updTimer() {
-  document.querySelectorAll('#players .tm').forEach(el => { el.textContent = ''; el.classList.remove('low'); });
+  document.querySelectorAll('.tm[data-tm]').forEach(el => { el.textContent = ''; el.classList.remove('low'); });
   if (!room || room.status !== 'playing' || !room.timer) return;
   const left = Math.max(0, room.timer - Math.floor((Date.now() - tickStart) / 1000));
-  const el = document.querySelector(`#players .tm[data-tm="${room.turn}"]`);
+  const el = document.querySelector(`.tm[data-tm="${room.turn}"]`);
   if (el) { el.textContent = left; el.classList.toggle('low', left <= 10); }
   return left;
 }
