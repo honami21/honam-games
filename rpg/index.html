@@ -69,6 +69,13 @@
   #htimeC { font-family:Fredoka,sans-serif; }
   #htime.low { color:#ff8f8f; }
   body.in-town #htimeC { display:none; }
+  #mini { position:absolute; top:58px; right:12px; width:252px; height:90px; border:3px solid rgba(255,246,236,.9); border-radius:10px; background:#203018;
+    pointer-events:auto; cursor:pointer; box-shadow:0 3px 10px rgba(0,0,0,.35); image-rendering:auto; }
+  body.win-open #mini { display:none; }
+  #w-gate { text-align:center; }
+  #w-gate .gate-t { font-size:18px; margin:6px 0 14px; word-break:keep-all; line-height:1.5; }
+  #w-gate .game-btn { margin-bottom:8px; }
+  #gate-msg { min-height:20px; margin-top:6px; word-break:keep-all; }
 
   #bar { position:absolute; left:50%; bottom:10px; transform:translateX(-50%); width:min(980px,calc(100% - 20px)); pointer-events:auto;
     display:flex; align-items:center; gap:10px; background:rgba(255,246,236,.95); border:3px solid var(--line); border-radius:22px; padding:8px 12px; transition:box-shadow .15s, background .15s; }
@@ -193,6 +200,7 @@
     #lvbox { width:44px; height:44px; } .stat { min-width:34px; } .stat.hide-s { display:none; }
     #log { bottom:84px; } #log .ln { font-size:13px; }
     .win { top:52px; right:8px; width:calc(100% - 16px); max-height:calc(100% - 140px); }
+    #mini { top:52px; right:8px; width:168px; height:60px; }
   }
 </style>
 <script src="../points.js"></script>
@@ -228,6 +236,7 @@
 
 <div id="hud" class="hidden">
   <div id="topinfo"><span class="chip" id="mapname">도깨비 마을</span><span class="chip" id="htimeC">사냥 <span id="htime">10:00</span></span></div>
+  <canvas id="mini" title="누르면 그곳으로 걸어가요"></canvas>
   <div id="log"></div>
   <div id="bar">
     <div id="lvbox"><small>Lv</small><span id="lv">1</span></div>
@@ -267,6 +276,14 @@
   <h3>길 안내 부엉이 도사 <span class="sp"></span><button class="x" type="button">×</button></h3>
   <div id="guide-time"></div>
   <div id="guide-list"></div>
+</div>
+
+<div class="win hidden" id="w-gate">
+  <h3>마을 문 <span class="sp"></span><button class="x" type="button">×</button></h3>
+  <p class="gate-t">사냥 시간이 없어요.<br>1포인트를 쓰면 10분 동안 사냥할 수 있어요.</p>
+  <button class="game-btn sun" id="gate-pay" type="button">1포인트 쓰고 나가기</button>
+  <div class="dim small" id="gate-pts"></div>
+  <div id="gate-msg"></div>
 </div>
 
 <div id="ench"><div class="glow"><img id="ench-img" alt=""></div><div id="ench-txt"></div></div>

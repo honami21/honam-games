@@ -55,24 +55,29 @@ const MONS = {
   general: { name: '대나무 장군',   lv: 22, hp: 2500, ac: -6, dmg: [15, 22], exp: 1500, h: 146, aggro: 1, step: .55, boss: 1 },
 };
 
-// 사냥터 (5지역 중 1차는 1·2지역). 드롭률은 디자인 문서 4장
-const REGIONS = [
-  { id: 'field',  name: '마을 앞 들판', lv: '1~10',  open: true },
-  { id: 'bamboo', name: '대나무 숲',    lv: '10~20', open: true },
-  { id: 'forest', name: '도깨비 숲',    lv: '20~30' },
-  { id: 'moon',   name: '달빛 고개',    lv: '30~40' },
-  { id: 'cave',   name: '이무기 동굴',  lv: '40~50' },
+// 한 장으로 이어진 넓은 세계 (서쪽 마을 → 동쪽으로 들판 → 대나무 숲). 아직 안 연 3~5지역은 길이 막혀 있어요.
+const WORLD = { w: 168, h: 60 };
+// x0~x1: 지역이 차지하는 가로 칸, spawn: 리스폰 지점(길 안내 도사가 서 있는 곳)
+const ZONES = [
+  { id: 'town', name: '도깨비 마을', lv: '', x0: 0, x1: 36, tile: 'tile-town', town: true, spawn: [17, 30] },
+  { id: 'field', name: '마을 앞 들판', lv: '1~10', x0: 36, x1: 102, tile: 'tile-field', tier: 1, spawn: [41, 30], count: 70, boss: 'kscare',
+    // [몬스터, 지역 서쪽에서 떨어진 정도(0 가까움 ~ 1 멂) 범위, 비율]
+    mons: [['dust', 0, .45, 3], ['rat', .1, .65, 3], ['acorn', .35, .9, 3], ['scare', .55, 1, 3]],
+    drop: { w: .002, a: .004, gear: .005, coin: [1, 3] } },
+  { id: 'bamboo', name: '대나무 숲', lv: '10~20', x0: 102, x1: 168, tile: 'tile-bamboo', tier: 2, spawn: [107, 30], count: 72, boss: 'general',
+    mons: [['shoot', 0, .45, 3], ['tanuki', .1, .7, 3], ['bghost', .35, .95, 3], ['broom', .55, 1, 3]],
+    drop: { w: .005, a: .01, gear: .005, coin: [3, 8] } },
 ];
-const MAPS = {
-  town:   { name: '도깨비 마을', w: 30, h: 22, tile: 'tile-town', town: true },
-  field:  { name: '마을 앞 들판', w: 64, h: 48, tile: 'tile-field', tier: 1, count: 70, boss: 'kscare',
-            // [몬스터, 입구에서 떨어진 정도(0 가까움 ~ 1 멂) 범위, 비율]
-            mons: [['dust', 0, .45, 3], ['rat', .1, .65, 3], ['acorn', .35, .9, 3], ['scare', .55, 1, 3]],
-            drop: { w: .002, a: .004, gear: .005, coin: [1, 3] } },
-  bamboo: { name: '대나무 숲', w: 64, h: 48, tile: 'tile-bamboo', tier: 2, count: 72, boss: 'general',
-            mons: [['shoot', 0, .45, 3], ['tanuki', .1, .7, 3], ['bghost', .35, .95, 3], ['broom', .55, 1, 3]],
-            drop: { w: .005, a: .01, gear: .005, coin: [3, 8] } },
-};
+const ZONE = Object.fromEntries(ZONES.map(z => [z.id, z]));
+// 길 안내 도사 목록 (아직 안 연 지역은 준비 중)
+const REGIONS = [
+  { id: 'town', name: '도깨비 마을', lv: '', open: true },
+  { id: 'field', name: '마을 앞 들판', lv: '1~10', open: true },
+  { id: 'bamboo', name: '대나무 숲', lv: '10~20', open: true },
+  { id: 'forest', name: '도깨비 숲', lv: '20~30' },
+  { id: 'moon', name: '달빛 고개', lv: '30~40' },
+  { id: 'cave', name: '이무기 동굴', lv: '40~50' },
+];
 const BOSS_FIRST = 180, BOSS_AGAIN = 300;   // 사냥터에서 3분 뒤 첫 우두머리, 쓰러뜨리면 5분 뒤 다시
 const HUNT_MS = 10 * 60 * 1000;              // 1포인트 = 사냥 10분
 

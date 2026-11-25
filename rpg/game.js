@@ -134,20 +134,23 @@ function playerAttacker() {
   return { lv: P.lv, dmg: weaponRange(P.eq.weapon), plus: strBonus(), hit: hitBonus(), crit: critRate() };
 }
 
-/* ================= 월드 ================= */
-let M = null;          // 지금 맵
+/* ================= 월드 (한 장으로 이어진 넓은 세계) ================= */
+let M = null;          // 세계 (막힌 칸, 유닛 자리, 장식)
 let units = [];        // 캐릭터·몬스터·NPC
 let drops = [], fx = [], nums = [];
 let player = null, uid = 0;
 let cam = { x: 0, y: 0 }, zoom = 1, shake = { a: 0, t: 0 }, freeze = 0;
 const cv = $('cv'), g = cv.getContext('2d');
 let VW = 0, VH = 0, DPR = 1;
+const ACTIVE_R = 24;   // 이 거리 안의 몬스터만 움직여요 (멀리 있는 몬스터는 잠들어 있어 렉이 없어요)
 
 function seeded(seed) { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
 function idx(x, y) { return y * M.w + x; }
 function inMap(x, y) { return x >= 0 && y >= 0 && x < M.w && y < M.h; }
 function blocked(x, y) { return !inMap(x, y) || M.block[idx(x, y)] === 1; }
 function free(x, y) { return !blocked(x, y) && !M.occ[idx(x, y)]; }
+function zoneAt(x) { for (const z of ZONES) if (x < z.x1) return z; return ZONES[ZONES.length - 1]; }
+const inTown = () => zoneAt(player.x).town;
 
 function placeProp(name, cx, cy, force) {   // cx,cy = 밑동 가운데 칸
   const d = PROPS[name]; if (!d) return false;
@@ -163,45 +166,53 @@ function placeProp(name, cx, cy, force) {   // cx,cy = 밑동 가운데 칸
   M.props.push({ kind: 'prop', name, x: (x0 + d.fw / 2) * CELL, y: (cy + 1) * CELL - 6, w: d.w, h, fade: 1 });
   return true;
 }
-function keepClear(cx, cy, r) { for (let y = cy - r; y <= cy + r; y++) for (let x = cx - r; x <= cx + r; x++) if (inMap(x, y)) M.keep[idx(x, y)] = 1; }
+function keepClear(x0, y0, x1, y1) { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (inMap(x, y)) M.keep[idx(x, y)] = 1; }
 
-function buildMap(key) {
-  const d = MAPS[key];
-  M = { key, ...d, block: new Uint8Array(d.w * d.h), occ: new Int32Array(d.w * d.h), keep: new Uint8Array(d.w * d.h), props: [], npcs: [] };
-  const R = seeded(key === 'town' ? 7 : key === 'field' ? 11 : 23);
-  // 가장자리는 못 나가는 칸
-  for (let x = 0; x < M.w; x++) { M.block[idx(x, 0)] = M.block[idx(x, M.h - 1)] = 1; }
-  for (let y = 0; y < M.h; y++) { M.block[idx(0, y)] = M.block[idx(M.w - 1, y)] = 1; }
-  if (key === 'town') {
-    M.entry = [15, 13];
-    keepClear(15, 12, 3);
-    // 집과 가게
-    placeProp('t-house2', 6, 6, 1); placeProp('t-house1', 12, 5, 1); placeProp('t-house1', 23, 6, 1);
-    placeProp('t-stall', 8, 12, 1); placeProp('t-jars', 4, 11, 1); placeProp('t-well', 19, 10, 1);
-    placeProp('t-portal', 23, 14, 1); placeProp('t-jangseung', 15, 19, 1);
-    for (const [x, y] of [[3, 16], [6, 18], [26, 18], [27, 10], [2, 7], [10, 19]]) placeProp('t-fence', x, y, 1);
-    for (const [x, y] of [[2, 3], [27, 3], [2, 20], [27, 20], [18, 3], [9, 2]]) placeProp('f-tree1', x, y, 1);
-    for (const [x, y] of [[17, 16], [12, 15], [25, 11], [4, 14]]) placeProp('f-flowers', x, y, 1);
-    M.npcs.push({ kind: 'npc', role: 'shop', name: '상점 할머니', img: 'npc-shop', x: 8, y: 13, h: 92 });
-    M.npcs.push({ kind: 'npc', role: 'guide', name: '길 안내 부엉이 도사', img: 'npc-guide', x: 21, y: 15, h: 96 });
-  } else {
-    M.entry = [5, Math.floor(M.h / 2)];
-    keepClear(M.entry[0], M.entry[1], 4);
-    const tall = key === 'field' ? ['f-tree1', 'f-tree2'] : ['b-bamboo1', 'b-bamboo2'];
-    // 가장자리 숲
-    for (let x = 1; x < M.w - 1; x += 2) { placeProp(tall[(x >> 1) % 2], x, 1, 1); placeProp(tall[(x >> 1) % 2 ^ 1], x, M.h - 2, 1); }
-    for (let y = 3; y < M.h - 2; y += 2) { placeProp(tall[1], 1, y, 1); placeProp(tall[1], M.w - 2, y, 1); }
-    const deco = key === 'field'
-      ? [['f-tree1', 10], ['f-tree2', 14], ['f-bush', 14], ['f-rock1', 7], ['f-rocks', 9], ['f-hay', 6], ['f-flowers', 16]]
-      : [['b-bamboo1', 16], ['b-bamboo2', 16], ['b-rock', 7], ['b-fallen', 6], ['b-tower', 5], ['b-sasa', 14], ['b-pond', 3], ['b-lantern', 5]];
-    for (const [n, c] of deco) for (let i = 0, tries = 0; i < c && tries < 400; tries++) {
-      if (placeProp(n, 3 + Math.floor(R() * (M.w - 6)), 3 + Math.floor(R() * (M.h - 6)))) i++;
+const TALL = { town: ['f-tree1', 'f-tree2'], field: ['f-tree1', 'f-tree2'], bamboo: ['b-bamboo1', 'b-bamboo2'] };
+const DECO = {
+  town: [['f-tree2', 8], ['f-bush', 10], ['f-flowers', 14], ['f-rocks', 4]],
+  field: [['f-tree1', 13], ['f-tree2', 18], ['f-bush', 18], ['f-rock1', 9], ['f-rocks', 12], ['f-hay', 8], ['f-flowers', 22]],
+  bamboo: [['b-bamboo1', 22], ['b-bamboo2', 22], ['b-rock', 9], ['b-fallen', 8], ['b-tower', 7], ['b-sasa', 18], ['b-pond', 4], ['b-lantern', 6]],
+};
+function buildWorld() {
+  const W = WORLD.w, H = WORLD.h;
+  M = { w: W, h: H, block: new Uint8Array(W * H), occ: new Int32Array(W * H), keep: new Uint8Array(W * H), props: [], npcs: [] };
+  const R = seeded(17);
+  for (let x = 0; x < W; x++) { M.block[idx(x, 0)] = M.block[idx(x, H - 1)] = 1; }
+  for (let y = 0; y < H; y++) { M.block[idx(0, y)] = M.block[idx(W - 1, y)] = 1; }
+  // 리스폰 지점과 마을 문 앞 길은 비워 둬요
+  for (const z of ZONES) keepClear(z.spawn[0] - 4, z.spawn[1] - 4, z.spawn[0] + 4, z.spawn[1] + 4);
+  keepClear(28, 27, 46, 33);
+  // 마을: 집·가게·우물, 동쪽 울타리와 문(장승)
+  const T = ZONE.town;
+  placeProp('t-stall', 10, 29, 1); placeProp('t-jars', 6, 31, 1); placeProp('t-well', 23, 36, 1);
+  for (const [n, x, y] of [['t-house2', 8, 21], ['t-house1', 17, 20], ['t-house2', 27, 21], ['t-house1', 8, 42], ['t-house2', 18, 43], ['t-house1', 27, 42], ['t-house1', 5, 13], ['t-house2', 25, 13], ['t-house1', 12, 51], ['t-house2', 25, 51]]) placeProp(n, x, y, 1);
+  for (let y = 2; y < H - 1; y += 2) if (y < 26 || y > 34) placeProp('t-fence', 35, y, 1);
+  placeProp('t-jangseung', 35, 25, 1); placeProp('t-jangseung', 35, 35, 1);
+  placeProp('t-portal', T.spawn[0] + 3, T.spawn[1] - 2, 1);
+  M.npcs.push({ kind: 'npc', role: 'shop', name: '상점 할머니', img: 'npc-shop', x: 10, y: 31, h: 92 });
+  // 지역마다 가장자리 숲 + 장식 (경계 근처는 옆 지역 장식과 섞여요)
+  for (const z of ZONES) {
+    const tall = TALL[z.id];
+    for (let x = z.x0 + 1; x < z.x1; x += 2) { placeProp(tall[(x >> 1) % 2], x, 1, 1); placeProp(tall[((x >> 1) % 2) ^ 1], x, H - 2, 1); }
+    const area = (z.x1 - z.x0) * H, scale = area / (64 * 48);
+    const prev = ZONES[ZONES.indexOf(z) - 1];
+    for (const [n, c] of DECO[z.id]) for (let i = 0, tries = 0; i < Math.round(c * scale) && tries < 600; tries++) {
+      let x = z.x0 + 2 + Math.floor(R() * (z.x1 - z.x0 - 3)), y = 3 + Math.floor(R() * (H - 6)), name = n;
+      if (prev && x - z.x0 < 7 && R() < .5) { const pd = DECO[prev.id]; name = pd[Math.floor(R() * pd.length)][0]; }
+      if (placeProp(name, x, y)) i++;
     }
-    if (key === 'field') placeProp('f-sign', M.entry[0] + 2, M.entry[1] - 2, 1);
-    else placeProp('b-lantern', M.entry[0] + 2, M.entry[1] - 2, 1);
+    if (!z.town) {
+      M.npcs.push({ kind: 'npc', role: 'guide', name: '길 안내 부엉이 도사', img: 'npc-guide', x: z.spawn[0] + 1, y: z.spawn[1] - 1, h: 96 });
+      z.bossTimer = BOSS_FIRST; z.bossAlive = false;
+    }
   }
-  M.pattern = IMG[d.tile] ? g.createPattern(IMG[d.tile], 'repeat') : null;
-  M.bossTimer = BOSS_FIRST; M.bossAlive = false;
+  M.npcs.push({ kind: 'npc', role: 'guide', name: '길 안내 부엉이 도사', img: 'npc-guide', x: T.spawn[0] + 2, y: T.spawn[1] + 1, h: 96 });
+  // 동쪽 끝: 아직 안 연 지역으로 가는 길은 막혀 있어요
+  for (let y = 3; y < H - 2; y += 2) placeProp('b-bamboo1', W - 2, y, 1);
+  placeProp('f-sign', W - 5, 30, 1);
+  M.patterns = {}; for (const z of ZONES) if (IMG[z.tile]) M.patterns[z.id] = g.createPattern(IMG[z.tile], 'repeat');
+  buildMini();
 }
 
 function addUnit(u) { u.id = ++uid; u.px = u.x * CELL + CELL / 2; u.py = u.y * CELL + CELL / 2; u.face = 1; M.occ[idx(u.x, u.y)] = u.id; units.push(u); return u; }
@@ -212,50 +223,74 @@ function findFree(cx, cy, maxR = 8) {
   return null;
 }
 
-function enterMap(key, at) {
+let curZone = null;
+function enterWorld() {
   units = []; drops = []; fx = []; nums = [];
-  buildMap(key);
-  const [ex, ey] = findFree(...(at || M.entry));
+  buildWorld();
+  const [ex, ey] = findFree(...ZONE.town.spawn);
   player = addUnit({ kind: 'player', x: ex, y: ey, step: .26 });
-  player.face = 1;
   for (const n of M.npcs) addUnit(Object.assign(n, { step: 1 }));
-  if (!M.town) for (let i = 0; i < M.count; i++) spawnMonster();
+  for (const z of ZONES) if (!z.town) for (let i = 0; i < z.count; i++) spawnMonster(z);
   cam.x = player.px; cam.y = player.py;
-  tgt = null; moveGoal = null; held = false; auto = false;
-  $('mapname').textContent = M.name;
-  document.body.classList.toggle('in-town', !!M.town);
+  resetControl(); setZone(zoneAt(player.x), true);
+}
+function resetControl() { tgt = null; moveGoal = null; held = false; auto = false; pending = 0; player.path = null; }
+// 지역(리스폰 지점)으로 순간 이동
+function teleport(id) {
+  const z = ZONE[id], spot = findFree(...z.spawn); if (!spot) return;
+  M.occ[idx(player.x, player.y)] = 0;
+  player.x = spot[0]; player.y = spot[1]; player.mv = null;
+  player.px = player.x * CELL + CELL / 2; player.py = player.y * CELL + CELL / 2;
+  M.occ[idx(player.x, player.y)] = player.id;
+  cam.x = player.px; cam.y = player.py;
+  resetControl(); setZone(z);
+}
+function setZone(z, quiet) {
+  if (curZone === z) return;
+  curZone = z;
+  $('mapname').textContent = z.name;
+  document.body.classList.toggle('in-town', !!z.town);
+  if (!quiet) banner(z.name + (z.lv ? `<small>권장 Lv ${z.lv}</small>` : ''), 1.5);
   updateHUD();
 }
-function pickMonType() {
-  const list = M.mons, tot = list.reduce((t, m) => t + m[3], 0);
+function pickMonType(z) {
+  const list = z.mons, tot = list.reduce((t, m) => t + m[3], 0);
   let r = Math.random() * tot; for (const m of list) { r -= m[3]; if (r < 0) return m; } return list[0];
 }
-function spawnMonster(type) {
-  let m = type ? [type, 0, 1] : pickMonType();
-  for (let tries = 0; tries < 60; tries++) {
+function spawnMonster(z, type) {
+  if (typeof z === 'string') { type = z; z = ZONES.find(q => q.mons && q.mons.some(m => m[0] === type) || q.boss === type) || zoneAt(player.x); }
+  const m = type ? [type, type === z.boss ? .55 : 0, 1] : pickMonType(z);
+  const span = z.x1 - z.x0 - 10;
+  for (let tries = 0; tries < 80; tries++) {
     const k = m[1] + Math.random() * (m[2] - m[1]);
-    const x = clamp(Math.round(M.entry[0] + k * (M.w - 8) + rnd(-3, 3)), 2, M.w - 3), y = rnd(3, M.h - 4);
+    const x = clamp(Math.round(z.x0 + 5 + k * span + rnd(-3, 3)), z.x0 + 2, z.x1 - 3), y = rnd(3, M.h - 4);
     if (!free(x, y)) continue;
-    if (player && cheb(x, y, player.x, player.y) < 6) continue;
+    if (cheb(x, y, z.spawn[0], z.spawn[1]) < 6) continue;
+    if (player && cheb(x, y, player.x, player.y) < 9) continue;
     const d = MONS[m[0]];
-    const u = addUnit({ kind: 'mon', type: m[0], d, x, y, hp: d.hp, step: d.step, home: [x, y], atkT: 0, wander: Math.random() * 3, flash: 0, kx: 0, ky: 0, sq: 0, dmgShow: 0 });
-    return u;
+    return addUnit({ kind: 'mon', type: m[0], d, zone: z, x, y, hp: d.hp, step: d.step, home: [x, y], atkT: 0, wander: Math.random() * 3, flash: 0, kx: 0, ky: 0, sq: 0, dmgShow: 0 });
   }
   return null;
 }
 
-/* ================= 길찾기 (A*) ================= */
+/* ================= 길찾기 (A*, 우선순위 큐) ================= */
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+function heapPush(h, f, v) { h.push([f, v]); let i = h.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (h[p][0] <= h[i][0]) break; [h[p], h[i]] = [h[i], h[p]]; i = p; } }
+function heapPop(h) {
+  const top = h[0], last = h.pop();
+  if (h.length) { h[0] = last; let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i; if (l < h.length && h[l][0] < h[m][0]) m = l; if (r < h.length && h[r][0] < h[m][0]) m = r; if (m === i) break; [h[m], h[i]] = [h[i], h[m]]; i = m; } }
+  return top;
+}
 function findPath(sx, sy, tx, ty, adj, self, limit = 3000) {
-  // adj: 목표 옆 칸(공격 거리)까지만 / 다른 유닛은 피해 감
+  // adj: 목표 옆 칸(공격 거리)까지만 / 가까운 유닛은 피해 감
   const W = M.w, start = sy * W + sx;
   const goal = (x, y) => adj ? (cheb(x, y, tx, ty) <= 1 && !(x === tx && y === ty)) : (x === tx && y === ty);
   if (goal(sx, sy)) return [];
-  const gS = new Map([[start, 0]]), from = new Map(), open = [[cheb(sx, sy, tx, ty), start]], closed = new Set();
+  const gS = new Map([[start, 0]]), from = new Map(), open = [], closed = new Set();
+  heapPush(open, cheb(sx, sy, tx, ty), start);
   let best = start, bestH = 1e9, n = 0;
   while (open.length && n++ < limit) {
-    let bi = 0; for (let i = 1; i < open.length; i++) if (open[i][0] < open[bi][0]) bi = i;
-    const cur = open[bi][1]; open[bi] = open[open.length - 1]; open.pop();
+    const cur = heapPop(open)[1];
     if (closed.has(cur)) continue; closed.add(cur);
     const cx = cur % W, cy = (cur - cx) / W;
     if (goal(cx, cy)) { best = cur; bestH = 0; break; }
@@ -266,9 +301,9 @@ function findPath(sx, sy, tx, ty, adj, self, limit = 3000) {
       if (dx && dy && (blocked(cx + dx, cy) || blocked(cx, cy + dy))) continue;   // 모서리 끼기 막기
       const o = M.occ[ny * W + nx];
       const near = cheb(nx, ny, sx, sy) <= 2;
-      if (o && o !== self && near && !(nx === tx && ny === ty && !adj)) continue;   // 가까운 유닛은 피해 가요
+      if (o && o !== self && near && !(nx === tx && ny === ty && !adj)) continue;
       const ni = ny * W + nx, ng = gS.get(cur) + (dx && dy ? 1.42 : 1) + (o && o !== self ? 3 : 0);
-      if (ng < (gS.has(ni) ? gS.get(ni) : 1e9)) { gS.set(ni, ng); from.set(ni, cur); open.push([ng + cheb(nx, ny, tx, ty), ni]); }
+      if (ng < (gS.has(ni) ? gS.get(ni) : 1e9)) { gS.set(ni, ng); from.set(ni, cur); heapPush(open, ng + cheb(nx, ny, tx, ty) * 1.01, ni); }
     }
   }
   if (best === start) return null;
@@ -278,7 +313,9 @@ function findPath(sx, sy, tx, ty, adj, self, limit = 3000) {
 function stepTo(u, nx, ny) {
   if (!free(nx, ny)) return false;
   const dx = nx - u.x, dy = ny - u.y;
+  if (Math.abs(dx) > 1 || Math.abs(dy) > 1) return false;
   if (dx && dy && (blocked(u.x + dx, u.y) || blocked(u.x, u.y + dy))) return false;
+  if (u === player ? !gateOK(nx) : (u.kind === 'mon' && zoneAt(nx).town)) return false;
   M.occ[idx(u.x, u.y)] = 0; M.occ[idx(nx, ny)] = u.id;
   u.mv = { fx: u.px, fy: u.py, t: 0, dur: u.step * (dx && dy ? 1.3 : 1) };
   u.x = nx; u.y = ny; if (dx) u.face = dx > 0 ? 1 : -1; u.walk = (u.walk || 0) + 1;
@@ -288,6 +325,23 @@ function stepToward(u, tx, ty, adj) {
   const path = findPath(u.x, u.y, tx, ty, adj, u.id, u === player ? 3000 : 500);
   if (!path || !path.length) return false;
   return stepTo(u, path[0][0], path[0][1]);
+}
+// 먼 곳까지 걸어갈 때는 길을 한 번 찾아 두고 따라가요 (막히면 다시 찾기)
+function walkTo(tx, ty) {
+  const p = player;
+  if (!p.path || !p.path.length || p.pathGoal !== tx + ',' + ty) { p.path = findPath(p.x, p.y, tx, ty, false, p.id, 14000); p.pathGoal = tx + ',' + ty; if (!p.path || !p.path.length) return false; }
+  const [nx, ny] = p.path[0];
+  if (stepTo(p, nx, ny)) { p.path.shift(); return true; }
+  p.path = null;   // 길이 막혔으면 다음에 다시 찾아요
+  return stepToward(p, tx, ty, false);
+}
+// 마을 문: 사냥 시간이 없으면 1포인트를 써야 나갈 수 있어요
+let gateAsked = 0;
+function gateOK(nx) {
+  if (!zoneAt(player.x).town || zoneAt(nx).town || P.hunt > 0) return true;
+  if (performance.now() - gateAsked > 800) { gateAsked = performance.now(); openWin('gate'); }
+  moveGoal = null; player.path = null;
+  return false;
 }
 
 /* ================= 플레이어 조작 ================= */
@@ -367,7 +421,7 @@ function playerThink() {
   }
   if (moveGoal && !player.mv) {
     if (player.x === moveGoal[0] && player.y === moveGoal[1]) { if (!pointer.down) moveGoal = null; return; }
-    if (!stepToward(player, moveGoal[0], moveGoal[1], false)) { if (!pointer.down) moveGoal = null; }
+    if (!walkTo(moveGoal[0], moveGoal[1])) { if (!pointer.down) moveGoal = null; }
   }
 }
 function faceTo(u, t) { if (t.x !== u.x) u.face = t.x > u.x ? 1 : -1; }
@@ -406,14 +460,15 @@ function killMonster(m) {
   gainExp(m.d.exp);
   log(`<b>${josa(m.d.name, '을를')}</b> 쓰러뜨렸어요 <span class="dim">경험치 +${m.d.exp}</span>`);
   dropLoot(m);
-  if (m.d.boss) { M.bossAlive = false; M.bossTimer = BOSS_AGAIN; banner(`${josa(m.d.name, '을를')} 물리쳤어요!`); }
-  else { const key = M.key; setTimeout(() => { if (M && M.key === key && units.filter(u => u.kind === 'mon' && !u.d.boss && !u.dying).length < M.count) spawnMonster(); }, 8000 + Math.random() * 6000); }
+  const z = m.zone;
+  if (m.d.boss) { z.bossAlive = false; z.bossTimer = BOSS_AGAIN; banner(`${josa(m.d.name, '을를')} 물리쳤어요!`); }
+  else { const w = M; setTimeout(() => { if (M === w && units.filter(u => u.kind === 'mon' && u.zone === z && !u.d.boss && !u.dying).length < z.count) spawnMonster(z); }, 8000 + Math.random() * 6000); }
 }
 function dropLoot(m) {
-  const dr = M.drop, bag = [];
+  const dr = m.zone.drop, bag = [];
   const c = m.d.boss ? rnd(dr.coin[0] * 20, dr.coin[1] * 20) : (Math.random() < .7 ? rnd(dr.coin[0], dr.coin[1]) : 0);
   if (c) bag.push({ coin: c });
-  const tier = M.tier;
+  const tier = m.zone.tier;
   const gearOf = () => { const pool = [...Object.keys(WEAPONS).filter(k => WEAPONS[k].tier === tier).map(k => ({ g: 'w', k })), ...Object.keys(ARMORS).filter(k => ARMORS[k].tier === tier).map(k => ({ g: 'a', k }))]; const it = pool[rnd(0, pool.length - 1)]; return { item: { g: it.g, k: it.k, en: 0 }, rare: 1 }; };
   if (m.d.boss) {
     bag.push(gearOf());
@@ -464,7 +519,8 @@ function monThink(m, dt) {
   const d = m.d;
   m.atkT -= dt;
   const dist = cheb(m.x, m.y, player.x, player.y);
-  if (!dead && !M.town && (m.angry || (d.aggro && dist <= 4))) {
+  if (dist > ACTIVE_R) { m.angry = false; return; }   // 멀리 있는 몬스터는 쉬어요
+  if (!dead && !curZone.town && (m.angry || (d.aggro && dist <= 4))) {
     m.angry = true;
     if (cheb(m.x, m.y, m.home[0], m.home[1]) > 14 && dist > 3) { m.angry = false; }
     else if (dist <= 1) {
@@ -507,7 +563,7 @@ function die() {
   tgt = null; auto = false; moveGoal = null;
   SND.die();
   banner(`쓰러졌어요...<small>경험치 ${loss.toLocaleString()}만큼 잃었어요. 마을에서 깨어나요</small>`, 2.6);
-  setTimeout(() => { dead = false; P.hp = maxHP(); enterMap('town'); dirty = true; save(true); }, 2600);
+  setTimeout(() => { dead = false; P.hp = maxHP(); teleport('town'); dirty = true; save(true); }, 2600);
 }
 
 /* ================= 효과·숫자 ================= */
@@ -620,9 +676,10 @@ function openWin(w) {
   if (winOpen === w) { closeWin(); return; }
   closeWin(true);
   winOpen = w; $('w-' + w).classList.remove('hidden'); SND.ui();
-  if (w === 'inv') renderInv(); if (w === 'char') renderChar(); if (w === 'shop') renderShop(); if (w === 'guide') renderGuide();
+  if (w === 'inv') renderInv(); if (w === 'char') renderChar(); if (w === 'shop') renderShop(); if (w === 'guide') renderGuide(); if (w === 'gate') renderGate();
+  document.body.classList.add('win-open');
 }
-function closeWin(quiet) { if (!winOpen) return; $('w-' + winOpen).classList.add('hidden'); winOpen = null; cancelEnchant(); hideTip(); if (!quiet) SND.ui(); }
+function closeWin(quiet) { if (!winOpen) return; $('w-' + winOpen).classList.add('hidden'); winOpen = null; document.body.classList.remove('win-open'); cancelEnchant(); hideTip(); if (!quiet) SND.ui(); }
 
 function gearInfo(it) {
   if (it.i) { const d = ITEMS[it.i]; return `<b>${d.name}</b>` + (it.i === 'potion' ? `<br>HP ${d.heal} 회복 (단축키 1)` : `<br>${it.i === 'wscroll' ? '무기' : '방어구'}를 한 단계 강화해요`); }
@@ -679,19 +736,26 @@ function renderGuide() {
   const k = window.KPOINT ? KPOINT.info() : null;
   const left = P.hunt;
   $('guide-time').innerHTML = left > 0 ? `남은 사냥 시간 <b>${fmtTime(left)}</b>` : `사냥 시간이 없어요 · 1포인트 = 10분` + (k ? ` <span class="dim">(내 포인트 ${k.pts}점)</span>` : '');
-  $('guide-list').innerHTML = REGIONS.map(r => `<button class="reg ${r.open ? '' : 'lock'}" data-reg="${r.id}" ${r.open ? '' : 'disabled'}><b>${r.name}</b><span>${r.open ? '권장 Lv ' + r.lv : '준비 중'}</span></button>`).join('');
+  $('guide-list').innerHTML = REGIONS.map(r => `<button class="reg ${r.open ? '' : 'lock'}" data-reg="${r.id}" ${r.open ? '' : 'disabled'}><b>${r.name}</b><span>${!r.open ? '준비 중' : r.lv ? '권장 Lv ' + r.lv : '상점·쉬는 곳'}</span></button>`).join('');
 }
 function fmtTime(ms) { const s = Math.ceil(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
 function goRegion(id) {
-  if (P.hunt <= 0) {
+  if (!ZONE[id]) return;
+  if (!ZONE[id].town && P.hunt <= 0) {
     if (window.KPOINT && !KPOINT.spend(KPOINT.COST || 1)) { $('guide-time').innerHTML = '<span class="bad">포인트가 모자라요.</span> <span class="dim">+1 포인트 게임을 끝까지 하면 모여요</span>'; return; }
     P.hunt = HUNT_MS; log('1포인트를 써서 사냥 시간 10분을 받았어요', 'sys');
   }
   closeWin(true); SND.warp();
-  warpFade(() => { enterMap(id); banner(MAPS[id].name, 1.4); save(); });
+  warpFade(() => { curZone = null; teleport(id); save(true); });
 }
 function warpFade(fn) { const f = $('fade'); f.classList.add('on'); setTimeout(() => { fn(); setTimeout(() => f.classList.remove('on'), 60); }, 260); }
-function goTown(msg) { if (M.town) return; warpFade(() => { enterMap('town', [17, 14]); if (msg) banner(msg, 2); save(true); }); }
+function goTown(msg) { if (inTown()) return; warpFade(() => { teleport('town'); if (msg) banner(msg, 2); save(true); }); }
+// 마을 문: 사냥 시간이 없을 때 1포인트 쓰고 나가기
+function renderGate() { const k = window.KPOINT ? KPOINT.info() : null; $('gate-pts').textContent = k ? `내 포인트 ${k.pts}점` : ''; $('gate-msg').innerHTML = ''; }
+function payGate() {
+  if (window.KPOINT && !KPOINT.spend(KPOINT.COST || 1)) { $('gate-msg').innerHTML = '<span class="bad">포인트가 모자라요.</span> <span class="dim">+1 포인트 게임을 끝까지 하면 모여요</span>'; return; }
+  P.hunt = HUNT_MS; dirty = true; log('1포인트를 써서 사냥 시간 10분을 받았어요', 'sys'); SND.coin(); closeWin(true); save(true);
+}
 
 /* ================= 화면 정보 ================= */
 let dirty = false;
@@ -706,7 +770,7 @@ function updateHUD() {
   $('coins').textContent = P.coins.toLocaleString();
   const pot = P.inv.find(x => x.i === 'potion'); $('potn').textContent = pot ? pot.n : 0;
   $('acv').textContent = playerAC();
-  $('b-town').classList.toggle('hidden', !M || !!M.town);
+  $('b-town').classList.toggle('hidden', !curZone || !!curZone.town);
   if (winOpen === 'char') renderChar();
   if (winOpen === 'shop') renderShop();
 }
@@ -892,13 +956,13 @@ function render() {
   if (shake.t > 0) { sx = (Math.random() * 2 - 1) * shake.a; sy = (Math.random() * 2 - 1) * shake.a; }
   g.setTransform(DPR * zoom, 0, 0, DPR * zoom, DPR * (VW / 2 - (cam.x + sx) * zoom), DPR * (VH / 2 - (cam.y + sy) * zoom));
   // 땅
-  if (M.pattern) { g.save(); g.scale(.62, .62); g.fillStyle = M.pattern; g.fillRect(0, 0, M.w * CELL / .62, M.h * CELL / .62); g.restore(); }
-  else { g.fillStyle = '#6a8f3a'; g.fillRect(0, 0, M.w * CELL, M.h * CELL); }
+  const vx0 = cam.x - VW / 2 / zoom - 20, vx1 = cam.x + VW / 2 / zoom + 20, vy0 = cam.y - VH / 2 / zoom - 20, vy1 = cam.y + VH / 2 / zoom + 20;
+  drawGround(vx0, vx1, vy0, vy1);
   // 맵 밖은 어둡게
   g.fillStyle = 'rgba(10,18,8,.55)'; g.fillRect(0, 0, M.w * CELL, CELL * .5); g.fillRect(0, M.h * CELL - CELL * .5, M.w * CELL, CELL * .5);
   // 이동 목표 표시
   if (moveGoal && !tgt) { g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 2; g.beginPath(); g.ellipse(moveGoal[0] * CELL + CELL / 2, moveGoal[1] * CELL + CELL * .8, 14, 6, 0, 0, Math.PI * 2); g.stroke(); }
-  for (const d of drops) drawDrop(d);
+  for (const d of drops) if (Math.abs(d.x * CELL - cam.x) < VW / zoom) drawDrop(d);
   // 공격 대상 표시
   if (tgt && tgt.kind === 'mon' && !tgt.dying) {
     const x = tgt.px, y = tgt.py + CELL * .32, r = tgt.d.h * .34 + 6;
@@ -907,8 +971,8 @@ function render() {
   }
   // 앞뒤 순서대로 (위쪽 먼저)
   const list = [];
-  for (const p of M.props) list.push([p.y, p]);
-  for (const u of units) list.push([u.py + CELL * .32, u]);
+  for (const p of M.props) if (p.x + p.w / 2 > vx0 && p.x - p.w / 2 < vx1 && p.y > vy0 && p.y - p.h < vy1) list.push([p.y, p]);
+  for (const u of units) if (u.px > vx0 - 120 && u.px < vx1 + 120 && u.py > vy0 - 40 && u.py < vy1 + 200) list.push([u.py + CELL * .32, u]);
   list.sort((a, b) => a[0] - b[0]);
   for (const [, o] of list) {
     if (o.kind === 'prop') drawProp(o);
@@ -926,7 +990,7 @@ function render() {
   }
   // 화면 밖 우두머리 화살표
   g.setTransform(DPR, 0, 0, DPR, 0, 0);
-  const boss = units.find(u => u.kind === 'mon' && u.d.boss && !u.dying);
+  const boss = units.find(u => u.kind === 'mon' && u.d.boss && !u.dying && u.zone === curZone);
   if (boss) {
     const bx = (boss.px - cam.x) * zoom + VW / 2, by = (boss.py - cam.y) * zoom + VH / 2;
     if (bx < 0 || by < 0 || bx > VW || by > VH - 90) {
@@ -936,6 +1000,87 @@ function render() {
       g.beginPath(); g.moveTo(18, 0); g.lineTo(-10, -12); g.lineTo(-4, 0); g.lineTo(-10, 12); g.closePath(); g.fill(); g.stroke(); g.restore();
     }
   }
+}
+
+// 땅: 지역마다 바닥 무늬, 경계는 몇 칸에 걸쳐 서서히 섞여요
+const BLEND = CELL * 6;
+function fillPat(id, x0, x1, y0, y1, a) {
+  const pat = M.patterns[id]; if (x1 <= x0) return;
+  g.globalAlpha = a;
+  if (pat) { g.save(); g.scale(.62, .62); g.fillStyle = pat; g.fillRect(x0 / .62, y0 / .62, (x1 - x0) / .62 + 1, (y1 - y0) / .62); g.restore(); }
+  else { g.fillStyle = '#6a8f3a'; g.fillRect(x0, y0, x1 - x0 + 1, y1 - y0); }
+  g.globalAlpha = 1;
+}
+const blendCv = document.createElement('canvas'), blendG = blendCv.getContext('2d');
+function drawGround(vx0, vx1, vy0, vy1) {
+  const y0 = Math.max(0, vy0), y1 = Math.min(M.h * CELL, vy1);
+  for (const z of ZONES) fillPat(z.id, Math.max(vx0, z.x0 * CELL), Math.min(vx1, z.x1 * CELL + 4), y0, y1, 1);   // 살짝 겹쳐 틈이 안 보이게
+  // 경계 왼쪽 5칸에 오른쪽 지역 바닥을 서서히 겹쳐 그려요
+  for (let i = 1; i < ZONES.length; i++) {
+    const B = ZONES[i], bx = B.x0 * CELL, pat = M.patterns[B.id];
+    if (!pat || bx < vx0 || bx - BLEND > vx1) continue;
+    const w = BLEND, h = Math.ceil(y1 - y0);
+    if (blendCv.width !== w || blendCv.height < h) { blendCv.width = w; blendCv.height = Math.max(h, blendCv.height); }
+    const x = blendG; x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'source-over'; x.clearRect(0, 0, w, blendCv.height);
+    x.save(); x.translate(-(bx - w), -y0); x.scale(.62, .62); x.fillStyle = pat; x.fillRect((bx - w) / .62, y0 / .62, w / .62, h / .62); x.restore();
+    const gr = x.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,1)');
+    x.globalCompositeOperation = 'destination-in'; x.fillStyle = gr; x.fillRect(0, 0, w, h);
+    g.drawImage(blendCv, 0, 0, w, h, bx - w, y0, w, h);
+  }
+}
+
+/* ================= 미니맵 ================= */
+const MINI_S = 2;   // 미니맵 한 칸 = 2픽셀 (캔버스 기준)
+let miniBase = null, miniT = 0;
+function avgColor(im, fb) {
+  if (!im) return fb;
+  try { const c = document.createElement('canvas'); c.width = c.height = 8; const x = c.getContext('2d'); x.drawImage(im, 0, 0, 8, 8); const d = x.getImageData(0, 0, 8, 8).data; let r = 0, gg = 0, b = 0; for (let i = 0; i < d.length; i += 4) { r += d[i]; gg += d[i + 1]; b += d[i + 2]; } const n = d.length / 4; return [r / n, gg / n, b / n]; } catch (e) { return fb; }
+}
+function buildMini() {
+  const W = M.w, H = M.h, c = document.createElement('canvas'); c.width = W * MINI_S; c.height = H * MINI_S;
+  const x = c.getContext('2d'), img = x.createImageData(W * MINI_S, H * MINI_S);
+  const col = ZONES.map(z => avgColor(IMG[z.tile], [106, 143, 58]));
+  for (let cy = 0; cy < H; cy++) for (let cx = 0; cx < W; cx++) {
+    const zi = ZONES.indexOf(zoneAt(cx)); let [r, gg, b] = col[zi];
+    if (zi > 0 && cx - ZONES[zi].x0 < 5) { const t = (cx - ZONES[zi].x0 + .5) / 10 + .5, o = col[zi - 1]; r = r * t + o[0] * (1 - t); gg = gg * t + o[1] * (1 - t); b = b * t + o[2] * (1 - t); }
+    if (zi < ZONES.length - 1 && ZONES[zi].x1 - cx <= 5) { const t = (ZONES[zi].x1 - cx - .5) / 10 + .5, o = col[zi + 1]; r = r * t + o[0] * (1 - t); gg = gg * t + o[1] * (1 - t); b = b * t + o[2] * (1 - t); }
+    if (M.block[idx(cx, cy)]) { r *= .45; gg *= .45; b *= .45; }
+    for (let j = 0; j < MINI_S; j++) for (let i = 0; i < MINI_S; i++) { const p = ((cy * MINI_S + j) * W * MINI_S + cx * MINI_S + i) * 4; img.data[p] = r; img.data[p + 1] = gg; img.data[p + 2] = b; img.data[p + 3] = 255; }
+  }
+  x.putImageData(img, 0, 0);
+  // 지역 경계선과 이름
+  x.font = '600 13px "Gowun Dodum",sans-serif'; x.textAlign = 'center'; x.lineWidth = 3;
+  for (const z of ZONES) { x.strokeStyle = 'rgba(0,0,0,.6)'; x.fillStyle = '#fff'; x.strokeText(z.name, (z.x0 + z.x1) / 2 * MINI_S, 16); x.fillText(z.name, (z.x0 + z.x1) / 2 * MINI_S, 16); }
+  miniBase = c;
+  const mc = $('mini'); mc.width = c.width; mc.height = c.height;
+}
+function drawMini(dt) {
+  miniT -= dt; if (miniT > 0 || !miniBase) return; miniT = .2;
+  const mc = $('mini'), x = mc.getContext('2d'), S = MINI_S;
+  x.drawImage(miniBase, 0, 0);
+  for (const u of units) {
+    if (u.kind === 'mon' && !u.dying) {
+      if (u.d.boss) { x.fillStyle = '#ff3b3b'; x.beginPath(); x.arc((u.x + .5) * S, (u.y + .5) * S, 5, 0, 7); x.fill(); x.strokeStyle = '#fff'; x.lineWidth = 1.5; x.stroke(); }
+      else if (cheb(u.x, u.y, player.x, player.y) < 30) { x.fillStyle = 'rgba(255,110,90,.9)'; x.fillRect(u.x * S, u.y * S, S, S); }
+    } else if (u.kind === 'npc') { x.fillStyle = u.role === 'shop' ? '#7fe0ff' : '#ffd23e'; x.fillRect(u.x * S - 2, u.y * S - 2, S + 4, S + 4); }
+  }
+  // 지금 보이는 화면
+  const hw = VW / 2 / zoom, hh = VH / 2 / zoom;
+  x.strokeStyle = 'rgba(255,255,255,.85)'; x.lineWidth = 1.5;
+  x.strokeRect((cam.x - hw) / CELL * S, (cam.y - hh) / CELL * S, hw * 2 / CELL * S, hh * 2 / CELL * S);
+  if (moveGoal) { x.strokeStyle = '#fff'; x.beginPath(); x.arc((moveGoal[0] + .5) * S, (moveGoal[1] + .5) * S, 4, 0, 7); x.stroke(); }
+  x.fillStyle = '#fff'; x.beginPath(); x.arc((player.x + .5) * S, (player.y + .5) * S, 4.5, 0, 7); x.fill();
+  x.fillStyle = '#3d7bff'; x.beginPath(); x.arc((player.x + .5) * S, (player.y + .5) * S, 3, 0, 7); x.fill();
+}
+// 미니맵을 누르면 그곳으로 걸어가요
+function miniClick(e) {
+  if (!P || dead || !M) return;
+  const r = $('mini').getBoundingClientRect();
+  let cx = Math.floor((e.clientX - r.left) / r.width * M.w), cy = Math.floor((e.clientY - r.top) / r.height * M.h);
+  cx = clamp(cx, 1, M.w - 2); cy = clamp(cy, 1, M.h - 2);
+  if (blocked(cx, cy)) { let best = null; for (let rr = 1; rr < 6 && !best; rr++) for (let y = cy - rr; y <= cy + rr; y++) for (let x = cx - rr; x <= cx + rr; x++) if (!best && !blocked(x, y)) best = [x, y]; if (!best) return; [cx, cy] = best; }
+  tgt = null; auto = false; held = false; pending = 0; moveGoal = [cx, cy]; player.path = null; SND.ui();
+  e.stopPropagation();
 }
 
 /* ================= 한 프레임 ================= */
@@ -954,6 +1099,7 @@ function frame(now) {
   cam.x = M.w * CELL < hw * 2 ? M.w * CELL / 2 : clamp(cam.x, hw, M.w * CELL - hw);
   cam.y = M.h * CELL < hh * 2 ? M.h * CELL / 2 : clamp(cam.y, hh, M.h * CELL - hh + 70 / zoom);
   render();
+  if (M && P) drawMini(rdt);
 }
 function update(dt) {
   // 이동 보간
@@ -991,22 +1137,25 @@ function update(dt) {
   { const [wx, wy] = screenToWorld(pointer.x, pointer.y); hoverMon = unitAt(wx, wy, ['mon']); }
   // 캐릭터를 가리는 장식은 반투명하게
   for (const p of M.props) {
+    if (Math.abs(p.x - player.px) > 400 && p.fade === 1) continue;
     const cover = p.y > player.py + CELL * .32 && Math.abs(p.x - player.px) < p.w * .42 && player.py + CELL * .32 > p.y - p.h * .95 && player.py < p.y;
     p.fade += ((cover ? .5 : 1) - p.fade) * Math.min(1, dt * 10);
   }
   // 사냥 시간·우두머리
-  if (!M.town && !dead) {
+  if (!dead) setZone(zoneAt(player.x));
+  const Z = curZone;
+  if (!Z.town && !dead) {
     P.hunt -= dt * 1000;
     if (P.hunt <= 0) { P.hunt = 0; tgt = null; auto = false; goTown('사냥 시간이 끝났어요<small>길 안내 도사에게 가면 다시 사냥할 수 있어요</small>'); }
-    if (!M.bossAlive) {
-      M.bossTimer -= dt;
-      if (M.bossTimer <= 0) { const b = spawnMonster(M.boss); if (b) { M.bossAlive = true; b.angry = false; SND.boss(); banner(`${josa(b.d.name, '이가')} 나타났어요!`, 2.2); log(`<b>${josa(b.d.name, '이가')}</b> 나타났어요! 화살표를 따라가 보세요`, 'boss'); } else M.bossTimer = 10; }
+    if (!Z.bossAlive) {
+      Z.bossTimer -= dt;
+      if (Z.bossTimer <= 0) { const b = spawnMonster(Z, Z.boss); if (b) { Z.bossAlive = true; b.angry = false; SND.boss(); banner(`${josa(b.d.name, '이가')} 나타났어요!`, 2.2); log(`<b>${josa(b.d.name, '이가')}</b> 나타났어요! 화살표를 따라가 보세요`, 'boss'); } else Z.bossTimer = 10; }
     }
     $('htime').textContent = fmtTime(P.hunt);
     $('htime').classList.toggle('low', P.hunt < 60000);
   }
   saveClock += dt;
-  if (saveClock > 5) { saveClock = 0; if (dirty || !M.town) { dirty = false; save(); } }
+  if (saveClock > 5) { saveClock = 0; if (dirty || !curZone.town) { dirty = false; save(); } }
 }
 let paused = false;
 
@@ -1021,7 +1170,7 @@ function startGame() {
   $('title').classList.add('hidden'); $('create').classList.add('hidden');
   document.body.classList.add('playing');
   $('hud').classList.remove('hidden');
-  enterMap('town');
+  enterWorld();
   updateHUD();
   log('깨비샘의 도깨비 대모험에 온 걸 환영해요!', 'sys');
   if (P.hunt > 0) log(`남은 사냥 시간 ${fmtTime(P.hunt)} · 길 안내 도사에게 말을 걸어요`, 'sys');
@@ -1048,6 +1197,8 @@ function bindUI() {
   $('b-inv').addEventListener('click', () => openWin('inv'));
   $('b-char').addEventListener('click', () => openWin('char'));
   $('b-town').addEventListener('click', () => { if (!dead) goTown(); });
+  $('mini').addEventListener('pointerdown', miniClick);
+  $('gate-pay').addEventListener('click', payGate);
   $('b-snd').addEventListener('click', () => { SND.on = !SND.on; $('b-snd').classList.toggle('off', !SND.on); });
   $('b-snd').classList.toggle('off', !SND.on);
   document.querySelectorAll('.win .x').forEach(b => b.addEventListener('click', () => closeWin()));
@@ -1165,4 +1316,4 @@ bindUI();
 loadImages().then(() => { document.body.classList.add('ready'); });
 setTimeout(pullCloud, 600);
 requestAnimationFrame(frame);
-window.__rpg = { screenPos() { return [(player.px - cam.x) * zoom + VW / 2, (player.py - cam.y) * zoom + VH / 2]; }, get P() { return P; }, get M() { return M; }, get units() { return units; }, get player() { return player; }, enterMap, spawnMonster, gainExp, giveItem, rollAttack, playerAttacker, playerAC, set tgt(v) { tgt = v; }, set auto(v) { auto = v; } };
+window.__rpg = { screenPos() { return [(player.px - cam.x) * zoom + VW / 2, (player.py - cam.y) * zoom + VH / 2]; }, get P() { return P; }, get M() { return M; }, get units() { return units; }, get player() { return player; }, get zone() { return curZone; }, enterWorld, teleport, goRegion, spawnMonster, gainExp, giveItem, rollAttack, playerAttacker, playerAC, set tgt(v) { tgt = v; }, set auto(v) { auto = v; } };
