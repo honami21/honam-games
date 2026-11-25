@@ -187,7 +187,7 @@ function placeProp(name, cx, cy, force) {   // cx,cy = 밑동 가운데 칸
 // 마을 울타리 (네모, 동서남북에 문)
 const TOWN_HX = 28, TOWN_HY = 17;
 function buildTownWall(cx, cy) {
-  const FS = .167, GS = .3, top = cy - TOWN_HY, bot = cy + TOWN_HY, lef = cx - TOWN_HX, rig = cx + TOWN_HX;
+  const FS = .167, GS = .33, top = cy - TOWN_HY, bot = cy + TOWN_HY, lef = cx - TOWN_HX, rig = cx + TOWN_HX;
   const add = (name, x, y, sc) => { const im = IMG[name]; if (!im) return; M.props.push({ kind: 'prop', name, x, y, w: im.width * sc, h: im.height * sc, fade: 1 }); };
   const shut = (x, y) => { if (inMap(x, y)) { const i = idx(x, y); M.block[i] = 1; M.keep[i] = 1; } };
   const gate = (x, y) => (x === cx && (y === top || y === bot)) || (y === cy && (x === lef || x === rig));
