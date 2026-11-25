@@ -11,7 +11,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 
 /* ================= 그림 ================= */
 const IMG = {}, WHITE = {};
-const IMG_LIST = ['p-idle', 'p-walk-0', 'p-walk-1', 'p-walk-2', 'p-walk-3', 'p-walk-4', 'p-walk-5', 'p-wind', 'p-swing', 'p-hurt', 'p-dead', 'p-win', 'npc-shop', 'npc-guide',
+const IMG_LIST = ['fence-h', 'fence-post', 'fence-corner', 'gate-front', 'fence-side', 'fence-lamp', 'p-idle', 'p-walk-0', 'p-walk-1', 'p-walk-2', 'p-walk-3', 'p-walk-4', 'p-walk-5', 'p-wind', 'p-swing', 'p-hurt', 'p-dead', 'p-win', 'npc-shop', 'npc-guide',
   ...Object.keys(MONS).flatMap(k => ['m-' + k + '-0', 'm-' + k + '-1']),
   ...Object.keys(WEAPONS).map(k => 'w-' + k), ...Object.keys(ARMORS).map(k => 'a-' + k),
   'i-potion', 'i-wscroll', 'i-ascroll', 'i-coin', 'i-coins', 'i-box', ...Object.keys(PROPS)];
@@ -184,6 +184,33 @@ function placeProp(name, cx, cy, force) {   // cx,cy = 밑동 가운데 칸
   if (d.flat) { p.y = (cy + .5) * CELL + h / 2; M.flats.push(p); } else M.props.push(p);
   return true;
 }
+// 마을 울타리 (네모, 동서남북에 문)
+const TOWN_HX = 28, TOWN_HY = 17;
+function buildTownWall(cx, cy) {
+  const FS = .167, GS = .3, top = cy - TOWN_HY, bot = cy + TOWN_HY, lef = cx - TOWN_HX, rig = cx + TOWN_HX;
+  const add = (name, x, y, sc) => { const im = IMG[name]; if (!im) return; M.props.push({ kind: 'prop', name, x, y, w: im.width * sc, h: im.height * sc, fade: 1 }); };
+  const shut = (x, y) => { if (inMap(x, y)) { const i = idx(x, y); M.block[i] = 1; M.keep[i] = 1; } };
+  const gate = (x, y) => (x === cx && (y === top || y === bot)) || (y === cy && (x === lef || x === rig));
+  for (let x = lef; x <= rig; x++) for (const y of [top, bot]) if (!gate(x, y)) shut(x, y);
+  for (let y = top; y <= bot; y++) for (const x of [lef, rig]) if (!gate(x, y)) shut(x, y);
+  const X = c => (c + .5) * CELL, Y = r => (r + .5) * CELL + 10;
+  // 가로 울타리: 기둥 사이 415px(그림 기준)를 한 조각으로, 길이에 맞춰 살짝 늘이거나 줄여요
+  const SPAN = 415 * FS, GH = CELL;   // GH = 정문 기둥까지 거리
+  const hRun = (x0, x1, row) => { const n = Math.max(1, Math.round((x1 - x0) / SPAN)), st = (x1 - x0) / n; for (let k = 0; k < n; k++) add('fence-h', x0 + st * (k + .5), Y(row), FS * st / SPAN); };
+  for (const row of [top, bot]) { hRun(X(lef), X(cx) - GH, row); hRun(X(cx) + GH, X(rig), row); add('gate-front', X(cx), Y(row) + 2, GS); }
+  // 세로 울타리: 옆에서 본 싸리 엮음 + 한 칸마다 통나무 기둥 (동서 문 자리는 비움)
+  for (const col of [lef, rig]) {
+    for (let y = Y(top) + 10; y < Y(bot) - 4; y += 10) if (Math.abs(y - Y(cy)) > CELL) add('fence-side', X(col), y, FS);
+    for (let r = top + 1; r < bot; r++) if (Math.abs(r - cy) > 1) add('fence-post', X(col), Y(r), FS);
+    // 동서 문: 짚 모자 기둥 두 개
+    add('fence-corner', X(col), Y(cy - 1) + 2, .17); add('fence-corner', X(col), Y(cy + 1) + 2, .17);
+  }
+  for (const [c, r] of [[lef, top], [rig, top], [lef, bot], [rig, bot]]) add('fence-corner', X(c), Y(r) + 2, .17);
+  // 문 안쪽 등불, 문 바깥 장승
+  for (const [c, r] of [[cx + 3, top + 1], [cx + 3, bot - 1], [lef + 1, cy - 3], [rig - 1, cy - 3]]) { add('fence-lamp', X(c), Y(r), .19); shut(c, r); }
+  for (const [c, r] of [[cx - 3, top - 2], [cx + 4, top - 2], [cx - 3, bot + 3], [cx + 4, bot + 3], [lef - 2, cy - 3], [lef - 2, cy + 4], [rig + 3, cy - 3], [rig + 3, cy + 4]]) placeProp('t-jangseung', c, r, 1);
+  for (let x = cx - 1; x <= cx + 1; x++) for (const y of [top - 1, top + 1, bot - 1, bot + 1]) if (inMap(x, y)) M.keep[idx(x, y)] = 1;
+}
 function keepClear(x0, y0, x1, y1) { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (inMap(x, y)) M.keep[idx(x, y)] = 1; }
 
 // 지역별 장식 (개수는 넓이 2500칸 기준)
@@ -222,7 +249,7 @@ function buildWorld() {
     const dx = (x - cx) / 1.4 / K, dy = (y - cy) / K, r = Math.hypot(dx, dy), a = Math.atan2(dy, dx) * 180 / Math.PI;
     const n = 9 * Math.sin(r * .17 + 1.3) + 5 * Math.sin(r * .41);
     let id;
-    if (r < 13 + 1.2 * Math.sin(a * .07)) id = 'town';
+    if (Math.abs(x - cx) <= TOWN_HX && Math.abs(y - cy) <= TOWN_HY) id = 'town';
     else if (r < 26 + 3 * Math.sin(a * .052 + 1) + 2 * Math.sin(a * .13) || (a > -135 + n && a < -45 + n)) id = 'near';
     else { let b = a - n; if (b < -180) b += 360; if (b >= 180) b -= 360; id = b >= -45 && b < 45 ? 'bamboo' : b >= 45 && b < 135 ? 'deep' : 'paddy'; }
     M.zid[i] = ZI[id];
@@ -284,12 +311,12 @@ function buildWorld() {
   for (const z of ZONES) if (z.spawn) keepClear(z.spawn[0] - 3, z.spawn[1] - 3, z.spawn[0] + 3, z.spawn[1] + 3);
   // 8) 마을
   keepClear(cx - 4, cy - 2, cx + 4, cy + 5);
-  for (const [n, dx, dy] of [['t-house2', -13, -6], ['t-house1', -6, -8], ['t-house2', 7, -8], ['t-house1', 14, -6], ['t-house1', -13, 8], ['t-house2', -6, 10], ['t-house1', 7, 10], ['t-house2', 14, 8], ['t-house1', -21, -2], ['t-house2', 21, 2]]) placeProp(n, ...T(dx, dy), 1);
+  for (const [n, dx, dy] of [['t-house2', -13, -6], ['t-house1', -6, -8], ['t-house2', 7, -8], ['t-house1', 14, -6], ['t-house1', -13, 8], ['t-house2', -6, 10], ['t-house1', 7, 10], ['t-house2', 14, 8], ['t-house1', -18, -10], ['t-house2', 18, 9]]) placeProp(n, ...T(dx, dy), 1);
   placeProp('t-stall', cx - 6, cy - 3, 1); placeProp('t-jars', ...T(-10, 3), 1); placeProp('t-well', cx + 6, cy + 4, 1); placeProp('t-portal', cx + 6, cy - 3, 1);
   M.npcs.push({ kind: 'npc', role: 'shop', name: '상점 할머니', img: 'npc-shop', x: cx - 6, y: cy - 2, h: 92 * UK });
   M.npcs.push({ kind: 'npc', role: 'guide', name: '길 안내 부엉이 도사', img: 'npc-guide', x: cx + 2, y: cy + 2, h: 96 * UK });
   // 마을 문 장승 (길이 마을 밖으로 나가는 곳 양옆)
-  for (const d of [0, 90, 180, -90]) { const [x, y] = P(14, d); const ox = d === 0 || d === 180 ? 0 : 3, oy = d === 0 || d === 180 ? 3 : 0; placeProp('t-jangseung', Math.round(x - ox), Math.round(y - oy)); placeProp('t-jangseung', Math.round(x + ox), Math.round(y + oy)); }
+  buildTownWall(cx, cy);
   // 9) 길 안내 도사 (사냥터마다 리스폰 지점) + 갈림길 이정표
   for (const z of ZONES) if (z.road) {
     M.npcs.push({ kind: 'npc', role: 'guide', name: '길 안내 부엉이 도사', img: 'npc-guide', x: z.spawn[0] + 1, y: z.spawn[1] - 2, h: 96 * UK });
