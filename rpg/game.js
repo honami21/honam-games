@@ -508,55 +508,56 @@ function walkTo(tx, ty) {
   return stepToward(p, tx, ty, false);
 }
 // 360도 걷기: 칸 길찾기 결과를 곧은 선으로 펴서 어느 방향으로든 미끄러지듯 걸어요 (칸 막기는 그대로)
-const PSPEED = CELL / .26;
-function losClear(ax, ay, bx, by) {   // 픽셀 좌표 두 점 사이를 몸 폭만큼 지나갈 수 있는지
+function losClear(u, ax, ay, bx, by) {   // 픽셀 좌표 두 점 사이를 몸 폭만큼 지나갈 수 있는지
   const L = Math.hypot(bx - ax, by - ay); if (L < 1) return true;
-  const n = Math.ceil(L / (CELL * .34)), ox = -(by - ay) / L, oy = (bx - ax) / L;
+  const n = Math.ceil(L / (CELL * .34)), ox = -(by - ay) / L, oy = (bx - ax) / L, mon = u.kind === 'mon';
   for (let i = 1; i <= n; i++) {
     const t = i / n;
     for (const o of [-.26, 0, .26]) {
       const cx = Math.floor((ax + (bx - ax) * t + ox * o * CELL) / CELL), cy = Math.floor((ay + (by - ay) * t + oy * o * CELL) / CELL);
-      if (blocked(cx, cy)) return false;
-      const oc = M.occ[idx(cx, cy)]; if (oc && oc !== player.id && cheb(cx, cy, player.x, player.y) <= 3) return false;
+      if (blocked(cx, cy) || (mon && zoneAt(cx, cy).town)) return false;
+      const oc = M.occ[idx(cx, cy)]; if (oc && oc !== u.id && cheb(cx, cy, u.x, u.y) <= 3) return false;
     }
   }
   return true;
 }
-function planGlide(tx, ty, adj, goalPt) {
-  const p = player, end = goalPt || [tx * CELL + CELL / 2, ty * CELL + CELL / 2];
-  if (!adj && losClear(p.px, p.py, end[0], end[1])) { p.glide = [end]; return true; }
-  const path = findPath(p.x, p.y, tx, ty, adj, p.id, 40000);
-  if (!path || !path.length) { p.glide = null; return false; }
+function planGlide(u, tx, ty, adj, goalPt) {
+  const end = goalPt || [tx * CELL + CELL / 2, ty * CELL + CELL / 2];
+  if (!adj && losClear(u, u.px, u.py, end[0], end[1])) { u.glide = [end]; return true; }
+  const path = findPath(u.x, u.y, tx, ty, adj, u.id, u === player ? 40000 : 600);
+  if (!path || !path.length) { u.glide = null; return false; }
   const pts = path.map(([x, y]) => [x * CELL + CELL / 2, y * CELL + CELL / 2]);
   if (!adj && goalPt) { const [lx, ly] = path[path.length - 1]; if (lx === tx && ly === ty) pts[pts.length - 1] = goalPt; }
-  const out = []; let cx = p.px, cy = p.py, i = 0;
+  const out = []; let cx = u.px, cy = u.py, i = 0;
   while (i < pts.length) {
     let j = Math.min(pts.length - 1, i + 30);
-    while (j > i && !losClear(cx, cy, pts[j][0], pts[j][1])) j--;
+    while (j > i && !losClear(u, cx, cy, pts[j][0], pts[j][1])) j--;
     out.push(pts[j]); [cx, cy] = pts[j]; i = j + 1;
   }
-  p.glide = out; return true;
+  u.glide = out; return true;
 }
-function glideUpdate(dt) {
-  const p = player;
-  if (!p.glide || !p.glide.length || dead) { p.moving = false; return; }
-  let budget = PSPEED * dt;
-  while (budget > 0 && p.glide && p.glide.length) {
-    const [tx, ty] = p.glide[0], dx = tx - p.px, dy = ty - p.py, d = Math.hypot(dx, dy);
-    if (d < .5) { p.glide.shift(); continue; }
-    const st = Math.min(d, budget), nx = p.px + dx / d * st, ny = p.py + dy / d * st;
+// 캐릭터·몬스터 모두 어느 방향으로든 미끄러지듯 걸어요 (한 칸에는 한 명만)
+function glideUpdate(u, dt) {
+  if (!u.glide || !u.glide.length || (u === player && dead)) { u.moving = false; return; }
+  let budget = CELL / u.step * dt;
+  while (budget > 0 && u.glide && u.glide.length) {
+    const [tx, ty] = u.glide[0], dx = tx - u.px, dy = ty - u.py, d = Math.hypot(dx, dy);
+    if (d < .5) { u.glide.shift(); continue; }
+    const st = Math.min(d, budget), nx = u.px + dx / d * st, ny = u.py + dy / d * st;
     const cx = Math.floor(nx / CELL), cy = Math.floor(ny / CELL);
-    if (cx !== p.x || cy !== p.y) {
+    if (cx !== u.x || cy !== u.y) {
       const oc = inMap(cx, cy) ? M.occ[idx(cx, cy)] : 1;
-      if (blocked(cx, cy) || (oc && oc !== p.id) || !gateOK(cx, cy)) { p.glide = null; planT = .2; break; }
-      M.occ[idx(p.x, p.y)] = 0; M.occ[idx(cx, cy)] = p.id; p.x = cx; p.y = cy; pickupAt(cx, cy);
+      const ok = !blocked(cx, cy) && !(oc && oc !== u.id) && (u === player ? gateOK(cx, cy) : !zoneAt(cx, cy).town);
+      if (!ok) { u.glide = null; if (u === player) planT = .2; else u.planT = .2; break; }
+      M.occ[idx(u.x, u.y)] = 0; M.occ[idx(cx, cy)] = u.id; u.x = cx; u.y = cy;
+      if (u === player) pickupAt(cx, cy);
     }
-    if (Math.abs(dx) > 3) p.face = dx > 0 ? 1 : -1;
-    p.px = nx; p.py = ny; p.dist = (p.dist || 0) + st; budget -= st;
-    if (st >= d) p.glide.shift();
+    if (Math.abs(dx) > 3) u.face = dx > 0 ? 1 : -1;
+    u.px = nx; u.py = ny; u.dist = (u.dist || 0) + st; budget -= st;
+    if (st >= d) u.glide.shift();
   }
-  p.moving = !!(p.glide && p.glide.length);
-  p.walk = Math.floor((p.dist || 0) / (CELL * .55));
+  u.moving = !!(u.glide && u.glide.length);
+  u.walk = Math.floor((u.dist || 0) / (CELL * .55));
 }
 // 마을 문: 사냥 시간이 없으면 1포인트를 써야 나갈 수 있어요
 let gateAsked = 0;
@@ -632,7 +633,7 @@ function playerThink(dt) {
   const settle = () => { const c = [p.x * CELL + CELL / 2, p.y * CELL + CELL / 2]; if (Math.hypot(c[0] - p.px, c[1] - p.py) > 1) { p.glide = [c]; return false; } p.glide = null; return true; };
   if (tgt && tgt.kind === 'npc') {
     if (cheb(p.x, p.y, tgt.x, tgt.y) <= 1) { if (settle()) { faceTo(p, tgt); talk(tgt); } return; }
-    if (planT <= 0 || !p.moving) { planT = .3; planGlide(tgt.x, tgt.y, true); }
+    if (planT <= 0 || !p.moving) { planT = .3; planGlide(p, tgt.x, tgt.y, true); }
     return;
   }
   if (tgt) {
@@ -640,16 +641,16 @@ function playerThink(dt) {
     if (!want) { tgt = null; return; }
     if (cheb(p.x, p.y, tgt.x, tgt.y) <= 1) {
       if (settle()) { faceTo(p, tgt); if (atkCD <= 0 && !atkAnim) startAttack(tgt); }
-    } else if (planT <= 0 || !p.moving) { planT = .25; planGlide(tgt.x, tgt.y, true); }
+    } else if (planT <= 0 || !p.moving) { planT = .25; planGlide(p, tgt.x, tgt.y, true); }
     return;
   }
   if (moveGoal) {
     const key = moveGoal + '|' + moveGoalPt;
-    if (key !== goalKey && planT <= 0) { goalKey = key; planT = .1; if (!planGlide(moveGoal[0], moveGoal[1], false, moveGoalPt) && !pointer.down) moveGoal = null; return; }
+    if (key !== goalKey && planT <= 0) { goalKey = key; planT = .1; if (!planGlide(p, moveGoal[0], moveGoal[1], false, moveGoalPt) && !pointer.down) moveGoal = null; return; }
     if (!p.moving && key === goalKey) {
       const end = moveGoalPt || [moveGoal[0] * CELL + CELL / 2, moveGoal[1] * CELL + CELL / 2];
       if (Math.hypot(end[0] - p.px, end[1] - p.py) < 3 || (p.x === moveGoal[0] && p.y === moveGoal[1] && !moveGoalPt)) { if (!pointer.down) moveGoal = null; return; }
-      if (planT <= 0) { planT = .3; if (!planGlide(moveGoal[0], moveGoal[1], false, moveGoalPt) && !pointer.down) moveGoal = null; }
+      if (planT <= 0) { planT = .3; if (!planGlide(p, moveGoal[0], moveGoal[1], false, moveGoalPt) && !pointer.down) moveGoal = null; }
     }
   } else if (p.moving && !atkAnim) { /* 목표가 없어지면 그 자리에 멈춰요 */ p.glide = null; p.moving = false; }
 }
@@ -698,7 +699,7 @@ function dropLoot(m) {
   const c = m.d.boss ? rnd(dr.coin[0] * 20, dr.coin[1] * 20) : (Math.random() < .7 ? rnd(dr.coin[0], dr.coin[1]) : 0);
   if (c) bag.push({ coin: c });
   const tier = m.zone.tier;
-  const gearOf = () => { const pool = [...Object.keys(WEAPONS).filter(k => WEAPONS[k].tier === tier).map(k => ({ g: 'w', k })), ...Object.keys(ARMORS).filter(k => ARMORS[k].tier === tier).map(k => ({ g: 'a', k }))]; const it = pool[rnd(0, pool.length - 1)]; return { item: { g: it.g, k: it.k, en: 0 }, rare: 1 }; };
+  const gearOf = () => { const pool = [...Object.keys(ARMORS).filter(k => ARMORS[k].tier === tier).map(k => ({ g: 'a', k }))]; const it = pool[rnd(0, pool.length - 1)]; return { item: { g: it.g, k: it.k, en: 0 }, rare: 1 }; };
   if (m.d.boss) {
     bag.push(gearOf());
     const n = rnd(3, 5); for (let i = 0; i < n; i++) bag.push({ item: { i: Math.random() < 1 / 3 ? 'wscroll' : 'ascroll', n: 1 }, rare: 1 });
@@ -762,22 +763,23 @@ function monThink(m, dt) {
   m.atkT -= dt;
   const dist = cheb(m.x, m.y, player.x, player.y);
   if (dist > ACTIVE_R) { m.angry = false; return; }   // 멀리 있는 몬스터는 쉬어요
+  m.planT = (m.planT || 0) - dt;
   if (!dead && !curZone.town && (m.angry || (d.aggro && dist <= 4))) {
     m.angry = true;
-    if (cheb(m.x, m.y, m.home[0], m.home[1]) > 14 && dist > 3) { m.angry = false; }
+    if (cheb(m.x, m.y, m.home[0], m.home[1]) > 14 && dist > 3) { m.angry = false; m.glide = null; }
     else if (dist <= 1) {
-      if (!m.mv && m.atkT <= 0) { faceTo(m, player); monAttack(m); m.atkT = d.boss ? 1.5 : 1.3; }
-      return;
-    } else if (!m.mv && m.atkT <= .4) { stepToward(m, player.x, player.y, true); return; }
+      m.glide = null;
+      if (m.atkT <= 0) { faceTo(m, player); monAttack(m); m.atkT = d.boss ? 1.5 : 1.3; }
+    } else if (m.planT <= 0 || !m.moving) { m.planT = .35 + Math.random() * .2; planGlide(m, player.x, player.y, true); }
     return;
   }
   m.wander -= dt;
-  if (!m.mv && cheb(m.x, m.y, m.home[0], m.home[1]) > 5) { if (m.wander <= 0) { m.wander = .3; stepToward(m, m.home[0], m.home[1], false); } return; }
-  if (m.wander <= 0 && !m.mv) {
+  if (!m.moving && cheb(m.x, m.y, m.home[0], m.home[1]) > 5) { if (m.wander <= 0) { m.wander = .6; planGlide(m, m.home[0], m.home[1], false); } return; }
+  if (m.wander <= 0 && !m.moving) {
     m.wander = 1.5 + Math.random() * 3.5;
-    const [dx, dy] = DIRS[rnd(0, 7)];
-    const nx = m.x + dx, ny = m.y + dy;
-    if (cheb(nx, ny, m.home[0], m.home[1]) <= 5) stepTo(m, nx, ny);
+    const a = Math.random() * Math.PI * 2, r = 1 + Math.random() * 2.5;
+    const tx = m.px + Math.cos(a) * r * CELL, ty = m.py + Math.sin(a) * r * CELL, cx = Math.floor(tx / CELL), cy = Math.floor(ty / CELL);
+    if (cheb(cx, cy, m.home[0], m.home[1]) <= 5 && losClear(m, m.px, m.py, tx, ty)) m.glide = [[tx, ty]];
   }
 }
 function monAttack(m) {
@@ -840,6 +842,7 @@ function useItem(ix) {
 }
 function equip(ix) {
   const it = P.inv[ix]; if (!it || !it.g) return;
+  if (it.g === 'w') { log('깨비샘은 자기 검만 쓸 수 있어요', 'warn'); return; }
   const slot = it.g === 'w' ? 'weapon' : ARMORS[it.k].slot;
   if (slot === 'shield' && P.eq.weapon && WEAPONS[P.eq.weapon.k].two) { log('방망이는 양손 무기라 방패를 들 수 없어요', 'warn'); return; }
   P.inv.splice(ix, 1);
@@ -849,7 +852,7 @@ function equip(ix) {
   dirty = true; renderInv(); updateHUD();
 }
 function unequip(slot) {
-  if (!P.eq[slot]) return;
+  if (!P.eq[slot] || slot === 'weapon') return;   // 검은 뺄 수 없어요
   if (P.inv.length >= INV_MAX) { log('가방이 가득 찼어요', 'warn'); return; }
   P.inv.push(P.eq[slot]); P.eq[slot] = null; SND.ui(); dirty = true; renderInv(); updateHUD();
 }
@@ -955,7 +958,7 @@ function renderChar() {
     `<div class="dim small">잡은 몬스터 ${P.kills.toLocaleString()} · 쓰러진 횟수 ${P.deaths}</div>`;
   $('b-char').classList.toggle('alert', P.pts > 0);
 }
-const SHOP_LIST = [{ i: 'potion' }, ...Object.keys(WEAPONS).filter(k => WEAPONS[k].price).map(k => ({ g: 'w', k })), ...Object.keys(ARMORS).filter(k => ARMORS[k].price).map(k => ({ g: 'a', k }))];
+const SHOP_LIST = [{ i: 'potion' }, ...Object.keys(ARMORS).filter(k => ARMORS[k].price).map(k => ({ g: 'a', k }))];
 let shopTab = 'buy';
 function priceOf(it) { return it.i ? ITEMS[it.i].price : (it.g === 'w' ? WEAPONS : ARMORS)[it.k].price; }
 function sellOf(it) {
@@ -1024,13 +1027,9 @@ function resize() {
   cv.width = Math.round(VW * DPR); cv.height = Math.round(VH * DPR);
   zoom = clamp(Math.min(VW / (CELL * 17), VH / (CELL * 10.2)), .65, 1.6);
 }
-const PSCALE = 90 / 239;   // 깨비샘 그림 크기
-// 프레임마다 손 위치(그림 비율)와 무기 각도
-const HAND = {
-  'p-idle': [.74, .7, .35], 'p-walk1': [.8, .63, .4], 'p-walk2': [.8, .63, .4], 'p-wind': [.2, .5, -1.3],
-  'p-swing': [.93, .57, 1.35], 'p-hurt': [.72, .62, -.2], 'p-win': [.82, .52, -.25],
-};
-const WLEN = { dagger: 34, sword: 52, club: 54 };
+const PSCALE = 92 / 300;   // 깨비샘 그림 크기
+// 프레임마다 몸 가운데 위치(그림 너비 비율): 검이 한쪽으로 뻗어도 몸이 흔들리지 않게
+const PANCHOR = { 'p-idle': .49, 'p-walk1': .534, 'p-walk2': .539, 'p-wind': .64, 'p-swing': .385, 'p-hurt': .515, 'p-dead': .5, 'p-win': .542 };
 function drawSprite(name, x, y, h, flip, opts = {}) {
   const im = IMG[name]; if (!im) return;
   const s = h / im.height * (opts.scale || 1), w = im.width * s, hh = im.height * s;
@@ -1057,28 +1056,16 @@ function drawPlayer() {
   shadow(x, y, 22);
   const fr = playerFrame(), im = IMG[fr]; if (!im) return;
   const s = PSCALE, w = im.width * s, h = im.height * s, flip = player.face < 0;
+  const ax = (PANCHOR[fr] || .5) * w, it = P.eq.weapon;
   g.save(); g.translate(x, y); if (flip) g.scale(-1, 1);
-  if (dead) { g.drawImage(im, -w / 2, -h, w, h); g.restore(); return; }
-  g.drawImage(im, -w / 2, -h, w, h);
-  // 무기
-  const it = P.eq.weapon;
-  if (it && HAND[fr]) {
-    const wi = IMG['w-' + it.k]; const wd = WEAPONS[it.k];
-    if (wi) {
-      let [hx, hy, rot] = HAND[fr];
-      if (atkAnim && fr === 'p-swing') { const k = clamp((atkAnim.t - atkAnim.wind) / .07, 0, 1); rot = -1.3 + (1.35 + 1.3) * (1 - Math.pow(1 - k, 3)); }
-      const L = WLEN[wd.type], sc = L / Math.hypot(wi.width, wi.height) * 1.25;
-      g.save(); g.translate(-w / 2 + hx * w, -h + hy * h); g.rotate(rot);
-      if (it.en >= 7) { g.shadowColor = it.en >= 9 ? '#ff6ad5' : '#7fd8ff'; g.shadowBlur = 10 + (it.en - 7) * 4; }
-      g.drawImage(wi, -wi.width * sc * .2, -wi.height * sc * .8, wi.width * sc, wi.height * sc);
-      g.restore();
-      // 휘두르는 잔상
-      if (atkAnim && fr === 'p-swing' && atkAnim.t - atkAnim.wind < .1) {
-        const a = 1 - (atkAnim.t - atkAnim.wind) / .1;
-        g.save(); g.translate(-w / 2 + .5 * w, -h + .55 * h); g.globalAlpha = a * .7; g.strokeStyle = '#fff'; g.lineWidth = wd.type === 'club' ? 9 : 6; g.lineCap = 'round';
-        g.beginPath(); g.arc(0, 0, L * 1.1, -2.1, .9); g.stroke(); g.restore();
-      }
-    }
+  if (it && it.en >= 7 && !dead) { g.shadowColor = it.en >= 9 ? '#ff6ad5' : '#7fd8ff'; g.shadowBlur = 8 + (it.en - 7) * 4; }   // 높게 강화한 검은 빛나요
+  g.drawImage(im, -ax, -h, w, h);
+  g.shadowBlur = 0;
+  // 휘두르는 잔상
+  if (atkAnim && fr === 'p-swing' && atkAnim.t - atkAnim.wind < .1) {
+    const a = 1 - (atkAnim.t - atkAnim.wind) / .1;
+    g.globalAlpha = a * .7; g.strokeStyle = '#fff'; g.lineWidth = 6; g.lineCap = 'round';
+    g.beginPath(); g.arc(4, -h * .45, 52, -2.1, .9); g.stroke(); g.globalAlpha = 1;
   }
   g.restore();
 }
@@ -1086,8 +1073,8 @@ function drawMon(m) {
   const d = m.d; let x = m.px + m.kx, y = m.py + CELL * .32 + m.ky;
   if (m.lunge > 0) x += m.face * 8 * Math.sin((1 - m.lunge / .2) * Math.PI);
   shadow(x, y, d.h * .3);
-  const fr = 'm-' + m.type + '-' + ((m.mv ? m.walk : Math.floor(performance.now() / 600 + m.id)) % 2);
-  const bob = m.mv ? 0 : Math.sin(performance.now() / 300 + m.id) * 1.5;
+  const fr = 'm-' + m.type + '-' + ((m.moving ? m.walk : Math.floor(performance.now() / 600 + m.id)) % 2);
+  const bob = m.moving ? 0 : Math.sin(performance.now() / 300 + m.id) * 1.5;
   const sq = m.sq;
   const opts = { flash: m.flash, sx: 1 + .14 * sq, sy: 1 - .12 * sq };
   if (m.dying) { const k = m.dying / .55; opts.rot = m.face * -1.4 * Math.min(1, k * 1.6); opts.alpha = k > .5 ? (Math.floor(k * 14) % 2 ? .25 : .9) : 1; }
@@ -1337,7 +1324,7 @@ function update(dt) {
       u.flash = Math.max(0, u.flash - dt); u.kx *= Math.pow(.0005, dt); u.ky *= Math.pow(.0005, dt); u.sq = Math.max(0, u.sq - dt / .15);
       if (u.lunge > 0) u.lunge -= dt; u.dmgShow -= dt;
       if (u.dying) { u.dying += dt; if (u.dying > .55) removeUnit(u); }
-      else monThink(u, dt);
+      else { monThink(u, dt); glideUpdate(u, dt); }
     }
   }
   // 플레이어
@@ -1347,7 +1334,7 @@ function update(dt) {
     if (!atkAnim.hit && atkAnim.t >= atkAnim.wind) { atkAnim.hit = true; const m = atkAnim.m; if (!m.dying && units.includes(m) && cheb(player.x, player.y, m.x, m.y) <= 1) doHit(m, atkAnim.type); }
     if (atkAnim.t > atkAnim.wind + .16) atkAnim = null;
   }
-  glideUpdate(dt);
+  glideUpdate(player, dt);
   playerThink(dt);
   // 회복: 가만히 있으면 더 빨리
   idleT += dt; regenT += dt;
@@ -1390,7 +1377,15 @@ function renderCreate() {
   for (const k of ['str', 'dex', 'con']) $('c-' + k).textContent = cStats[k];
   $('c-go').disabled = createPts > 0;
 }
+// 예전 저장: 다른 무기는 엽전으로 바꾸고, 낀 무기 강화 단계는 깨비샘의 검으로 옮겨요
+function migrateWeapons() {
+  const w = P.eq.weapon;
+  if (!w || w.k !== 'sword1') P.eq.weapon = { g: 'w', k: 'sword1', en: w ? w.en : 0 };
+  let c = 0; P.inv = P.inv.filter(it => { if (it.g === 'w') { c += sellOf(it); return false; } return true; });
+  if (c) { P.coins += c; log(`이제 깨비샘은 자기 검만 써요. 가방의 다른 무기는 엽전 ${c}냥으로 바꿨어요`, 'sys'); }
+}
 function startGame() {
+  migrateWeapons();
   $('title').classList.add('hidden'); $('create').classList.add('hidden');
   document.body.classList.add('playing');
   $('hud').classList.remove('hidden');

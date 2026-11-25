@@ -2,11 +2,12 @@
 'use strict';
 const CELL = 56;   // 한 칸 크기 (월드 픽셀)
 
-// 무기: 기본 데미지, 한 대 간격(초), 종류. 방망이는 양손이라 방패를 못 들어요.
+// 무기: 캐릭터마다 자기 무기 하나만 써요 (깨비샘 = 검). 무기는 바꿀 수 없고 강화만 해요.
+// 나머지는 예전 저장 호환용으로만 남겨 둬요.
 const WEAPONS = {
-  dagger1: { name: '대나무 칼',     dmg: 3,  spd: 0.4, type: 'dagger', tier: 1, price: 60 },
-  sword1:  { name: '나무 검',       dmg: 5,  spd: 0.6, type: 'sword',  tier: 1, price: 80 },
-  club1:   { name: '나무 방망이',   dmg: 8,  spd: 0.9, type: 'club',   tier: 1, price: 120, two: true },
+  dagger1: { name: '대나무 칼',     dmg: 3,  spd: 0.4, type: 'dagger', tier: 1 },
+  sword1:  { name: '깨비샘의 검',   dmg: 5,  spd: 0.6, type: 'sword',  tier: 1 },
+  club1:   { name: '나무 방망이',   dmg: 8,  spd: 0.9, type: 'club',   tier: 1, two: true },
   dagger2: { name: '무쇠 단도',     dmg: 5,  spd: 0.4, type: 'dagger', tier: 2 },
   sword2:  { name: '무쇠 검',       dmg: 8,  spd: 0.6, type: 'sword',  tier: 2 },
   club2:   { name: '무쇠 방망이',   dmg: 12, spd: 0.9, type: 'club',   tier: 2, two: true },
