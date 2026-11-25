@@ -11,7 +11,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 
 /* ================= 그림 ================= */
 const IMG = {}, WHITE = {};
-const IMG_LIST = ['a-idle', 'a-walk1', 'a-walk2', 'a-wind', 'a-swing', 'a-hurt', 'a-dead', 'a-win', 'arrow', 'fence-h', 'fence-post', 'fence-corner', 'gate-front', 'gate-side', 'gate-side-l', 'fence-side', 'fence-lamp', 'p-idle', 'p-walk-0', 'p-walk-1', 'p-walk-2', 'p-walk-3', 'p-walk-4', 'p-walk-5', 'p-wind', 'p-swing', 'p-hurt', 'p-dead', 'p-win', 'npc-shop', 'npc-guide',
+const IMG_LIST = ['a-walk-0', 'a-walk-1', 'a-walk-2', 'a-walk-3', 'a-walk-4', 'a-walk-5', 'a-idle', 'a-walk1', 'a-walk2', 'a-wind', 'a-swing', 'a-hurt', 'a-dead', 'a-win', 'arrow', 'fence-h', 'fence-post', 'fence-corner', 'gate-front', 'gate-side', 'gate-side-l', 'fence-side', 'fence-lamp', 'p-idle', 'p-walk-0', 'p-walk-1', 'p-walk-2', 'p-walk-3', 'p-walk-4', 'p-walk-5', 'p-wind', 'p-swing', 'p-hurt', 'p-dead', 'p-win', 'npc-shop', 'npc-guide',
   ...Object.keys(MONS).flatMap(k => ['m-' + k + '-0', 'm-' + k + '-1']),
   ...Object.keys(WEAPONS).map(k => 'w-' + k), ...Object.keys(ARMORS).map(k => 'a-' + k),
   'i-potion', 'i-haste', 'i-wscroll', 'i-ascroll', 'i-coin', 'i-coins', 'i-box', ...Object.keys(PROPS)];
@@ -1128,7 +1128,7 @@ function resize() {
 const PSCALE = 92 / 300 * UK;   // 깨비샘 그림 크기
 // 프레임마다 몸 가운데 위치(그림 너비 비율): 검이 한쪽으로 뻗어도 몸이 흔들리지 않게
 const PANCHOR = { 'p-walk-0': .486, 'p-walk-1': .488, 'p-walk-2': .485, 'p-walk-3': .481, 'p-walk-4': .483, 'p-walk-5': .478, 'p-idle': .49, 'p-walk1': .534, 'p-walk2': .539, 'p-wind': .64, 'p-swing': .385, 'p-hurt': .515, 'p-dead': .5, 'p-win': .542,
-  'a-idle': .49, 'a-walk1': .485, 'a-walk2': .484, 'a-wind': .407, 'a-swing': .451, 'a-hurt': .506, 'a-dead': .442, 'a-win': .493 };
+  'a-walk-0': .479, 'a-walk-1': .489, 'a-walk-2': .494, 'a-walk-3': .477, 'a-walk-4': .472, 'a-walk-5': .482, 'a-idle': .49, 'a-walk1': .485, 'a-walk2': .484, 'a-wind': .407, 'a-swing': .451, 'a-hurt': .506, 'a-dead': .442, 'a-win': .493 };
 function drawSprite(name, x, y, h, flip, opts = {}) {
   const im = IMG[name]; if (!im) return;
   const s = h / im.height * (opts.scale || 1), w = im.width * s, hh = im.height * s;
@@ -1144,13 +1144,13 @@ function shadow(x, y, r) { g.fillStyle = 'rgba(20,30,10,.28)'; g.beginPath(); g.
 
 // 걷기 6장: 한 걸음 주기 (걸은 거리에 맞춰 넘겨요)
 const WALK = ['p-walk-0', 'p-walk-1', 'p-walk-2', 'p-walk-3', 'p-walk-4', 'p-walk-5'];
-const AWALK = ['a-walk1', 'a-idle', 'a-walk2', 'a-idle'];
+const AWALK = ['a-walk-0', 'a-walk-1', 'a-walk-2', 'a-walk-3', 'a-walk-4', 'a-walk-5'];
 function playerFrame() {
   if (isBow()) {
     if (dead) return 'a-dead';
     if (hurtT > 0 && !atkAnim) return 'a-hurt';
     if (atkAnim) return atkAnim.t < atkAnim.wind ? 'a-wind' : 'a-swing';
-    if (player.moving) return AWALK[Math.floor((player.dist || 0) / (CELL * .3)) % 4];
+    if (player.moving) return AWALK[Math.floor((player.dist || 0) / (CELL * .16)) % 6];
     if (winT > 0) return 'a-win';
     return 'a-idle';
   }
