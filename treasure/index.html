@@ -1424,6 +1424,10 @@ function fit() {
     $('myRes').style.setProperty('--rw', Math.round(Math.max(34, cw * .55)) + 'px');
     const g = $('game');
     if (short) return $('table').getBoundingClientRect().bottom <= H - 4 && g.scrollWidth <= W + 1;
+    if (wide) { // 아래 내 칸과 버튼이 화면 안에 다 들어오는지 실제 위치로 확인
+      const bot = Math.max($('mine').getBoundingClientRect().bottom, $('actions').getBoundingClientRect().bottom);
+      if (bot > H - 8 || $('status').getBoundingClientRect().top < 0) return false;
+    }
     return g.scrollHeight <= H + 1 && g.scrollWidth <= W + 1 && $('table').scrollWidth <= W - 8;
   };
   while (hi - lo > 1) { const m = (lo + hi) >> 1; if (ok(m)) lo = m; else hi = m; }
