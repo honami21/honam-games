@@ -114,6 +114,8 @@
   .iv .tn { width:22px; height:22px; border-radius:50%; background-size:cover; position:relative; }
   .iv .tn i { position:absolute; right:-5px; bottom:-4px; font-style:normal; font-size:11px; line-height:calc(14px - .12em); min-width:14px; padding:.12em 2px 0; border-radius:7px; background:#fff; border:1.5px solid var(--ink); text-align:center; }
   .iv.zero .tn { opacity:.3; }
+  .inv .lbl { display:none; flex-direction:column; gap:4px; font-size:14px; color:var(--ink2); text-align:right; }
+  .inv .lbl span { height:24px; line-height:24px; } .inv .lbl span + span { height:36px; line-height:36px; }
   .rescnt { font-size:12px; color:var(--ink2); white-space:nowrap; margin-left:2px; }
   .bn.c0 { background:var(--c0); color:var(--ink) !important; } .bn.c1 { background:var(--c1); } .bn.c2 { background:var(--c2); } .bn.c3 { background:var(--c3); } .bn.c4 { background:var(--c4); }
 
@@ -123,6 +125,7 @@
   #table { display:flex; gap:10px; align-items:flex-start; justify-content:center; }
   #board { display:flex; flex-direction:column; gap:calc(var(--cw) * .07); }
   .row { display:flex; gap:calc(var(--cw) * .07); }
+  #boardCol { display:flex; flex-direction:column; align-items:center; gap:calc(var(--cw) * .1); }
   #side { display:flex; flex-direction:column; gap:8px; align-items:center; }
   #guests { display:flex; flex-direction:column; gap:calc(var(--cw) * .06); }
   #bank { display:grid; grid-template-columns:repeat(3, auto); gap:6px 8px; background:rgba(40,22,40,.45); border-radius:16px; padding:8px; }
@@ -135,6 +138,51 @@
   body.many .pcard .inv { order:3; flex-basis:100%; }
   body.narrow .pcard .who { max-width:70%; }
   body.narrow .pcard .inv { order:3; flex-basis:100%; }
+  /* 넓은 화면: 상대는 왼쪽·위·오른쪽, 보물은 판 아래 한 줄, 나는 아래 */
+  body.wide #game { display:grid; grid-template-columns:1fr auto 1fr; grid-template-rows:auto auto auto auto;
+    grid-template-areas:"t t t" "st st st" "l tb r" ". mi ."; justify-items:center; align-items:center; column-gap:14px; row-gap:6px; align-content:center; }
+  body.wide #players { display:contents; }
+  body.wide #status { grid-area:st; }
+  body.wide #table { grid-area:tb; }
+  body.wide #mine { grid-area:mi; }
+  body.wide #side { position:relative; align-self:stretch; justify-content:flex-start; }
+  body.wide #mine { justify-self:end; margin-right:calc(var(--sidew, 0px) + 12px); }
+  body.wide #side > #actions { position:absolute; left:0; top:calc(100% + 10px); flex-wrap:nowrap; justify-content:flex-start; zoom:var(--pz, 1); }
+  body.wide .pcard.pos-t { grid-area:t; width:min(440px, 100%); flex:none; }
+  body.wide .pcard.pos-b { grid-area:mi; width:min(440px, 100%); flex:none; }
+  body.wide .pcard.pos-l, body.wide .pcard.pos-r { flex:none; width:132px; flex-direction:column; align-items:center; gap:6px; padding:10px 8px 12px; }
+  body.wide .pcard.pos-l { grid-area:l; justify-self:end; } body.wide .pcard.pos-r { grid-area:r; justify-self:start; }
+  body.wide .pcard.pos-l .who, body.wide .pcard.pos-r .who { max-width:100%; width:100%; text-align:center; }
+  body.wide .pcard.pos-l .dot, body.wide .pcard.pos-r .dot { position:absolute; left:8px; top:13px; width:14px; height:14px; border-width:2.5px; }
+  body.wide .pcard.pos-l .nm, body.wide .pcard.pos-r .nm { padding:0 4px 0 16px; }
+  body.wide .pcard.pos-l .pts b, body.wide .pcard.pos-r .pts b { font-size:28px; }
+  body.wide .pcard.pos-l .inv, body.wide .pcard.pos-r .inv { display:flex; flex-direction:column; align-items:center; gap:7px; border-top:2px dashed var(--cream2); padding-top:8px; width:100%; }
+  body.wide .pcard.pos-l .iv, body.wide .pcard.pos-r .iv { flex-direction:row; gap:10px; }
+  body.wide .pcard.pos-l .iv .bn, body.wide .pcard.pos-r .iv .bn { width:36px; height:26px; font-size:17px; line-height:20px; border-radius:6px; }
+  body.wide .pcard.pos-l .iv .tn, body.wide .pcard.pos-r .iv .tn { width:34px; height:34px; }
+  body.wide .pcard.pos-l .iv .tn i, body.wide .pcard.pos-r .iv .tn i { font-size:13px; min-width:17px; line-height:calc(15px - .12em); right:-8px; }
+  body.wide .pcard.pos-l .rescnt, body.wide .pcard.pos-r .rescnt, body.wide .pcard.pos-l .xchip, body.wide .pcard.pos-r .xchip { font-size:13px; margin:0; }
+  body.wide .pcard.pos-l .tm, body.wide .pcard.pos-r .tm { position:static; min-width:0; text-align:center; margin:0; }
+  body.wide .pcard.pos-l .tm:empty, body.wide .pcard.pos-r .tm:empty { display:none; }
+  body.wide .pcard.turn.pos-l, body.wide .pcard.turn.pos-r { transform:none; }
+  body.wide #mine, body.wide .pcard { zoom:var(--pz, 1); }
+  body.wide #mine { width:auto; max-width:100%; flex-wrap:nowrap; padding:6px 16px; }
+  body.wide #boardCol > #bank { align-self:stretch; margin-left:calc(var(--cw) * 1.07); justify-content:center; }
+  body.wide #bank { grid-template-columns:repeat(6, auto); gap:8px 16px; padding:8px 16px; }
+  body.wide #bank .tk { width:max(40px, calc(var(--cw) * .56)); height:max(40px, calc(var(--cw) * .56)); }
+  body.wide .pcard.pos-t, body.wide .pcard.pos-b { flex-wrap:nowrap; }
+  body.wide .pcard.pos-t .inv, body.wide .pcard.pos-b .inv { order:0; flex-basis:auto; flex:1; justify-content:flex-end; }
+  body.wide .pcard.pos-t .who, body.wide .pcard.pos-b .who { display:flex; align-items:baseline; gap:8px; max-width:40%; }
+  body.wide .pcard.pos-t { width:auto; max-width:100%; padding:6px 16px; gap:10px; }
+  body.wide .pcard.pos-t .who { display:block; max-width:8em; text-align:center; padding-right:12px; border-right:2px dashed var(--cream2); }
+  body.wide .pcard.pos-t .pts { line-height:1; } body.wide .pcard.pos-t .pts b { font-size:28px; }
+  body.wide .pcard.pos-t .inv { flex:none; gap:10px; align-items:flex-end; }
+  body.wide .pcard.pos-t .iv { gap:4px; }
+  body.wide .pcard.pos-t .iv .bn { width:38px; height:24px; font-size:16px; line-height:18px; border-radius:6px; }
+  body.wide .pcard.pos-t .iv .tn { width:36px; height:36px; }
+  body.wide .pcard.pos-t .iv .tn i { font-size:14px; min-width:18px; line-height:calc(16px - .12em); right:-7px; }
+  body.wide .pcard.pos-t .inv .lbl { display:flex; }
+  body.wide .pcard.pos-t .tm { margin-left:4px; } body.wide .pcard.pos-t .tm:empty { display:none; }
   /* 낮고 넓은 화면(휴대폰 가로): 왼쪽에 사람·내 보물, 오른쪽에 판 */
   body.short #game { display:grid; grid-template-columns:minmax(190px, 270px) auto; grid-template-rows:auto auto auto 1fr auto;
     grid-template-areas:"pl tb" "st tb" "mi tb" ". tb" "ac tb"; justify-content:center; align-items:start; column-gap:10px; row-gap:5px; }
@@ -160,6 +208,7 @@
   body.short.many .pcard .tm { display:none; }
   body.short.many .iv .tn { width:17px; height:17px; } body.short.many .iv .bn { width:17px; height:13px; font-size:10px; line-height:9px; }
   body.short #mine { padding:4px 6px; border-radius:12px; }
+  body.short #myWho > div { display:flex; gap:6px; align-items:baseline; } body.short #myWho .nm { font-size:15px; } body.short #myWho .pts b { font-size:20px; }
   body.short #myWho { border-right:none; border-bottom:2px dashed var(--cream2); padding:0 0 4px; justify-content:center; }
   body.short #myInv { gap:6px; } body.short #myInv .iv .tn { width:30px; height:30px; } body.short #myInv .iv .bn { width:30px; height:20px; font-size:14px; line-height:15px; }
   body.short #myInv .iv .tn i { font-size:12px; min-width:16px; line-height:calc(14px - .12em); }
@@ -378,7 +427,7 @@
   <div id="status"></div>
   <div id="table">
     <div id="posts" class="hidden"></div>
-    <div id="board"></div>
+    <div id="boardCol"><div id="board"></div></div>
     <div id="side"><div id="guests"></div><div id="bank"></div></div>
   </div>
   <div id="mine">
@@ -1002,14 +1051,18 @@ function renderPlayers() {
   document.documentElement.style.setProperty('--np', Math.max(1, shown));
   document.body.classList.toggle('many', st.length > 2);
   let h = '';
-  st.forEach((x, i) => {
+  const order = st.map((x, i) => i), start = me == null ? 0 : me + 1;
+  const others = order.slice(start).concat(order.slice(0, start)).filter(i => !(inGame && i === me));
+  const POS = [[], ['l'], ['l', 'r'], ['l', 't', 'r'], ['l', 't', 'r', 'b']][others.length] || [];
+  others.forEach((i, k) => {
+    const x = st[i], pos = POS[k] || 't';
     const pl = inGame ? room.p[i] : null;
     const tag = i === me && x.name !== '나' ? '<span class="me">나</span>' : (x.left || (x.cpu && !offline())) ? '<span class="cpu">컴퓨터</span>' : '';
     const off = !offline() && role !== 'watch' && !x.cpu && !x.left && x.id !== myId && Date.now() - (hbSeen[x.id] || Date.now()) > 75000 ? '<span class="off">연결 끊김?</span>' : '';
     if (pl && i === me) return; // 내 자리는 아래 내 칸에 크게 보여요
     const showInv = !!pl;
-    const inv = showInv ? invHtml(pl) + (pl.res.length ? `<span class="rescnt">찜 ${pl.res.length}</span>` : '') + (pl.guests.length ? `<span class="rescnt">손님 ${pl.guests.length}</span>` : '') + extraHtml(pl, i) : '';
-    h += `<div class="pcard${playing && room.turn === i ? ' turn' : ''}"><span class="dot c${x.col}"></span><div class="who"><div class="nm">${esc(x.name)}${tag}</div><div class="pts"><b>${pl ? G.score(pl) : 0}</b>점</div></div><div class="inv">${inv}</div><div class="tm" data-tm="${i}"></div>${off}</div>`;
+    const inv = showInv ? '<span class="lbl"><span>할인</span><span>보물</span></span>' + invHtml(pl) + (pl.res.length ? `<span class="rescnt">찜 ${pl.res.length}</span>` : '') + (pl.guests.length ? `<span class="rescnt">손님 ${pl.guests.length}</span>` : '') + extraHtml(pl, i) : '';
+    h += `<div class="pcard pos-${pos}${playing && room.turn === i ? ' turn' : ''}"><span class="dot c${x.col}"></span><div class="who"><div class="nm">${esc(x.name)}${tag}</div><div class="pts"><b>${pl ? G.score(pl) : 0}</b>점</div></div><div class="inv">${inv}</div><div class="tm" data-tm="${i}"></div>${off}</div>`;
   });
   if ($('players').dataset.h !== h) { $('players').innerHTML = h; $('players').dataset.h = h; }
 }
@@ -1356,13 +1409,25 @@ function fit() {
   const narrow = W / H < 1.05, short = !narrow && H < 560;
   document.body.classList.toggle('narrow', narrow);
   document.body.classList.toggle('short', short);
+  const wide = !narrow && !short;
+  document.body.classList.toggle('wide', wide);
+  const bankHome = wide ? $('boardCol') : $('side');
+  if ($('bank').parentNode !== bankHome) bankHome.appendChild($('bank'));
+  const actHome = wide ? $('side') : $('game');
+  if ($('actions').parentNode !== actHome) actHome.appendChild($('actions'));
   const root = document.documentElement;
-  let lo = 34, hi = 150;
+  let lo = 34, hi = 240;
   const ok = cw => {
     root.style.setProperty('--cw', cw + 'px');
+    if (wide) root.style.setProperty('--sidew', $('side').offsetWidth + 'px');
+    root.style.setProperty('--pz', wide ? Math.min(1.35, Math.max(1, cw / 115)).toFixed(3) : 1);
     $('myRes').style.setProperty('--rw', Math.round(Math.max(34, cw * .55)) + 'px');
     const g = $('game');
     if (short) return $('table').getBoundingClientRect().bottom <= H - 4 && g.scrollWidth <= W + 1;
+    if (wide) { // 아래 내 칸과 버튼이 화면 안에 다 들어오는지 실제 위치로 확인
+      const bot = Math.max($('mine').getBoundingClientRect().bottom, $('actions').getBoundingClientRect().bottom);
+      if (bot > H - 8 || $('status').getBoundingClientRect().top < 0) return false;
+    }
     return g.scrollHeight <= H + 1 && g.scrollWidth <= W + 1 && $('table').scrollWidth <= W - 8;
   };
   while (hi - lo > 1) { const m = (lo + hi) >> 1; if (ok(m)) lo = m; else hi = m; }
