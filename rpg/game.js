@@ -661,6 +661,19 @@ function findDropSpot(cx, cy) {
   for (let r = 1; r < 3; r++) for (let i = 0; i < 12; i++) { const x = cx + rnd(-r, r), y = cy + rnd(-r, r); if (!blocked(x, y) && !drops.some(d => d.x === x && d.y === y)) return [x, y]; }
   return null;
 }
+// 떨어진 물건은 잠깐 뒤 저절로 날아와 가방에 들어가요 (가방이 가득 차면 땅에 남아요)
+const FLY_AT = d => d.rare ? 1.1 : .6, FLY_T = .28;
+function autoLoot() {
+  for (const d of drops.slice()) {
+    if (d.stay || d.t < FLY_AT(d) + FLY_T) continue;
+    if (!takeDrop(d)) { d.stay = 1; continue; }
+  }
+}
+function takeDrop(d) {
+  if (d.coin) { P.coins += d.coin; SND.coin(); addNum(player.px, player.py - 70, '+' + d.coin + ' 엽전', 'coin'); }
+  else { if (!giveItem(d.item)) { if (!d.warned) { log('가방이 가득 찼어요', 'warn'); d.warned = 1; } return false; } SND.pick(); log(`<b>${josa(itemName(d.item), '을를')}</b> 주웠어요`, 'item'); }
+  drops.splice(drops.indexOf(d), 1); dirty = true; updateHUD(); return true;
+}
 function pickupAt(x, y) {
   for (const d of drops.slice()) {
     if (d.x !== x || d.y !== y || d.t < .45) continue;
@@ -1046,6 +1059,7 @@ function drawDrop(d) {
   const x = d.x * CELL + CELL / 2, y = d.y * CELL + CELL / 2 + 8;
   let px = x, py = y;
   if (d.t < .45) { const k = d.t / .45; px = d.fx + (x - d.fx) * k; py = d.fy + (y - d.fy) * k - Math.sin(k * Math.PI) * 40; }
+  else if (!d.stay && d.t > FLY_AT(d)) { const k = Math.min(1, (d.t - FLY_AT(d)) / FLY_T), e = k * k; px = x + (player.px - x) * e; py = y + (player.py - 46 - y) * e - Math.sin(k * Math.PI) * 30; }
   const name = d.coin ? (d.coin >= 10 ? 'i-coins' : 'i-coin') : gearImg(d.item);
   const blink = d.life - d.t < 10 && Math.floor(d.t * 6) % 2;
   if (!blink) drawSprite(name, px, py + 6, d.coin ? 22 : 30, false);
@@ -1284,7 +1298,7 @@ function update(dt) {
   // 효과
   for (const f of fx) f.t += dt; fx = fx.filter(f => f.t < f.d);
   for (const n of nums) n.t += dt; nums = nums.filter(n => n.t < .9);
-  for (const d of drops) d.t += dt; drops = drops.filter(d => d.t < d.life);
+  for (const d of drops) d.t += dt; drops = drops.filter(d => d.t < d.life); autoLoot();
   // 마우스 아래 몬스터
   { const [wx, wy] = screenToWorld(pointer.x, pointer.y); hoverMon = unitAt(wx, wy, ['mon']); }
   // 캐릭터를 가리는 장식은 반투명하게

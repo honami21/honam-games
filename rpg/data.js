@@ -101,8 +101,8 @@ const PROPS = {
   'c-pine': { w: 150, fw: 1, fh: 1 }, 'c-rock': { w: 130, fw: 2, fh: 1 }, 'c-shells': { w: 70, fw: 0, fh: 0, flat: 1 },
   'c-dock': { w: 190, fw: 0, fh: 0, flat: 1 }, 'c-boat': { w: 150, fw: 2, fh: 1 }, 'c-lighthouse': { w: 130, fw: 2, fh: 1 },
   'c-cave': { w: 190, fw: 3, fh: 1 }, 'c-drift': { w: 100, fw: 2, fh: 1 },
-  'l-bridge': { w: 200, fw: 0, fh: 0, flat: 1 }, 'l-cliff': { w: 170, fw: 3, fh: 1 }, 'l-wall': { w: 110, fw: 2, fh: 1 },
-  'l-sign': { w: 76, fw: 1, fh: 1 }, 'l-stones': { w: 150, fw: 0, fh: 0, flat: 1 }, 'l-pine': { w: 170, fw: 2, fh: 1 },
+  'l-bridge': { w: 250, fw: 0, fh: 0, flat: 1 }, 'l-cliff': { w: 170, fw: 3, fh: 1 }, 'l-wall': { w: 110, fw: 2, fh: 1 },
+  'l-sign': { w: 76, fw: 1, fh: 1 }, 'l-stones': { w: 190, fw: 0, fh: 0, flat: 1 }, 'l-pine': { w: 170, fw: 2, fh: 1 },
   'l-pavilion': { w: 200, fw: 3, fh: 2 }, 'l-reed': { w: 86, fw: 1, fh: 1 },
 };
 
