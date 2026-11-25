@@ -11,7 +11,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 
 /* ================= 그림 ================= */
 const IMG = {}, WHITE = {};
-const IMG_LIST = ['fence-h', 'fence-post', 'fence-corner', 'gate-front', 'fence-side', 'fence-lamp', 'p-idle', 'p-walk-0', 'p-walk-1', 'p-walk-2', 'p-walk-3', 'p-walk-4', 'p-walk-5', 'p-wind', 'p-swing', 'p-hurt', 'p-dead', 'p-win', 'npc-shop', 'npc-guide',
+const IMG_LIST = ['fence-h', 'fence-post', 'fence-corner', 'gate-front', 'gate-side', 'gate-side-l', 'fence-side', 'fence-lamp', 'p-idle', 'p-walk-0', 'p-walk-1', 'p-walk-2', 'p-walk-3', 'p-walk-4', 'p-walk-5', 'p-wind', 'p-swing', 'p-hurt', 'p-dead', 'p-win', 'npc-shop', 'npc-guide',
   ...Object.keys(MONS).flatMap(k => ['m-' + k + '-0', 'm-' + k + '-1']),
   ...Object.keys(WEAPONS).map(k => 'w-' + k), ...Object.keys(ARMORS).map(k => 'a-' + k),
   'i-potion', 'i-wscroll', 'i-ascroll', 'i-coin', 'i-coins', 'i-box', ...Object.keys(PROPS)];
@@ -187,7 +187,7 @@ function placeProp(name, cx, cy, force) {   // cx,cy = 밑동 가운데 칸
 // 마을 울타리 (네모, 동서남북에 문)
 const TOWN_HX = 28, TOWN_HY = 17;
 function buildTownWall(cx, cy) {
-  const FS = .167, GS = .33, top = cy - TOWN_HY, bot = cy + TOWN_HY, lef = cx - TOWN_HX, rig = cx + TOWN_HX;
+  const FS = .167, GS = 56 / 250, top = cy - TOWN_HY, bot = cy + TOWN_HY, lef = cx - TOWN_HX, rig = cx + TOWN_HX;
   const add = (name, x, y, sc) => { const im = IMG[name]; if (!im) return; M.props.push({ kind: 'prop', name, x, y, w: im.width * sc, h: im.height * sc, fade: 1 }); };
   const shut = (x, y) => { if (inMap(x, y)) { const i = idx(x, y); M.block[i] = 1; M.keep[i] = 1; } };
   const gate = (x, y) => (x === cx && (y === top || y === bot)) || (y === cy && (x === lef || x === rig));
@@ -202,8 +202,8 @@ function buildTownWall(cx, cy) {
   for (const col of [lef, rig]) {
     for (let y = Y(top) + 10; y < Y(bot) - 4; y += 10) if (Math.abs(y - Y(cy)) > CELL) add('fence-side', X(col), y, FS);
     for (let r = top + 1; r < bot; r++) if (Math.abs(r - cy) > 1) add('fence-post', X(col), Y(r), FS);
-    // 동서 문: 짚 모자 기둥 두 개
-    add('fence-corner', X(col), Y(cy - 1) + 2, .17); add('fence-corner', X(col), Y(cy + 1) + 2, .17);
+    // 동서 문: 옆에서 본 기와 대문 (문짝이 마을 안쪽으로 열려요)
+    add(col === lef ? 'gate-side-l' : 'gate-side', X(col), Y(cy + 1) + 4, GS);
   }
   for (const [c, r] of [[lef, top], [rig, top], [lef, bot], [rig, bot]]) add('fence-corner', X(c), Y(r) + 2, .17);
   // 문 안쪽 등불, 문 바깥 장승
