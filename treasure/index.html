@@ -135,6 +135,37 @@
   body.many .pcard .inv { order:3; flex-basis:100%; }
   body.narrow .pcard .who { max-width:70%; }
   body.narrow .pcard .inv { order:3; flex-basis:100%; }
+  /* 넓은 화면: 상대는 왼쪽·위·오른쪽, 보물은 판 아래 한 줄, 나는 아래 */
+  body.wide #game { display:grid; grid-template-columns:1fr auto 1fr; grid-template-rows:auto auto auto auto auto;
+    grid-template-areas:"t t t" "st st st" "l tb r" "bk bk bk" "mi mi mi" "ac ac ac"; justify-items:center; align-items:center; column-gap:14px; row-gap:6px; align-content:start; }
+  body.wide #players { display:contents; }
+  body.wide #status { grid-area:st; }
+  body.wide #table { grid-area:tb; }
+  body.wide #bankRow { grid-area:bk; }
+  body.wide #mine { grid-area:mi; }
+  body.wide #actions { grid-area:ac; }
+  body.wide .pcard.pos-t { grid-area:t; width:min(440px, 100%); flex:none; }
+  body.wide .pcard.pos-b { grid-area:mi; width:min(440px, 100%); flex:none; }
+  body.wide .pcard.pos-l, body.wide .pcard.pos-r { flex:none; width:clamp(180px, 17vw, 250px); flex-direction:column; align-items:stretch; gap:8px; padding:10px 10px 12px; }
+  body.wide .pcard.pos-l { grid-area:l; justify-self:end; } body.wide .pcard.pos-r { grid-area:r; justify-self:start; }
+  body.wide .pcard.pos-l .who, body.wide .pcard.pos-r .who { max-width:none; display:flex; align-items:center; gap:8px; }
+  body.wide .pcard.pos-l .dot, body.wide .pcard.pos-r .dot { position:absolute; left:10px; top:13px; }
+  body.wide .pcard.pos-l .who, body.wide .pcard.pos-r .who { padding-left:24px; }
+  body.wide .pcard.pos-l .nm, body.wide .pcard.pos-r .nm { flex:1; min-width:0; }
+  body.wide .pcard.pos-l .pts b, body.wide .pcard.pos-r .pts b { font-size:26px; }
+  body.wide .pcard.pos-l .inv, body.wide .pcard.pos-r .inv { display:flex; flex-wrap:wrap; justify-content:space-between; gap:6px 0; }
+  body.wide .pcard.pos-l .iv, body.wide .pcard.pos-r .iv { width:16.66%; gap:3px; }
+  body.wide .pcard.pos-l .iv .bn, body.wide .pcard.pos-r .iv .bn { width:calc(100% - 4px); max-width:34px; height:22px; font-size:15px; line-height:16px; }
+  body.wide .pcard.pos-l .iv .tn, body.wide .pcard.pos-r .iv .tn { width:calc(100% - 6px); max-width:34px; height:auto; aspect-ratio:1; }
+  body.wide .pcard.pos-l .iv .tn i, body.wide .pcard.pos-r .iv .tn i { font-size:12px; min-width:15px; }
+  body.wide .pcard.pos-l .rescnt, body.wide .pcard.pos-r .rescnt, body.wide .pcard.pos-l .xchip, body.wide .pcard.pos-r .xchip { font-size:13px; margin:0 4px 0 0; }
+  body.wide .pcard.pos-l .tm, body.wide .pcard.pos-r .tm { position:absolute; right:10px; bottom:6px; }
+  body.wide .pcard.turn.pos-l, body.wide .pcard.turn.pos-r { transform:none; }
+  body.wide #bank { grid-template-columns:repeat(6, auto); gap:8px 16px; padding:8px 16px; }
+  body.wide #bank .tk { width:max(40px, calc(var(--cw) * .56)); height:max(40px, calc(var(--cw) * .56)); }
+  body.wide .pcard.pos-t, body.wide .pcard.pos-b { flex-wrap:nowrap; }
+  body.wide .pcard.pos-t .inv, body.wide .pcard.pos-b .inv { order:0; flex-basis:auto; flex:1; justify-content:flex-end; }
+  body.wide .pcard.pos-t .who, body.wide .pcard.pos-b .who { display:flex; align-items:baseline; gap:8px; max-width:40%; }
   /* 낮고 넓은 화면(휴대폰 가로): 왼쪽에 사람·내 보물, 오른쪽에 판 */
   body.short #game { display:grid; grid-template-columns:minmax(190px, 270px) auto; grid-template-rows:auto auto auto 1fr auto;
     grid-template-areas:"pl tb" "st tb" "mi tb" ". tb" "ac tb"; justify-content:center; align-items:start; column-gap:10px; row-gap:5px; }
@@ -160,6 +191,7 @@
   body.short.many .pcard .tm { display:none; }
   body.short.many .iv .tn { width:17px; height:17px; } body.short.many .iv .bn { width:17px; height:13px; font-size:10px; line-height:9px; }
   body.short #mine { padding:4px 6px; border-radius:12px; }
+  body.short #myWho > div { display:flex; gap:6px; align-items:baseline; } body.short #myWho .nm { font-size:15px; } body.short #myWho .pts b { font-size:20px; }
   body.short #myWho { border-right:none; border-bottom:2px dashed var(--cream2); padding:0 0 4px; justify-content:center; }
   body.short #myInv { gap:6px; } body.short #myInv .iv .tn { width:30px; height:30px; } body.short #myInv .iv .bn { width:30px; height:20px; font-size:14px; line-height:15px; }
   body.short #myInv .iv .tn i { font-size:12px; min-width:16px; line-height:calc(14px - .12em); }
@@ -381,6 +413,7 @@
     <div id="board"></div>
     <div id="side"><div id="guests"></div><div id="bank"></div></div>
   </div>
+  <div id="bankRow"></div>
   <div id="mine">
     <div id="myWho"></div>
     <div id="myInv"></div>
@@ -1002,14 +1035,18 @@ function renderPlayers() {
   document.documentElement.style.setProperty('--np', Math.max(1, shown));
   document.body.classList.toggle('many', st.length > 2);
   let h = '';
-  st.forEach((x, i) => {
+  const order = st.map((x, i) => i), start = me == null ? 0 : me + 1;
+  const others = order.slice(start).concat(order.slice(0, start)).filter(i => !(inGame && i === me));
+  const POS = [[], ['l'], ['l', 'r'], ['l', 't', 'r'], ['l', 't', 'r', 'b']][others.length] || [];
+  others.forEach((i, k) => {
+    const x = st[i], pos = POS[k] || 't';
     const pl = inGame ? room.p[i] : null;
     const tag = i === me && x.name !== '나' ? '<span class="me">나</span>' : (x.left || (x.cpu && !offline())) ? '<span class="cpu">컴퓨터</span>' : '';
     const off = !offline() && role !== 'watch' && !x.cpu && !x.left && x.id !== myId && Date.now() - (hbSeen[x.id] || Date.now()) > 75000 ? '<span class="off">연결 끊김?</span>' : '';
     if (pl && i === me) return; // 내 자리는 아래 내 칸에 크게 보여요
     const showInv = !!pl;
     const inv = showInv ? invHtml(pl) + (pl.res.length ? `<span class="rescnt">찜 ${pl.res.length}</span>` : '') + (pl.guests.length ? `<span class="rescnt">손님 ${pl.guests.length}</span>` : '') + extraHtml(pl, i) : '';
-    h += `<div class="pcard${playing && room.turn === i ? ' turn' : ''}"><span class="dot c${x.col}"></span><div class="who"><div class="nm">${esc(x.name)}${tag}</div><div class="pts"><b>${pl ? G.score(pl) : 0}</b>점</div></div><div class="inv">${inv}</div><div class="tm" data-tm="${i}"></div>${off}</div>`;
+    h += `<div class="pcard pos-${pos}${playing && room.turn === i ? ' turn' : ''}"><span class="dot c${x.col}"></span><div class="who"><div class="nm">${esc(x.name)}${tag}</div><div class="pts"><b>${pl ? G.score(pl) : 0}</b>점</div></div><div class="inv">${inv}</div><div class="tm" data-tm="${i}"></div>${off}</div>`;
   });
   if ($('players').dataset.h !== h) { $('players').innerHTML = h; $('players').dataset.h = h; }
 }
@@ -1356,6 +1393,10 @@ function fit() {
   const narrow = W / H < 1.05, short = !narrow && H < 560;
   document.body.classList.toggle('narrow', narrow);
   document.body.classList.toggle('short', short);
+  const wide = !narrow && !short;
+  document.body.classList.toggle('wide', wide);
+  const bankHome = wide ? $('bankRow') : $('side');
+  if ($('bank').parentNode !== bankHome) bankHome.appendChild($('bank'));
   const root = document.documentElement;
   let lo = 34, hi = 150;
   const ok = cw => {
