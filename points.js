@@ -1,17 +1,18 @@
 /* 포인트 공용 도우미 (로그인 없이 이 기기에만 저장)
-   - 게임을 끝까지 해서 끝나면 1점
-   - 하루에 모을 수 있는 포인트는 5점까지, 한 번 받으면 1분 뒤에 다시 받을 수 있음
+   - 포인트 주는 게임(EARN: 맞춤법, 영어 타자, 국기, 블록 쌓기)을 끝까지 해서 끝나면 1점 (2026-11-25 사용자 결정)
+   - 하루에 모을 수 있는 포인트는 4점까지, 한 번 받으면 1분 뒤에 다시 받을 수 있음
    - 한 게임에서는 하루에 1점만 (게임 폴더 이름으로 구분)
    - 한국 시간 자정이 지나면 0점으로 돌아감
    - 도깨비숲 생존기 한 판에 COST점을 씀 (생존기 엽전과는 따로)
    - 관리자 모드에서 이 기기에 포인트를 줄 수 있음 (give) */
 (function () {
-  var KEY = 'kpoint', CAP = 5, GAP = 60 * 1000;
+  var KEY = 'kpoint', CAP = 4, GAP = 60 * 1000;
   var base = (function () {
     var s = document.currentScript && document.currentScript.src;
     return s ? s.replace(/points\.js(\?.*)?$/, '') : '/';
   })();
   var seen = {};
+  var EARN = ['spelling', 'typing', 'flags', 'tetris'];   // 포인트를 주는 게임 폴더
 
   // 한국 시간 기준 날짜 (예: 2026-11-24)
   function today() { return new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10); }
@@ -58,11 +59,12 @@
     info: info,
     // 게임 한 판이 끝까지 끝났을 때 부름. key는 같은 판이 두 번 세지지 않게 하는 이름.
     earn: function (key) {
+      var game = (location.pathname.match(/([^\/]+)\/(index\.html)?$/) || [])[1] || 'home';
+      if (EARN.indexOf(game) < 0) return 'off';
       if (key) { if (seen[key]) return 'dup'; seen[key] = 1; }
       var d = load(), now = Date.now();
       if (d.e >= CAP) { toast('오늘 모을 수 있는 포인트 ' + CAP + '점을 다 모았어요'); return 'cap'; }
-      var game = (location.pathname.match(/([^\/]+)\/(index\.html)?$/) || [])[1] || 'home';
-      if (d.g.indexOf(game) >= 0) { toast('이 게임은 오늘 포인트를 받았어요. 다른 게임을 끝까지 하면 받을 수 있어요'); return 'game'; }
+      if (d.g.indexOf(game) >= 0) { toast('이 게임은 오늘 포인트를 받았어요. +1 포인트 표시가 있는 다른 게임을 끝까지 해 보세요'); return 'game'; }
       if (now - d.t < GAP) {
         var s = Math.ceil((d.t + GAP - now) / 1000);
         toast('포인트는 <b>' + s + '초</b> 뒤에 끝난 게임부터 다시 받아요');
