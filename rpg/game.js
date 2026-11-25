@@ -29,6 +29,19 @@ function white(n) {   // 맞았을 때 하얗게 번쩍이는 그림
 }
 const gearImg = it => it.g === 'w' ? 'w-' + it.k : it.g === 'a' ? 'a-' + it.k : ITEMS[it.i].img;
 
+/* ================= 배경 음악 (지역마다 바뀜) ================= */
+KBGM.init({ key: 'rpg', start: 'title', tracks: { title: 'audio/bgm-title.mp3', town: 'audio/bgm-town.mp3', field: 'audio/bgm-field.mp3', bamboo: 'audio/bgm-bamboo.mp3', boss: 'audio/bgm-boss.mp3' } });
+KBGM.full();
+const ZONE_BGM = { town: 'town', bamboo: 'bamboo', deep: 'bamboo' };
+let bgmT = 0;
+function updateMusic(dt) {
+  if ((bgmT -= dt) > 0) return; bgmT = .5;
+  if (!curZone || !player) return;
+  // 우두머리가 가까이(12칸) 있으면 전투 음악
+  const b = units.find(u => u.kind === 'mon' && u.d.boss && !u.dying && Math.abs(u.x - player.x) + Math.abs(u.y - player.y) < 12);
+  KBGM.track(b ? 'boss' : (ZONE_BGM[curZone.id] || 'field'));
+}
+
 /* ================= 소리 (코드로 만든 효과음) ================= */
 const SND = (() => {
   let ac = null, on = true, master = null, noiseBuf = null;
@@ -1315,6 +1328,7 @@ function frame(now) {
   if (M && P) drawMini(rdt);
 }
 function update(dt) {
+  updateMusic(dt);
   // 이동 보간
   for (const u of units) {
     if (u.mv) {
@@ -1423,6 +1437,7 @@ function bindUI() {
   $('gate-pay').addEventListener('click', payGate);
   $('b-snd').addEventListener('click', () => { SND.on = !SND.on; $('b-snd').classList.toggle('off', !SND.on); });
   $('b-snd').classList.toggle('off', !SND.on);
+  KBGM.button({ after: $('b-snd'), icon: '<svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg>음악' });
   document.querySelectorAll('.win .x').forEach(b => b.addEventListener('click', () => closeWin()));
   // 가방
   const tip = $('tip');
