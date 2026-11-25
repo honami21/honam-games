@@ -44,16 +44,16 @@ const ENCH = { w: { safe: 6, max: 10 }, a: { safe: 4, max: 7 }, rate: 0.25 };
 
 // 몬스터 (디자인 문서 4장 표). h=화면 키, aggro=먼저 덤비는지, step=한 칸 걷는 시간
 const MONS = {
-  dust:    { name: '먼지 꼬마',     lv: 1,  hp: 15,   ac: 10, dmg: [1, 3],   exp: 3,    h: 40,  aggro: 0, step: .5 },
-  rat:     { name: '들쥐',          lv: 3,  hp: 25,   ac: 8,  dmg: [2, 4],   exp: 5,    h: 44,  aggro: 0, step: .42 },
-  acorn:   { name: '도토리 요정',   lv: 5,  hp: 35,   ac: 6,  dmg: [3, 5],   exp: 7,    h: 58,  aggro: 0, step: .45 },
-  scare:   { name: '허수아비',      lv: 8,  hp: 55,   ac: 4,  dmg: [4, 7],   exp: 10,   h: 84,  aggro: 1, step: .5 },
-  kscare:  { name: '왕 허수아비',   lv: 12, hp: 600,  ac: 0,  dmg: [8, 12],  exp: 300,  h: 140, aggro: 1, step: .55, boss: 1 },
-  shoot:   { name: '죽순 꼬마',     lv: 10, hp: 70,   ac: 2,  dmg: [5, 8],   exp: 14,   h: 54,  aggro: 0, step: .48 },
-  tanuki:  { name: '너구리',        lv: 13, hp: 90,   ac: 0,  dmg: [6, 10],  exp: 18,   h: 60,  aggro: 1, step: .42 },
-  bghost:  { name: '대나무 귀신',   lv: 16, hp: 120,  ac: -2, dmg: [8, 12],  exp: 24,   h: 78,  aggro: 1, step: .5 },
-  broom:   { name: '몽당빗자루',    lv: 19, hp: 150,  ac: -4, dmg: [9, 14],  exp: 30,   h: 74,  aggro: 1, step: .45 },
-  general: { name: '대나무 장군',   lv: 22, hp: 2500, ac: -6, dmg: [15, 22], exp: 1500, h: 146, aggro: 1, step: .55, boss: 1 },
+  dust:    { name: '먼지 꼬마',     lv: 1,  hp: 15,   ac: 10, dmg: [1, 3],   exp: 3,    h: 20,  aggro: 0, step: .5 },
+  rat:     { name: '들쥐',          lv: 3,  hp: 25,   ac: 8,  dmg: [2, 4],   exp: 5,    h: 22,  aggro: 0, step: .42 },
+  acorn:   { name: '도토리 요정',   lv: 5,  hp: 35,   ac: 6,  dmg: [3, 5],   exp: 7,    h: 29,  aggro: 0, step: .45 },
+  scare:   { name: '허수아비',      lv: 8,  hp: 55,   ac: 4,  dmg: [4, 7],   exp: 10,   h: 42,  aggro: 1, step: .5 },
+  kscare:  { name: '왕 허수아비',   lv: 12, hp: 600,  ac: 0,  dmg: [8, 12],  exp: 300,  h: 70, aggro: 1, step: .55, boss: 1 },
+  shoot:   { name: '죽순 꼬마',     lv: 10, hp: 70,   ac: 2,  dmg: [5, 8],   exp: 14,   h: 27,  aggro: 0, step: .48 },
+  tanuki:  { name: '너구리',        lv: 13, hp: 90,   ac: 0,  dmg: [6, 10],  exp: 18,   h: 30,  aggro: 1, step: .42 },
+  bghost:  { name: '대나무 귀신',   lv: 16, hp: 120,  ac: -2, dmg: [8, 12],  exp: 24,   h: 39,  aggro: 1, step: .5 },
+  broom:   { name: '몽당빗자루',    lv: 19, hp: 150,  ac: -4, dmg: [9, 14],  exp: 30,   h: 37,  aggro: 1, step: .45 },
+  general: { name: '대나무 장군',   lv: 22, hp: 2500, ac: -6, dmg: [15, 22], exp: 1500, h: 73, aggro: 1, step: .55, boss: 1 },
 };
 
 // 도깨비섬: 바다로 둘러싸인 섬 하나. 가운데 마을, 둘레 들판, 서쪽 논밭, 동쪽 대나무 숲, 남쪽 깊은 대숲, 북쪽 뿔 곶 두 개

@@ -29,6 +29,8 @@ function white(n) {   // 맞았을 때 하얗게 번쩍이는 그림
 }
 const gearImg = it => it.g === 'w' ? 'w-' + it.k : it.g === 'a' ? 'a-' + it.k : ITEMS[it.i].img;
 
+// 캐릭터·몬스터·NPC 크기 (1 = 처음 크기, 2026-11-25 절반으로 줄임)
+const UK = .5;
 /* ================= 배경 음악 (지역마다 바뀜) ================= */
 KBGM.init({ key: 'rpg', start: 'title', tracks: { title: 'audio/bgm-title.mp3', town: 'audio/bgm-town.mp3', field: 'audio/bgm-field.mp3', bamboo: 'audio/bgm-bamboo.mp3', boss: 'audio/bgm-boss.mp3' } });
 KBGM.full();
@@ -284,13 +286,13 @@ function buildWorld() {
   keepClear(cx - 4, cy - 2, cx + 4, cy + 5);
   for (const [n, dx, dy] of [['t-house2', -13, -6], ['t-house1', -6, -8], ['t-house2', 7, -8], ['t-house1', 14, -6], ['t-house1', -13, 8], ['t-house2', -6, 10], ['t-house1', 7, 10], ['t-house2', 14, 8], ['t-house1', -21, -2], ['t-house2', 21, 2]]) placeProp(n, ...T(dx, dy), 1);
   placeProp('t-stall', cx - 6, cy - 3, 1); placeProp('t-jars', ...T(-10, 3), 1); placeProp('t-well', cx + 6, cy + 4, 1); placeProp('t-portal', cx + 6, cy - 3, 1);
-  M.npcs.push({ kind: 'npc', role: 'shop', name: '상점 할머니', img: 'npc-shop', x: cx - 6, y: cy - 2, h: 92 });
-  M.npcs.push({ kind: 'npc', role: 'guide', name: '길 안내 부엉이 도사', img: 'npc-guide', x: cx + 2, y: cy + 2, h: 96 });
+  M.npcs.push({ kind: 'npc', role: 'shop', name: '상점 할머니', img: 'npc-shop', x: cx - 6, y: cy - 2, h: 92 * UK });
+  M.npcs.push({ kind: 'npc', role: 'guide', name: '길 안내 부엉이 도사', img: 'npc-guide', x: cx + 2, y: cy + 2, h: 96 * UK });
   // 마을 문 장승 (길이 마을 밖으로 나가는 곳 양옆)
   for (const d of [0, 90, 180, -90]) { const [x, y] = P(14, d); const ox = d === 0 || d === 180 ? 0 : 3, oy = d === 0 || d === 180 ? 3 : 0; placeProp('t-jangseung', Math.round(x - ox), Math.round(y - oy)); placeProp('t-jangseung', Math.round(x + ox), Math.round(y + oy)); }
   // 9) 길 안내 도사 (사냥터마다 리스폰 지점) + 갈림길 이정표
   for (const z of ZONES) if (z.road) {
-    M.npcs.push({ kind: 'npc', role: 'guide', name: '길 안내 부엉이 도사', img: 'npc-guide', x: z.spawn[0] + 1, y: z.spawn[1] - 2, h: 96 });
+    M.npcs.push({ kind: 'npc', role: 'guide', name: '길 안내 부엉이 도사', img: 'npc-guide', x: z.spawn[0] + 1, y: z.spawn[1] - 2, h: 96 * UK });
     if (z.boss) { z.bossTimer = BOSS_FIRST; z.bossAlive = false; }
   }
   for (const d of [0, 90, 180]) { const [x, y] = P(19, d - 8); placeProp('l-sign', Math.round(x), Math.round(y) + (d === 0 ? -2 : 0)); }
@@ -329,7 +331,7 @@ function enterWorld() {
   units = []; drops = []; fx = []; nums = []; chunkCache.clear(); curZone = null;
   buildWorld();
   const [ex, ey] = findFree(...ZONE.town.spawn);
-  player = addUnit({ kind: 'player', x: ex, y: ey, step: .26 });
+  player = addUnit({ kind: 'player', x: ex, y: ey, step: .36 });
   for (const n of M.npcs) addUnit(Object.assign(n, { step: 1 }));
   for (const z of ZONES) if (z.count) for (let i = 0; i < z.count; i++) spawnMonster(z);
   cam.x = player.px; cam.y = player.py;
@@ -368,7 +370,7 @@ function spawnMonster(z, type) {
     if (z.spawn && cheb(x, y, z.spawn[0], z.spawn[1]) < 6) continue;
     if (player && cheb(x, y, player.x, player.y) < 9) continue;
     const d = MONS[type];
-    return addUnit({ kind: 'mon', type, d, zone: z, x, y, hp: d.hp, step: d.step, home: [x, y], atkT: 0, wander: Math.random() * 3, flash: 0, kx: 0, ky: 0, sq: 0, dmgShow: 0 });
+    return addUnit({ kind: 'mon', type, d, zone: z, x, y, hp: d.hp, step: d.step * 1.35, home: [x, y], atkT: 0, wander: Math.random() * 3, flash: 0, kx: 0, ky: 0, sq: 0, dmgShow: 0 });
   }
   return null;
 }
@@ -590,8 +592,8 @@ function unitAt(wx, wy, kinds) {
   let best = null;
   for (const u of units) {
     if (!kinds.includes(u.kind) || u.dying) continue;
-    const h = u.kind === 'mon' ? u.d.h : u.h || 88, w = h * .8;
-    if (wx > u.px - w / 2 && wx < u.px + w / 2 && wy > u.py + CELL * .3 - h && wy < u.py + CELL * .35) if (!best || u.py > best.py) best = u;
+    const h = u.kind === 'mon' ? u.d.h : u.h || 88 * UK, w = Math.max(h * .8, 30);
+    if (wx > u.px - w / 2 && wx < u.px + w / 2 && wy > u.py + CELL * .3 - Math.max(h, 36) && wy < u.py + CELL * .35) if (!best || u.py > best.py) best = u;
   }
   return best;
 }
@@ -741,14 +743,14 @@ function autoLoot() {
   }
 }
 function takeDrop(d) {
-  if (d.coin) { P.coins += d.coin; SND.coin(); addNum(player.px, player.py - 70, '+' + d.coin + ' 엽전', 'coin'); }
+  if (d.coin) { P.coins += d.coin; SND.coin(); addNum(player.px, player.py - 40, '+' + d.coin + ' 엽전', 'coin'); }
   else { if (!giveItem(d.item)) { if (!d.warned) { log('가방이 가득 찼어요', 'warn'); d.warned = 1; } return false; } SND.pick(); log(`<b>${josa(itemName(d.item), '을를')}</b> 주웠어요`, 'item'); }
   drops.splice(drops.indexOf(d), 1); dirty = true; updateHUD(); return true;
 }
 function pickupAt(x, y) {
   for (const d of drops.slice()) {
     if (d.x !== x || d.y !== y || d.t < .45) continue;
-    if (d.coin) { P.coins += d.coin; SND.coin(); addNum(player.px, player.py - 70, '+' + d.coin + ' 엽전', 'coin'); }
+    if (d.coin) { P.coins += d.coin; SND.coin(); addNum(player.px, player.py - 40, '+' + d.coin + ' 엽전', 'coin'); }
     else { if (!giveItem(d.item)) { if (!d.warned) { log('가방이 가득 찼어요', 'warn'); d.warned = 1; } continue; } SND.pick(); log(`<b>${josa(itemName(d.item), '을를')}</b> 주웠어요`, 'item'); }
     drops.splice(drops.indexOf(d), 1); dirty = true; updateHUD();
   }
@@ -800,7 +802,7 @@ function monAttack(m) {
   setTimeout(() => {
     if (dead || m.dying || !units.includes(m) || cheb(m.x, m.y, player.x, player.y) > 1) return;
     const r = rollAttack({ lv: m.d.lv, dmg: m.d.dmg, crit: 0 }, { ac: playerAC(), lv: P.lv });
-    const px = player.px, py = player.py - 60;
+    const px = player.px, py = player.py - 36;
     if (r.miss) { addNum(px, py, '빗나감', 'miss'); return; }
     if (r.block) { addNum(px, py, '막음', 'block'); SND.block(); return; }
     P.hp -= r.dmg; hurtT = .18; idleT = 0;
@@ -875,7 +877,7 @@ function drinkPotion() {
   if (P.hp >= maxHP()) return;
   s.n--; if (s.n <= 0) P.inv.splice(P.inv.indexOf(s), 1);
   P.hp = Math.min(maxHP(), P.hp + ITEMS.potion.heal);
-  SND.potion(); addNum(player.px, player.py - 70, '+' + ITEMS.potion.heal, 'heal');
+  SND.potion(); addNum(player.px, player.py - 40, '+' + ITEMS.potion.heal, 'heal');
   fx.push({ k: 'heal', x: player.px, y: player.py, t: 0, d: .6 });
   dirty = true; updateHUD(); if (winOpen === 'inv') renderInv();
 }
@@ -1040,7 +1042,7 @@ function resize() {
   cv.width = Math.round(VW * DPR); cv.height = Math.round(VH * DPR);
   zoom = clamp(Math.min(VW / (CELL * 17), VH / (CELL * 10.2)), .65, 1.6);
 }
-const PSCALE = 92 / 300;   // 깨비샘 그림 크기
+const PSCALE = 92 / 300 * UK;   // 깨비샘 그림 크기
 // 프레임마다 몸 가운데 위치(그림 너비 비율): 검이 한쪽으로 뻗어도 몸이 흔들리지 않게
 const PANCHOR = { 'p-walk-0': .486, 'p-walk-1': .488, 'p-walk-2': .485, 'p-walk-3': .481, 'p-walk-4': .483, 'p-walk-5': .478, 'p-idle': .49, 'p-walk1': .534, 'p-walk2': .539, 'p-wind': .64, 'p-swing': .385, 'p-hurt': .515, 'p-dead': .5, 'p-win': .542 };
 function drawSprite(name, x, y, h, flip, opts = {}) {
@@ -1062,13 +1064,13 @@ function playerFrame() {
   if (dead) return 'p-dead';
   if (hurtT > 0 && !atkAnim) return 'p-hurt';
   if (atkAnim) return atkAnim.t < atkAnim.wind ? 'p-wind' : 'p-swing';
-  if (player.moving) return WALK[Math.floor((player.dist || 0) / (CELL * .27)) % 6];
+  if (player.moving) return WALK[Math.floor((player.dist || 0) / (CELL * .16)) % 6];
   if (winT > 0) return 'p-win';
   return 'p-idle';
 }
 function drawPlayer() {
   const x = player.px, y = player.py + CELL * .32;
-  shadow(x, y, 22);
+  shadow(x, y, 22 * UK);
   const fr = playerFrame(), im = IMG[fr]; if (!im) return;
   const s = PSCALE, w = im.width * s, h = im.height * s, flip = player.face < 0;
   const ax = (PANCHOR[fr] || .5) * w, it = P.eq.weapon;
@@ -1080,14 +1082,14 @@ function drawPlayer() {
   // 휘두르는 잔상
   if (atkAnim && fr === 'p-swing' && atkAnim.t - atkAnim.wind < .1) {
     const a = 1 - (atkAnim.t - atkAnim.wind) / .1;
-    g.globalAlpha = a * .7; g.strokeStyle = '#fff'; g.lineWidth = 6; g.lineCap = 'round';
-    g.beginPath(); g.arc(4, -h * .45, 52, -2.1, .9); g.stroke(); g.globalAlpha = 1;
+    g.globalAlpha = a * .7; g.strokeStyle = '#fff'; g.lineWidth = 4; g.lineCap = 'round';
+    g.beginPath(); g.arc(2, -h * .45, 52 * UK, -2.1, .9); g.stroke(); g.globalAlpha = 1;
   }
   g.restore();
 }
 function drawMon(m) {
   const d = m.d; let x = m.px + m.kx, y = m.py + CELL * .32 + m.ky;
-  if (m.lunge > 0) x += m.face * 8 * Math.sin((1 - m.lunge / .2) * Math.PI);
+  if (m.lunge > 0) x += m.face * 5 * Math.sin((1 - m.lunge / .2) * Math.PI);
   shadow(x, y, d.h * .3);
   const fr = 'm-' + m.type + '-' + ((m.moving ? m.walk : Math.floor(performance.now() / 600 + m.id)) % 2);
   const bob = m.moving ? 0 : Math.sin(performance.now() / 300 + m.id) * 1.5;
@@ -1096,7 +1098,7 @@ function drawMon(m) {
   if (m.dying) { const k = m.dying / .55; opts.rot = m.face * -1.4 * Math.min(1, k * 1.6); opts.alpha = k > .5 ? (Math.floor(k * 14) % 2 ? .25 : .9) : 1; }
   drawSprite(fr, x, y + bob, d.h, m.face < 0, opts);
   if (!m.dying && (m === tgt || m.dmgShow > 0 || d.boss) && m.hp < d.hp) {
-    const bw = d.boss ? 90 : 46, bx = x - bw / 2, by = y - d.h - 12;
+    const bw = d.boss ? 64 : 34, bx = x - bw / 2, by = y - d.h - 12;
     g.fillStyle = 'rgba(20,14,30,.75)'; g.fillRect(bx - 2, by - 2, bw + 4, 9);
     g.fillStyle = d.boss ? '#ff5d7a' : '#ff6b5b'; g.fillRect(bx, by, bw * Math.max(0, m.hp) / d.hp, 5);
   }
@@ -1108,7 +1110,7 @@ function nameTag(t, x, y, col) {
 let hoverMon = null;
 function drawNpc(n) {
   const x = n.px, y = n.py + CELL * .32;
-  shadow(x, y, 26);
+  shadow(x, y, 26 * UK);
   drawSprite(n.img, x, y + Math.sin(performance.now() / 500) * 1.2, n.h, false);
   nameTag(n.name, x, y - n.h - 8, '#ffe58a');
 }
@@ -1119,7 +1121,7 @@ function drawDrop(d) {
   const x = d.x * CELL + CELL / 2, y = d.y * CELL + CELL / 2 + 8;
   let px = x, py = y;
   if (d.t < .45) { const k = d.t / .45; px = d.fx + (x - d.fx) * k; py = d.fy + (y - d.fy) * k - Math.sin(k * Math.PI) * 40; }
-  else if (!d.stay && d.t > FLY_AT(d)) { const k = Math.min(1, (d.t - FLY_AT(d)) / FLY_T), e = k * k; px = x + (player.px - x) * e; py = y + (player.py - 46 - y) * e - Math.sin(k * Math.PI) * 30; }
+  else if (!d.stay && d.t > FLY_AT(d)) { const k = Math.min(1, (d.t - FLY_AT(d)) / FLY_T), e = k * k; px = x + (player.px - x) * e; py = y + (player.py - 24 - y) * e - Math.sin(k * Math.PI) * 30; }
   const name = d.coin ? (d.coin >= 10 ? 'i-coins' : 'i-coin') : gearImg(d.item);
   const blink = d.life - d.t < 10 && Math.floor(d.t * 6) % 2;
   if (!blink) drawSprite(name, px, py + 6, d.coin ? 22 : 30, false);
