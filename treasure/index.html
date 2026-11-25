@@ -123,6 +123,7 @@
   #table { display:flex; gap:10px; align-items:flex-start; justify-content:center; }
   #board { display:flex; flex-direction:column; gap:calc(var(--cw) * .07); }
   .row { display:flex; gap:calc(var(--cw) * .07); }
+  #boardCol { display:flex; flex-direction:column; align-items:center; gap:calc(var(--cw) * .1); }
   #side { display:flex; flex-direction:column; gap:8px; align-items:center; }
   #guests { display:flex; flex-direction:column; gap:calc(var(--cw) * .06); }
   #bank { display:grid; grid-template-columns:repeat(3, auto); gap:6px 8px; background:rgba(40,22,40,.45); border-radius:16px; padding:8px; }
@@ -137,29 +138,28 @@
   body.narrow .pcard .inv { order:3; flex-basis:100%; }
   /* 넓은 화면: 상대는 왼쪽·위·오른쪽, 보물은 판 아래 한 줄, 나는 아래 */
   body.wide #game { display:grid; grid-template-columns:1fr auto 1fr; grid-template-rows:auto auto auto auto auto;
-    grid-template-areas:"t t t" "st st st" "l tb r" "bk bk bk" "mi mi mi" "ac ac ac"; justify-items:center; align-items:center; column-gap:14px; row-gap:6px; align-content:start; }
+    grid-template-areas:"t t t" "st st st" "l tb r" "mi mi mi" "ac ac ac"; justify-items:center; align-items:center; column-gap:14px; row-gap:6px; align-content:start; }
   body.wide #players { display:contents; }
   body.wide #status { grid-area:st; }
   body.wide #table { grid-area:tb; }
-  body.wide #bankRow { grid-area:bk; }
   body.wide #mine { grid-area:mi; }
   body.wide #actions { grid-area:ac; }
   body.wide .pcard.pos-t { grid-area:t; width:min(440px, 100%); flex:none; }
   body.wide .pcard.pos-b { grid-area:mi; width:min(440px, 100%); flex:none; }
-  body.wide .pcard.pos-l, body.wide .pcard.pos-r { flex:none; width:clamp(180px, 17vw, 250px); flex-direction:column; align-items:stretch; gap:8px; padding:10px 10px 12px; }
+  body.wide .pcard.pos-l, body.wide .pcard.pos-r { flex:none; width:132px; flex-direction:column; align-items:center; gap:6px; padding:10px 8px 12px; }
   body.wide .pcard.pos-l { grid-area:l; justify-self:end; } body.wide .pcard.pos-r { grid-area:r; justify-self:start; }
-  body.wide .pcard.pos-l .who, body.wide .pcard.pos-r .who { max-width:none; display:flex; align-items:center; gap:8px; }
-  body.wide .pcard.pos-l .dot, body.wide .pcard.pos-r .dot { position:absolute; left:10px; top:13px; }
-  body.wide .pcard.pos-l .who, body.wide .pcard.pos-r .who { padding-left:24px; }
-  body.wide .pcard.pos-l .nm, body.wide .pcard.pos-r .nm { flex:1; min-width:0; }
-  body.wide .pcard.pos-l .pts b, body.wide .pcard.pos-r .pts b { font-size:26px; }
-  body.wide .pcard.pos-l .inv, body.wide .pcard.pos-r .inv { display:flex; flex-wrap:wrap; justify-content:space-between; gap:6px 0; }
-  body.wide .pcard.pos-l .iv, body.wide .pcard.pos-r .iv { width:16.66%; gap:3px; }
-  body.wide .pcard.pos-l .iv .bn, body.wide .pcard.pos-r .iv .bn { width:calc(100% - 4px); max-width:34px; height:22px; font-size:15px; line-height:16px; }
-  body.wide .pcard.pos-l .iv .tn, body.wide .pcard.pos-r .iv .tn { width:calc(100% - 6px); max-width:34px; height:auto; aspect-ratio:1; }
-  body.wide .pcard.pos-l .iv .tn i, body.wide .pcard.pos-r .iv .tn i { font-size:12px; min-width:15px; }
-  body.wide .pcard.pos-l .rescnt, body.wide .pcard.pos-r .rescnt, body.wide .pcard.pos-l .xchip, body.wide .pcard.pos-r .xchip { font-size:13px; margin:0 4px 0 0; }
-  body.wide .pcard.pos-l .tm, body.wide .pcard.pos-r .tm { position:absolute; right:10px; bottom:6px; }
+  body.wide .pcard.pos-l .who, body.wide .pcard.pos-r .who { max-width:100%; width:100%; text-align:center; }
+  body.wide .pcard.pos-l .dot, body.wide .pcard.pos-r .dot { position:absolute; left:8px; top:13px; width:14px; height:14px; border-width:2.5px; }
+  body.wide .pcard.pos-l .nm, body.wide .pcard.pos-r .nm { padding:0 4px 0 16px; }
+  body.wide .pcard.pos-l .pts b, body.wide .pcard.pos-r .pts b { font-size:28px; }
+  body.wide .pcard.pos-l .inv, body.wide .pcard.pos-r .inv { display:flex; flex-direction:column; align-items:center; gap:7px; border-top:2px dashed var(--cream2); padding-top:8px; width:100%; }
+  body.wide .pcard.pos-l .iv, body.wide .pcard.pos-r .iv { flex-direction:row; gap:10px; }
+  body.wide .pcard.pos-l .iv .bn, body.wide .pcard.pos-r .iv .bn { width:36px; height:26px; font-size:17px; line-height:20px; border-radius:6px; }
+  body.wide .pcard.pos-l .iv .tn, body.wide .pcard.pos-r .iv .tn { width:34px; height:34px; }
+  body.wide .pcard.pos-l .iv .tn i, body.wide .pcard.pos-r .iv .tn i { font-size:13px; min-width:17px; line-height:calc(15px - .12em); right:-8px; }
+  body.wide .pcard.pos-l .rescnt, body.wide .pcard.pos-r .rescnt, body.wide .pcard.pos-l .xchip, body.wide .pcard.pos-r .xchip { font-size:13px; margin:0; }
+  body.wide .pcard.pos-l .tm, body.wide .pcard.pos-r .tm { position:static; min-width:0; text-align:center; margin:0; }
+  body.wide .pcard.pos-l .tm:empty, body.wide .pcard.pos-r .tm:empty { display:none; }
   body.wide .pcard.turn.pos-l, body.wide .pcard.turn.pos-r { transform:none; }
   body.wide #bank { grid-template-columns:repeat(6, auto); gap:8px 16px; padding:8px 16px; }
   body.wide #bank .tk { width:max(40px, calc(var(--cw) * .56)); height:max(40px, calc(var(--cw) * .56)); }
@@ -410,10 +410,9 @@
   <div id="status"></div>
   <div id="table">
     <div id="posts" class="hidden"></div>
-    <div id="board"></div>
+    <div id="boardCol"><div id="board"></div></div>
     <div id="side"><div id="guests"></div><div id="bank"></div></div>
   </div>
-  <div id="bankRow"></div>
   <div id="mine">
     <div id="myWho"></div>
     <div id="myInv"></div>
@@ -1395,7 +1394,7 @@ function fit() {
   document.body.classList.toggle('short', short);
   const wide = !narrow && !short;
   document.body.classList.toggle('wide', wide);
-  const bankHome = wide ? $('bankRow') : $('side');
+  const bankHome = wide ? $('boardCol') : $('side');
   if ($('bank').parentNode !== bankHome) bankHome.appendChild($('bank'));
   const root = document.documentElement;
   let lo = 34, hi = 150;
