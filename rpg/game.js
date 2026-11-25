@@ -376,6 +376,8 @@ function spawnMonster(z, type) {
 }
 
 /* ================= 땅 그리기 (조각으로 나눠 한 번 그려 두고 다시 써요) ================= */
+// 땅 무늬 크기 (캐릭터를 절반으로 줄이면서 .62 → .36)
+const TS = .36;
 const CH = 12, chunkCache = new Map(), chunkTmp = document.createElement('canvas');
 function boxBlur(src, r) {
   const W = M.w, H = M.h, a = new Float32Array(W * H), b = new Float32Array(W * H), n = 2 * r + 1;
@@ -422,7 +424,7 @@ function getChunk(ix, iy) {
     if (!l.has[iy * M.nx + ix]) continue;
     tc.setTransform(1, 0, 0, 1, 0, 0); tc.globalCompositeOperation = 'source-over'; tc.clearRect(0, 0, S, S);
     const pat = l.tile && M.patterns[l.tile];
-    if (pat) { tc.save(); tc.translate(-ix * S, -iy * S); tc.scale(.62, .62); tc.fillStyle = pat; tc.fillRect(ix * S / .62, iy * S / .62, S / .62 + 2, S / .62 + 2); tc.restore(); }
+    if (pat) { tc.save(); tc.translate(-ix * S, -iy * S); tc.scale(TS, TS); tc.fillStyle = pat; tc.fillRect(ix * S / TS, iy * S / TS, S / TS + 2, S / TS + 2); tc.restore(); }
     else { tc.fillStyle = l.fill || '#6a8f3a'; tc.fillRect(0, 0, S, S); }
     tc.globalCompositeOperation = 'destination-in'; tc.imageSmoothingEnabled = true; tc.imageSmoothingQuality = 'high';
     tc.drawImage(l.cv, ix * CH - 1, iy * CH - 1, CH + 2, CH + 2, -CELL, -CELL, (CH + 2) * CELL, (CH + 2) * CELL);
@@ -435,7 +437,7 @@ function getChunk(ix, iy) {
 const hash2 = (x, y) => (((x * 73856093) ^ (y * 19349663)) >>> 0);
 function drawSea(vx0, vx1, vy0, vy1) {
   const t = performance.now() / 1000, pat = M.patterns['tile-sea'];
-  if (pat) { const ox = Math.sin(t * .4) * 10 + t * 6, oy = Math.cos(t * .3) * 6; g.save(); g.translate(ox, oy); g.scale(.62, .62); g.fillStyle = pat; g.fillRect((vx0 - ox) / .62 - 2, (vy0 - oy) / .62 - 2, (vx1 - vx0) / .62 + 4, (vy1 - vy0) / .62 + 4); g.restore(); }
+  if (pat) { const ox = Math.sin(t * .4) * 10 + t * 6, oy = Math.cos(t * .3) * 6; g.save(); g.translate(ox, oy); g.scale(TS, TS); g.fillStyle = pat; g.fillRect((vx0 - ox) / TS - 2, (vy0 - oy) / TS - 2, (vx1 - vx0) / TS + 4, (vy1 - vy0) / TS + 4); g.restore(); }
   else { g.fillStyle = '#3a98c2'; g.fillRect(vx0, vy0, vx1 - vx0, vy1 - vy0); }
   // 반짝이는 물결
   g.strokeStyle = '#ffffff'; g.lineWidth = 2.5; g.lineCap = 'round';
