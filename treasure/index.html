@@ -161,6 +161,8 @@
   body.wide .pcard.pos-l .tm, body.wide .pcard.pos-r .tm { position:static; min-width:0; text-align:center; margin:0; }
   body.wide .pcard.pos-l .tm:empty, body.wide .pcard.pos-r .tm:empty { display:none; }
   body.wide .pcard.turn.pos-l, body.wide .pcard.turn.pos-r { transform:none; }
+  body.wide #mine { width:auto; max-width:100%; flex-wrap:nowrap; padding:6px 16px; }
+  body.wide #boardCol > #bank { align-self:stretch; margin-left:calc(var(--cw) * 1.07); justify-content:center; }
   body.wide #bank { grid-template-columns:repeat(6, auto); gap:8px 16px; padding:8px 16px; }
   body.wide #bank .tk { width:max(40px, calc(var(--cw) * .56)); height:max(40px, calc(var(--cw) * .56)); }
   body.wide .pcard.pos-t, body.wide .pcard.pos-b { flex-wrap:nowrap; }
