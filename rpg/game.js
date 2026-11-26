@@ -65,19 +65,20 @@ const SND = (() => {
   }
   function env(g, t, a, peak, dur) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); }
   function tone(type, f0, f1, dur, vol, delay = 0) {
-    const c = ctx(); if (!c || !on) return; const t = c.currentTime + delay;
+    if (!on) return; const c = ctx(); if (!c) return; const t = c.currentTime + delay;
     const o = c.createOscillator(), g = c.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t); if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
     env(g, t, .005, vol, dur); o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + .02);
   }
   function noise(dur, vol, type, f0, f1, q = 1, delay = 0) {
-    const c = ctx(); if (!c || !on) return; const t = c.currentTime + delay;
+    if (!on) return; const c = ctx(); if (!c) return; const t = c.currentTime + delay;
     const s = c.createBufferSource(); s.buffer = noiseBuf; const fl = c.createBiquadFilter(); fl.type = type; fl.Q.value = q;
     fl.frequency.setValueAtTime(f0, t); if (f1) fl.frequency.exponentialRampToValueAtTime(f1, t + dur);
     const g = c.createGain(); env(g, t, .004, vol, dur); s.connect(fl); fl.connect(g); g.connect(master); s.start(t, Math.random() * .5); s.stop(t + dur + .02);
   }
   return {
-    get on() { return on; }, set on(v) { on = v; try { localStorage.setItem('rpg-sfx', v ? 'on' : 'off'); } catch (e) {} },
-    unlock() { ctx(); },
+    get on() { return on; }, set on(v) { on = v; try { localStorage.setItem('rpg-sfx', v ? 'on' : 'off'); } catch (e) {} if (!v && ac && ac.state === 'running') ac.suspend(); },
+    unlock() { if (on) ctx(); },
+    sleep() { if (ac && ac.state === 'running') ac.suspend(); },   // 효과음을 끄거나 창을 내리면 소리 장치를 놓아줘요 (다른 앱 음악이 끊기지 않게)
     hit(type, crit) {
       if (type === 'club') { tone('sine', 150, 45, .22, .9); noise(.16, .7, 'lowpass', 900, 200); }
       else if (type === 'dagger') { noise(.07, .55, 'highpass', 2500, 5000); tone('triangle', 420, 180, .07, .35); }
@@ -1957,9 +1958,14 @@ function bindUI() {
 
   $('mini').addEventListener('pointerdown', miniClick);
   $('gate-pay').addEventListener('click', payGate);
-  $('b-snd').addEventListener('click', () => { SND.on = !SND.on; $('b-snd').classList.toggle('off', !SND.on); });
+  // 휴대폰: 배경음악을 끄면 다른 앱(유튜브 등) 소리와 섞여서 나게 (아이폰은 이때 무음 모드면 효과음도 안 나요)
+  const audioMode = () => { try { if (navigator.audioSession) navigator.audioSession.type = (KBGM.on && KBGM.vol > 0) ? 'auto' : 'ambient'; } catch (e) {} };
+  $('b-snd').addEventListener('click', e => { e.stopPropagation(); SND.on = !SND.on; $('b-snd').classList.toggle('off', !SND.on); if (SND.on) SND.unlock(); SND.ui(); });
+  ['pointerdown', 'touchstart'].forEach(t => $('b-snd').addEventListener(t, e => e.stopPropagation()));
+  document.addEventListener('visibilitychange', () => { if (document.hidden) SND.sleep(); });
   $('b-snd').classList.toggle('off', !SND.on);
   KBGM.button({ after: $('b-snd'), icon: '<svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg>음악' });
+  document.querySelectorAll('.kbgm-btn').forEach(b => b.addEventListener('click', () => setTimeout(audioMode, 0))); audioMode();
   document.querySelectorAll('.win .x').forEach(b => b.addEventListener('click', () => closeWin(b.closest('.win').id.slice(2))));
 document.querySelectorAll('.win').forEach(el => el.addEventListener('pointerdown', () => { const n = el.id.slice(2); if (wins.includes(n) && wins[wins.length - 1] !== n) focusWin(n); }, true));
   // 가방
