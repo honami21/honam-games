@@ -9,7 +9,10 @@
 <meta name="apple-mobile-web-app-title" content="깨비샘과 쉬는 시간"/>
 <meta name="theme-color" content="#2a2860"/>
 <title>깨비샘과 쉬는 시간</title>
-<link rel="preload" as="image" href="img/bg.jpg"/>
+<link rel="preload" as="image" href="img/bg.jpg" media="not all and (orientation:portrait) and (max-width:820px)"/>
+<link rel="preload" as="image" href="img/bg-mobile.jpg" media="(orientation:portrait) and (max-width:820px)"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet"/>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -34,7 +37,8 @@ h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .game{transition:transform .15s}
 .game:hover,.game:focus-visible{transform:translateY(-5px) rotate(-.4deg)}
 .game:focus-visible{outline:4px solid var(--yellow);outline-offset:4px}
-.game img{display:block;width:100%;aspect-ratio:10/9;object-fit:cover;border-radius:18px;background:#1d1c48}
+.game>img{transition:opacity .4s ease}.game>img.ld{opacity:0}
+.game img{display:block;width:100%;height:auto;aspect-ratio:10/9;object-fit:cover;border-radius:18px;background:#1d1c48}
 .title{display:flex;align-items:center;justify-content:center;margin:14px 0 8px;container-type:inline-size}
 .title b{font-weight:normal;font-size:24px;font-size:clamp(14px,7.2cqw,24px);background:var(--yellow);border-radius:999px;padding:5px 16px 3px;box-shadow:inset 0 -3px 0 rgba(200,140,20,.25);white-space:nowrap}
 .title b.spend{background:#9fd4ff;box-shadow:inset 0 -3px 0 rgba(40,110,190,.25)}
@@ -133,7 +137,8 @@ body.adm-see .game.adm-hid,body.adm-edit .game.adm-hid{display:flex}
 body.adm-see .game.adm-hid>*:not(.adm-eye):not(.adm-num),body.adm-edit .game.adm-hid>*:not(.adm-eye):not(.adm-num){opacity:.35}
 body.adm-see .game.adm-hid::after,body.adm-edit .game.adm-hid::after{content:"가려짐";position:absolute;left:50%;top:38%;transform:translate(-50%,-50%) rotate(-6deg);
   background:var(--line);color:#fff6e4;border-radius:999px;padding:6px 18px 4px;font-size:22px;pointer-events:none}
-.grid.adm-wait{visibility:hidden}
+.grid{transition:opacity .35s ease}
+.grid.adm-wait{opacity:0}
 .adm-eye{position:absolute;right:-8px;top:-8px;z-index:3;display:none;align-items:center;gap:4px;font-family:'Jua',sans-serif;font-size:15px;color:var(--ink);
   background:var(--yellow);border:3px solid var(--line);border-radius:999px;padding:4px 12px 3px 9px;cursor:pointer}
 .adm-eye svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
@@ -215,107 +220,107 @@ body.adm-edit .adm-num{display:flex}
     <img class="logo" src="img/logo.png" alt="깨비샘과 쉬는 시간" width="1100" height="303">
     <p class="sub">쉬는 시간에 친구들과 즐겨 보세요!</p>
   </header>
-  <img class="char" src="img/ggobi-wave.png" alt="손을 흔드는 깨비샘" width="400" height="642">
+  <img class="char" src="img/ggobi-wave-s.png" alt="손을 흔드는 깨비샘" width="600" height="963" fetchpriority="high">
   <div class="grid">
     <a class="game" href="tetris/">
       <span class="adm-num"></span>
       <span class="cost earn"><img src="img/point.png" alt="" onerror="this.remove()">+1 포인트</span>
-      <img src="tetris/thumb.jpg?v=5" alt="블록 쌓기 게임 화면">
+      <img src="tetris/thumb.jpg?v=5" width="640" height="576" decoding="async" alt="블록 쌓기 게임 화면">
       <div class="title"><b>블록 쌓기</b></div>
       <p>10단계까지 완주하고 랭킹 TOP 50에 도전!</p>
     </a>
     <a class="game" href="spelling/">
       <span class="adm-num"></span>
       <span class="cost earn"><img src="img/point.png" alt="" onerror="this.remove()">+1 포인트</span>
-      <img src="spelling/thumb.jpg?v=3" alt="한글 맞춤법 대소동 게임 화면">
+      <img src="spelling/thumb.jpg?v=3" width="640" height="576" decoding="async" alt="한글 맞춤법 대소동 게임 화면">
       <div class="title"><b>한글 맞춤법 대소동</b></div>
       <p>낱말과 빈칸 문장, 옳은 맞춤법 블록을 톡! 50문제에 도전!</p>
     </a>
     <a class="game" href="typing/">
       <span class="adm-num"></span>
       <span class="cost earn"><img src="img/point.png" alt="" onerror="this.remove()">+1 포인트</span>
-      <img src="typing/thumb.jpg?v=3" alt="영어 타자 연습 게임 화면">
+      <img src="typing/thumb.jpg?v=3" width="640" height="576" decoding="async" alt="영어 타자 연습 게임 화면">
       <div class="title"><b>영어 타자 연습</b></div>
       <p>내려오는 영어 단어를 키보드로 톡톡! 컴퓨터에서 즐겨요.</p>
     </a>
     <a class="game" href="flags/">
       <span class="adm-num"></span>
       <span class="cost earn"><img src="img/point.png" alt="" onerror="this.remove()">+1 포인트</span>
-      <img src="flags/thumb.jpg?v=2" alt="국기 맞히기 게임 화면">
+      <img src="flags/thumb.jpg?v=2" width="640" height="576" decoding="async" alt="국기 맞히기 게임 화면">
       <div class="title"><b>국기 맞히기</b></div>
       <p>국기에 맞는 나라의 유리 다리로 폴짝! 세계 여행을 떠나요.</p>
     </a>
     <a class="game" href="omok/">
       <span class="adm-num"></span>
-      <img src="omok/thumb.jpg?v=2" alt="오목 대결 게임 화면">
+      <img src="omok/thumb.jpg?v=2" width="640" height="576" decoding="async" loading="lazy" alt="오목 대결 게임 화면">
       <div class="title"><b>오목 대결</b></div>
       <p>방 코드로 친구와 만나 한 수씩! 다섯 개를 먼저 이어요.</p>
     </a>
     <a class="game" href="alkkagi/">
       <span class="adm-num"></span>
-      <img src="alkkagi/thumb.jpg?v=4" alt="알까기 게임 화면">
+      <img src="alkkagi/thumb.jpg?v=4" width="640" height="576" decoding="async" loading="lazy" alt="알까기 게임 화면">
       <div class="title"><b>알까기</b></div>
       <p>바둑알·장기알을 톡! 힘 게이지와 "딱!" 타이밍으로 판 밖으로.</p>
     </a>
     <a class="game" href="survivor/">
       <span class="adm-num"></span>
-      <img src="survivor/thumb.jpg?v=4" alt="도깨비숲 생존기 게임 화면">
+      <img src="survivor/thumb.jpg?v=4" width="640" height="576" decoding="async" loading="lazy" alt="도깨비숲 생존기 게임 화면">
       <span class="cost"><img src="img/point.png" alt="" onerror="this.remove()"><span id="pt-cost">-1</span> 포인트</span>
       <div class="title"><b class="spend">도깨비숲 생존기</b></div>
       <p>몰려오는 숲속 요괴를 피해 20분! 무기를 키우고 조합해요.</p>
     </a>
     <a class="game" href="rpg/">
       <span class="adm-num"></span>
-      <img src="rpg/thumb.jpg?v=1" alt="도깨비 대모험 게임 화면">
+      <img src="rpg/thumb.jpg?v=1" width="640" height="576" decoding="async" loading="lazy" alt="도깨비 대모험 게임 화면">
       <span class="cost"><img src="img/point.png" alt="" onerror="this.remove()">-1 포인트</span>
       <div class="title"><b class="spend">도깨비 대모험</b></div>
       <p>몬스터를 클릭해 퍽퍽! 레벨을 올리고<br>무기와 방어구를 강화해요.</p>
     </a>
     <a class="game" href="worldtour/">
       <span class="adm-num"></span>
-      <img src="worldtour/thumb.jpg?v=5" alt="세계 여행 게임 화면">
+      <img src="worldtour/thumb.jpg?v=5" width="640" height="576" decoding="async" loading="lazy" alt="세계 여행 게임 화면">
       <div class="title"><b>세계 여행</b></div>
       <p>주사위를 굴려 세계 도시를 사고 건물을 지어요. 친구나 깨비샘 AI와 함께!</p>
     </a>
     <a class="game" href="chess/">
       <span class="adm-num"></span>
-      <img src="chess/thumb.jpg?v=4" alt="체스 한 판 게임 화면">
+      <img src="chess/thumb.jpg?v=4" width="640" height="576" decoding="async" loading="lazy" alt="체스 한 판 게임 화면">
       <div class="title"><b>체스 한 판</b></div>
       <p>방 코드로 친구와 한 판! 깨비샘과 겨루면 아주 쉬움부터 최강까지.</p>
     </a>
     <a class="game" href="cards/">
       <span class="adm-num"></span>
-      <img src="cards/thumb.jpg?v=2" alt="GGAEBI 게임 화면">
+      <img src="cards/thumb.jpg?v=2" width="640" height="576" decoding="async" loading="lazy" alt="GGAEBI 게임 화면">
       <div class="title"><b>GGAEBI</b></div>
       <p>같은 색, 같은 숫자 카드를 톡!<br>한 장 남으면 "GGAEBI!"를 외쳐요.</p>
     </a>
     <a class="game" href="cube/">
       <span class="adm-num"></span>
-      <img src="cube/thumb.jpg?v=1" alt="밀당 큐브 게임 화면">
+      <img src="cube/thumb.jpg?v=1" width="640" height="576" decoding="async" loading="lazy" alt="밀당 큐브 게임 화면">
       <div class="title"><b>밀당 큐브</b></div>
       <p>가장자리 큐브를 쏙 빼서 밀어 넣기!<br>내 모양 다섯 개를 한 줄로.</p>
     </a>
     <a class="game" href="words/">
       <span class="adm-num"></span>
-      <img src="words/thumb.jpg?v=1" alt="낱말 뚝딱 게임 화면">
+      <img src="words/thumb.jpg?v=1" width="640" height="576" decoding="async" loading="lazy" alt="낱말 뚝딱 게임 화면">
       <div class="title"><b>낱말 뚝딱</b></div>
       <p>가운데 낱말을 부수고 내 타일을 더해 뚝딱!<br>타일을 먼저 다 쓰면 이겨요.</p>
     </a>
     <a class="game" href="market/">
       <span class="adm-num"></span>
-      <img src="market/thumb.jpg?v=1" alt="도깨비 야시장 게임 화면">
+      <img src="market/thumb.jpg?v=1" width="640" height="576" decoding="async" loading="lazy" alt="도깨비 야시장 게임 화면">
       <div class="title"><b>도깨비 야시장</b></div>
       <p>도깨비 손님 주문대로 꼬치를 뚝딱!<br>가장 먼저 만들면 엽전이 내 것.</p>
     </a>
     <a class="game" href="hwatu/">
       <span class="adm-num"></span>
-      <img src="hwatu/thumb.jpg?v=2" alt="꽃들의 전쟁 게임 화면">
+      <img src="hwatu/thumb.jpg?v=2" width="640" height="576" decoding="async" loading="lazy" alt="꽃들의 전쟁 게임 화면">
       <div class="title"><b>꽃들의 전쟁</b></div>
       <p>깨비와 맞고, 고스톱, 섯다 한 판!<br>엽전을 걸고 쪼는 맛을 즐겨요.</p>
     </a>
     <a class="game" href="treasure/">
       <span class="adm-num"></span>
-      <img src="treasure/thumb.jpg?v=1" alt="보물 공방 게임 화면">
+      <img src="treasure/thumb.jpg?v=1" width="640" height="576" decoding="async" loading="lazy" alt="보물 공방 게임 화면">
       <div class="title"><b>보물 공방</b></div>
       <p>보물을 모아 카드를 사고 손님을 맞이해요!<br>15점을 먼저 모으면 이겨요.</p>
     </a>
@@ -325,6 +330,15 @@ body.adm-edit .adm-num{display:flex}
     </div>
   </div>
 </div>
+<script>
+// 게임 그림은 다 받아진 뒤 부드럽게 나타나게
+[].forEach.call(document.querySelectorAll('.game>img'),function(im){
+  if(im.complete&&im.naturalWidth) return;
+  im.classList.add('ld');
+  var done=function(){ im.classList.remove('ld'); };
+  im.addEventListener('load',done); im.addEventListener('error',done);
+});
+</script>
 <script>
 // 관리자가 정한 게임 순서를 먼저 적용 (저장된 순서를 기억해 두었다가 바로 보여 주고, 서버 값으로 다시 맞춤)
 (function(){
