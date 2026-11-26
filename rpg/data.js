@@ -7,7 +7,7 @@ const CELL = 56;   // 한 칸 크기 (월드 픽셀)
 const WEAPONS = {
   dagger1: { name: '대나무 칼',     dmg: 3,  spd: 0.4, type: 'dagger', tier: 1 },
   sword1:  { name: '깨비샘의 검',   dmg: 5,  spd: 0.6, type: 'sword',  tier: 1 },
-  bow1:    { name: '깨순이의 활',   dmg: 4,  spd: 0.75, type: 'bow',  tier: 1, range: 4 },   // 4칸 떨어져서 쏴요
+  bow1:    { name: '깨순이의 활',   dmg: 4,  spd: 0.75, type: 'bow',  tier: 1, range: 6 },   // 6칸 떨어져서 쏴요
   club1:   { name: '나무 방망이',   dmg: 8,  spd: 0.9, type: 'club',   tier: 1, two: true },
   dagger2: { name: '무쇠 단도',     dmg: 5,  spd: 0.4, type: 'dagger', tier: 2 },
   sword2:  { name: '무쇠 검',       dmg: 8,  spd: 0.6, type: 'sword',  tier: 2 },

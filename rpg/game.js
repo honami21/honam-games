@@ -738,6 +738,15 @@ function talk(npc) {
   if (npc.role === 'shop' || npc.role === 'smith') { shopWho = npc.role; openWin('shop'); }
   else if (npc.role === 'board') openWin('board');
   else openWin('guide');
+  winNpc = winOpen ? npc : null;
+}
+// NPC 창(상점 등)은 그 NPC에게서 멀어지면 저절로 닫혀요
+let winNpc = null;
+function checkNpcWin() {
+  if (!winNpc) return;
+  if (!winOpen) { winNpc = null; return; }
+  const n = winNpc, nx = n.prop ? n.prop.x : (n.x + .5) * CELL, ny = n.prop ? n.prop.y : (n.y + .5) * CELL;
+  if (dead || Math.hypot(player.px - nx, player.py - ny) > CELL * 4.5) closeWin();
 }
 
 function playerThink(dt) {
@@ -1131,14 +1140,35 @@ function playEnchant(it, risky, ok, done) {
 
 /* ================= 창 ================= */
 let winOpen = null;
+// 창 제목을 잡고 끌어서 옮겨요 (자리는 이 기기에 기억)
+let winPos = {}; try { winPos = JSON.parse(localStorage.getItem('rpg-winpos') || '{}'); } catch (e) {}
+function placeWin(el) {
+  const p = winPos[el.id]; if (!p) { el.style.left = el.style.top = el.style.right = ''; return; }
+  const r = el.getBoundingClientRect();
+  el.style.right = 'auto';
+  el.style.left = clamp(p.x, 0, Math.max(0, innerWidth - r.width)) + 'px';
+  el.style.top = clamp(p.y, 0, Math.max(0, innerHeight - 60)) + 'px';
+}
+document.querySelectorAll('.win').forEach(el => {
+  const h = el.querySelector('h3'); if (!h) return;
+  h.classList.add('grab');
+  h.addEventListener('pointerdown', e => {
+    if (e.button || e.target.closest('button')) return;
+    const r = el.getBoundingClientRect(), ox = e.clientX - r.left, oy = e.clientY - r.top;
+    h.setPointerCapture(e.pointerId); e.preventDefault();
+    const mv = ev => { winPos[el.id] = { x: ev.clientX - ox, y: ev.clientY - oy }; placeWin(el); };
+    const up = () => { h.removeEventListener('pointermove', mv); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', up); try { localStorage.setItem('rpg-winpos', JSON.stringify(winPos)); } catch (e) {} };
+    h.addEventListener('pointermove', mv); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
+  });
+});
 function openWin(w) {
   if (winOpen === w) { closeWin(); return; }
   closeWin(true);
-  winOpen = w; $('w-' + w).classList.remove('hidden'); SND.ui();
+  winOpen = w; $('w-' + w).classList.remove('hidden'); placeWin($('w-' + w)); SND.ui();
   if (w === 'inv') renderInv(); if (w === 'char') renderChar(); if (w === 'shop') { closeBuy(); renderShop(); } if (w === 'guide') renderGuide(); if (w === 'gate') renderGate();
   document.body.classList.add('win-open');
 }
-function closeWin(quiet) { if (!winOpen) return; $('w-' + winOpen).classList.add('hidden'); winOpen = null; document.body.classList.remove('win-open'); cancelEnchant(); hideTip(); if (!quiet) SND.ui(); }
+function closeWin(quiet) { winNpc = null; if (!winOpen) return; $('w-' + winOpen).classList.add('hidden'); winOpen = null; document.body.classList.remove('win-open'); cancelEnchant(); hideTip(); if (!quiet) SND.ui(); }
 
 function gearInfo(it) {
   if (it.i) { const d = ITEMS[it.i]; return `<b>${d.name}</b>` + (it.i === 'potion' ? `<br>HP ${d.heal} 회복` : it.i === 'haste' ? '<br>5분 동안 걷기와 공격이 빨라져요' : it.i === 'ret' ? '<br>읽으면 마을로 돌아가요' : it.i === 'tele' ? '<br>지금 사냥터 안 아무 곳으로 순간이동해요' : `<br>${it.i === 'wscroll' ? '무기' : '방어구'}를 한 단계 강화해요`); }
@@ -1693,6 +1723,7 @@ function update(dt) {
     hasteShow -= dt; if (hasteShow <= 0) { hasteShow = .5; updateHaste(); }
   }
   player.step = hasted() ? .36 * HASTE : .36;
+  checkNpcWin();
   // 사냥 시간·우두머리
   if (!dead) setZone(zoneAt(player.x, player.y));
   const Z = curZone;
@@ -1963,4 +1994,4 @@ bindUI();
 loadImages().then(() => { document.body.classList.add('ready'); });
 setTimeout(pullCloud, 600);
 requestAnimationFrame(frame);
-window.__rpg = { screenPos() { return [(player.px - cam.x) * zoom + VW / 2, (player.py - cam.y) * zoom + VH / 2]; }, get P() { return P; }, get M() { return M; }, get units() { return units; }, get player() { return player; }, get zone() { return curZone; }, enterWorld, teleport, goRegion, spawnMonster, gainExp, giveItem, rollAttack, playerAttacker, playerAC, set tgt(v) { tgt = v; }, set auto(v) { auto = v; } };
+window.__rpg = { screenPos() { return [(player.px - cam.x) * zoom + VW / 2, (player.py - cam.y) * zoom + VH / 2]; }, get P() { return P; }, get M() { return M; }, get units() { return units; }, get player() { return player; }, get zone() { return curZone; }, enterWorld, teleport, talk, warpTo, goRegion, spawnMonster, gainExp, giveItem, rollAttack, playerAttacker, playerAC, set tgt(v) { tgt = v; }, set auto(v) { auto = v; } };
