@@ -627,6 +627,8 @@ function planGlide(u, tx, ty, adj, goalPt) {
   const pts = path.map(([x, y]) => [x * CELL + CELL / 2, y * CELL + CELL / 2]);
   if (!adj && goalPt) { const [lx, ly] = path[path.length - 1]; if (lx === tx && ly === ty) pts[pts.length - 1] = goalPt; }
   const out = []; let cx = u.px, cy = u.py, i = 0;
+  // 내 칸 가장자리에 서 있어서 첫 칸으로 바로 못 가면, 먼저 내 칸 가운데로 갔다가 출발해요
+  if (!losClear(u, cx, cy, pts[0][0], pts[0][1])) { cx = u.x * CELL + CELL / 2; cy = u.y * CELL + CELL / 2; out.push([cx, cy]); }
   while (i < pts.length) {
     let j = Math.min(pts.length - 1, i + 30);
     while (j > i && !losClear(u, cx, cy, pts[j][0], pts[j][1])) j--;
@@ -646,7 +648,12 @@ function glideUpdate(u, dt) {
     if (cx !== u.x || cy !== u.y) {
       const oc = inMap(cx, cy) ? M.occ[idx(cx, cy)] : 1;
       const ok = !blocked(cx, cy) && !(oc && oc !== u.id) && (u === player ? gateOK(cx, cy) : !zoneAt(cx, cy).town);
-      if (!ok) { u.glide = null; if (u === player) planT = .2; else u.planT = .2; break; }
+      if (!ok) {
+        // 지금 서 있는 점이 내 칸 밖이면 내 칸 안으로 되돌려요 (막힌 칸에 걸려 꼼짝 못 하는 것 방지)
+        const ix = Math.floor(u.px / CELL), iy = Math.floor(u.py / CELL);
+        if (ix !== u.x || iy !== u.y) { u.px = clamp(u.px, u.x * CELL + 2, (u.x + 1) * CELL - 2); u.py = clamp(u.py, u.y * CELL + 2, (u.y + 1) * CELL - 2); }
+        u.glide = null; if (u === player) planT = .2; else u.planT = .2; break;
+      }
       M.occ[idx(u.x, u.y)] = 0; M.occ[idx(cx, cy)] = u.id; u.x = cx; u.y = cy;
       if (u === player) pickupAt(cx, cy);
     }
@@ -1612,7 +1619,13 @@ function closeIn(dt) {
     let o = null;
     if (u === player) { if (tgt && tgt.kind === 'mon' && !tgt.dying && !u.moving && !isBow() && cheb(u.x, u.y, tgt.x, tgt.y) <= 1) o = tgt; }
     // 싸움이 끝나면 그 자리에 그대로 서 있다가, 걷기 시작할 때 거기서부터 걸어가요 (제자리로 휙 돌아가지 않게)
-    if (u === player && !o) { if (u.moving && (u.ox || u.oy)) { u.px += u.ox; u.py += u.oy; u.ox = u.oy = 0; } continue; }
+    if (u === player && !o) {
+      if (u.moving && (u.ox || u.oy)) {
+        // 몬스터 쪽으로 다가붙었던 만큼을 실제 자리로 옮기되, 내 칸 밖(옆 몬스터 칸)으로는 넘어가지 않게 (넘어가면 그 칸에 막혀 못 움직여요)
+        u.px = clamp(u.px + u.ox, u.x * CELL + 2, (u.x + 1) * CELL - 2); u.py = clamp(u.py + u.oy, u.y * CELL + 2, (u.y + 1) * CELL - 2); u.ox = u.oy = 0;
+      }
+      continue;
+    }
     else if (u.kind === 'mon' && u.angry && !u.dying && !u.moving && !dead && cheb(u.x, u.y, player.x, player.y) <= 1) o = player;
     const kk = u === player ? .5 : .25, gx = o ? (o.px - u.px) * kk : 0, gy = o ? (o.py - u.py) * kk : 0;   // 서로 다가가서 거의 붙어서 때려요
     u.ox = (u.ox || 0) + (gx - (u.ox || 0)) * k; u.oy = (u.oy || 0) + (gy - (u.oy || 0)) * k;
