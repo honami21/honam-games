@@ -688,9 +688,18 @@ function unitAt(wx, wy, kinds) {
   for (const u of units) {
     if (!kinds.includes(u.kind) || u.dying) continue;
     if (u.prop) { const p = u.prop; if (wx > p.x - p.w / 2 && wx < p.x + p.w / 2 && wy > p.y - p.h && wy < p.y) if (!best || u.py > best.py) best = u; continue; }
-    const h = u.kind === 'mon' ? u.d.h : u.h || 88 * UK, w = Math.max(h * .8, 30);
+    const mon = u.kind === 'mon', h = mon ? u.d.h : u.h || 88 * UK, pad = mon ? 14 : 0, w = Math.max(h * .8, 30) + pad * 2;
     const ux = u.px + (u.ox || 0), uy = u.py + (u.oy || 0);
-    if (wx > ux - w / 2 && wx < ux + w / 2 && wy > uy + CELL * .3 - Math.max(h, 36) && wy < uy + CELL * .35) if (!best || u.py > best.py) best = u;
+    if (wx > ux - w / 2 && wx < ux + w / 2 && wy > uy + CELL * .3 - Math.max(h, 36) - pad && wy < uy + CELL * .35 + pad / 2) if (!best || u.py > best.py) best = u;
+  }
+  if (best || !kinds.includes('mon')) return best;
+  // 몬스터를 살짝 빗나가게 눌러도 가까이 있는 몬스터를 골라줘요 (움직이는 몬스터 누르기 쉽게)
+  let bd = 1e9;
+  for (const u of units) {
+    if (u.kind !== 'mon' || u.dying) continue;
+    const h = Math.max(u.d.h, 36), cx = u.px + (u.ox || 0), cy = u.py + (u.oy || 0) + CELL * .3 - h / 2;
+    const d = Math.hypot(wx - cx, wy - cy), lim = h * .4 + 28;
+    if (d < lim && d < bd) { bd = d; best = u; }
   }
   return best;
 }
