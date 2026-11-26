@@ -30,8 +30,16 @@ const ARMORS = {
   boots2:  { name: '남색 고무신',     slot: 'boots',  ac: 1, tier: 2 },
   shield2: { name: '대나무 방패',     slot: 'shield', ac: 2, tier: 2 },
 };
-const SLOTS = ['weapon', 'helm', 'armor', 'cloak', 'glove', 'boots', 'shield'];
-const SLOT_NAME = { weapon: '무기', helm: '투구', armor: '갑옷', cloak: '망토', glove: '장갑', boots: '고무신', shield: '방패' };
+// 장신구: 목걸이·반지. 강화할 수 없고 우두머리만 떨어뜨려요 (boss: 떨어뜨리는 우두머리)
+const ACCS = {
+  neck1: { name: '허수아비 짚 목걸이', slot: 'neck', tier: 1, boss: 'kscare', hp: 15 },
+  ring1: { name: '허수아비 반지',      slot: 'ring', tier: 1, boss: 'kscare', str: 1 },
+  neck2: { name: '대나무 장군 목걸이', slot: 'neck', tier: 2, boss: 'general', hp: 30, ac: 1 },
+  ring2: { name: '대나무 장군 반지',   slot: 'ring', tier: 2, boss: 'general', str: 1, dex: 1 },
+};
+const ACC_DROP = 0.25;   // 우두머리를 잡으면 25% 확률로 장신구 하나
+const SLOTS = ['weapon', 'helm', 'armor', 'cloak', 'glove', 'boots', 'shield', 'neck', 'ring'];
+const SLOT_NAME = { weapon: '무기', helm: '투구', armor: '갑옷', cloak: '망토', glove: '장갑', boots: '고무신', shield: '방패', neck: '목걸이', ring: '반지' };
 
 // 쌓이는 아이템
 const ITEMS = {

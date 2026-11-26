@@ -13,7 +13,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 const IMG = {}, WHITE = {};
 const IMG_LIST = ['t-board', 't-forge', 'npc-smith', 'i-return', 'i-teleport', 'fence-panel', 'fence-v-post', 'fence-v-weave', 'emblem-1', 'emblem-2', 'emblem-3', 'emblem-4', 'a-walk-0', 'a-walk-1', 'a-walk-2', 'a-walk-3', 'a-walk-4', 'a-walk-5', 'a-idle', 'a-walk1', 'a-walk2', 'a-wind', 'a-swing', 'a-hurt', 'a-dead', 'a-win', 'arrow', 'fence-h', 'fence-post', 'fence-corner', 'gate-front', 'gate-side', 'gate-side-l', 'fence-side', 'fence-lamp', 'p-idle', 'p-walk-0', 'p-walk-1', 'p-walk-2', 'p-walk-3', 'p-walk-4', 'p-walk-5', 'p-wind', 'p-swing', 'p-hurt', 'p-dead', 'p-win', 'npc-shop', 'npc-guide',
   ...Object.keys(MONS).flatMap(k => ['m-' + k + '-0', 'm-' + k + '-1']),
-  ...Object.keys(WEAPONS).map(k => 'w-' + k), ...Object.keys(ARMORS).map(k => 'a-' + k),
+  ...Object.keys(WEAPONS).map(k => 'w-' + k), ...Object.keys(ARMORS).map(k => 'a-' + k), ...Object.keys(ACCS).map(k => 'c-' + k),
   'i-potion', 'i-haste', 'i-wscroll', 'i-ascroll', 'i-coin', 'i-coins', 'i-box', ...Object.keys(PROPS)];
 function loadImages() {
   const jobs = IMG_LIST.map(n => new Promise(res => { const im = new Image(); im.onload = () => { IMG[n] = im; res(); }; im.onerror = res; im.src = 'img/' + n + '.png?v=1'; }));
@@ -27,7 +27,8 @@ function white(n) {   // 맞았을 때 하얗게 번쩍이는 그림
   const g = c.getContext('2d'); g.drawImage(im, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
   return (WHITE[n] = c);
 }
-const gearImg = it => it.g === 'w' ? 'w-' + it.k : it.g === 'a' ? 'a-' + it.k : ITEMS[it.i].img;
+const gearImg = it => it.g === 'w' ? 'w-' + it.k : it.g === 'a' ? 'a-' + it.k : it.g === 'c' ? (IMG['c-' + it.k] ? 'c-' + it.k : 'i-box') : ITEMS[it.i].img;
+const GDEF = it => (it.g === 'w' ? WEAPONS : it.g === 'c' ? ACCS : ARMORS)[it.k];
 
 // 캐릭터·몬스터·NPC 크기 (1 = 처음 크기, 2026-11-25 절반으로 줄임)
 const UK = .5;
@@ -131,21 +132,24 @@ const W_OF = () => P.eq.weapon ? WEAPONS[P.eq.weapon.k] : null;
 const isBow = () => !!P && P.cls === 'bow';
 const reach = () => { const w = W_OF(); return w && w.range || 1; };
 const HERO = () => isBow() ? '깨순이' : '깨비샘';
-function maxHP() { return 30 + (P.lv - 1) * 8 + (P.con - 10) * (P.lv + 2); }
+// 장신구가 더해 주는 능력치
+function accBonus(k) { let v = 0; for (const s of ['neck', 'ring']) { const it = P.eq[s]; if (it && it.g === 'c') v += ACCS[it.k][k] || 0; } return v; }
+const ST = k => P[k] + accBonus(k);
+function maxHP() { return 30 + (P.lv - 1) * 8 + (ST('con') - 10) * (P.lv + 2) + accBonus('hp'); }
 function playerAC() {
   let ac = 10;
-  for (const s of SLOTS) { const it = P.eq[s]; if (it && it.g === 'a') ac -= ARMORS[it.k].ac + it.en; }
-  return ac - Math.floor((P.dex - 10) / 3);
+  for (const s of SLOTS) { const it = P.eq[s]; if (it && it.g === 'a') ac -= ARMORS[it.k].ac + it.en; else if (it && it.g === 'c') ac -= ACCS[it.k].ac || 0; }
+  return ac - Math.floor((ST('dex') - 10) / 3);
 }
-const strBonus = () => Math.floor((P.str - 10) / 2);
-const hitBonus = () => (P.dex - 10) * 2;
-const critRate = () => 5 + Math.floor((P.dex - 10) / 2);
+const strBonus = () => Math.floor((ST('str') - 10) / 2);
+const hitBonus = () => (ST('dex') - 10) * 2;
+const critRate = () => 5 + Math.floor((ST('dex') - 10) / 2);
 function weaponRange(it) {   // 무기 데미지 범위 (힘 보너스 제외)
   if (!it) return [1, 2];
   const base = WEAPONS[it.k].dmg + it.en;
   return [base, base + (it.en >= 7 ? 2 * (it.en - 6) : 0)];
 }
-function regenAmt() { return 1 + Math.floor(P.lv / 5) + Math.max(0, Math.floor((P.con - 10) / 2)); }
+function regenAmt() { return 1 + Math.floor(P.lv / 5) + Math.max(0, Math.floor((ST('con') - 10) / 2)); }
 
 // 한 대의 결과: 명중 → 데미지 굴림 → 치명타 → AC 감소 → 0이면 막음
 function rollAttack(att, def) {
@@ -857,6 +861,7 @@ function dropLoot(m) {
   const gearOf = () => { const pool = [...Object.keys(ARMORS).filter(k => ARMORS[k].tier === tier).map(k => ({ g: 'a', k }))]; const it = pool[rnd(0, pool.length - 1)]; return { item: { g: it.g, k: it.k, en: 0 }, rare: 1 }; };
   if (m.d.boss) {
     bag.push(gearOf());
+    if (Math.random() < ACC_DROP) { const pool = Object.keys(ACCS).filter(k => ACCS[k].boss === m.d.id || ACCS[k].boss === m.type); if (pool.length) bag.push({ item: { g: 'c', k: pool[rnd(0, pool.length - 1)], en: 0 }, rare: 1 }); }
     const n = rnd(3, 5); for (let i = 0; i < n; i++) bag.push({ item: { i: Math.random() < 1 / 3 ? 'wscroll' : 'ascroll', n: 1 }, rare: 1 });
   } else {
     if (Math.random() < dr.w) bag.push({ item: { i: 'wscroll', n: 1 }, rare: 1 });
@@ -982,7 +987,7 @@ function log(html, cls = '') {
 const INV_MAX = 30;
 function itemName(it) {
   if (it.i) return ITEMS[it.i].name + (it.n > 1 ? ' ' + it.n + '개' : '');
-  const d = it.g === 'w' ? WEAPONS[it.k] : ARMORS[it.k];
+  const d = GDEF(it);
   return (it.en ? '+' + it.en + ' ' : '') + d.name;
 }
 function giveItem(it) {
@@ -1004,18 +1009,18 @@ function useItem(ix) {
 function equip(ix) {
   const it = P.inv[ix]; if (!it || !it.g) return;
   if (it.g === 'w') { log(`${HERO()}는 자기 무기만 쓸 수 있어요`, 'warn'); return; }
-  const slot = it.g === 'w' ? 'weapon' : ARMORS[it.k].slot;
+  const slot = it.g === 'w' ? 'weapon' : GDEF(it).slot;
   if (slot === 'shield' && P.eq.weapon && WEAPONS[P.eq.weapon.k].two) { log(`${WTYPE[WEAPONS[P.eq.weapon.k].type]}${WEAPONS[P.eq.weapon.k].type === 'bow' ? '은' : '는'} 양손 무기라 방패를 들 수 없어요`, 'warn'); return; }
   P.inv.splice(ix, 1);
   if (it.g === 'w' && WEAPONS[it.k].two && P.eq.shield) { P.inv.push(P.eq.shield); P.eq.shield = null; log('양손 무기를 들어서 방패를 가방에 넣었어요', 'sys'); }
   if (P.eq[slot]) P.inv.push(P.eq[slot]);
-  P.eq[slot] = it; SND.ui();
+  P.eq[slot] = it; SND.ui(); P.hp = Math.min(P.hp, maxHP());
   dirty = true; renderInv(); updateHUD();
 }
 function unequip(slot) {
   if (!P.eq[slot] || slot === 'weapon') return;   // 검은 뺄 수 없어요
   if (P.inv.length >= INV_MAX) { log('가방이 가득 찼어요', 'warn'); return; }
-  P.inv.push(P.eq[slot]); P.eq[slot] = null; SND.ui(); dirty = true; renderInv(); updateHUD();
+  P.inv.push(P.eq[slot]); P.eq[slot] = null; SND.ui(); P.hp = Math.min(P.hp, maxHP()); dirty = true; renderInv(); updateHUD();
 }
 let hasteShow = 0;
 function drinkHaste() {
@@ -1113,6 +1118,7 @@ function enchantTarget(ref) {   // ref: {eq:slot} 또는 {inv:index}
   const scroll = enchantPick; cancelEnchant();
   if (!it || !it.g) return;
   const kind = scroll === 'wscroll' ? 'w' : 'a';
+  if (it.g === 'c') { log('장신구는 강화할 수 없어요', 'warn'); return; }
   if (it.g !== kind) { log(kind === 'w' ? '무기 강화 부적은 무기에만 쓸 수 있어요' : '방어구 강화 부적은 방어구에만 쓸 수 있어요', 'warn'); return; }
   const rule = ENCH[kind];
   if (it.en >= rule.max) { log(`+${rule.max}이 가장 높은 강화예요`, 'warn'); return; }
@@ -1186,6 +1192,10 @@ function gearInfo(it) {
     return `<b>${itemName(it)}</b><br>${WTYPE[d.type]} · ${d.tier}단계<br>데미지 ${a === b ? a : a + '~' + b} · 한 대 ${d.spd}초` +
       `<br><span class="dim">안전 강화 +${ENCH.w.safe}까지 · 최대 +${ENCH.w.max}</span>`;
   }
+  if (it.g === 'c') {
+    const c = ACCS[it.k], parts = [c.hp && `최대 HP +${c.hp}`, c.str && `힘 +${c.str}`, c.dex && `민첩 +${c.dex}`, c.con && `체력 +${c.con}`, c.ac && `방어도 ${c.ac}`].filter(Boolean);
+    return `<b>${itemName(it)}</b><br>${SLOT_NAME[c.slot]} · 장신구<br>${parts.join(' · ')}<br><span class="dim">강화할 수 없어요 · 우두머리가 떨어뜨려요</span>`;
+  }
   const d = ARMORS[it.k];
   return `<b>${itemName(it)}</b><br>${SLOT_NAME[d.slot]} · ${d.tier}단계<br>방어도 ${d.ac + it.en}${it.en ? ` (기본 ${d.ac} +${it.en})` : ''}<br><span class="dim">안전 강화 +${ENCH.a.safe}까지 · 최대 +${ENCH.a.max}</span>`;
 }
@@ -1203,7 +1213,7 @@ function renderInv() {
 }
 function renderChar() {
   const [a, b] = weaponRange(P.eq.weapon), sb = strBonus();
-  const row = (k, n, d) => `<div class="st"><span>${n}</span><b>${P[k]}</b>${P.pts > 0 ? `<button class="plus" data-st="${k}">+</button>` : ''}<em>${d}</em></div>`;
+  const row = (k, n, d) => `<div class="st"><span>${n}</span><b>${P[k]}${accBonus(k) ? `<small> +${accBonus(k)}</small>` : ''}</b>${P.pts > 0 ? `<button class="plus" data-st="${k}">+</button>` : ''}<em>${d}</em></div>`;
   $('char-body').innerHTML =
     `${P.name ? `<div class="nmline"><i class="nm" style="color:${nameColor(P.lv)}">${esc(P.name)}</i></div>` : ''}<div class="lvline">Lv ${P.lv} <span>${P.lv >= MAX_LV ? '최고 레벨' : `경험치 ${P.exp.toLocaleString()} / ${needExp(P.lv).toLocaleString()}`}</span></div>` +
     row('str', '힘', `데미지 ${sb >= 0 ? '+' : ''}${sb}`) + row('dex', '민첩', `명중 +${hitBonus()}% · 치명타 ${critRate()}%`) + row('con', '체력', `최대 HP ${maxHP()}`) +
@@ -1217,10 +1227,11 @@ const SHOPS = { shop: { name: '꽃분 할머니 · 잡화', list: [{ i: 'potion'
   smith: { name: '쇠돌 아저씨 · 대장간', list: Object.keys(ARMORS).filter(k => ARMORS[k].price).map(k => ({ g: 'a', k })) } };
 let shopWho = 'shop', SHOP_LIST = SHOPS.shop.list;
 let shopTab = 'buy';
-function priceOf(it) { return it.i ? ITEMS[it.i].price : (it.g === 'w' ? WEAPONS : ARMORS)[it.k].price; }
+function priceOf(it) { return it.i ? ITEMS[it.i].price : GDEF(it).price; }
 function sellOf(it) {
   if (it.i) return ITEMS[it.i].sell;
-  const d = (it.g === 'w' ? WEAPONS : ARMORS)[it.k];
+  const d = GDEF(it);
+  if (it.g === 'c') return d.tier === 1 ? 150 : 400;
   return Math.round((d.tier === 1 ? 12 : 70) * (1 + it.en * .5) * (it.g === 'w' ? 1.5 : 1));
 }
 function renderShop() {
@@ -1228,7 +1239,7 @@ function renderShop() {
   $('shop-coins').textContent = P.coins.toLocaleString();
   document.querySelectorAll('#w-shop .tab').forEach(b => b.classList.toggle('on', b.dataset.tab === shopTab));
   if (shopTab === 'buy') {
-    $('shop-list').innerHTML = SHOP_LIST.map((it, i) => `<button class="shop-it" data-buy="${i}" ${P.coins < priceOf(it) ? 'disabled' : ''}><img src="img/${gearImg(it)}.png" alt=""><span>${esc(it.i ? ITEMS[it.i].name : (it.g === 'w' ? WEAPONS : ARMORS)[it.k].name)}</span><b>${priceOf(it)}</b></button>`).join('');
+    $('shop-list').innerHTML = SHOP_LIST.map((it, i) => `<button class="shop-it" data-buy="${i}" ${P.coins < priceOf(it) ? 'disabled' : ''}><img src="img/${gearImg(it)}.png" alt=""><span>${esc(it.i ? ITEMS[it.i].name : GDEF(it).name)}</span><b>${priceOf(it)}</b></button>`).join('');
   } else {
     const list = P.inv.map((it, i) => [it, i]);
     $('shop-list').innerHTML = list.length ? list.map(([it, i]) => `<button class="shop-it" data-sell="${i}"><img src="img/${gearImg(it)}.png" alt=""><span>${esc(itemName(it))}</span><b>${sellOf(it)}${it.n > 1 ? ' /개' : ''}</b></button>`).join('') : '<p class="dim">팔 물건이 없어요</p>';
@@ -1246,7 +1257,7 @@ function closeBuy() { buyIx = -1; $('buyq').classList.add('hidden'); }
 function renderBuy() {
   const it = SHOP_LIST[buyIx]; if (!it) return closeBuy();
   const mx = buyMax(it); buyN = clamp(buyN, mx ? 1 : 0, mx);
-  const name = it.i ? ITEMS[it.i].name : (it.g === 'w' ? WEAPONS : ARMORS)[it.k].name;
+  const name = it.i ? ITEMS[it.i].name : GDEF(it).name;
   $('bq-img').src = `img/${gearImg(it)}.png`; $('bq-name').textContent = name;
   $('bq-n').textContent = buyN; $('bq-sum').textContent = (buyN * priceOf(it)).toLocaleString();
   $('bq-ok').disabled = buyN < 1; $('bq-msg').textContent = mx ? `최대 ${mx}개` : (P.coins < priceOf(it) ? '엽전이 모자라요' : '가방이 가득 찼어요');
@@ -1258,7 +1269,7 @@ function doBuy() {
   else for (let k = 0; k < buyN; k++) { if (!giveItem({ g: it.g, k: it.k, en: 0 })) break; got++; }
   if (!got) { log('가방이 가득 찼어요', 'warn'); return; }
   P.coins -= got * priceOf(it); SND.coin();
-  log(`<b>${esc(it.i ? ITEMS[it.i].name : (it.g === 'w' ? WEAPONS : ARMORS)[it.k].name)}</b> ${got}개를 샀어요`, 'item');
+  log(`<b>${esc(it.i ? ITEMS[it.i].name : GDEF(it).name)}</b> ${got}개를 샀어요`, 'item');
   closeBuy(); dirty = true; renderShop(); updateHUD();
 }
 function renderGuide() {
