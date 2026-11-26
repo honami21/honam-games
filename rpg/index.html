@@ -148,10 +148,11 @@
 
 
   /* 게임 알림: 화면 가운데 아래에서 올라오다가 흐려져요 (캐릭터까지는 안 올라가게 4줄까지만) */
-  #buffs { position:absolute; left:14px; bottom:calc(100% + 8px); display:flex; gap:8px; pointer-events:none; }
+  #buffs { position:absolute; left:14px; bottom:calc(100% + 20px); display:flex; gap:8px; pointer-events:none; }
   #buffs .bf { position:relative; width:46px; height:46px; background:rgba(255,246,236,.95); border:3px solid var(--line); border-radius:12px; display:flex; align-items:center; justify-content:center; animation:logIn .25s ease-out; }
   #buffs .bf img { width:34px; height:34px; object-fit:contain; }
-  #buffs .bf span { position:absolute; left:50%; bottom:-11px; transform:translateX(-50%); background:var(--line); color:#fff; border-radius:999px; padding:1px 6px 0; font-size:12px; white-space:nowrap; }
+  #buffs .bf::after { content:''; position:absolute; inset:0; border-radius:9px; background:conic-gradient(rgba(20,12,40,.6) var(--p,0deg), transparent 0); pointer-events:none; }
+  #buffs .bf span { position:absolute; z-index:1; left:50%; bottom:-11px; transform:translateX(-50%); background:var(--line); color:#fff; border-radius:999px; padding:1px 6px 0; font-size:12px; white-space:nowrap; }
   #buffs .bf.end { animation:bfBlink .5s steps(2) infinite; }
   @keyframes bfBlink { 50% { opacity:.35; } }
   #log { position:absolute; left:50%; transform:translateX(-50%); bottom:96px; width:min(520px,80vw); display:flex; flex-direction:column; align-items:center; gap:2px; pointer-events:none; }

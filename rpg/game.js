@@ -1051,13 +1051,13 @@ function renderQuick() {
   });
 }
 // 받은 버프: 상태창 왼쪽 위에 그림과 남은 시간 (새 버프는 BUFFS에 한 줄 추가)
-const BUFFS = [{ id: 'haste', img: 'i-haste', left: () => P.haste }];
+const BUFFS = [{ id: 'haste', img: 'i-haste', left: () => P.haste, max: () => ITEMS.haste.sec * 1000 }];
 function renderBuffs() {
   const box = $('buffs'); if (!box) return;
   const on = BUFFS.filter(b => b.left() > 0);
   const key = on.map(b => b.id).join();
   if (box.dataset.k !== key) { box.dataset.k = key; box.innerHTML = on.map(b => `<div class="bf" data-b="${b.id}"><img src="img/${b.img}.png" alt=""><span></span></div>`).join(''); }
-  for (const b of on) { const el = box.querySelector(`[data-b="${b.id}"]`), t = b.left(); el.querySelector('span').textContent = fmtTime(t); el.classList.toggle('end', t < 10000); }
+  for (const b of on) { const el = box.querySelector(`[data-b="${b.id}"]`), t = b.left(); el.querySelector('span').textContent = fmtTime(t); el.style.setProperty('--p', (360 * clamp(1 - t / b.max(), 0, 1)).toFixed(1) + 'deg'); el.classList.toggle('end', t < 10000); }
 }
 function updateHaste() { renderQuick(); renderBuffs(); }
 // 마을 귀환 주문서 (3) · 순간이동 주문서 (4)
