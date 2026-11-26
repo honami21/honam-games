@@ -7,7 +7,7 @@ const CELL = 56;   // 한 칸 크기 (월드 픽셀)
 const WEAPONS = {
   dagger1: { name: '대나무 칼',     dmg: 3,  spd: 0.4, type: 'dagger', tier: 1 },
   sword1:  { name: '깨비샘의 검',   dmg: 5,  spd: 0.6, type: 'sword',  tier: 1 },
-  bow1:    { name: '깨순이의 활',   dmg: 4,  spd: 0.75, type: 'bow',  tier: 1, range: 4 },   // 4칸 떨어져서 쏴요
+  bow1:    { name: '깨순이의 활',   dmg: 4,  spd: 0.75, type: 'bow',  tier: 1, range: 8, two: true },   // 8칸 떨어져서 쏴요
   club1:   { name: '나무 방망이',   dmg: 8,  spd: 0.9, type: 'club',   tier: 1, two: true },
   dagger2: { name: '무쇠 단도',     dmg: 5,  spd: 0.4, type: 'dagger', tier: 2 },
   sword2:  { name: '무쇠 검',       dmg: 8,  spd: 0.6, type: 'sword',  tier: 2 },
@@ -30,8 +30,16 @@ const ARMORS = {
   boots2:  { name: '남색 고무신',     slot: 'boots',  ac: 1, tier: 2 },
   shield2: { name: '대나무 방패',     slot: 'shield', ac: 2, tier: 2 },
 };
-const SLOTS = ['weapon', 'helm', 'armor', 'cloak', 'glove', 'boots', 'shield'];
-const SLOT_NAME = { weapon: '무기', helm: '투구', armor: '갑옷', cloak: '망토', glove: '장갑', boots: '고무신', shield: '방패' };
+// 장신구: 목걸이·반지. 강화할 수 없고 우두머리만 떨어뜨려요 (boss: 떨어뜨리는 우두머리)
+const ACCS = {
+  neck1: { name: '허수아비 짚 목걸이', slot: 'neck', tier: 1, boss: 'kscare', hp: 15 },
+  ring1: { name: '허수아비 반지',      slot: 'ring', tier: 1, boss: 'kscare', str: 1 },
+  neck2: { name: '대나무 장군 목걸이', slot: 'neck', tier: 2, boss: 'general', hp: 30, ac: 1 },
+  ring2: { name: '대나무 장군 반지',   slot: 'ring', tier: 2, boss: 'general', str: 1, dex: 1 },
+};
+const ACC_DROP = 0.25;   // 우두머리를 잡으면 25% 확률로 장신구 하나
+const SLOTS = ['weapon', 'helm', 'armor', 'cloak', 'glove', 'boots', 'shield', 'neck', 'ring'];
+const SLOT_NAME = { weapon: '무기', helm: '투구', armor: '갑옷', cloak: '망토', glove: '장갑', boots: '고무신', shield: '방패', neck: '목걸이', ring: '반지' };
 
 // 쌓이는 아이템
 const ITEMS = {
@@ -65,13 +73,13 @@ const WORLD = { w: 258, h: 218, cx: 129, cy: 126, k: 1.4 };   // k: 섬 크기 �
 // tile: 바닥 그림, mons: [몬스터, 비율], count: 몬스터 수, road: 리스폰 지점이 놓이는 길 방향(도)과 거리
 const ZONES = [
   { id: 'town', name: '도깨비 마을', lv: '', tile: 'tile-town', town: true, color: '#c99b5e' },
-  { id: 'near', name: '마을 앞 들판', lv: '1~5', tile: 'tile-field', tier: 1, road: [-90, 17], count: 110,
+  { id: 'near', name: '마을 앞 들판', lv: '1~5', tile: 'tile-field', tier: 1, road: [-90, 17], count: 190,
     mons: [['dust', 5], ['rat', 4]], drop: { w: .002, a: .004, gear: .004, coin: [1, 2] } },
-  { id: 'paddy', name: '허수아비 논밭', lv: '5~10', tile: 'tile-paddy', tier: 1, road: [180, 31], count: 75, boss: 'kscare',
-    mons: [['rat', 1], ['acorn', 4], ['scare', 4]], drop: { w: .003, a: .006, gear: .006, coin: [2, 4] } },
-  { id: 'bamboo', name: '대나무 숲', lv: '10~15', tile: 'tile-bamboo', tier: 2, road: [0, 35], count: 75,
-    mons: [['shoot', 5], ['tanuki', 4]], drop: { w: .004, a: .008, gear: .004, coin: [3, 6] } },
-  { id: 'deep', name: '깊은 대숲', lv: '15~20', tile: 'tile-deep', tier: 2, road: [90, 30], count: 75, boss: 'general',
+  { id: 'paddy', name: '허수아비 논밭', lv: '5~10', tile: 'tile-paddy', tier: 1, road: [180, 31], count: 140, boss: 'kscare',
+    mons: [['rat', 3], ['acorn', 6], ['scare', 3]], drop: { w: .003, a: .006, gear: .006, coin: [2, 4] } },
+  { id: 'bamboo', name: '대나무 숲', lv: '10~15', tile: 'tile-bamboo', tier: 2, road: [0, 35], count: 140,
+    mons: [['shoot', 7], ['tanuki', 2]], drop: { w: .004, a: .008, gear: .004, coin: [3, 6] } },
+  { id: 'deep', name: '깊은 대숲', lv: '15~20', tile: 'tile-deep', tier: 2, road: [90, 30], count: 105, boss: 'general',
     mons: [['tanuki', 1], ['bghost', 4], ['broom', 4]], drop: { w: .006, a: .012, gear: .006, coin: [5, 9] } },
   { id: 'beach', name: '도깨비섬 바닷가', lv: '', tile: 'tile-sand', tier: 1 },
   { id: 'hornL', name: '왼뿔 곶', lv: '', tile: 'tile-rock', tier: 1 },
@@ -88,28 +96,31 @@ const REGIONS = [
   { id: 'cave', name: '왼뿔 곶 도깨비 동굴', lv: '20~30' },
   { id: 'ship', name: '배 타고 새 섬으로', lv: '30~' },
 ];
+// 황금 몬스터: 일반 몬스터가 나올 때 1.5% 확률. HP 4배, 경험치 5배, 엽전 30배, 부적·방어구 확률 15배, 초록 물약 30%
+const RARE = { chance: .015, hp: 4, exp: 5, coin: 30, drop: 15 };
 const BOSS_FIRST = 180, BOSS_AGAIN = 300;   // 사냥터에서 3분 뒤 첫 우두머리, 쓰러뜨리면 5분 뒤 다시
 const HUNT_MS = 10 * 60 * 1000;              // 1포인트 = 사냥 10분
 
 // 장식물: 그림, 화면 너비, 막는 칸(밑동 기준 가로×세로)
 const PROPS = {
   't-house1': { w: 210, fw: 4, fh: 2 }, 't-house2': { w: 220, fw: 4, fh: 2 }, 't-stall': { w: 150, fw: 3, fh: 1 },
-  't-well': { w: 96, fw: 2, fh: 1 }, 't-jars': { w: 96, fw: 2, fh: 1 }, 't-fence': { w: 96, fw: 2, fh: 1 },
+  't-well': { w: 80, fw: 2, fh: 1 }, 't-jars': { w: 52, fw: 1, fh: 1 }, 't-fence': { w: 96, fw: 2, fh: 1 },
   't-jangseung': { w: 96, fw: 2, fh: 1 }, 't-portal': { w: 120, fw: 2, fh: 1 },
   't-board': { w: 110, fw: 2, fh: 1 }, 't-forge': { w: 170, fw: 3, fh: 1 },
-  'f-tree1': { w: 170, fw: 2, fh: 1 }, 'f-tree2': { w: 110, fw: 1, fh: 1 }, 'f-bush': { w: 80, fw: 1, fh: 1 },
-  'f-rock1': { w: 110, fw: 2, fh: 1 }, 'f-rocks': { w: 80, fw: 1, fh: 1 }, 'f-hay': { w: 76, fw: 1, fh: 1 },
-  'f-sign': { w: 72, fw: 1, fh: 1 }, 'f-flowers': { w: 78, fw: 0, fh: 0, flat: 1 },
-  'b-bamboo1': { w: 120, fw: 2, fh: 1 }, 'b-bamboo2': { w: 92, fw: 1, fh: 1 }, 'b-rock': { w: 110, fw: 2, fh: 1 },
-  'b-fallen': { w: 110, fw: 2, fh: 1 }, 'b-tower': { w: 70, fw: 1, fh: 1 }, 'b-sasa': { w: 84, fw: 1, fh: 1 },
-  'b-pond': { w: 150, fw: 3, fh: 2 }, 'b-lantern': { w: 72, fw: 1, fh: 1 },
+  't-shop': { w: 165, fw: 3, fh: 1 }, 't-storage': { w: 165, fw: 3, fh: 1 }, 't-well-f': { w: 86, fw: 2, fh: 1 }, 't-jars-f': { w: 72, fw: 2, fh: 1 },
+  'f-tree1': { w: 170, fw: 2, fh: 1 }, 'f-tree2': { w: 110, fw: 1, fh: 1 }, 'f-bush': { w: 50, fw: 1, fh: 1 },
+  'f-rock1': { w: 80, fw: 2, fh: 1 }, 'f-rocks': { w: 48, fw: 1, fh: 1 }, 'f-hay': { w: 46, fw: 1, fh: 1 },
+  'f-sign': { w: 42, fw: 1, fh: 1 }, 'f-flowers': { w: 54, fw: 0, fh: 0, flat: 1 },
+  'b-bamboo1': { w: 120, fw: 2, fh: 1 }, 'b-bamboo2': { w: 92, fw: 1, fh: 1 }, 'b-rock': { w: 80, fw: 2, fh: 1 },
+  'b-fallen': { w: 84, fw: 2, fh: 1 }, 'b-tower': { w: 56, fw: 1, fh: 1 }, 'b-sasa': { w: 56, fw: 1, fh: 1 },
+  'b-pond': { w: 150, fw: 3, fh: 2 }, 'b-lantern': { w: 44, fw: 1, fh: 1 },
   // 바닷가·섬 안쪽 (flat: 땅에 붙은 그림이라 캐릭터가 위로 지나가요)
-  'c-pine': { w: 150, fw: 1, fh: 1 }, 'c-rock': { w: 130, fw: 2, fh: 1 }, 'c-shells': { w: 70, fw: 0, fh: 0, flat: 1 },
+  'c-pine': { w: 150, fw: 1, fh: 1 }, 'c-rock': { w: 90, fw: 2, fh: 1 }, 'c-shells': { w: 46, fw: 0, fh: 0, flat: 1 },
   'c-dock': { w: 190, fw: 0, fh: 0, flat: 1 }, 'c-boat': { w: 150, fw: 2, fh: 1 }, 'c-lighthouse': { w: 130, fw: 2, fh: 1 },
-  'c-cave': { w: 190, fw: 3, fh: 1 }, 'c-drift': { w: 100, fw: 2, fh: 1 },
-  'l-bridge': { w: 250, fw: 0, fh: 0, flat: 1 }, 'l-cliff': { w: 170, fw: 3, fh: 1 }, 'l-wall': { w: 110, fw: 2, fh: 1 },
-  'l-sign': { w: 76, fw: 1, fh: 1 }, 'l-stones': { w: 190, fw: 0, fh: 0, flat: 1 }, 'l-pine': { w: 170, fw: 2, fh: 1 },
-  'l-pavilion': { w: 200, fw: 3, fh: 2 }, 'l-reed': { w: 86, fw: 1, fh: 1 },
+  'c-cave': { w: 190, fw: 3, fh: 1 }, 'c-drift': { w: 72, fw: 2, fh: 1 },
+  'l-bridge': { w: 250, fw: 0, fh: 0, flat: 1 }, 'l-cliff': { w: 170, fw: 3, fh: 1 }, 'l-wall': { w: 84, fw: 2, fh: 1 },
+  'l-sign': { w: 44, fw: 1, fh: 1 }, 'l-stones': { w: 190, fw: 0, fh: 0, flat: 1 }, 'l-pine': { w: 170, fw: 2, fh: 1 },
+  'l-pavilion': { w: 200, fw: 3, fh: 2 }, 'l-reed': { w: 58, fw: 1, fh: 1 },
 };
 
 // 레벨업에 필요한 경험치 (레벨³, 처음 두 단계는 10)
