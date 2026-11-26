@@ -1221,7 +1221,7 @@ function drawEmblem(tier, x, y, s) {
 function drawPlayerName(x, y) {
   if (!P.name) return;
   g.font = '13px Jua, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'alphabetic';
-  const tier = emblemTier(P.lv), tw = g.measureText(P.name).width, es = 14, gap = tier ? es + 3 : 0;
+  const tier = emblemTier(P.lv), tw = g.measureText(P.name).width, es = 16, gap = tier ? es + 3 : 0;
   const tx = x + gap / 2;
   g.lineWidth = 3.5; g.strokeStyle = 'rgba(15,12,35,.9)'; g.strokeText(P.name, tx, y);
   g.fillStyle = nameColor(P.lv); g.fillText(P.name, tx, y);
