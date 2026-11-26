@@ -384,7 +384,7 @@ function teleport(id) {
   const z = ZONE[id], spot = findFree(...z.spawn); if (!spot) return;
   M.occ[idx(player.x, player.y)] = 0;
   player.x = spot[0]; player.y = spot[1]; player.mv = null; player.glide = null;
-  player.px = player.x * CELL + CELL / 2; player.py = player.y * CELL + CELL / 2;
+  player.px = player.x * CELL + CELL / 2; player.py = player.y * CELL + CELL / 2; player.ox = player.oy = 0;
   M.occ[idx(player.x, player.y)] = player.id;
   cam.x = player.px; cam.y = player.py;
   resetControl(); setZone(z);
@@ -1467,6 +1467,8 @@ function closeIn(dt) {
   for (const u of units) {
     let o = null;
     if (u === player) { if (tgt && tgt.kind === 'mon' && !tgt.dying && !u.moving && !isBow() && cheb(u.x, u.y, tgt.x, tgt.y) <= 1) o = tgt; }
+    // 싸움이 끝나면 그 자리에 그대로 서 있다가, 걷기 시작할 때 거기서부터 걸어가요 (제자리로 휙 돌아가지 않게)
+    if (u === player && !o) { if (u.moving && (u.ox || u.oy)) { u.px += u.ox; u.py += u.oy; u.ox = u.oy = 0; } continue; }
     else if (u.kind === 'mon' && u.angry && !u.dying && !u.moving && !dead && cheb(u.x, u.y, player.x, player.y) <= 1) o = player;
     const kk = u === player ? .5 : .25, gx = o ? (o.px - u.px) * kk : 0, gy = o ? (o.py - u.py) * kk : 0;   // 서로 다가가서 거의 붙어서 때려요
     u.ox = (u.ox || 0) + (gx - (u.ox || 0)) * k; u.oy = (u.oy || 0) + (gy - (u.oy || 0)) * k;
