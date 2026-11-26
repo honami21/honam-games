@@ -49,7 +49,13 @@
   .panel { background:var(--cream); border:4px solid var(--line); border-radius:26px; padding:20px 22px; width:min(460px,100%); text-align:center; }
   .panel h2 { font-weight:normal; font-size:28px; color:var(--coral-d); margin-bottom:10px; }
   #create, #select { justify-content:center; }
-  #t-new { font-size:clamp(24px,3.6vw,34px); padding:14px 50px; }
+  /* 시작 화면 부적 버튼 (그림 틀 + 글자) */
+  .fbtn { border:0; background:center/100% 100% no-repeat; font-family:'Do Hyeon',sans-serif; color:#5a2414; cursor:pointer; padding:0 0 .12em;
+    filter:drop-shadow(0 4px 8px rgba(20,10,40,.45)); transition:transform .12s, filter .12s; }
+  .fbtn:hover { transform:translateY(-2px) scale(1.03); filter:drop-shadow(0 6px 12px rgba(20,10,40,.5)) brightness(1.06); }
+  .fbtn:active { transform:scale(.97); }
+  .fbtn.start { background-image:url(img/btn-start.png?v=1); width:clamp(250px,30vw,380px); aspect-ratio:720/205; font-size:clamp(26px,3.2vw,40px); }
+  .fbtn.sub { background-image:url(img/btn-sub.png?v=1); width:clamp(170px,19vw,240px); aspect-ratio:720/178; font-size:clamp(16px,1.9vw,22px); }
   #c-cls { display:flex; gap:12px; justify-content:center; margin:4px 0 10px; }
   .cls { flex:1; max-width:170px; display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 6px; border:3px solid var(--ink2); border-radius:14px; background:#fff; cursor:pointer; font:inherit; opacity:.6; }
   .cls.on { opacity:1; border-color:var(--coral-d); background:#fff3e6; }
@@ -367,8 +373,8 @@
 <div class="screen" id="title">
   <img id="logo" src="img/logo.png?v=1" alt="깨비샘의 도깨비 대모험">
   <div class="tbtns">
-    <button class="game-btn sun" id="t-new" type="button">시작하기</button>
-    <button class="game-btn white small" id="t-code" type="button">이어하기 코드</button>
+    <button class="fbtn start" id="t-new" type="button">모험 떠나기</button>
+    <button class="fbtn sub" id="t-code" type="button">이어하기 코드</button>
   </div>
 </div>
 
