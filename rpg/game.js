@@ -1537,7 +1537,7 @@ function drawNpc(n) {
   else nameTag(n.name, x, y - n.h - 8, '#ffe58a');
 }
 function drawProp(p) {
-  drawSprite(p.name, p.x, p.y, p.h, false, { alpha: p.fade });
+  drawSprite(p.name, p.x, p.y, p.h, false, { alpha: p.fade, sx: PROPS[p.name]?.sx });   // sx: 좌우로 날씬하게
 }
 function drawDrop(d) {
   const x = d.x * CELL + CELL / 2, y = d.y * CELL + CELL / 2 + 8;

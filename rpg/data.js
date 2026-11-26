@@ -105,22 +105,22 @@ const HUNT_MS = 10 * 60 * 1000;              // 1포인트 = 사냥 10분
 const PROPS = {
   't-house1': { w: 210, fw: 4, fh: 2 }, 't-house2': { w: 220, fw: 4, fh: 2 }, 't-stall': { w: 150, fw: 3, fh: 1 },
   't-well': { w: 80, fw: 2, fh: 1 }, 't-jars': { w: 52, fw: 1, fh: 1 }, 't-fence': { w: 96, fw: 2, fh: 1 },
-  't-jangseung': { w: 96, fw: 2, fh: 1 }, 't-portal': { w: 120, fw: 2, fh: 1 },
+  't-jangseung': { w: 96, fw: 2, fh: 1, sx: 0.7 }, 't-portal': { w: 120, fw: 2, fh: 1 },
   't-board': { w: 110, fw: 2, fh: 1 }, 't-forge': { w: 170, fw: 3, fh: 1 },
   't-shop': { w: 165, fw: 3, fh: 1 }, 't-storage': { w: 165, fw: 3, fh: 1 }, 't-well-f': { w: 86, fw: 2, fh: 1 }, 't-jars-f': { w: 72, fw: 2, fh: 1 },
-  'f-tree1': { w: 170, fw: 2, fh: 1 }, 'f-tree2': { w: 110, fw: 1, fh: 1 }, 'f-bush': { w: 50, fw: 1, fh: 1 },
+  'f-tree1': { w: 170, fw: 2, fh: 1, sx: 0.82 }, 'f-tree2': { w: 110, fw: 1, fh: 1, sx: 0.82 }, 'f-bush': { w: 50, fw: 1, fh: 1 },
   'f-rock1': { w: 80, fw: 2, fh: 1 }, 'f-rocks': { w: 48, fw: 1, fh: 1 }, 'f-hay': { w: 46, fw: 1, fh: 1 },
   'f-sign': { w: 42, fw: 1, fh: 1 }, 'f-flowers': { w: 54, fw: 0, fh: 0, flat: 1 },
-  'b-bamboo1': { w: 120, fw: 2, fh: 1 }, 'b-bamboo2': { w: 92, fw: 1, fh: 1 }, 'b-rock': { w: 80, fw: 2, fh: 1 },
+  'b-bamboo1': { w: 120, fw: 2, fh: 1, sx: 0.65 }, 'b-bamboo2': { w: 92, fw: 1, fh: 1, sx: 0.65 }, 'b-rock': { w: 80, fw: 2, fh: 1 },
   'b-fallen': { w: 84, fw: 2, fh: 1 }, 'b-tower': { w: 56, fw: 1, fh: 1 }, 'b-sasa': { w: 56, fw: 1, fh: 1 },
   'b-pond': { w: 150, fw: 3, fh: 2 }, 'b-lantern': { w: 44, fw: 1, fh: 1 },
   // 바닷가·섬 안쪽 (flat: 땅에 붙은 그림이라 캐릭터가 위로 지나가요)
-  'c-pine': { w: 150, fw: 1, fh: 1 }, 'c-rock': { w: 90, fw: 2, fh: 1 }, 'c-shells': { w: 46, fw: 0, fh: 0, flat: 1 },
+  'c-pine': { w: 150, fw: 1, fh: 1, sx: 0.82 }, 'c-rock': { w: 90, fw: 2, fh: 1 }, 'c-shells': { w: 46, fw: 0, fh: 0, flat: 1 },
   'c-dock': { w: 190, fw: 0, fh: 0, flat: 1 }, 'c-boat': { w: 150, fw: 2, fh: 1 }, 'c-lighthouse': { w: 130, fw: 2, fh: 1 },
   'c-cave': { w: 190, fw: 3, fh: 1 }, 'c-drift': { w: 72, fw: 2, fh: 1 },
   'l-bridge': { w: 250, fw: 0, fh: 0, flat: 1 }, 'l-cliff': { w: 170, fw: 3, fh: 1 }, 'l-wall': { w: 84, fw: 2, fh: 1 },
-  'l-sign': { w: 44, fw: 1, fh: 1 }, 'l-stones': { w: 215, fw: 0, fh: 0, flat: 1 }, 'l-pine': { w: 170, fw: 2, fh: 1 },
-  'l-pavilion': { w: 200, fw: 3, fh: 2 }, 'l-reed': { w: 58, fw: 1, fh: 1 },
+  'l-sign': { w: 44, fw: 1, fh: 1 }, 'l-stones': { w: 215, fw: 0, fh: 0, flat: 1 }, 'l-pine': { w: 170, fw: 2, fh: 1, sx: 0.82 },
+  'l-pavilion': { w: 200, fw: 3, fh: 2 }, 'l-reed': { w: 58, fw: 1, fh: 1, sx: 0.7 },
 };
 
 // 레벨업에 필요한 경험치 (레벨³, 처음 두 단계는 10)
