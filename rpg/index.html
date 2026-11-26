@@ -36,8 +36,8 @@
   /* 시작 화면 */
   .screen { position:fixed; inset:0; z-index:40; display:flex; flex-direction:column; align-items:center; justify-content:space-between;
     padding:max(70px,8vh) 16px max(30px,7vh); background:linear-gradient(rgba(10,6,30,.05), rgba(10,6,30,0) 45%, rgba(10,6,30,.5)), url(img/start-bg.jpg?v=1) center/cover no-repeat #2a1d40; }
-  @media (orientation:portrait) and (max-width:820px) { .screen { background-image:linear-gradient(rgba(10,6,30,.05), rgba(10,6,30,0) 45%, rgba(10,6,30,.5)), url(img/start-bg-m.jpg?v=1); } }   /* 휴대폰 세로: 세로 배경 */
-  #logo { width:min(900px,92vw); max-height:30vh; object-fit:contain; filter:drop-shadow(0 6px 12px rgba(20,10,40,.6)); animation:float 3.2s ease-in-out infinite; }
+  @media (orientation:portrait) and (max-width:820px) { .screen #logo { margin-top:13vh; } .screen { background-image:linear-gradient(rgba(10,6,30,.05), rgba(10,6,30,0) 45%, rgba(10,6,30,.5)), url(img/start-bg-m.jpg?v=1); } }   /* 휴대폰 세로: 세로 배경 */
+  #logo { width:min(640px,88vw); max-height:40vh; margin-top:2vh; object-fit:contain; filter:drop-shadow(0 6px 12px rgba(20,10,40,.6)); animation:float 3.2s ease-in-out infinite; }
   @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }
   .tbtns { display:flex; flex-direction:column; align-items:center; gap:12px; }
   .game-btn { padding:11px 26px; font-size:clamp(17px,2.4vw,22px); border-radius:40px; border:3px solid var(--line); color:var(--ink); background:var(--coral);
@@ -404,7 +404,7 @@
 <div id="ench"><div class="glow"><img id="ench-img" alt=""></div><div id="ench-txt"></div></div>
 
 <div class="screen" id="title">
-  <img id="logo" src="img/logo.png?v=1" alt="깨비샘의 도깨비 대모험">
+  <img id="logo" src="img/logo.png?v=2" alt="깨비샘의 도깨비 대모험">
   <div class="tbtns">
     <button class="fbtn start" id="t-new" type="button">모험 떠나기</button>
     <button class="fbtn sub" id="t-code" type="button">이어하기 코드</button>
