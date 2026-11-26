@@ -371,7 +371,7 @@ function buildWorld() {
   for (const [x, y] of stones) { const i = idx(x, y); M.block[i] = 0; M.keep[i] = 1; }
   for (const row of [stones, stones2]) if (row.length) {
     const mx = row.reduce((t, b) => t + b[0], 0) / row.length;
-    placeProp('l-stones', Math.round(mx), row[0][1], 1); const f = M.flats[M.flats.length - 1]; f.x = (mx + .5) * CELL; f.y = (row[0][1] + .62) * CELL + f.h / 2;   // 돌 가운데가 밟는 칸에 오게
+    placeProp('l-stones', Math.round(mx), row[0][1], 1); const f = M.flats[M.flats.length - 1]; f.x = (mx + .5) * CELL; f.y = (row[0][1] + .5) * CELL + f.h / 2;   // 돌 가운데가 밟는 칸에 오게
   }
   // 6) 선착장: 남동쪽 바닷가에서 바다로 (나중에 배를 타고 새 섬으로)
   { let [px, py] = dockRoad[dockRoad.length - 1]; const [qx, qy] = dockRoad[dockRoad.length - 2]; const L = Math.hypot(px - qx, py - qy), ux = (px - qx) / L, uy = (py - qy) / L;
