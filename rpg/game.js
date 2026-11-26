@@ -394,7 +394,7 @@ function buildWorld() {
   placeProp('t-portal', cx + 3, RN - 1, 1);
   M.npcs.push({ kind: 'npc', role: 'guide', name: '순간이동 문', hide: 1, x: cx + 3, y: RN - 1, h: 120, prop: M.props[M.props.length - 1] });
   placeProp('t-forge', cx + 6, RN, 1);
-  M.npcs.push({ kind: 'npc', role: 'smith', name: '쇠돌 아저씨', job: '대장간', img: 'npc-smith', x: cx + 7, y: RN + 1, h: 135 * UK });
+  M.npcs.push({ kind: 'npc', role: 'smith', name: '쇠돌 아저씨', job: '대장간', img: 'npc-smith', x: cx + 7, y: RN + 1, h: 135 * UK, flip: 1 });
   placeProp(TOWN_ART.store, cx - 6, RS, 1);
   M.npcs.push({ kind: 'npc', role: 'store', name: '복덩 할아버지', job: '창고', img: TOWN_ART.keeper, x: cx - 3, y: RS - 1, h: 120 * UK });
   placeProp('t-well', cx + 6, RS, 1); placeProp('t-jars', cx - 8, cy + 2, 1); placeProp('t-jars', cx + 8, cy + 2, 1);
@@ -1525,7 +1525,7 @@ function drawNpc(n) {
   if (n.hide) { const p = n.prop; if (p) nameTag(n.name, p.x, p.y - p.h - 6, '#ffe58a'); return; }
   const x = n.px, y = n.py + CELL * .32;
   shadow(x, y, 26 * UK);
-  drawSprite(n.img, x, y + Math.sin(performance.now() / 500) * 1.2, n.h, false);
+  drawSprite(n.img, x, y + Math.sin(performance.now() / 500) * 1.2, n.h, !!n.flip);
   if (n.job) { nameTag(n.name, x, y - n.h - 22, '#ffe58a'); jobTag(n.job, x, y - n.h - 7); }
   else nameTag(n.name, x, y - n.h - 8, '#ffe58a');
 }
