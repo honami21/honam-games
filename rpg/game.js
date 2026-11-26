@@ -365,10 +365,14 @@ function buildWorld() {
   const sy = Math.round(cy - 24 * K); for (const x of [sxAt(sy) - 1, sxAt(sy), sxAt(sy) + 1]) stones.push([x, sy]);
   // 물은 지나갈 수 없어요 (다리·징검다리는 빼고)
   for (let i = 0; i < N; i++) if (M.water[i]) M.block[i] = 1;
-  for (const [x, y] of bridge) { const i = idx(x, y); M.water[i] = 1; M.stream[i] = 1; M.block[i] = 0; }
+  // 동쪽 길도 다리 대신 징검다리: 길 가운데 한 줄만 돌을 밟고 건너요
+  const by = bridge.length ? Math.round(bridge.reduce((t, b) => t + b[1], 0) / bridge.length) : -1, stones2 = [];
+  for (const [x, y] of bridge) { const i = idx(x, y); M.water[i] = 1; M.stream[i] = 1; M.road[i] = 0; M.block[i] = y === by ? 0 : 1; if (y === by) stones2.push([x, y]); }
   for (const [x, y] of stones) { const i = idx(x, y); M.block[i] = 0; M.keep[i] = 1; }
-  if (bridge.length) { const bx = bridge.reduce((t, b) => t + b[0], 0) / bridge.length, by = bridge.reduce((t, b) => t + b[1], 0) / bridge.length; placeProp('l-bridge', Math.round(bx), Math.round(by), 1); M.flats[M.flats.length - 1].x = (bx + .5) * CELL; }
-  placeProp('l-stones', stones[1][0], sy, 1); M.flats[M.flats.length - 1].x = (stones[1][0] + .5) * CELL;
+  for (const row of [stones, stones2]) if (row.length) {
+    const mx = row.reduce((t, b) => t + b[0], 0) / row.length;
+    placeProp('l-stones', Math.round(mx), row[0][1], 1); const f = M.flats[M.flats.length - 1]; f.x = (mx + .5) * CELL; f.y = (row[0][1] + .62) * CELL + f.h / 2;   // 돌 가운데가 밟는 칸에 오게
+  }
   // 6) 선착장: 남동쪽 바닷가에서 바다로 (나중에 배를 타고 새 섬으로)
   { let [px, py] = dockRoad[dockRoad.length - 1]; const [qx, qy] = dockRoad[dockRoad.length - 2]; const L = Math.hypot(px - qx, py - qy), ux = (px - qx) / L, uy = (py - qy) / L;
     while (!M.water[idx(Math.round(px), Math.round(py))]) { px += ux; py += uy; }
