@@ -130,7 +130,8 @@ function save(now) {
   // 인터넷 저장은 아껴서: 마을로 올 때·창을 닫을 때(now)나 2분에 한 번만
   if (window.RPG_CLOUD && cloudCode() && (now || Date.now() - cloudAt > 120000)) {
     cloudAt = Date.now(); clearTimeout(saveT);
-    saveT = setTimeout(() => window.RPG_CLOUD.put(cloudCode(), { s, t: all.t }).catch(e => console.warn('저장 올리기 실패', e)), 300);
+    const up = () => window.RPG_CLOUD.put(cloudCode(), { s, t: all.t }).catch(e => console.warn('저장 올리기 실패', e));
+    if (document.hidden) up(); else saveT = setTimeout(up, 300);   // 창을 닫을 때는 기다리지 않고 바로 올려요
   }
 }
 /* ================= 창고: 한 계정(이어하기 코드)의 캐릭터들이 함께 써요 ================= */
