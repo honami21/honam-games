@@ -128,7 +128,11 @@
   .bbtn.qs.empty img { visibility:hidden; }
   .bbtn.qs.empty .n { display:none; }
   .bbtn.qs.zero img { opacity:.35; }
-  body.qpick .bbtn.qs.pick { background:var(--sun); animation:pulse 1s ease-in-out infinite; }
+  .bbtn.qs.over { background:var(--sun); transform:scale(1.08); }
+  .bbtn.qs, #inv-grid .slot { touch-action:none; }
+  .bbtn.qs img, .bbtn.qs span, #inv-grid .slot img { pointer-events:none; -webkit-user-drag:none; user-select:none; }
+  #qghost { position:fixed; z-index:9999; width:44px; height:44px; object-fit:contain; transform:translate(-50%,-60%); pointer-events:none; filter:drop-shadow(0 3px 6px rgba(0,0,0,.45)); }
+  body.qdrag, body.qdrag * { cursor:grabbing !important; }
   #inv-hint .qhint { color:#b5541a; }
   .bbtn .bt { position:absolute; left:0; right:0; top:-18px; text-align:center; font-family:Fredoka,sans-serif; font-size:12px; color:#2f7a22; text-shadow:0 0 3px #fff,0 0 3px #fff; }
   #guide-admin { margin-top:10px; text-align:right; font-size:13px; }
@@ -315,6 +319,7 @@
 <div id="banner"></div>
 <div id="fade"></div>
 <div id="tip" class="hidden"></div>
+<img id="qghost" class="hidden" alt="">
 
 <div class="win hidden" id="w-inv">
   <h3>가방 <span class="sp"></span><span class="coins"><img src="img/i-coin.png" alt=""><span id="inv-coins">0</span></span><button class="x" type="button">×</button></h3>
