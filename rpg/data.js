@@ -96,7 +96,7 @@ const PROPS = {
   't-house1': { w: 210, fw: 4, fh: 2 }, 't-house2': { w: 220, fw: 4, fh: 2 }, 't-stall': { w: 150, fw: 3, fh: 1 },
   't-well': { w: 96, fw: 2, fh: 1 }, 't-jars': { w: 96, fw: 2, fh: 1 }, 't-fence': { w: 96, fw: 2, fh: 1 },
   't-jangseung': { w: 96, fw: 2, fh: 1 }, 't-portal': { w: 120, fw: 2, fh: 1 },
-  't-board': { w: 120, fw: 2, fh: 1 }, 't-forge': { w: 130, fw: 2, fh: 1 },
+  't-board': { w: 110, fw: 2, fh: 1 }, 't-forge': { w: 170, fw: 3, fh: 1 },
   'f-tree1': { w: 170, fw: 2, fh: 1 }, 'f-tree2': { w: 110, fw: 1, fh: 1 }, 'f-bush': { w: 80, fw: 1, fh: 1 },
   'f-rock1': { w: 110, fw: 2, fh: 1 }, 'f-rocks': { w: 80, fw: 1, fh: 1 }, 'f-hay': { w: 76, fw: 1, fh: 1 },
   'f-sign': { w: 72, fw: 1, fh: 1 }, 'f-flowers': { w: 78, fw: 0, fh: 0, flat: 1 },

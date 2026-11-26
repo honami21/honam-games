@@ -341,13 +341,13 @@ function buildWorld() {
   placeProp('t-stall', cx - 4, cy - 3, 1); placeProp('t-portal', cx + 4, cy - 3, 1); placeProp('t-well', cx - 4, cy + 4, 1); placeProp('t-jars', cx + 4, cy + 4, 1);
   M.npcs.push({ kind: 'npc', role: 'shop', name: '상점 할머니', img: 'npc-shop', x: cx - 4, y: cy - 2, h: 92 * UK });
   // 순간이동 문: 그림은 장식물(t-portal)이고, 누를 수 있게 보이지 않는 안내 칸을 겹쳐 둬요
-  M.npcs.push({ kind: 'npc', role: 'guide', name: '순간이동 문', hide: 1, x: cx + 4, y: cy - 3, ox: -CELL / 2, h: 120 });
+  M.npcs.push({ kind: 'npc', role: 'guide', name: '순간이동 문', hide: 1, x: cx + 4, y: cy - 3, h: 120, prop: M.props.find(p => p.name === 't-portal') });
   // 마을 한가운데 게시판 (처음 하는 사람을 위한 안내)
-  placeProp(IMG['t-board'] ? 't-board' : 'l-sign', cx, cy, 1);
-  M.npcs.push({ kind: 'npc', role: 'board', name: '마을 게시판', hide: 1, x: cx, y: cy, h: 80 });
+  placeProp('t-board', cx, cy, 1);
+  M.npcs.push({ kind: 'npc', role: 'board', name: '마을 게시판', hide: 1, x: cx, y: cy, h: 80, prop: M.props[M.props.length - 1] });
   // 대장장이: 방어구를 팔아요
-  if (IMG['t-forge']) placeProp('t-forge', cx + 4, cy + 1, 1);
-  M.npcs.push({ kind: 'npc', role: 'smith', name: '대장장이', img: IMG['npc-smith'] ? 'npc-smith' : 'npc-guide', x: cx + 4, y: cy + 2, h: 96 * UK });
+  placeProp('t-forge', cx + 4, cy + 1, 1);
+  M.npcs.push({ kind: 'npc', role: 'smith', name: '대장장이', img: 'npc-smith', x: cx + 4, y: cy + 2, h: 100 * UK });
   // 마을 문 장승 (길이 마을 밖으로 나가는 곳 양옆)
   buildTownWall(cx, cy);
   // 9) 사냥터 우두머리 + 갈림길 이정표 (마을로 돌아올 땐 마을 귀환 주문서)
@@ -660,6 +660,7 @@ function unitAt(wx, wy, kinds) {
   let best = null;
   for (const u of units) {
     if (!kinds.includes(u.kind) || u.dying) continue;
+    if (u.prop) { const p = u.prop; if (wx > p.x - p.w / 2 && wx < p.x + p.w / 2 && wy > p.y - p.h && wy < p.y) if (!best || u.py > best.py) best = u; continue; }
     const h = u.kind === 'mon' ? u.d.h : u.h || 88 * UK, w = Math.max(h * .8, 30);
     const ux = u.px + (u.ox || 0), uy = u.py + (u.oy || 0);
     if (wx > ux - w / 2 && wx < ux + w / 2 && wy > uy + CELL * .3 - Math.max(h, 36) && wy < uy + CELL * .35) if (!best || u.py > best.py) best = u;
@@ -982,11 +983,38 @@ function drinkHaste() {
   log('초록 물약을 마셨어요. 5분 동안 걷기와 공격이 빨라져요', 'sys');
   dirty = true; updateHUD(); if (winOpen === 'inv') renderInv();
 }
-function updateHaste() {
-  const b = $('b-haste'); if (!b || !P) return;
-  b.classList.toggle('on', hasted());
-  $('hastet').textContent = hasted() ? fmtTime(P.haste) : '';
+// 단축키 1~4: 가방에서 아이템을 골라 넣어요 (리니지처럼 아이템 위에서 숫자 누르기, 또는 칸을 누르고 아이템 고르기)
+const QUSE = ['potion', 'haste', 'ret', 'tele', 'wscroll', 'ascroll'];
+const qkeys = () => (P.keys && P.keys.length === 4) ? P.keys : (P.keys = ['potion', 'haste', 'ret', 'tele']);
+let qPick = -1;
+function setQuick(k, id) {
+  if (!QUSE.includes(id)) { log('물약과 주문서, 부적만 단축키에 넣을 수 있어요', 'warn'); return; }
+  const ks = qkeys(); const was = ks.indexOf(id); if (was >= 0) ks[was] = ks[k] === id ? null : ks[k];
+  ks[k] = id; dirty = true; SND.ui();
+  log(`<b>${ITEMS[id].name}</b>을(를) 단축키 ${k + 1}에 넣었어요`, 'sys');
+  qPick = -1; document.body.classList.remove('qpick'); updateHUD(); if (winOpen === 'inv') renderInv();
 }
+function useQuick(k) {
+  const id = qkeys()[k];
+  if (!id) { if (winOpen !== 'inv') openWin('inv'); qPick = k; document.body.classList.add('qpick'); renderInv(); renderQuick(); return; }
+  const ix = P.inv.findIndex(x => x.i === id);
+  if (ix < 0) { log(`${ITEMS[id].name}이(가) 없어요`, 'warn'); return; }
+  useItem(ix);
+}
+function renderQuick() {
+  if (!P) return;
+  const ks = qkeys();
+  document.querySelectorAll('.bbtn.qs').forEach(b => {
+    const k = +b.dataset.k, id = ks[k], s = id && P.inv.find(x => x.i === id), n = s ? s.n : 0;
+    b.classList.toggle('empty', !id); b.classList.toggle('zero', !!id && !n); b.classList.toggle('pick', qPick === k);
+    const im = b.querySelector('img'), src = id ? `img/${ITEMS[id].img}.png` : '';
+    if (im.getAttribute('src') !== src) { if (src) im.setAttribute('src', src); else im.removeAttribute('src'); }
+    b.querySelector('.n').textContent = id ? n : '';
+    b.title = id ? `${ITEMS[id].name} (${k + 1})` : `빈 칸 (${k + 1}) · 눌러서 아이템 넣기`;
+    const on = id === 'haste' && hasted(); b.classList.toggle('on', on); b.querySelector('.bt').textContent = on ? fmtTime(P.haste) : '';
+  });
+}
+function updateHaste() { renderQuick(); }
 // 마을 귀환 주문서 (3) · 순간이동 주문서 (4)
 function useOne(id) { const s = P.inv.find(x => x.i === id); if (!s) return false; s.n--; if (s.n <= 0) P.inv.splice(P.inv.indexOf(s), 1); dirty = true; if (winOpen === 'inv') renderInv(); updateHUD(); return true; }
 function readReturn() {
@@ -1074,10 +1102,10 @@ function openWin(w) {
   if (w === 'inv') renderInv(); if (w === 'char') renderChar(); if (w === 'shop') { closeBuy(); renderShop(); } if (w === 'guide') renderGuide(); if (w === 'gate') renderGate();
   document.body.classList.add('win-open');
 }
-function closeWin(quiet) { if (!winOpen) return; $('w-' + winOpen).classList.add('hidden'); winOpen = null; document.body.classList.remove('win-open'); cancelEnchant(); hideTip(); if (!quiet) SND.ui(); }
+function closeWin(quiet) { if (qPick >= 0) { qPick = -1; document.body.classList.remove('qpick'); renderQuick(); } if (!winOpen) return; $('w-' + winOpen).classList.add('hidden'); winOpen = null; document.body.classList.remove('win-open'); cancelEnchant(); hideTip(); if (!quiet) SND.ui(); }
 
 function gearInfo(it) {
-  if (it.i) { const d = ITEMS[it.i]; return `<b>${d.name}</b>` + (it.i === 'potion' ? `<br>HP ${d.heal} 회복 (단축키 1)` : it.i === 'haste' ? '<br>5분 동안 걷기와 공격이 빨라져요 (단축키 2)' : it.i === 'ret' ? '<br>읽으면 마을로 돌아가요 (단축키 3)' : it.i === 'tele' ? '<br>지금 사냥터 안 아무 곳으로 순간이동해요 (단축키 4)' : `<br>${it.i === 'wscroll' ? '무기' : '방어구'}를 한 단계 강화해요`); }
+  if (it.i) { const d = ITEMS[it.i]; return `<b>${d.name}</b>` + (it.i === 'potion' ? `<br>HP ${d.heal} 회복` : it.i === 'haste' ? '<br>5분 동안 걷기와 공격이 빨라져요' : it.i === 'ret' ? '<br>읽으면 마을로 돌아가요' : it.i === 'tele' ? '<br>지금 사냥터 안 아무 곳으로 순간이동해요' : `<br>${it.i === 'wscroll' ? '무기' : '방어구'}를 한 단계 강화해요`); }
   if (it.g === 'w') {
     const d = WEAPONS[it.k], [a, b] = weaponRange(it);
     return `<b>${itemName(it)}</b><br>${WTYPE[d.type]} · ${d.tier}단계<br>데미지 ${a === b ? a : a + '~' + b} · 한 대 ${d.spd}초` +
@@ -1092,6 +1120,7 @@ function slotHTML(it, attrs) {
     (it.en ? `<i class="en">+${it.en}</i>` : '') + (it.n > 1 ? `<i class="cnt">${it.n}</i>` : '') + `</div>`;
 }
 function renderInv() {
+  $('inv-hint').innerHTML = qPick >= 0 ? `<span class="qhint">단축키 ${qPick + 1}에 넣을 아이템을 눌러요</span>` : '<span class="dim">단축키 넣기: 아래 1~4 칸을 누르고 아이템 고르기 (컴퓨터는 아이템 위에서 숫자키)</span>';
   $('eq-grid').innerHTML = SLOTS.map(s => `<div class="eqc"><span>${SLOT_NAME[s]}</span>${slotHTML(P.eq[s], `data-eq="${s}"`)}</div>`).join('');
   let h = ''; for (let i = 0; i < INV_MAX; i++) h += slotHTML(P.inv[i], `data-inv="${i}"`);
   $('inv-grid').innerHTML = h;
@@ -1195,11 +1224,9 @@ function updateHUD() {
   $('xptxt').textContent = P.lv >= MAX_LV ? '최고 레벨' : (P.exp / needExp(P.lv) * 100).toFixed(1) + '%';
   $('lv').textContent = P.lv;
   $('coins').textContent = P.coins.toLocaleString();
-  const pot = P.inv.find(x => x.i === 'potion'); $('potn').textContent = pot ? pot.n : 0;
-  const hp2 = P.inv.find(x => x.i === 'haste'); $('hasten').textContent = hp2 ? hp2.n : 0; updateHaste();
+  renderQuick();
   $('acv').textContent = playerAC();
-  const cnt = id => { const s = P.inv.find(x => x.i === id); return s ? s.n : 0; };
-  $('retn').textContent = cnt('ret'); $('telen').textContent = cnt('tele');
+
   if (winOpen === 'char') renderChar();
   if (winOpen === 'shop') renderShop();
 }
@@ -1331,7 +1358,7 @@ let hoverMon = null;
 // 몬스터 위에 올리면 칼 모양 마우스 (칼끝이 누르는 자리)
 const SWORD_CURSOR = "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><g stroke='%233a2412' stroke-width='1.6' stroke-linejoin='round' stroke-linecap='round'><path d='M2 2 L7 3 L21 17 L17 21 L3 7 Z' fill='%23eef3f8'/><path d='M5 5 L19 19' stroke='%23b8c4d0' stroke-width='1.2'/><path d='M15 23 L23 15 L25 17 L17 25 Z' fill='%23e0a43a'/><path d='M21 21 L28 28' stroke='%23a0612a' stroke-width='4'/><circle cx='29' cy='29' r='2.2' fill='%23e0a43a'/></g></svg>\") 2 2, crosshair";
 function drawNpc(n) {
-  if (n.hide) { nameTag(n.name, n.px + (n.ox || 0), n.py + CELL * .32 - n.h - 8, '#ffe58a'); return; }
+  if (n.hide) { const p = n.prop; if (p) nameTag(n.name, p.x, p.y - p.h - 6, '#ffe58a'); return; }
   const x = n.px, y = n.py + CELL * .32;
   shadow(x, y, 26 * UK);
   drawSprite(n.img, x, y + Math.sin(performance.now() / 500) * 1.2, n.h, false);
@@ -1687,22 +1714,25 @@ function bindUI() {
     if (!P || !document.body.classList.contains('playing')) return;
     if (e.target.tagName === 'INPUT') return;
     const k = e.key.toLowerCase();
-    if (k === '1') { drinkPotion(); e.preventDefault(); }
-    else if (k === '2') { drinkHaste(); e.preventDefault(); }
-    else if (k === '3') { readReturn(); e.preventDefault(); }
-    else if (k === '4') { readTele(); e.preventDefault(); }
+    if (k >= '1' && k <= '4') {
+      e.preventDefault();
+      // 가방이 열려 있고 아이템 위에 마우스가 있으면 그 아이템을 그 번호에 넣어요
+      const hov = winOpen === 'inv' && document.querySelector('#inv-grid .slot:hover');
+      const it = hov && P.inv[+hov.dataset.inv];
+      if (it && it.i) setQuick(+k - 1, it.i); else useQuick(+k - 1);
+    }
     else if (k === 'i' || k === 'ㅑ') openWin('inv');
     else if (k === 'c' || k === 'ㅊ') openWin('char');
     else if (k === 'escape') { if (enchantPick) cancelEnchant(); else closeWin(); }
   });
   addEventListener('pagehide', () => save(true));
   document.addEventListener('visibilitychange', () => { if (document.hidden) save(true); });
-  $('b-pot').addEventListener('click', drinkPotion);
+  document.querySelectorAll('.bbtn.qs').forEach(b => b.addEventListener('click', () => { const k = +b.dataset.k; if (winOpen === 'inv' && qkeys()[k]) { qPick = qPick === k ? -1 : k; document.body.classList.toggle('qpick', qPick >= 0); renderQuick(); renderInv(); return; } useQuick(k); }));
   $('buyq').addEventListener('click', e => {
     const b = e.target.closest('[data-q]'); if (b) { const q = b.dataset.q; buyN = q === 'max' ? 999 : buyN + (+q); SND.ui(); renderBuy(); return; }
     if (e.target.id === 'bq-ok') doBuy(); if (e.target.id === 'bq-no') closeBuy();
   });
-  $('b-haste').addEventListener('click', drinkHaste);
+
   $('b-switch').addEventListener('click', () => { save(true); $('b-switch').disabled = true; setTimeout(() => location.reload(), 700); });
   $('w-guide').addEventListener('click', e => {
     if (e.target.id === 'adm-open') { $('adm-row').classList.remove('hidden'); $('adm-code').value = ''; $('adm-msg').textContent = ''; $('adm-code').focus(); }
@@ -1720,8 +1750,7 @@ function bindUI() {
   $('adm-code').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') admGo(); });
   $('b-inv').addEventListener('click', () => openWin('inv'));
   $('b-char').addEventListener('click', () => openWin('char'));
-  $('b-ret').addEventListener('click', readReturn);
-  $('b-tele').addEventListener('click', readTele);
+
   $('mini').addEventListener('pointerdown', miniClick);
   $('gate-pay').addEventListener('click', payGate);
   $('b-snd').addEventListener('click', () => { SND.on = !SND.on; $('b-snd').classList.toggle('off', !SND.on); });
@@ -1739,6 +1768,7 @@ function bindUI() {
     box.addEventListener('click', e => {
       const s = e.target.closest('.slot'); if (!s || enchanting) return;
       if (enchantPick) { enchantTarget(s.dataset.eq ? { eq: s.dataset.eq } : { inv: +s.dataset.inv }); hideTip(); return; }
+      if (qPick >= 0 && s.dataset.inv) { const it = P.inv[+s.dataset.inv]; if (it && it.i) { setQuick(qPick, it.i); hideTip(); return; } }
       if (s.dataset.eq) unequip(s.dataset.eq); else useItem(+s.dataset.inv);
       hideTip();
     });

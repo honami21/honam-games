@@ -114,7 +114,12 @@
   #w-board h4 { margin:12px 0 2px; font-size:17px; color:var(--ink); }
   #w-board h4:first-child { margin-top:0; }
   #w-board p { margin:0; line-height:1.55; word-break:keep-all; }
-  #b-haste.on { background:#d9f7c8; border-color:#3e8f2e; }
+  .bbtn.qs.on { background:#d9f7c8; border-color:#3e8f2e; }
+  .bbtn.qs.empty img { visibility:hidden; }
+  .bbtn.qs.empty .n { display:none; }
+  .bbtn.qs.zero img { opacity:.35; }
+  body.qpick .bbtn.qs.pick { background:var(--sun); animation:pulse 1s ease-in-out infinite; }
+  #inv-hint .qhint { color:#b5541a; }
   .bbtn .bt { position:absolute; left:0; right:0; top:-18px; text-align:center; font-family:Fredoka,sans-serif; font-size:12px; color:#2f7a22; text-shadow:0 0 3px #fff,0 0 3px #fff; }
   #guide-admin { margin-top:10px; text-align:right; font-size:13px; }
   #guide-admin .lnk { background:none; border:0; color:var(--ink2); opacity:.6; font:inherit; cursor:pointer; text-decoration:underline; padding:2px 4px; }
@@ -285,10 +290,10 @@
     </div>
     <div class="stat"><span>AC</span><b id="acv">10</b></div>
     <div class="stat hide-s"><img src="img/i-coin.png" alt=""><b id="coins">0</b></div>
-    <button class="bbtn" id="b-pot" type="button" title="빨간 물약 (1)"><kbd>1</kbd><img src="img/i-potion.png" alt=""><span class="n" id="potn">0</span></button>
-    <button class="bbtn" id="b-haste" type="button" title="초록 물약 (2)"><kbd>2</kbd><img src="img/i-haste.png" alt=""><span class="n" id="hasten">0</span><span class="bt" id="hastet"></span></button>
-    <button class="bbtn" id="b-ret" type="button" title="마을 귀환 주문서 (3)"><kbd>3</kbd><img src="img/i-return.png" alt=""><span class="n" id="retn">0</span></button>
-    <button class="bbtn" id="b-tele" type="button" title="순간이동 주문서 (4)"><kbd>4</kbd><img src="img/i-teleport.png" alt=""><span class="n" id="telen">0</span></button>
+    <button class="bbtn qs" data-k="0" type="button"><kbd>1</kbd><img alt=""><span class="n"></span><span class="bt"></span></button>
+    <button class="bbtn qs" data-k="1" type="button"><kbd>2</kbd><img alt=""><span class="n"></span><span class="bt"></span></button>
+    <button class="bbtn qs" data-k="2" type="button"><kbd>3</kbd><img alt=""><span class="n"></span><span class="bt"></span></button>
+    <button class="bbtn qs" data-k="3" type="button"><kbd>4</kbd><img alt=""><span class="n"></span><span class="bt"></span></button>
     <button class="bbtn" id="b-inv" type="button" title="가방 (I)"><kbd>I</kbd><svg viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>가방</button>
     <button class="bbtn" id="b-char" type="button" title="능력치 (C)"><kbd>C</kbd><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>능력치</button>
 
