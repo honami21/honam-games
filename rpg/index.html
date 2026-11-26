@@ -148,6 +148,12 @@
 
 
   /* 게임 알림: 화면 가운데 아래에서 올라오다가 흐려져요 (캐릭터까지는 안 올라가게 4줄까지만) */
+  #buffs { position:absolute; left:14px; bottom:calc(100% + 8px); display:flex; gap:8px; pointer-events:none; }
+  #buffs .bf { position:relative; width:46px; height:46px; background:rgba(255,246,236,.95); border:3px solid var(--line); border-radius:12px; display:flex; align-items:center; justify-content:center; animation:logIn .25s ease-out; }
+  #buffs .bf img { width:34px; height:34px; object-fit:contain; }
+  #buffs .bf span { position:absolute; left:50%; bottom:-11px; transform:translateX(-50%); background:var(--line); color:#fff; border-radius:999px; padding:1px 6px 0; font-size:12px; white-space:nowrap; }
+  #buffs .bf.end { animation:bfBlink .5s steps(2) infinite; }
+  @keyframes bfBlink { 50% { opacity:.35; } }
   #log { position:absolute; left:50%; transform:translateX(-50%); bottom:96px; width:min(520px,80vw); display:flex; flex-direction:column; align-items:center; gap:2px; pointer-events:none; }
   #log .ln { font-size:15px; color:#fff; text-align:center; text-shadow:0 1px 2px #000, 0 0 6px rgba(0,0,0,.6); transition:opacity 1s, transform 1s; word-break:keep-all; animation:logIn .25s ease-out; }
   @keyframes logIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
@@ -299,6 +305,7 @@
   <canvas id="mini" title="누르면 그곳으로 걸어가요"></canvas>
   <div id="log"></div>
   <div id="bar">
+    <div id="buffs"></div>
     <div id="lvbox"><small>Lv</small><span id="lv">1</span></div>
     <div class="bars">
       <div class="gauge"><i id="hpfill"></i><span id="hptxt">30 / 30</span></div>

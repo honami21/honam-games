@@ -1041,7 +1041,16 @@ function renderQuick() {
     const on = id === 'haste' && hasted(); b.classList.toggle('on', on); b.querySelector('.bt').textContent = on ? fmtTime(P.haste) : '';
   });
 }
-function updateHaste() { renderQuick(); }
+// 받은 버프: 상태창 왼쪽 위에 그림과 남은 시간 (새 버프는 BUFFS에 한 줄 추가)
+const BUFFS = [{ id: 'haste', img: 'i-haste', left: () => P.haste }];
+function renderBuffs() {
+  const box = $('buffs'); if (!box) return;
+  const on = BUFFS.filter(b => b.left() > 0);
+  const key = on.map(b => b.id).join();
+  if (box.dataset.k !== key) { box.dataset.k = key; box.innerHTML = on.map(b => `<div class="bf" data-b="${b.id}"><img src="img/${b.img}.png" alt=""><span></span></div>`).join(''); }
+  for (const b of on) { const el = box.querySelector(`[data-b="${b.id}"]`), t = b.left(); el.querySelector('span').textContent = fmtTime(t); el.classList.toggle('end', t < 10000); }
+}
+function updateHaste() { renderQuick(); renderBuffs(); }
 // 마을 귀환 주문서 (3) · 순간이동 주문서 (4)
 function useOne(id) { const s = P.inv.find(x => x.i === id); if (!s) return false; s.n--; if (s.n <= 0) P.inv.splice(P.inv.indexOf(s), 1); dirty = true; if (winOpen === 'inv') renderInv(); updateHUD(); return true; }
 function readReturn() {
@@ -1244,6 +1253,7 @@ function payGate() {
 let dirty = false;
 function updateHUD() {
   if (!P) return;
+  renderBuffs();
   const mh = maxHP();
   $('hpfill').style.width = clamp(P.hp / mh * 100, 0, 100) + '%';
   $('hptxt').textContent = Math.max(0, Math.ceil(P.hp)) + ' / ' + mh;
@@ -1679,7 +1689,7 @@ function update(dt) {
   // 초록 물약 시간
   if (P.haste > 0 && !dead) {
     P.haste -= dt * 1000;
-    if (P.haste <= 0) { P.haste = 0; log('초록 물약 효과가 끝났어요', 'sys'); }
+    if (P.haste <= 0) { P.haste = 0; log('초록 물약 효과가 끝났어요', 'sys'); renderBuffs(); }
     hasteShow -= dt; if (hasteShow <= 0) { hasteShow = .5; updateHaste(); }
   }
   player.step = hasted() ? .36 * HASTE : .36;
