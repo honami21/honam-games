@@ -339,15 +339,15 @@ function buildWorld() {
   // 네 귀퉁이에 집 한 채씩, 가운데 십자 길을 비우고 상점·순간이동·우물
   for (const [n, dx, dy] of [['t-house1', -7, -3], ['t-house2', 7, -3], ['t-house2', -7, 5], ['t-house1', 7, 5]]) placeProp(n, cx + dx, cy + dy, 1);
   placeProp('t-stall', cx - 4, cy - 3, 1); placeProp('t-portal', cx + 4, cy - 3, 1); placeProp('t-well', cx - 4, cy + 4, 1); placeProp('t-jars', cx + 4, cy + 4, 1);
-  M.npcs.push({ kind: 'npc', role: 'shop', name: '상점 할머니', img: 'npc-shop', x: cx - 4, y: cy - 2, h: 92 * UK });
+  M.npcs.push({ kind: 'npc', role: 'shop', name: '꽃분 할머니', job: '잡화', img: 'npc-shop', x: cx - 4, y: cy - 2, h: 92 * UK });
   // 순간이동 문: 그림은 장식물(t-portal)이고, 누를 수 있게 보이지 않는 안내 칸을 겹쳐 둬요
   M.npcs.push({ kind: 'npc', role: 'guide', name: '순간이동 문', hide: 1, x: cx + 4, y: cy - 3, h: 120, prop: M.props.find(p => p.name === 't-portal') });
   // 마을 한가운데 게시판 (처음 하는 사람을 위한 안내)
   placeProp('t-board', cx, cy, 1);
   M.npcs.push({ kind: 'npc', role: 'board', name: '마을 게시판', hide: 1, x: cx, y: cy, h: 80, prop: M.props[M.props.length - 1] });
   // 대장장이: 방어구를 팔아요
-  placeProp('t-forge', cx + 4, cy + 1, 1);
-  M.npcs.push({ kind: 'npc', role: 'smith', name: '대장장이', img: 'npc-smith', x: cx + 4, y: cy + 2, h: 100 * UK });
+  placeProp('t-forge', cx + 4, cy, 1);
+  M.npcs.push({ kind: 'npc', role: 'smith', name: '쇠돌 아저씨', job: '대장간', img: 'npc-smith', x: cx + 4, y: cy + 2, h: 100 * UK });
   // 마을 문 장승 (길이 마을 밖으로 나가는 곳 양옆)
   buildTownWall(cx, cy);
   // 9) 사냥터 우두머리 + 갈림길 이정표 (마을로 돌아올 땐 마을 귀환 주문서)
@@ -1138,8 +1138,8 @@ function renderChar() {
   $('b-char').classList.toggle('alert', P.pts > 0);
 }
 // 할머니: 물약·주문서, 대장장이: 방어구 (무기는 캐릭터마다 하나라 강화만 해요)
-const SHOPS = { shop: { name: '상점 할머니', list: [{ i: 'potion' }, { i: 'haste' }, { i: 'ret' }, { i: 'tele' }] },
-  smith: { name: '대장장이', list: Object.keys(ARMORS).filter(k => ARMORS[k].price).map(k => ({ g: 'a', k })) } };
+const SHOPS = { shop: { name: '꽃분 할머니 · 잡화', list: [{ i: 'potion' }, { i: 'haste' }, { i: 'ret' }, { i: 'tele' }] },
+  smith: { name: '쇠돌 아저씨 · 대장간', list: Object.keys(ARMORS).filter(k => ARMORS[k].price).map(k => ({ g: 'a', k })) } };
 let shopWho = 'shop', SHOP_LIST = SHOPS.shop.list;
 let shopTab = 'buy';
 function priceOf(it) { return it.i ? ITEMS[it.i].price : (it.g === 'w' ? WEAPONS : ARMORS)[it.k].price; }
@@ -1351,6 +1351,9 @@ function drawMon(m) {
   }
   if (!m.dying && (m === tgt || d.boss || m === hoverMon)) nameTag(d.name + ' Lv ' + d.lv + (m === tgt && auto ? ' · 자동' : ''), x, y + 24, d.boss ? '#ffcf5a' : m === tgt && auto ? '#ffcf3e' : '#fff');
 }
+function jobTag(t, x, y) {
+  g.font = '12px Jua, sans-serif'; g.textAlign = 'center'; g.lineWidth = 3; g.strokeStyle = 'rgba(20,14,40,.85)'; g.strokeText(t, x, y); g.fillStyle = '#fff'; g.fillText(t, x, y);
+}
 function nameTag(t, x, y, col) {
   g.font = '15px Jua, sans-serif'; g.textAlign = 'center'; g.lineWidth = 4; g.strokeStyle = 'rgba(20,14,40,.85)'; g.strokeText(t, x, y); g.fillStyle = col; g.fillText(t, x, y);
 }
@@ -1362,7 +1365,8 @@ function drawNpc(n) {
   const x = n.px, y = n.py + CELL * .32;
   shadow(x, y, 26 * UK);
   drawSprite(n.img, x, y + Math.sin(performance.now() / 500) * 1.2, n.h, false);
-  nameTag(n.name, x, y - n.h - 8, '#ffe58a');
+  if (n.job) { nameTag(n.name, x, y - n.h - 22, '#ffe58a'); jobTag(n.job, x, y - n.h - 7); }
+  else nameTag(n.name, x, y - n.h - 8, '#ffe58a');
 }
 function drawProp(p) {
   drawSprite(p.name, p.x, p.y, p.h, false, { alpha: p.fade });
