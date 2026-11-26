@@ -124,7 +124,7 @@ function loadAll() { try { return normAll(JSON.parse(localStorage.getItem(SAVE_K
 let saveT = 0, cloudAt = 0;
 function save(now) {
   if (!P) return; P.t = Date.now();
-  const all = loadAll(); all.chars[slot] = P; all.t = P.t;
+  const all = loadAll(); all.chars[slot] = P; all.t = P.t; if (STORE) all.store = STORE;
   const s = JSON.stringify(all);
   try { localStorage.setItem(SAVE_KEY, s); } catch (e) {}
   // 인터넷 저장은 아껴서: 마을로 올 때·창을 닫을 때(now)나 2분에 한 번만
@@ -132,6 +132,39 @@ function save(now) {
     cloudAt = Date.now(); clearTimeout(saveT);
     saveT = setTimeout(() => window.RPG_CLOUD.put(cloudCode(), { s, t: all.t }).catch(e => console.warn('저장 올리기 실패', e)), 300);
   }
+}
+/* ================= 창고: 한 계정(이어하기 코드)의 캐릭터들이 함께 써요 ================= */
+const STORE_MAX = 40;
+let STORE = null;
+function loadStore() { const a = loadAll(); STORE = a.store && Array.isArray(a.store.items) ? a.store : { items: [], coins: 0 }; }
+function toStore(ix) {
+  const it = P.inv[ix]; if (!it) return;
+  const same = it.i && STORE.items.find(x => x.i === it.i);
+  if (!same && STORE.items.length >= STORE_MAX) { log('창고가 가득 찼어요', 'warn'); return; }
+  P.inv.splice(ix, 1);
+  if (same) same.n += it.n || 1; else STORE.items.push(it);
+  SND.ui(); save(true); renderStore(); renderInv(); updateHUD(); renderQuick();
+}
+function fromStore(ix) {
+  const it = STORE.items[ix]; if (!it) return;
+  if (!giveItem({ ...it })) { log('가방이 가득 찼어요', 'warn'); return; }
+  STORE.items.splice(ix, 1);
+  SND.ui(); save(true); renderStore(); renderInv(); updateHUD(); renderQuick();
+}
+function storeCoins(dir) {
+  const v = Math.floor(+$('store-amt').value || 0), have = dir > 0 ? P.coins : STORE.coins;
+  const n = v > 0 ? Math.min(v, have) : have;
+  if (n <= 0) return;
+  if (dir > 0) { P.coins -= n; STORE.coins += n; log(`엽전 ${n.toLocaleString()}냥을 맡겼어요`, 'sys'); }
+  else { STORE.coins -= n; P.coins += n; log(`엽전 ${n.toLocaleString()}냥을 찾았어요`, 'sys'); }
+  $('store-amt').value = ''; SND.coin(); save(true); renderStore(); renderInv(); updateHUD();
+}
+function renderStore() {
+  if (!STORE || !wins.includes('store')) return;
+  let h = ''; for (let i = 0; i < STORE_MAX; i++) h += slotHTML(STORE.items[i], `data-st="${i}"`);
+  $('store-grid').innerHTML = h;
+  $('store-coins').textContent = STORE.coins.toLocaleString();
+  $('store-count').textContent = `${STORE.items.length} / ${STORE_MAX}`;
 }
 function cloudCode() { try { return localStorage.getItem('rpg-save-code') || ''; } catch (e) { return ''; } }
 
@@ -212,7 +245,9 @@ function placeProp(name, cx, cy, force) {   // cx,cy = 밑동 가운데 칸
   return true;
 }
 // 마을 울타리 (네모, 동서남북에 문)
-const TOWN_HX = 10, TOWN_HY = 7;   // 한 화면에 들어오는 작은 마을
+const TOWN_HX = 10, TOWN_HY = 7;
+// 마을 건물 그림 (정면 그림이 오면 이름만 바꿔요)
+const TOWN_ART = { shop: 't-stall', store: 't-house1', house: 't-house2', keeper: 'npc-guide' };   // 한 화면에 들어오는 작은 마을
 function buildTownWall(cx, cy) {
   const FS = .167, GS = 56 / 250, top = cy - TOWN_HY, bot = cy + TOWN_HY, lef = cx - TOWN_HX, rig = cx + TOWN_HX;
   const add = (name, x, y, sc) => { const im = IMG[name]; if (!im) return; M.props.push({ kind: 'prop', name, x, y, w: im.width * sc, h: im.height * sc, fade: 1 }); };
@@ -349,19 +384,20 @@ function buildWorld() {
   for (const z of ZONES) if (z.road) { const [x, y] = P(z.road[1], z.road[0]); z.spawn = [Math.round(x), Math.round(y)]; }
   for (const z of ZONES) if (z.spawn) keepClear(z.spawn[0] - 3, z.spawn[1] - 3, z.spawn[0] + 3, z.spawn[1] + 3);
   // 8) 마을
-  keepClear(cx - 4, cy - 2, cx + 4, cy + 5);
-  // 네 귀퉁이에 집 한 채씩, 가운데 십자 길을 비우고 상점·순간이동·우물
-  for (const [n, dx, dy] of [['t-house1', -7, -3], ['t-house2', 7, -3], ['t-house2', -7, 5], ['t-house1', 7, 5]]) placeProp(n, cx + dx, cy + dy, 1);
-  placeProp('t-stall', cx - 4, cy - 3, 1); placeProp('t-portal', cx + 4, cy - 3, 1); placeProp('t-well', cx - 4, cy + 4, 1); placeProp('t-jars', cx + 4, cy + 4, 1);
-  M.npcs.push({ kind: 'npc', role: 'shop', name: '꽃분 할머니', job: '잡화', img: 'npc-shop', x: cx - 4, y: cy - 2, h: 92 * UK });
-  // 순간이동 문: 그림은 장식물(t-portal)이고, 누를 수 있게 보이지 않는 안내 칸을 겹쳐 둬요
-  M.npcs.push({ kind: 'npc', role: 'guide', name: '순간이동 문', hide: 1, x: cx + 4, y: cy - 3, h: 120, prop: M.props.find(p => p.name === 't-portal') });
-  // 마을 한가운데 게시판 (처음 하는 사람을 위한 안내)
-  placeProp('t-board', cx, cy, 1);
-  M.npcs.push({ kind: 'npc', role: 'board', name: '마을 게시판', hide: 1, x: cx, y: cy, h: 80, prop: M.props[M.props.length - 1] });
-  // 대장장이: 방어구를 팔아요
-  placeProp('t-forge', cx + 4, cy, 1);
-  M.npcs.push({ kind: 'npc', role: 'smith', name: '쇠돌 아저씨', job: '대장간', img: 'npc-smith', x: cx + 4, y: cy + 2, h: 100 * UK });
+  // 정돈된 마을: 북쪽 줄(잡화점·게시판·순간이동 문·대장간), 남쪽 줄(창고·우물·장독·집), 가운데 십자 길은 비워요
+  keepClear(cx - 9, cy - 1, cx + 9, cy + 1); keepClear(cx - 1, cy - 6, cx + 1, cy + 6);
+  const RN = cy - 3, RS = cy + 5;   // 건물 밑동 줄
+  placeProp(TOWN_ART.shop, cx - 6, RN, 1);
+  M.npcs.push({ kind: 'npc', role: 'shop', name: '꽃분 할머니', job: '잡화', img: 'npc-shop', x: cx - 6, y: RN + 1, h: 92 * UK });
+  placeProp('t-board', cx - 3, RN - 1, 1);
+  M.npcs.push({ kind: 'npc', role: 'board', name: '마을 게시판', hide: 1, x: cx - 3, y: RN - 1, h: 80, prop: M.props[M.props.length - 1] });
+  placeProp('t-portal', cx + 3, RN - 1, 1);
+  M.npcs.push({ kind: 'npc', role: 'guide', name: '순간이동 문', hide: 1, x: cx + 3, y: RN - 1, h: 120, prop: M.props[M.props.length - 1] });
+  placeProp('t-forge', cx + 6, RN, 1);
+  M.npcs.push({ kind: 'npc', role: 'smith', name: '쇠돌 아저씨', job: '대장간', img: 'npc-smith', x: cx + 7, y: RN + 1, h: 100 * UK });
+  placeProp(TOWN_ART.store, cx - 6, RS, 1);
+  M.npcs.push({ kind: 'npc', role: 'store', name: '복덩 할아버지', job: '창고', img: TOWN_ART.keeper, x: cx - 3, y: RS - 1, h: 96 * UK });
+  placeProp('t-well', cx + 3, RS, 1); placeProp(TOWN_ART.house, cx + 7, RS, 1); placeProp('t-jars', cx - 8, cy + 2, 1); placeProp('t-jars', cx + 8, cy + 2, 1);
   // 마을 문 장승 (길이 마을 밖으로 나가는 곳 양옆)
   buildTownWall(cx, cy);
   // 9) 사냥터 우두머리 + 갈림길 이정표 (마을로 돌아올 땐 마을 귀환 주문서)
@@ -761,9 +797,10 @@ function onUp(e) {
 function talk(npc) {
   tgt = null;
   if (npc.role === 'shop' || npc.role === 'smith') { if (wins.includes('shop') && shopWho !== npc.role) { shopWho = npc.role; closeBuy(); renderShop(); focusWin('shop'); } else { shopWho = npc.role; openWin('shop'); } }
+  else if (npc.role === 'store') { if (!wins.includes('store')) openWin('store'); if (!wins.includes('inv')) openWin('inv'); renderStore(); }
   else if (npc.role === 'board') openWin('board');
   else openWin('guide');
-  const w = npc.role === 'shop' || npc.role === 'smith' ? 'shop' : npc.role === 'board' ? 'board' : 'guide';
+  const w = npc.role === 'shop' || npc.role === 'smith' ? 'shop' : npc.role === 'store' ? 'store' : npc.role === 'board' ? 'board' : 'guide';
   winNpc = wins.includes(w) ? { npc, w } : null;
 }
 // NPC 창(상점 등)은 그 NPC에게서 멀어지면 저절로 닫혀요
@@ -1058,6 +1095,7 @@ function setQuick(k, id) {
   log(`<b>${ITEMS[id].name}</b>을(를) 단축키 ${k + 1}에 넣었어요`, 'sys');
   updateHUD(); if (wins.includes('inv')) renderInv();
 }
+const sDrag = { from: null, ix: -1, x: 0, y: 0, on: false, done: false, it: null };
 const qDrag = { id: null, from: -1, x: 0, y: 0, on: false, done: false };
 function useQuick(k) {
   const id = qkeys()[k];
@@ -1202,7 +1240,7 @@ function focusWin(w) { const el = $('w-' + w); el.style.zIndex = ++winZ; wins = 
 function openWin(w) {
   if (wins.includes(w)) { closeWin(w); return; }
   const el = $('w-' + w); el.classList.remove('hidden'); focusWin(w); placeWin(el); SND.ui();
-  if (w === 'inv') renderInv(); if (w === 'char') renderChar(); if (w === 'shop') { closeBuy(); renderShop(); } if (w === 'guide') renderGuide(); if (w === 'gate') renderGate();
+  if (w === 'inv') renderInv(); if (w === 'char') renderChar(); if (w === 'shop') { closeBuy(); renderShop(); } if (w === 'guide') renderGuide(); if (w === 'store') renderStore(); if (w === 'gate') renderGate();
   document.body.classList.add('win-open');
 }
 // closeWin(): 맨 위 창 닫기 · closeWin('shop'): 그 창 닫기 · closeWin(true): 맨 위 창 조용히 닫기
@@ -1830,6 +1868,7 @@ function migrateWeapons() {
   if (WEAPONS[P.eq.weapon.k].two && P.eq.shield) { P.inv.push(P.eq.shield); P.eq.shield = null; log('활은 양손 무기라 방패를 가방에 넣었어요', 'sys'); }
 }
 function startGame() {
+  loadStore();
   migrateWeapons();
   $('title').classList.add('hidden'); $('create').classList.add('hidden'); $('select').classList.add('hidden');
   document.body.classList.add('playing');
@@ -1928,10 +1967,37 @@ document.querySelectorAll('.win').forEach(el => el.addEventListener('pointerdown
       const s = e.target.closest('.slot'); if (!s || enchanting) return;
       if (enchantPick) { enchantTarget(s.dataset.eq ? { eq: s.dataset.eq } : { inv: +s.dataset.inv }); hideTip(); return; }
       if (qDrag.done) return;
-      if (s.dataset.eq) unequip(s.dataset.eq); else useItem(+s.dataset.inv);
+      if (s.dataset.eq) unequip(s.dataset.eq); else if (wins.includes('store')) toStore(+s.dataset.inv); else useItem(+s.dataset.inv);
       hideTip();
     });
   });
+  // 창고
+  $('store-grid').addEventListener('click', e => { const s = e.target.closest('.slot'); if (!s || sDrag.done) return; fromStore(+s.dataset.st); hideTip(); });
+  $('store-grid').addEventListener('mouseover', e => { const s = e.target.closest('.slot'); const it = s && STORE.items[+s.dataset.st]; if (it) showTip(s, gearInfo(it)); else hideTip(); });
+  $('store-grid').addEventListener('mouseleave', hideTip);
+  $('store-in').addEventListener('click', () => storeCoins(1));
+  $('store-out').addEventListener('click', () => storeCoins(-1));
+  // 가방 ↔ 창고 끌어서 옮기기
+  const sGhost = $('qghost');
+  const sStart = (e, from, ix, it) => { if (e.button || !it) return; Object.assign(sDrag, { from, ix, x: e.clientX, y: e.clientY, on: false, it }); };
+  $('store-grid').addEventListener('pointerdown', e => { const s = e.target.closest('.slot'); if (s) sStart(e, 'store', +s.dataset.st, STORE.items[+s.dataset.st]); });
+  $('inv-grid').addEventListener('pointerdown', e => { const s = e.target.closest('.slot'); if (s && wins.includes('store')) sStart(e, 'inv', +s.dataset.inv, P.inv[+s.dataset.inv]); });
+  window.addEventListener('pointermove', e => {
+    if (!sDrag.from) return;
+    if (!sDrag.on && Math.hypot(e.clientX - sDrag.x, e.clientY - sDrag.y) > 8) { sDrag.on = true; sGhost.src = `img/${gearImg(sDrag.it)}.png`; sGhost.classList.remove('hidden'); hideTip(); }
+    if (sDrag.on) { sGhost.style.left = e.clientX + 'px'; sGhost.style.top = e.clientY + 'px'; }
+  }, true);
+  window.addEventListener('pointerup', e => {
+    if (!sDrag.from) return;
+    if (sDrag.on) {
+      sGhost.classList.add('hidden');
+      const over = document.elementFromPoint(e.clientX, e.clientY);
+      if (sDrag.from === 'inv' && over && over.closest('#w-store')) toStore(sDrag.ix);
+      else if (sDrag.from === 'store' && over && over.closest('#w-inv')) fromStore(sDrag.ix);
+      sDrag.done = true; setTimeout(() => { sDrag.done = false; }, 50);
+    }
+    sDrag.from = null; sDrag.on = false;
+  }, true);
   // 능력치
   $('char-body').addEventListener('click', e => {
     const b = e.target.closest('.plus'); if (!b || P.pts <= 0) return;

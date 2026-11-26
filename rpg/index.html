@@ -183,6 +183,10 @@
   .win .x { width:34px; height:34px; border-radius:50%; border:2px solid var(--line); background:#fff; font-size:20px; line-height:1; cursor:pointer; font-family:Fredoka,sans-serif; color:var(--ink); }
   .coins { display:inline-flex; align-items:center; gap:4px; font-family:Fredoka,sans-serif; font-size:17px; }
   .coins img { width:22px; height:22px; }
+  #store-grid { display:grid; grid-template-columns:repeat(8,1fr); gap:4px; margin:8px 0 10px; }
+  .store-hint b { font-weight:normal; color:var(--ink); margin-left:4px; }
+  .store-coin { display:flex; gap:6px; align-items:center; }
+  .store-coin input { flex:1; min-width:0; font:inherit; font-size:15px; padding:6px 10px; border:2px solid var(--line); border-radius:12px; background:#fff; }
   #eq-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:5px; margin-bottom:10px; }
   .eqc { display:flex; flex-direction:column; align-items:center; gap:2px; font-size:12px; color:var(--ink2); }
   #inv-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:5px; }
@@ -353,6 +357,12 @@
   <h3><span id="shop-name">꽃분 할머니 · 잡화</span> <span class="sp"></span><span class="coins"><img src="img/i-coin.png" alt=""><span id="shop-coins">0</span></span><button class="x" type="button">×</button></h3>
   <div class="tabs"><button class="tab on" data-tab="buy" type="button">사기</button><button class="tab" data-tab="sell" type="button">팔기</button></div>
   <div id="shop-list"></div>
+</div>
+<div class="win hidden" id="w-store">
+  <h3>복덩 할아버지 · 창고 <span class="sp"></span><span class="coins"><img src="img/i-coin.png" alt=""><span id="store-coins">0</span></span><button class="x" type="button">×</button></h3>
+  <div class="dim small store-hint">가방이나 창고의 물건을 누르거나 끌면 옮겨져요 · 내 캐릭터들이 함께 써요 <b id="store-count"></b></div>
+  <div id="store-grid"></div>
+  <div class="store-coin"><input id="store-amt" type="number" min="0" inputmode="numeric" placeholder="엽전 (비우면 전부)"><button class="game-btn white small" id="store-in" type="button">맡기기</button><button class="game-btn sun small" id="store-out" type="button">찾기</button></div>
 </div>
 <div class="win hidden" id="w-guide">
   <h3>순간이동 문 <span class="sp"></span><button class="x" type="button">×</button></h3>
