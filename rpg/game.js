@@ -11,7 +11,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 
 /* ================= 그림 ================= */
 const IMG = {}, WHITE = {};
-const IMG_LIST = ['emblem-1', 'emblem-2', 'emblem-3', 'emblem-4', 'a-walk-0', 'a-walk-1', 'a-walk-2', 'a-walk-3', 'a-walk-4', 'a-walk-5', 'a-idle', 'a-walk1', 'a-walk2', 'a-wind', 'a-swing', 'a-hurt', 'a-dead', 'a-win', 'arrow', 'fence-h', 'fence-post', 'fence-corner', 'gate-front', 'gate-side', 'gate-side-l', 'fence-side', 'fence-lamp', 'p-idle', 'p-walk-0', 'p-walk-1', 'p-walk-2', 'p-walk-3', 'p-walk-4', 'p-walk-5', 'p-wind', 'p-swing', 'p-hurt', 'p-dead', 'p-win', 'npc-shop', 'npc-guide',
+const IMG_LIST = ['fence-panel', 'emblem-1', 'emblem-2', 'emblem-3', 'emblem-4', 'a-walk-0', 'a-walk-1', 'a-walk-2', 'a-walk-3', 'a-walk-4', 'a-walk-5', 'a-idle', 'a-walk1', 'a-walk2', 'a-wind', 'a-swing', 'a-hurt', 'a-dead', 'a-win', 'arrow', 'fence-h', 'fence-post', 'fence-corner', 'gate-front', 'gate-side', 'gate-side-l', 'fence-side', 'fence-lamp', 'p-idle', 'p-walk-0', 'p-walk-1', 'p-walk-2', 'p-walk-3', 'p-walk-4', 'p-walk-5', 'p-wind', 'p-swing', 'p-hurt', 'p-dead', 'p-win', 'npc-shop', 'npc-guide',
   ...Object.keys(MONS).flatMap(k => ['m-' + k + '-0', 'm-' + k + '-1']),
   ...Object.keys(WEAPONS).map(k => 'w-' + k), ...Object.keys(ARMORS).map(k => 'a-' + k),
   'i-potion', 'i-haste', 'i-wscroll', 'i-ascroll', 'i-coin', 'i-coins', 'i-box', ...Object.keys(PROPS)];
@@ -207,14 +207,21 @@ function buildTownWall(cx, cy) {
   for (let x = lef; x <= rig; x++) for (const y of [top, bot]) if (!gate(x, y)) shut(x, y);
   for (let y = top; y <= bot; y++) for (const x of [lef, rig]) if (!gate(x, y)) shut(x, y);
   const X = c => (c + .5) * CELL, Y = r => (r + .5) * CELL + 10;
-  // 가로 울타리: 기둥 사이 415px(그림 기준)를 한 조각으로, 길이에 맞춰 살짝 늘이거나 줄여요
-  const SPAN = 415 * FS, GH = CELL;   // GH = 정문 기둥까지 거리
-  const hRun = (x0, x1, row) => { const n = Math.max(1, Math.round((x1 - x0) / SPAN)), st = (x1 - x0) / n; for (let k = 0; k < n; k++) add('fence-h', x0 + st * (k + .5), Y(row), FS * st / SPAN); };
+  // 가로 울타리: 기둥은 한 칸마다 하나씩, 기둥 사이는 엮음 판 한 장으로 채워요 (겹치지 않게)
+  const GH = CELL;   // GH = 정문 기둥까지 거리
+  const panel = (x, y, wid) => { const im = IMG['fence-panel']; if (!im) return; M.props.push({ kind: 'prop', name: 'fence-panel', x, y: y - .5, w: wid, h: im.height * FS, fade: 1 }); };
+  const hRun = (x0, x1, row) => {
+    const n = Math.max(1, Math.round((x1 - x0) / CELL)), st = (x1 - x0) / n;
+    for (let k = 0; k < n; k++) panel(x0 + st * (k + .5), Y(row), st + 6);
+    for (let k = 0; k <= n; k++) add('fence-post', x0 + st * k, Y(row), FS);
+  };
   for (const row of [top, bot]) { hRun(X(lef), X(cx) - GH, row); hRun(X(cx) + GH, X(rig), row); add('gate-front', X(cx), Y(row) + 2, GS); }
   // 세로 울타리: 옆에서 본 싸리 엮음 + 한 칸마다 통나무 기둥 (동서 문 자리는 비움)
   for (const col of [lef, rig]) {
-    for (let y = Y(top) + 10; y < Y(bot) - 4; y += 10) if (Math.abs(y - Y(cy)) > CELL) add('fence-side', X(col), y, FS);
+    // 기둥은 한 칸마다, 기둥 사이 가운데에 옆에서 본 엮음 판 하나 (겹쳐 쌓지 않아요)
     for (let r = top + 1; r < bot; r++) if (Math.abs(r - cy) > 1) add('fence-post', X(col), Y(r), FS);
+    // 기둥 사이는 옆에서 본 얇은 엮음 띠 하나만 (가늘게 해서 기둥이 쌓인 것처럼 보이지 않게)
+    for (let r = top; r < bot; r++) if (Math.abs(r + .5 - cy) > 1.4) { const im = IMG['fence-side']; if (im) M.props.push({ kind: 'prop', name: 'fence-side', x: X(col), y: Y(r) + CELL / 2 - .5, w: im.width * FS * .45, h: im.height * FS * .8, fade: 1 }); }
     // 동서 문: 옆에서 본 기와 대문 (문짝이 마을 안쪽으로 열려요)
     add(col === lef ? 'gate-side-l' : 'gate-side', X(col), Y(cy + 1) + 4, GS);
   }
