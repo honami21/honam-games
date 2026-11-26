@@ -730,7 +730,7 @@ function startAttack(m) {
 // 화살: 활 시위를 놓으면 날아가서 닿을 때 맞아요
 let shots = [];
 function shoot(m) {
-  const x = player.px + player.face * 14, y = player.py - 24;
+  const x = player.px + player.face * 16, y = player.py + CELL * .32 - 92 * UK * .42;   // 활을 든 손 높이에서 나가요
   const tx = m.px, ty = m.py + CELL * .32 - m.d.h * .45;
   shots.push({ m, x0: x, y0: y, tx, ty, t: 0, d: Math.max(.08, Math.hypot(tx - x, ty - y) / 900) });
   SND.shoot();
@@ -1468,7 +1468,7 @@ function closeIn(dt) {
     let o = null;
     if (u === player) { if (tgt && tgt.kind === 'mon' && !tgt.dying && !u.moving && !isBow() && cheb(u.x, u.y, tgt.x, tgt.y) <= 1) o = tgt; }
     else if (u.kind === 'mon' && u.angry && !u.dying && !u.moving && !dead && cheb(u.x, u.y, player.x, player.y) <= 1) o = player;
-    const gx = o ? (o.px - u.px) * .22 : 0, gy = o ? (o.py - u.py) * .22 : 0;
+    const kk = u === player ? .5 : .25, gx = o ? (o.px - u.px) * kk : 0, gy = o ? (o.py - u.py) * kk : 0;   // 서로 다가가서 거의 붙어서 때려요
     u.ox = (u.ox || 0) + (gx - (u.ox || 0)) * k; u.oy = (u.oy || 0) + (gy - (u.oy || 0)) * k;
   }
 }
