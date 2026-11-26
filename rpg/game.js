@@ -385,7 +385,7 @@ function findFree(cx, cy, maxR = 8) {
 
 let curZone = null;
 function enterWorld() {
-  units = []; shots = []; drops = []; fx = []; nums = []; chunkCache.clear(); curZone = null;
+  units = []; shots = []; drops = []; fx = []; nums = []; chunkCache.clear(); chunkJob = null; curZone = null;
   buildWorld();
   const [ex, ey] = findFree(...ZONE.town.spawn);
   player = addUnit({ kind: 'player', x: ex, y: ey, step: .36 });
@@ -475,13 +475,13 @@ function buildGroundMasks() {
   }
   M.layers = L; M.nx = NX;
 }
-function getChunk(ix, iy) {
-  const key = ix + ',' + iy; let c = chunkCache.get(key);
-  if (c) { chunkCache.delete(key); chunkCache.set(key, c); return c; }
-  const S = CH * CELL; c = document.createElement('canvas'); c.width = c.height = S;
-  const x = c.getContext('2d'), t = chunkTmp; if (t.width !== S) { t.width = t.height = S; }
+// 땅 조각: 화면에 필요한 조각은 바로 만들고, 곧 보일 둘레 조각은 한 프레임에 한 겹씩 미리 만들어 둬요 (걸을 때 버벅임 방지)
+let chunkJob = null;
+function chunkStep(job) {   // 한 겹 그리기. 다 그리면 true
+  const { ix, iy, c } = job, S = CH * CELL, x = c.getContext('2d'), t = chunkTmp; if (t.width !== S) { t.width = t.height = S; }
   const tc = t.getContext('2d');
-  for (const l of M.layers) {
+  while (job.li < M.layers.length) {
+    const l = M.layers[job.li++];
     if (!l.has[iy * M.nx + ix]) continue;
     tc.setTransform(1, 0, 0, 1, 0, 0); tc.globalCompositeOperation = 'source-over'; tc.clearRect(0, 0, S, S);
     const pat = l.tile && M.patterns[l.tile];
@@ -490,10 +490,29 @@ function getChunk(ix, iy) {
     tc.globalCompositeOperation = 'destination-in'; tc.imageSmoothingEnabled = true; tc.imageSmoothingQuality = 'high';
     tc.drawImage(l.cv, ix * CH - 1, iy * CH - 1, CH + 2, CH + 2, -CELL, -CELL, (CH + 2) * CELL, (CH + 2) * CELL);
     x.globalAlpha = l.alpha || 1; x.drawImage(t, 0, 0); x.globalAlpha = 1;
+    return job.li >= M.layers.length;
   }
-  chunkCache.set(key, c);
-  while (chunkCache.size > 30) chunkCache.delete(chunkCache.keys().next().value);
-  return c;
+  return true;
+}
+function newJob(ix, iy) { const c = document.createElement('canvas'); c.width = c.height = CH * CELL; return { ix, iy, c, li: 0, key: ix + ',' + iy }; }
+function storeChunk(key, c) { chunkCache.set(key, c); while (chunkCache.size > 40) chunkCache.delete(chunkCache.keys().next().value); }
+function getChunk(ix, iy) {
+  const key = ix + ',' + iy; let c = chunkCache.get(key);
+  if (c) { chunkCache.delete(key); chunkCache.set(key, c); return c; }
+  // 미리 만들던 조각이면 이어서 끝내기
+  const job = chunkJob && chunkJob.key === key ? chunkJob : newJob(ix, iy); if (job === chunkJob) chunkJob = null;
+  while (!chunkStep(job));
+  storeChunk(key, job.c);
+  return job.c;
+}
+function prefetchChunks(ix0, ix1, iy0, iy1) {
+  if (!chunkJob) {
+    const NY = Math.ceil(M.h / CH);
+    for (let iy = Math.max(0, iy0 - 1); iy <= Math.min(NY - 1, iy1 + 1) && !chunkJob; iy++)
+      for (let ix = Math.max(0, ix0 - 1); ix <= Math.min(M.nx - 1, ix1 + 1); ix++)
+        if (!chunkCache.has(ix + ',' + iy)) { chunkJob = newJob(ix, iy); break; }
+  }
+  if (chunkJob && chunkStep(chunkJob)) { storeChunk(chunkJob.key, chunkJob.c); chunkJob = null; }
 }
 const hash2 = (x, y) => (((x * 73856093) ^ (y * 19349663)) >>> 0);
 function drawSea(vx0, vx1, vy0, vy1) {
@@ -520,6 +539,7 @@ function drawGround(vx0, vx1, vy0, vy1) {
       { const x0 = Math.round(ix * S * T.a + T.e), x1 = Math.round((ix + 1) * S * T.a + T.e), y0 = Math.round(iy * S * T.d + T.f), y1 = Math.round((iy + 1) * S * T.d + T.f);
         g.drawImage(getChunk(ix, iy), x0, y0, x1 - x0, y1 - y0); }
   g.restore();
+  prefetchChunks(Math.floor(vx0 / S), Math.floor(vx1 / S), Math.floor(vy0 / S), Math.floor(vy1 / S));
   for (const p of M.flats) if (p.x + p.w / 2 > vx0 && p.x - p.w / 2 < vx1 && p.y > vy0 && p.y - p.h < vy1) drawProp(p);
 }
 
