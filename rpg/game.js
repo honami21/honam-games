@@ -11,7 +11,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 
 /* ================= 그림 ================= */
 const IMG = {}, WHITE = {};
-const IMG_LIST = ['fence-panel', 'emblem-1', 'emblem-2', 'emblem-3', 'emblem-4', 'a-walk-0', 'a-walk-1', 'a-walk-2', 'a-walk-3', 'a-walk-4', 'a-walk-5', 'a-idle', 'a-walk1', 'a-walk2', 'a-wind', 'a-swing', 'a-hurt', 'a-dead', 'a-win', 'arrow', 'fence-h', 'fence-post', 'fence-corner', 'gate-front', 'gate-side', 'gate-side-l', 'fence-side', 'fence-lamp', 'p-idle', 'p-walk-0', 'p-walk-1', 'p-walk-2', 'p-walk-3', 'p-walk-4', 'p-walk-5', 'p-wind', 'p-swing', 'p-hurt', 'p-dead', 'p-win', 'npc-shop', 'npc-guide',
+const IMG_LIST = ['fence-panel', 'fence-v-post', 'fence-v-weave', 'emblem-1', 'emblem-2', 'emblem-3', 'emblem-4', 'a-walk-0', 'a-walk-1', 'a-walk-2', 'a-walk-3', 'a-walk-4', 'a-walk-5', 'a-idle', 'a-walk1', 'a-walk2', 'a-wind', 'a-swing', 'a-hurt', 'a-dead', 'a-win', 'arrow', 'fence-h', 'fence-post', 'fence-corner', 'gate-front', 'gate-side', 'gate-side-l', 'fence-side', 'fence-lamp', 'p-idle', 'p-walk-0', 'p-walk-1', 'p-walk-2', 'p-walk-3', 'p-walk-4', 'p-walk-5', 'p-wind', 'p-swing', 'p-hurt', 'p-dead', 'p-win', 'npc-shop', 'npc-guide',
   ...Object.keys(MONS).flatMap(k => ['m-' + k + '-0', 'm-' + k + '-1']),
   ...Object.keys(WEAPONS).map(k => 'w-' + k), ...Object.keys(ARMORS).map(k => 'a-' + k),
   'i-potion', 'i-haste', 'i-wscroll', 'i-ascroll', 'i-coin', 'i-coins', 'i-box', ...Object.keys(PROPS)];
@@ -219,9 +219,12 @@ function buildTownWall(cx, cy) {
   // 세로 울타리: 옆에서 본 싸리 엮음 + 한 칸마다 통나무 기둥 (동서 문 자리는 비움)
   for (const col of [lef, rig]) {
     // 기둥은 한 칸마다, 기둥 사이 가운데에 옆에서 본 엮음 판 하나 (겹쳐 쌓지 않아요)
-    for (let r = top + 1; r < bot; r++) if (Math.abs(r - cy) > 1) add('fence-post', X(col), Y(r), FS);
-    // 기둥 사이는 옆에서 본 얇은 엮음 띠 하나만 (가늘게 해서 기둥이 쌓인 것처럼 보이지 않게)
-    for (let r = top; r < bot; r++) if (Math.abs(r + .5 - cy) > 1.4) { const im = IMG['fence-side']; if (im) M.props.push({ kind: 'prop', name: 'fence-side', x: X(col), y: Y(r) + CELL / 2 - .5, w: im.width * FS * .45, h: im.height * FS * .8, fade: 1 }); }
+    // 엮음은 두 기둥 사이에 한 장, 위아래 끝이 기둥 뒤로 숨도록 두 기둥보다 먼저 그려요 (z)
+    const VS = .0634, post = r => r > top && r < bot && Math.abs(r - cy) > 1, corner = r => r === top || r === bot;
+    for (let r = top + 1; r <= bot; r++) if ((post(r - 1) || corner(r - 1)) && (post(r) || corner(r))) {
+      const im = IMG['fence-v-weave']; if (im) M.props.push({ kind: 'prop', name: 'fence-v-weave', x: X(col), y: Y(r) - 532 * VS, z: Y(r - 1) - 1, w: im.width * VS, h: im.height * VS, fade: 1 });
+    }
+    for (let r = top + 1; r < bot; r++) if (post(r)) add('fence-v-post', X(col), Y(r), VS);
     // 동서 문: 옆에서 본 기와 대문 (문짝이 마을 안쪽으로 열려요)
     add(col === lef ? 'gate-side-l' : 'gate-side', X(col), Y(cy + 1) + 4, GS);
   }
@@ -1398,7 +1401,7 @@ function render() {
   }
   // 앞뒤 순서대로 (위쪽 먼저)
   const list = [];
-  for (const p of M.props) if (p.x + p.w / 2 > vx0 && p.x - p.w / 2 < vx1 && p.y > vy0 && p.y - p.h < vy1) list.push([p.y, p]);
+  for (const p of M.props) if (p.x + p.w / 2 > vx0 && p.x - p.w / 2 < vx1 && p.y > vy0 && p.y - p.h < vy1) list.push([p.z ?? p.y, p]);
   for (const u of units) if (u.px > vx0 - 120 && u.px < vx1 + 120 && u.py > vy0 - 40 && u.py < vy1 + 200) list.push([u.py + CELL * .32, u]);
   list.sort((a, b) => a[0] - b[0]);
   for (const [, o] of list) {
