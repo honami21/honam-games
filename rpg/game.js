@@ -838,7 +838,7 @@ function killMonster(m) {
   dropLoot(m);
   const z = m.zone;
   if (m.d.boss) { z.bossAlive = false; z.bossTimer = BOSS_AGAIN; banner(`${josa(m.d.name, '을를')} 물리쳤어요!`); }
-  else { const w = M; setTimeout(() => { if (M === w && units.filter(u => u.kind === 'mon' && u.zone === z && !u.d.boss && !u.dying).length < z.count) spawnMonster(z); }, 8000 + Math.random() * 6000); }
+  else { const w = M; setTimeout(() => { if (M === w && units.filter(u => u.kind === 'mon' && u.zone === z && !u.d.boss && !u.dying).length < z.count) spawnMonster(z); }, 5000 + Math.random() * 4000); }
 }
 function dropLoot(m) {
   const dr = m.zone.drop, bag = [];
