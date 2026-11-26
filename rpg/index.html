@@ -110,7 +110,16 @@
   .bbtn img { width:28px; height:28px; object-fit:contain; }
   .bbtn svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
   .bbtn kbd { position:absolute; left:4px; top:2px; font-family:Fredoka,sans-serif; font-size:11px; color:var(--ink2); }
-  #b-haste.on { background:#d9f7c8; border-color:#3e8f2e; }
+  #w-board .board { max-height:min(60vh,520px); overflow:auto; padding-right:6px; }
+  #w-board h4 { margin:12px 0 2px; font-size:17px; color:var(--ink); }
+  #w-board h4:first-child { margin-top:0; }
+  #w-board p { margin:0; line-height:1.55; word-break:keep-all; }
+  .bbtn.qs.on { background:#d9f7c8; border-color:#3e8f2e; }
+  .bbtn.qs.empty img { visibility:hidden; }
+  .bbtn.qs.empty .n { display:none; }
+  .bbtn.qs.zero img { opacity:.35; }
+  body.qpick .bbtn.qs.pick { background:var(--sun); animation:pulse 1s ease-in-out infinite; }
+  #inv-hint .qhint { color:#b5541a; }
   .bbtn .bt { position:absolute; left:0; right:0; top:-18px; text-align:center; font-family:Fredoka,sans-serif; font-size:12px; color:#2f7a22; text-shadow:0 0 3px #fff,0 0 3px #fff; }
   #guide-admin { margin-top:10px; text-align:right; font-size:13px; }
   #guide-admin .lnk { background:none; border:0; color:var(--ink2); opacity:.6; font:inherit; cursor:pointer; text-decoration:underline; padding:2px 4px; }
@@ -122,7 +131,7 @@
   @keyframes pulse { 50% { transform:scale(1.07); } }
   #b-snd.off svg .w { display:none; }
   #b-snd.off { opacity:.55; }
-  #b-town { background:var(--sky); }
+
 
   #log { position:absolute; left:14px; bottom:96px; width:min(420px,60vw); display:flex; flex-direction:column; gap:2px; }
   #log .ln { font-size:15px; color:#fff; text-shadow:0 1px 2px #000, 0 0 6px rgba(0,0,0,.6); transition:opacity 1.2s; word-break:keep-all; }
@@ -281,11 +290,13 @@
     </div>
     <div class="stat"><span>AC</span><b id="acv">10</b></div>
     <div class="stat hide-s"><img src="img/i-coin.png" alt=""><b id="coins">0</b></div>
-    <button class="bbtn" id="b-pot" type="button" title="빨간 물약 (1)"><kbd>1</kbd><img src="img/i-potion.png" alt=""><span class="n" id="potn">0</span></button>
-    <button class="bbtn" id="b-haste" type="button" title="초록 물약 (2)"><kbd>2</kbd><img src="img/i-haste.png" alt=""><span class="n" id="hasten">0</span><span class="bt" id="hastet"></span></button>
+    <button class="bbtn qs" data-k="0" type="button"><kbd>1</kbd><img alt=""><span class="n"></span><span class="bt"></span></button>
+    <button class="bbtn qs" data-k="1" type="button"><kbd>2</kbd><img alt=""><span class="n"></span><span class="bt"></span></button>
+    <button class="bbtn qs" data-k="2" type="button"><kbd>3</kbd><img alt=""><span class="n"></span><span class="bt"></span></button>
+    <button class="bbtn qs" data-k="3" type="button"><kbd>4</kbd><img alt=""><span class="n"></span><span class="bt"></span></button>
     <button class="bbtn" id="b-inv" type="button" title="가방 (I)"><kbd>I</kbd><svg viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>가방</button>
     <button class="bbtn" id="b-char" type="button" title="능력치 (C)"><kbd>C</kbd><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>능력치</button>
-    <button class="bbtn hidden" id="b-town" type="button" title="마을로 돌아가기"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M6 10v10h12V10"/><path d="M10 20v-6h4v6"/></svg>마을로</button>
+
     <button class="bbtn" id="b-snd" type="button" title="효과음 켜기/끄기"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="w" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>소리</button>
   </div>
 </div>
@@ -312,18 +323,37 @@
     <div class="dim small" id="bq-msg"></div>
     <div class="btns"><button class="game-btn white small" id="bq-no" type="button">취소</button><button class="game-btn sun small" id="bq-ok" type="button">사기</button></div>
   </div></div>
-  <h3>상점 할머니 <span class="sp"></span><span class="coins"><img src="img/i-coin.png" alt=""><span id="shop-coins">0</span></span><button class="x" type="button">×</button></h3>
+  <h3><span id="shop-name">꽃분 할머니 · 잡화</span> <span class="sp"></span><span class="coins"><img src="img/i-coin.png" alt=""><span id="shop-coins">0</span></span><button class="x" type="button">×</button></h3>
   <div class="tabs"><button class="tab on" data-tab="buy" type="button">사기</button><button class="tab" data-tab="sell" type="button">팔기</button></div>
   <div id="shop-list"></div>
 </div>
 <div class="win hidden" id="w-guide">
-  <h3>길 안내 부엉이 도사 <span class="sp"></span><button class="x" type="button">×</button></h3>
+  <h3>순간이동 문 <span class="sp"></span><button class="x" type="button">×</button></h3>
   <div id="guide-time"></div>
   <div id="guide-list"></div>
   <div id="guide-admin"></div>
   <div id="adm-row" class="hidden"><input id="adm-code" type="password" placeholder="관리자 코드" autocomplete="off"><button class="game-btn" id="adm-go" type="button">확인</button><span class="dim small" id="adm-msg"></span></div>
 </div>
 
+<div class="win hidden" id="w-board">
+  <h3>마을 게시판 <span class="sp"></span><button class="x" type="button">×</button></h3>
+  <div class="board">
+    <h4>움직이기</h4>
+    <p>땅을 누르면 그곳으로 걸어가요. 꾹 누르고 있으면 계속 따라가요.</p>
+    <h4>사냥하기</h4>
+    <p>몬스터를 한 번 누르면 쓰러질 때까지 알아서 공격해요. 쓰러뜨리면 경험치와 엽전, 아이템이 나와요.</p>
+    <h4>사냥터 가기</h4>
+    <p>마을의 순간이동 문을 누르면 사냥터를 고를 수 있어요. 사냥 시간은 1포인트에 10분이고, 마을 안에서는 줄지 않아요.</p>
+    <h4>단축키</h4>
+    <p><b>1</b> 빨간 물약 (HP 회복) · <b>2</b> 초록 물약 (5분 동안 빨라짐)<br><b>3</b> 마을 귀환 주문서 · <b>4</b> 순간이동 주문서 (사냥터 안 아무 곳)<br><b>I</b> 가방 · <b>C</b> 능력치</p>
+    <h4>상점</h4>
+    <p>꽃분 할머니(잡화)는 물약과 주문서를, 쇠돌 아저씨(대장간)는 방어구를 팔아요. 가방에서 안 쓰는 물건은 팔 수 있어요.</p>
+    <h4>강화</h4>
+    <p>강화 부적을 누르고 장비를 고르면 한 단계 강해져요. 무기는 +6, 방어구는 +4까지는 안전하지만, 그 위로는 실패하면 장비가 사라져요.</p>
+    <h4>쓰러지면</h4>
+    <p>마을에서 다시 일어나고, 경험치가 조금 줄어요. HP가 낮으면 물약을 꼭 마셔요.</p>
+  </div>
+</div>
 <div class="win hidden" id="w-gate">
   <h3>마을 문 <span class="sp"></span><button class="x" type="button">×</button></h3>
   <p class="gate-t">사냥 시간이 없어요.<br>1포인트를 쓰면 10분 동안 사냥할 수 있어요.</p>

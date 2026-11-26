@@ -11,7 +11,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 
 /* ================= 그림 ================= */
 const IMG = {}, WHITE = {};
-const IMG_LIST = ['emblem-1', 'emblem-2', 'emblem-3', 'emblem-4', 'a-walk-0', 'a-walk-1', 'a-walk-2', 'a-walk-3', 'a-walk-4', 'a-walk-5', 'a-idle', 'a-walk1', 'a-walk2', 'a-wind', 'a-swing', 'a-hurt', 'a-dead', 'a-win', 'arrow', 'fence-h', 'fence-post', 'fence-corner', 'gate-front', 'gate-side', 'gate-side-l', 'fence-side', 'fence-lamp', 'p-idle', 'p-walk-0', 'p-walk-1', 'p-walk-2', 'p-walk-3', 'p-walk-4', 'p-walk-5', 'p-wind', 'p-swing', 'p-hurt', 'p-dead', 'p-win', 'npc-shop', 'npc-guide',
+const IMG_LIST = ['t-board', 't-forge', 'npc-smith', 'i-return', 'i-teleport', 'fence-panel', 'fence-v-post', 'fence-v-weave', 'emblem-1', 'emblem-2', 'emblem-3', 'emblem-4', 'a-walk-0', 'a-walk-1', 'a-walk-2', 'a-walk-3', 'a-walk-4', 'a-walk-5', 'a-idle', 'a-walk1', 'a-walk2', 'a-wind', 'a-swing', 'a-hurt', 'a-dead', 'a-win', 'arrow', 'fence-h', 'fence-post', 'fence-corner', 'gate-front', 'gate-side', 'gate-side-l', 'fence-side', 'fence-lamp', 'p-idle', 'p-walk-0', 'p-walk-1', 'p-walk-2', 'p-walk-3', 'p-walk-4', 'p-walk-5', 'p-wind', 'p-swing', 'p-hurt', 'p-dead', 'p-win', 'npc-shop', 'npc-guide',
   ...Object.keys(MONS).flatMap(k => ['m-' + k + '-0', 'm-' + k + '-1']),
   ...Object.keys(WEAPONS).map(k => 'w-' + k), ...Object.keys(ARMORS).map(k => 'a-' + k),
   'i-potion', 'i-haste', 'i-wscroll', 'i-ascroll', 'i-coin', 'i-coins', 'i-box', ...Object.keys(PROPS)];
@@ -100,7 +100,7 @@ const SAVE_KEY = 'rpg-save';
 let P = null;   // 저장되는 캐릭터 정보
 function newChar(str, dex, con, cls, name) {
   return { v: 1, name: name || '', cls: cls === 'bow' ? 'bow' : 'sword', lv: 1, exp: 0, hp: 30, str, dex, con, pts: 0, coins: 50, hunt: 0,
-    inv: [{ i: 'potion', n: 5 }], eq: { weapon: { g: 'w', k: cls === 'bow' ? 'bow1' : 'sword1', en: 0 }, armor: { g: 'a', k: 'armor1', en: 0 } },
+    inv: [{ i: 'potion', n: 5 }, { i: 'ret', n: 3 }, { i: 'tele', n: 3 }], eq: { weapon: { g: 'w', k: cls === 'bow' ? 'bow1' : 'sword1', en: 0 }, armor: { g: 'a', k: 'armor1', en: 0 } },
     kills: 0, deaths: 0, t: Date.now() };
 }
 // 저장: 캐릭터 여러 명 { v: 2, chars: [캐릭터...], t } (예전 한 명 저장 v1도 읽어요)
@@ -207,14 +207,26 @@ function buildTownWall(cx, cy) {
   for (let x = lef; x <= rig; x++) for (const y of [top, bot]) if (!gate(x, y)) shut(x, y);
   for (let y = top; y <= bot; y++) for (const x of [lef, rig]) if (!gate(x, y)) shut(x, y);
   const X = c => (c + .5) * CELL, Y = r => (r + .5) * CELL + 10;
-  // 가로 울타리: 기둥 사이 415px(그림 기준)를 한 조각으로, 길이에 맞춰 살짝 늘이거나 줄여요
-  const SPAN = 415 * FS, GH = CELL;   // GH = 정문 기둥까지 거리
-  const hRun = (x0, x1, row) => { const n = Math.max(1, Math.round((x1 - x0) / SPAN)), st = (x1 - x0) / n; for (let k = 0; k < n; k++) add('fence-h', x0 + st * (k + .5), Y(row), FS * st / SPAN); };
+  // 가로 울타리: 기둥은 한 칸마다 하나씩, 기둥 사이는 엮음 판 한 장으로 채워요 (겹치지 않게)
+  const GH = CELL;   // GH = 정문 기둥까지 거리
+  const panel = (x, y, wid) => { const im = IMG['fence-panel']; if (!im) return; M.props.push({ kind: 'prop', name: 'fence-panel', x, y: y - .5, w: wid, h: im.height * FS, fade: 1 }); };
+  const hRun = (x0, x1, row) => {
+    const n = Math.max(1, Math.round((x1 - x0) / CELL)), st = (x1 - x0) / n;
+    for (let k = 0; k < n; k++) panel(x0 + st * (k + .5), Y(row), st + 6);
+    for (let k = 0; k <= n; k++) add('fence-post', x0 + st * k, Y(row), FS);
+  };
   for (const row of [top, bot]) { hRun(X(lef), X(cx) - GH, row); hRun(X(cx) + GH, X(rig), row); add('gate-front', X(cx), Y(row) + 2, GS); }
   // 세로 울타리: 옆에서 본 싸리 엮음 + 한 칸마다 통나무 기둥 (동서 문 자리는 비움)
   for (const col of [lef, rig]) {
-    for (let y = Y(top) + 10; y < Y(bot) - 4; y += 10) if (Math.abs(y - Y(cy)) > CELL) add('fence-side', X(col), y, FS);
-    for (let r = top + 1; r < bot; r++) if (Math.abs(r - cy) > 1) add('fence-post', X(col), Y(r), FS);
+    // 기둥은 한 칸마다, 기둥 사이 가운데에 옆에서 본 엮음 판 하나 (겹쳐 쌓지 않아요)
+    // 엮음은 두 기둥 사이에 한 장, 위아래 끝이 기둥 뒤로 숨도록 두 기둥보다 먼저 그려요 (z)
+    const VS = .0634, post = r => r > top && r < bot && Math.abs(r - cy) > 1, corner = r => r === top || r === bot;
+    // 문 바로 위아래 칸(cy-1, cy+2)도 이어서 기둥과 문 사이 빈틈을 메워요
+    const end = r => post(r) || corner(r) || r === cy - 1 || r === cy + 1;
+    for (let r = top + 1; r <= bot; r++) if (end(r - 1) && end(r) && r !== cy && r !== cy + 1) {
+      const im = IMG['fence-v-weave']; if (im) M.props.push({ kind: 'prop', name: 'fence-v-weave', x: X(col), y: Y(r) - 532 * VS, z: Y(r - 1) - 1, w: im.width * VS, h: im.height * VS, fade: 1 });
+    }
+    for (let r = top + 1; r < bot; r++) if (post(r)) add('fence-v-post', X(col), Y(r), VS);
     // 동서 문: 옆에서 본 기와 대문 (문짝이 마을 안쪽으로 열려요)
     add(col === lef ? 'gate-side-l' : 'gate-side', X(col), Y(cy + 1) + 4, GS);
   }
@@ -327,15 +339,19 @@ function buildWorld() {
   // 네 귀퉁이에 집 한 채씩, 가운데 십자 길을 비우고 상점·순간이동·우물
   for (const [n, dx, dy] of [['t-house1', -7, -3], ['t-house2', 7, -3], ['t-house2', -7, 5], ['t-house1', 7, 5]]) placeProp(n, cx + dx, cy + dy, 1);
   placeProp('t-stall', cx - 4, cy - 3, 1); placeProp('t-portal', cx + 4, cy - 3, 1); placeProp('t-well', cx - 4, cy + 4, 1); placeProp('t-jars', cx + 4, cy + 4, 1);
-  M.npcs.push({ kind: 'npc', role: 'shop', name: '상점 할머니', img: 'npc-shop', x: cx - 4, y: cy - 2, h: 92 * UK });
-  M.npcs.push({ kind: 'npc', role: 'guide', name: '길 안내 부엉이 도사', img: 'npc-guide', x: cx + 3, y: cy + 2, h: 96 * UK });
+  M.npcs.push({ kind: 'npc', role: 'shop', name: '꽃분 할머니', job: '잡화', img: 'npc-shop', x: cx - 4, y: cy - 2, h: 92 * UK });
+  // 순간이동 문: 그림은 장식물(t-portal)이고, 누를 수 있게 보이지 않는 안내 칸을 겹쳐 둬요
+  M.npcs.push({ kind: 'npc', role: 'guide', name: '순간이동 문', hide: 1, x: cx + 4, y: cy - 3, h: 120, prop: M.props.find(p => p.name === 't-portal') });
+  // 마을 한가운데 게시판 (처음 하는 사람을 위한 안내)
+  placeProp('t-board', cx, cy, 1);
+  M.npcs.push({ kind: 'npc', role: 'board', name: '마을 게시판', hide: 1, x: cx, y: cy, h: 80, prop: M.props[M.props.length - 1] });
+  // 대장장이: 방어구를 팔아요
+  placeProp('t-forge', cx + 4, cy, 1);
+  M.npcs.push({ kind: 'npc', role: 'smith', name: '쇠돌 아저씨', job: '대장간', img: 'npc-smith', x: cx + 4, y: cy + 2, h: 100 * UK });
   // 마을 문 장승 (길이 마을 밖으로 나가는 곳 양옆)
   buildTownWall(cx, cy);
-  // 9) 길 안내 도사 (사냥터마다 리스폰 지점) + 갈림길 이정표
-  for (const z of ZONES) if (z.road) {
-    M.npcs.push({ kind: 'npc', role: 'guide', name: '길 안내 부엉이 도사', img: 'npc-guide', x: z.spawn[0] + 1, y: z.spawn[1] - 2, h: 96 * UK });
-    if (z.boss) { z.bossTimer = BOSS_FIRST; z.bossAlive = false; }
-  }
+  // 9) 사냥터 우두머리 + 갈림길 이정표 (마을로 돌아올 땐 마을 귀환 주문서)
+  for (const z of ZONES) if (z.road && z.boss) { z.bossTimer = BOSS_FIRST; z.bossAlive = false; }
   for (const d of [0, 90, 180]) { const [x, y] = P(19, d - 8); placeProp('l-sign', Math.round(x), Math.round(y) + (d === 0 ? -2 : 0)); }
   // 10) 뿔 끝: 왼쪽은 도깨비 동굴 입구, 오른쪽은 등대 (나중에 열어요)
   { const a = horns[0][36], b = horns[1][36]; placeProp('c-cave', Math.round(a[0]), Math.round(a[1]), 1); placeProp('c-lighthouse', Math.round(b[0]), Math.round(b[1]), 1); }
@@ -382,12 +398,16 @@ function resetControl() { tgt = null; moveGoal = null; moveGoalPt = null; held =
 // 지역(리스폰 지점)으로 순간 이동
 function teleport(id) {
   const z = ZONE[id], spot = findFree(...z.spawn); if (!spot) return;
+  warpTo(spot[0], spot[1]); setZone(z);
+}
+function warpTo(x, y) {
+  const spot = [x, y];
   M.occ[idx(player.x, player.y)] = 0;
   player.x = spot[0]; player.y = spot[1]; player.mv = null; player.glide = null;
   player.px = player.x * CELL + CELL / 2; player.py = player.y * CELL + CELL / 2; player.ox = player.oy = 0;
   M.occ[idx(player.x, player.y)] = player.id;
   cam.x = player.px; cam.y = player.py;
-  resetControl(); setZone(z);
+  resetControl();
 }
 function setZone(z, quiet) {
   if (curZone === z) return;
@@ -640,6 +660,7 @@ function unitAt(wx, wy, kinds) {
   let best = null;
   for (const u of units) {
     if (!kinds.includes(u.kind) || u.dying) continue;
+    if (u.prop) { const p = u.prop; if (wx > p.x - p.w / 2 && wx < p.x + p.w / 2 && wy > p.y - p.h && wy < p.y) if (!best || u.py > best.py) best = u; continue; }
     const h = u.kind === 'mon' ? u.d.h : u.h || 88 * UK, w = Math.max(h * .8, 30);
     const ux = u.px + (u.ox || 0), uy = u.py + (u.oy || 0);
     if (wx > ux - w / 2 && wx < ux + w / 2 && wy > uy + CELL * .3 - Math.max(h, 36) && wy < uy + CELL * .35) if (!best || u.py > best.py) best = u;
@@ -687,7 +708,9 @@ function onUp(e) {
 }
 function talk(npc) {
   tgt = null;
-  if (npc.role === 'shop') openWin('shop'); else openWin('guide');
+  if (npc.role === 'shop' || npc.role === 'smith') { shopWho = npc.role; openWin('shop'); }
+  else if (npc.role === 'board') openWin('board');
+  else openWin('guide');
 }
 
 function playerThink(dt) {
@@ -796,6 +819,8 @@ function dropLoot(m) {
     if (Math.random() < dr.gear) bag.push(gearOf());
     if (Math.random() < .03) bag.push({ item: { i: 'potion', n: 1 } });
     if (Math.random() < .015) bag.push({ item: { i: 'haste', n: 1 }, rare: 1 });
+    if (Math.random() < .02) bag.push({ item: { i: 'ret', n: 1 } });
+    if (Math.random() < .02) bag.push({ item: { i: 'tele', n: 1 } });
   }
   bag.forEach((b, i) => {
     const spot = i === 0 ? [m.x, m.y] : (findDropSpot(m.x, m.y) || [m.x, m.y]);
@@ -926,6 +951,8 @@ function useItem(ix) {
   const it = P.inv[ix]; if (!it) return;
   if (it.i === 'potion') return drinkPotion();
   if (it.i === 'haste') return drinkHaste();
+  if (it.i === 'ret') return readReturn();
+  if (it.i === 'tele') return readTele();
   if (it.i === 'wscroll' || it.i === 'ascroll') { startEnchantPick(it.i); return; }
   if (it.g) equip(ix);
 }
@@ -956,10 +983,56 @@ function drinkHaste() {
   log('초록 물약을 마셨어요. 5분 동안 걷기와 공격이 빨라져요', 'sys');
   dirty = true; updateHUD(); if (winOpen === 'inv') renderInv();
 }
-function updateHaste() {
-  const b = $('b-haste'); if (!b || !P) return;
-  b.classList.toggle('on', hasted());
-  $('hastet').textContent = hasted() ? fmtTime(P.haste) : '';
+// 단축키 1~4: 가방에서 아이템을 골라 넣어요 (리니지처럼 아이템 위에서 숫자 누르기, 또는 칸을 누르고 아이템 고르기)
+const QUSE = ['potion', 'haste', 'ret', 'tele', 'wscroll', 'ascroll'];
+const qkeys = () => (P.keys && P.keys.length === 4) ? P.keys : (P.keys = ['potion', 'haste', 'ret', 'tele']);
+let qPick = -1;
+function setQuick(k, id) {
+  if (!QUSE.includes(id)) { log('물약과 주문서, 부적만 단축키에 넣을 수 있어요', 'warn'); return; }
+  const ks = qkeys(); const was = ks.indexOf(id); if (was >= 0) ks[was] = ks[k] === id ? null : ks[k];
+  ks[k] = id; dirty = true; SND.ui();
+  log(`<b>${ITEMS[id].name}</b>을(를) 단축키 ${k + 1}에 넣었어요`, 'sys');
+  qPick = -1; document.body.classList.remove('qpick'); updateHUD(); if (winOpen === 'inv') renderInv();
+}
+function useQuick(k) {
+  const id = qkeys()[k];
+  if (!id) { if (winOpen !== 'inv') openWin('inv'); qPick = k; document.body.classList.add('qpick'); renderInv(); renderQuick(); return; }
+  const ix = P.inv.findIndex(x => x.i === id);
+  if (ix < 0) { log(`${ITEMS[id].name}이(가) 없어요`, 'warn'); return; }
+  useItem(ix);
+}
+function renderQuick() {
+  if (!P) return;
+  const ks = qkeys();
+  document.querySelectorAll('.bbtn.qs').forEach(b => {
+    const k = +b.dataset.k, id = ks[k], s = id && P.inv.find(x => x.i === id), n = s ? s.n : 0;
+    b.classList.toggle('empty', !id); b.classList.toggle('zero', !!id && !n); b.classList.toggle('pick', qPick === k);
+    const im = b.querySelector('img'), src = id ? `img/${ITEMS[id].img}.png` : '';
+    if (im.getAttribute('src') !== src) { if (src) im.setAttribute('src', src); else im.removeAttribute('src'); }
+    b.querySelector('.n').textContent = id ? n : '';
+    b.title = id ? `${ITEMS[id].name} (${k + 1})` : `빈 칸 (${k + 1}) · 눌러서 아이템 넣기`;
+    const on = id === 'haste' && hasted(); b.classList.toggle('on', on); b.querySelector('.bt').textContent = on ? fmtTime(P.haste) : '';
+  });
+}
+function updateHaste() { renderQuick(); }
+// 마을 귀환 주문서 (3) · 순간이동 주문서 (4)
+function useOne(id) { const s = P.inv.find(x => x.i === id); if (!s) return false; s.n--; if (s.n <= 0) P.inv.splice(P.inv.indexOf(s), 1); dirty = true; if (winOpen === 'inv') renderInv(); updateHUD(); return true; }
+function readReturn() {
+  if (dead) return;
+  if (inTown()) { log('여기는 이미 마을이에요', 'warn'); return; }
+  if (!P.inv.some(x => x.i === 'ret')) { log('마을 귀환 주문서가 없어요', 'warn'); return; }
+  useOne('ret'); SND.warp(); log('마을 귀환 주문서를 읽었어요', 'sys'); goTown();
+}
+function readTele() {
+  if (dead) return;
+  if (inTown()) { log('마을에서는 순간이동 주문서를 쓸 수 없어요', 'warn'); return; }
+  if (!P.inv.some(x => x.i === 'tele')) { log('순간이동 주문서가 없어요', 'warn'); return; }
+  const cells = M.zcells[curZone && curZone.id] || [];
+  let spot = null;
+  for (let k = 0; k < 40 && !spot; k++) { const i = cells[Math.floor(Math.random() * cells.length)]; if (i != null && free(i % M.w, Math.floor(i / M.w))) spot = [i % M.w, Math.floor(i / M.w)]; }
+  if (!spot) { log('지금은 순간이동할 곳이 없어요', 'warn'); return; }
+  useOne('tele'); SND.warp();
+  warpFade(() => { warpTo(spot[0], spot[1]); });
 }
 function drinkPotion() {
   const s = P.inv.find(x => x.i === 'potion');
@@ -1029,10 +1102,10 @@ function openWin(w) {
   if (w === 'inv') renderInv(); if (w === 'char') renderChar(); if (w === 'shop') { closeBuy(); renderShop(); } if (w === 'guide') renderGuide(); if (w === 'gate') renderGate();
   document.body.classList.add('win-open');
 }
-function closeWin(quiet) { if (!winOpen) return; $('w-' + winOpen).classList.add('hidden'); winOpen = null; document.body.classList.remove('win-open'); cancelEnchant(); hideTip(); if (!quiet) SND.ui(); }
+function closeWin(quiet) { if (qPick >= 0) { qPick = -1; document.body.classList.remove('qpick'); renderQuick(); } if (!winOpen) return; $('w-' + winOpen).classList.add('hidden'); winOpen = null; document.body.classList.remove('win-open'); cancelEnchant(); hideTip(); if (!quiet) SND.ui(); }
 
 function gearInfo(it) {
-  if (it.i) { const d = ITEMS[it.i]; return `<b>${d.name}</b>` + (it.i === 'potion' ? `<br>HP ${d.heal} 회복 (단축키 1)` : it.i === 'haste' ? '<br>5분 동안 걷기와 공격이 빨라져요 (단축키 2)' : `<br>${it.i === 'wscroll' ? '무기' : '방어구'}를 한 단계 강화해요`); }
+  if (it.i) { const d = ITEMS[it.i]; return `<b>${d.name}</b>` + (it.i === 'potion' ? `<br>HP ${d.heal} 회복` : it.i === 'haste' ? '<br>5분 동안 걷기와 공격이 빨라져요' : it.i === 'ret' ? '<br>읽으면 마을로 돌아가요' : it.i === 'tele' ? '<br>지금 사냥터 안 아무 곳으로 순간이동해요' : `<br>${it.i === 'wscroll' ? '무기' : '방어구'}를 한 단계 강화해요`); }
   if (it.g === 'w') {
     const d = WEAPONS[it.k], [a, b] = weaponRange(it);
     return `<b>${itemName(it)}</b><br>${WTYPE[d.type]} · ${d.tier}단계<br>데미지 ${a === b ? a : a + '~' + b} · 한 대 ${d.spd}초` +
@@ -1047,6 +1120,7 @@ function slotHTML(it, attrs) {
     (it.en ? `<i class="en">+${it.en}</i>` : '') + (it.n > 1 ? `<i class="cnt">${it.n}</i>` : '') + `</div>`;
 }
 function renderInv() {
+  $('inv-hint').innerHTML = qPick >= 0 ? `<span class="qhint">단축키 ${qPick + 1}에 넣을 아이템을 눌러요</span>` : '<span class="dim">단축키 넣기: 아래 1~4 칸을 누르고 아이템 고르기 (컴퓨터는 아이템 위에서 숫자키)</span>';
   $('eq-grid').innerHTML = SLOTS.map(s => `<div class="eqc"><span>${SLOT_NAME[s]}</span>${slotHTML(P.eq[s], `data-eq="${s}"`)}</div>`).join('');
   let h = ''; for (let i = 0; i < INV_MAX; i++) h += slotHTML(P.inv[i], `data-inv="${i}"`);
   $('inv-grid').innerHTML = h;
@@ -1063,7 +1137,10 @@ function renderChar() {
     `<div class="dim small">잡은 몬스터 ${P.kills.toLocaleString()} · 쓰러진 횟수 ${P.deaths}</div>`;
   $('b-char').classList.toggle('alert', P.pts > 0);
 }
-const SHOP_LIST = [{ i: 'potion' }, { i: 'haste' }, ...Object.keys(ARMORS).filter(k => ARMORS[k].price).map(k => ({ g: 'a', k }))];
+// 할머니: 물약·주문서, 대장장이: 방어구 (무기는 캐릭터마다 하나라 강화만 해요)
+const SHOPS = { shop: { name: '꽃분 할머니 · 잡화', list: [{ i: 'potion' }, { i: 'haste' }, { i: 'ret' }, { i: 'tele' }] },
+  smith: { name: '쇠돌 아저씨 · 대장간', list: Object.keys(ARMORS).filter(k => ARMORS[k].price).map(k => ({ g: 'a', k })) } };
+let shopWho = 'shop', SHOP_LIST = SHOPS.shop.list;
 let shopTab = 'buy';
 function priceOf(it) { return it.i ? ITEMS[it.i].price : (it.g === 'w' ? WEAPONS : ARMORS)[it.k].price; }
 function sellOf(it) {
@@ -1072,6 +1149,7 @@ function sellOf(it) {
   return Math.round((d.tier === 1 ? 12 : 70) * (1 + it.en * .5) * (it.g === 'w' ? 1.5 : 1));
 }
 function renderShop() {
+  SHOP_LIST = SHOPS[shopWho].list; $('shop-name').textContent = SHOPS[shopWho].name;
   $('shop-coins').textContent = P.coins.toLocaleString();
   document.querySelectorAll('#w-shop .tab').forEach(b => b.classList.toggle('on', b.dataset.tab === shopTab));
   if (shopTab === 'buy') {
@@ -1146,10 +1224,9 @@ function updateHUD() {
   $('xptxt').textContent = P.lv >= MAX_LV ? '최고 레벨' : (P.exp / needExp(P.lv) * 100).toFixed(1) + '%';
   $('lv').textContent = P.lv;
   $('coins').textContent = P.coins.toLocaleString();
-  const pot = P.inv.find(x => x.i === 'potion'); $('potn').textContent = pot ? pot.n : 0;
-  const hp2 = P.inv.find(x => x.i === 'haste'); $('hasten').textContent = hp2 ? hp2.n : 0; updateHaste();
+  renderQuick();
   $('acv').textContent = playerAC();
-  $('b-town').classList.toggle('hidden', !curZone || !!curZone.town);
+
   if (winOpen === 'char') renderChar();
   if (winOpen === 'shop') renderShop();
 }
@@ -1274,6 +1351,9 @@ function drawMon(m) {
   }
   if (!m.dying && (m === tgt || d.boss || m === hoverMon)) nameTag(d.name + ' Lv ' + d.lv + (m === tgt && auto ? ' · 자동' : ''), x, y + 24, d.boss ? '#ffcf5a' : m === tgt && auto ? '#ffcf3e' : '#fff');
 }
+function jobTag(t, x, y) {
+  g.font = '12px Jua, sans-serif'; g.textAlign = 'center'; g.lineWidth = 3; g.strokeStyle = 'rgba(20,14,40,.85)'; g.strokeText(t, x, y); g.fillStyle = '#fff'; g.fillText(t, x, y);
+}
 function nameTag(t, x, y, col) {
   g.font = '15px Jua, sans-serif'; g.textAlign = 'center'; g.lineWidth = 4; g.strokeStyle = 'rgba(20,14,40,.85)'; g.strokeText(t, x, y); g.fillStyle = col; g.fillText(t, x, y);
 }
@@ -1281,10 +1361,12 @@ let hoverMon = null;
 // 몬스터 위에 올리면 칼 모양 마우스 (칼끝이 누르는 자리)
 const SWORD_CURSOR = "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><g stroke='%233a2412' stroke-width='1.6' stroke-linejoin='round' stroke-linecap='round'><path d='M2 2 L7 3 L21 17 L17 21 L3 7 Z' fill='%23eef3f8'/><path d='M5 5 L19 19' stroke='%23b8c4d0' stroke-width='1.2'/><path d='M15 23 L23 15 L25 17 L17 25 Z' fill='%23e0a43a'/><path d='M21 21 L28 28' stroke='%23a0612a' stroke-width='4'/><circle cx='29' cy='29' r='2.2' fill='%23e0a43a'/></g></svg>\") 2 2, crosshair";
 function drawNpc(n) {
+  if (n.hide) { const p = n.prop; if (p) nameTag(n.name, p.x, p.y - p.h - 6, '#ffe58a'); return; }
   const x = n.px, y = n.py + CELL * .32;
   shadow(x, y, 26 * UK);
   drawSprite(n.img, x, y + Math.sin(performance.now() / 500) * 1.2, n.h, false);
-  nameTag(n.name, x, y - n.h - 8, '#ffe58a');
+  if (n.job) { nameTag(n.name, x, y - n.h - 22, '#ffe58a'); jobTag(n.job, x, y - n.h - 7); }
+  else nameTag(n.name, x, y - n.h - 8, '#ffe58a');
 }
 function drawProp(p) {
   drawSprite(p.name, p.x, p.y, p.h, false, { alpha: p.fade });
@@ -1391,7 +1473,7 @@ function render() {
   }
   // 앞뒤 순서대로 (위쪽 먼저)
   const list = [];
-  for (const p of M.props) if (p.x + p.w / 2 > vx0 && p.x - p.w / 2 < vx1 && p.y > vy0 && p.y - p.h < vy1) list.push([p.y, p]);
+  for (const p of M.props) if (p.x + p.w / 2 > vx0 && p.x - p.w / 2 < vx1 && p.y > vy0 && p.y - p.h < vy1) list.push([p.z ?? p.y, p]);
   for (const u of units) if (u.px > vx0 - 120 && u.px < vx1 + 120 && u.py > vy0 - 40 && u.py < vy1 + 200) list.push([u.py + CELL * .32, u]);
   list.sort((a, b) => a[0] - b[0]);
   for (const [, o] of list) {
@@ -1573,7 +1655,7 @@ function update(dt) {
   if (!Z.town && !dead) {
     if (isAdmin()) P.hunt = Math.max(P.hunt, HUNT_MS);
     else P.hunt -= dt * 1000;
-    if (P.hunt <= 0) { P.hunt = 0; tgt = null; auto = false; goTown('사냥 시간이 끝났어요<small>길 안내 도사에게 가면 다시 사냥할 수 있어요</small>'); }
+    if (P.hunt <= 0) { P.hunt = 0; tgt = null; auto = false; goTown('사냥 시간이 끝났어요<small>마을 순간이동 문에서 다시 사냥할 수 있어요</small>'); }
     if (Z.boss && !Z.bossAlive) {
       Z.bossTimer -= dt;
       if (Z.bossTimer <= 0) { const b = spawnMonster(Z, Z.boss); if (b) { Z.bossAlive = true; b.angry = false; SND.boss(); banner(`${josa(b.d.name, '이가')} 나타났어요!`, 2.2); log(`<b>${josa(b.d.name, '이가')}</b> 나타났어요! 화살표를 따라가 보세요`, 'boss'); } else Z.bossTimer = 10; }
@@ -1623,7 +1705,7 @@ function startGame() {
   enterWorld();
   updateHUD();
   log('깨비샘의 도깨비 대모험에 온 걸 환영해요!', 'sys');
-  if (P.hunt > 0) log(`남은 사냥 시간 ${fmtTime(P.hunt)} · 길 안내 도사에게 말을 걸어요`, 'sys');
+  if (P.hunt > 0) log(`남은 사냥 시간 ${fmtTime(P.hunt)} · 마을 순간이동 문을 눌러 사냥터로 가요`, 'sys');
 }
 
 function bindUI() {
@@ -1636,20 +1718,25 @@ function bindUI() {
     if (!P || !document.body.classList.contains('playing')) return;
     if (e.target.tagName === 'INPUT') return;
     const k = e.key.toLowerCase();
-    if (k === '1') { drinkPotion(); e.preventDefault(); }
-    if (k === '2') { drinkHaste(); e.preventDefault(); }
+    if (k >= '1' && k <= '4') {
+      e.preventDefault();
+      // 가방이 열려 있고 아이템 위에 마우스가 있으면 그 아이템을 그 번호에 넣어요
+      const hov = winOpen === 'inv' && document.querySelector('#inv-grid .slot:hover');
+      const it = hov && P.inv[+hov.dataset.inv];
+      if (it && it.i) setQuick(+k - 1, it.i); else useQuick(+k - 1);
+    }
     else if (k === 'i' || k === 'ㅑ') openWin('inv');
     else if (k === 'c' || k === 'ㅊ') openWin('char');
     else if (k === 'escape') { if (enchantPick) cancelEnchant(); else closeWin(); }
   });
   addEventListener('pagehide', () => save(true));
   document.addEventListener('visibilitychange', () => { if (document.hidden) save(true); });
-  $('b-pot').addEventListener('click', drinkPotion);
+  document.querySelectorAll('.bbtn.qs').forEach(b => b.addEventListener('click', () => { const k = +b.dataset.k; if (winOpen === 'inv' && qkeys()[k]) { qPick = qPick === k ? -1 : k; document.body.classList.toggle('qpick', qPick >= 0); renderQuick(); renderInv(); return; } useQuick(k); }));
   $('buyq').addEventListener('click', e => {
     const b = e.target.closest('[data-q]'); if (b) { const q = b.dataset.q; buyN = q === 'max' ? 999 : buyN + (+q); SND.ui(); renderBuy(); return; }
     if (e.target.id === 'bq-ok') doBuy(); if (e.target.id === 'bq-no') closeBuy();
   });
-  $('b-haste').addEventListener('click', drinkHaste);
+
   $('b-switch').addEventListener('click', () => { save(true); $('b-switch').disabled = true; setTimeout(() => location.reload(), 700); });
   $('w-guide').addEventListener('click', e => {
     if (e.target.id === 'adm-open') { $('adm-row').classList.remove('hidden'); $('adm-code').value = ''; $('adm-msg').textContent = ''; $('adm-code').focus(); }
@@ -1667,7 +1754,7 @@ function bindUI() {
   $('adm-code').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') admGo(); });
   $('b-inv').addEventListener('click', () => openWin('inv'));
   $('b-char').addEventListener('click', () => openWin('char'));
-  $('b-town').addEventListener('click', () => { if (!dead) goTown(); });
+
   $('mini').addEventListener('pointerdown', miniClick);
   $('gate-pay').addEventListener('click', payGate);
   $('b-snd').addEventListener('click', () => { SND.on = !SND.on; $('b-snd').classList.toggle('off', !SND.on); });
@@ -1685,6 +1772,7 @@ function bindUI() {
     box.addEventListener('click', e => {
       const s = e.target.closest('.slot'); if (!s || enchanting) return;
       if (enchantPick) { enchantTarget(s.dataset.eq ? { eq: s.dataset.eq } : { inv: +s.dataset.inv }); hideTip(); return; }
+      if (qPick >= 0 && s.dataset.inv) { const it = P.inv[+s.dataset.inv]; if (it && it.i) { setQuick(qPick, it.i); hideTip(); return; } }
       if (s.dataset.eq) unequip(s.dataset.eq); else useItem(+s.dataset.inv);
       hideTip();
     });

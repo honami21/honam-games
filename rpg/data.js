@@ -37,6 +37,8 @@ const SLOT_NAME = { weapon: '무기', helm: '투구', armor: '갑옷', cloak: '�
 const ITEMS = {
   potion:  { name: '빨간 물약',       img: 'i-potion',  price: 15, sell: 3, heal: 40 },
   haste:   { name: '초록 물약',       img: 'i-haste',   price: 40, sell: 8, sec: 300 },   // 5분 동안 걷기·공격이 빨라져요
+  ret:     { name: '마을 귀환 주문서', img: 'i-return',  price: 12, sell: 2 },              // 읽으면 마을로 돌아가요 (단축키 3)
+  tele:    { name: '순간이동 주문서', img: 'i-teleport', price: 8, sell: 1 },              // 지금 있는 사냥터 안 아무 곳으로 (단축키 4)
   wscroll: { name: '무기 강화 부적',   img: 'i-wscroll', sell: 20 },
   ascroll: { name: '방어구 강화 부적', img: 'i-ascroll', sell: 15 },
 };
@@ -76,7 +78,7 @@ const ZONES = [
   { id: 'hornR', name: '오른뿔 곶', lv: '', tile: 'tile-rock', tier: 1 },
 ];
 const ZONE = Object.fromEntries(ZONES.map(z => [z.id, z]));
-// 길 안내 도사 목록 (아직 안 연 곳은 준비 중)
+// 마을 순간이동 문 목록 (아직 안 연 곳은 준비 중)
 const REGIONS = [
   { id: 'town', name: '도깨비 마을', lv: '', open: true },
   { id: 'near', name: '마을 앞 들판', lv: '1~5', open: true },
@@ -94,6 +96,7 @@ const PROPS = {
   't-house1': { w: 210, fw: 4, fh: 2 }, 't-house2': { w: 220, fw: 4, fh: 2 }, 't-stall': { w: 150, fw: 3, fh: 1 },
   't-well': { w: 96, fw: 2, fh: 1 }, 't-jars': { w: 96, fw: 2, fh: 1 }, 't-fence': { w: 96, fw: 2, fh: 1 },
   't-jangseung': { w: 96, fw: 2, fh: 1 }, 't-portal': { w: 120, fw: 2, fh: 1 },
+  't-board': { w: 110, fw: 2, fh: 1 }, 't-forge': { w: 170, fw: 3, fh: 1 },
   'f-tree1': { w: 170, fw: 2, fh: 1 }, 'f-tree2': { w: 110, fw: 1, fh: 1 }, 'f-bush': { w: 80, fw: 1, fh: 1 },
   'f-rock1': { w: 110, fw: 2, fh: 1 }, 'f-rocks': { w: 80, fw: 1, fh: 1 }, 'f-hay': { w: 76, fw: 1, fh: 1 },
   'f-sign': { w: 72, fw: 1, fh: 1 }, 'f-flowers': { w: 78, fw: 0, fh: 0, flat: 1 },
