@@ -50,7 +50,7 @@
 
   .panel { background:var(--cream); border:4px solid var(--line); border-radius:26px; padding:20px 22px; width:min(460px,100%); text-align:center; }
   .panel h2 { font-weight:normal; font-size:28px; color:var(--coral-d); margin-bottom:10px; }
-  #create, #select { justify-content:center; }
+  #create, #select, #namebox, #delbox { justify-content:flex-start !important; overflow-y:auto; } #create > .panel, #select > .panel, #namebox > .panel, #delbox > .panel { margin:auto 0; flex:none; }   /* 화면이 낮으면 스크롤 */
   /* 시작 화면 부적 버튼 (그림 틀 + 글자) */
   .fbtn { border:0; background:center/100% 100% no-repeat; font-family:'Do Hyeon',sans-serif; color:#5a2414; cursor:pointer; padding:0; line-height:1;
     display:flex; align-items:center; justify-content:center;
@@ -277,6 +277,18 @@
     .win { top:52px; right:8px; width:calc(100% - 16px); max-height:calc(100% - 140px); }
     #mini { top:52px; right:8px; width:140px; height:119px; }
   }
+  /* 휴대폰 세로: 아래 바를 두 줄로 (윗줄 레벨·HP·AC, 아랫줄 단축키·가방·능력치·소리·음악) */
+  @media (max-width:600px) {
+    #bar { flex-wrap:wrap; gap:6px; padding:6px 8px; bottom:max(8px, env(safe-area-inset-bottom)); border-radius:18px; }
+    #bar .bars { flex:1 1 calc(100% - 110px); }
+    #bar .bbtn { flex:1 1 34px; min-width:0; height:44px; padding:2px; border-radius:12px; }
+    #bar .bbtn img { width:24px; height:24px; } #bar .bbtn svg { width:20px; height:20px; }
+    #log { bottom:124px; }
+    .win { max-height:calc(100% - 190px); }
+  }
+  /* 휴대폰 가로: 창은 오른쪽에 좁게 */
+  @media (max-height:520px) and (min-width:601px) { .win { width:min(380px, 50vw); max-height:calc(100% - 130px); } }
+  #inv-grid .slot, .bbtn.qs { touch-action:none; }   /* 휴대폰에서 아이템을 단축키 칸으로 끌어 놓을 수 있게 */
 </style>
 <script src="../points.js"></script>
 </head>
