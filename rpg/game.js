@@ -11,7 +11,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 
 /* ================= 그림 ================= */
 const IMG = {}, WHITE = {};
-const IMG_LIST = ['a-walk-0', 'a-walk-1', 'a-walk-2', 'a-walk-3', 'a-walk-4', 'a-walk-5', 'a-idle', 'a-walk1', 'a-walk2', 'a-wind', 'a-swing', 'a-hurt', 'a-dead', 'a-win', 'arrow', 'fence-h', 'fence-post', 'fence-corner', 'gate-front', 'gate-side', 'gate-side-l', 'fence-side', 'fence-lamp', 'p-idle', 'p-walk-0', 'p-walk-1', 'p-walk-2', 'p-walk-3', 'p-walk-4', 'p-walk-5', 'p-wind', 'p-swing', 'p-hurt', 'p-dead', 'p-win', 'npc-shop', 'npc-guide',
+const IMG_LIST = ['emblem-1', 'emblem-2', 'emblem-3', 'emblem-4', 'a-walk-0', 'a-walk-1', 'a-walk-2', 'a-walk-3', 'a-walk-4', 'a-walk-5', 'a-idle', 'a-walk1', 'a-walk2', 'a-wind', 'a-swing', 'a-hurt', 'a-dead', 'a-win', 'arrow', 'fence-h', 'fence-post', 'fence-corner', 'gate-front', 'gate-side', 'gate-side-l', 'fence-side', 'fence-lamp', 'p-idle', 'p-walk-0', 'p-walk-1', 'p-walk-2', 'p-walk-3', 'p-walk-4', 'p-walk-5', 'p-wind', 'p-swing', 'p-hurt', 'p-dead', 'p-win', 'npc-shop', 'npc-guide',
   ...Object.keys(MONS).flatMap(k => ['m-' + k + '-0', 'm-' + k + '-1']),
   ...Object.keys(WEAPONS).map(k => 'w-' + k), ...Object.keys(ARMORS).map(k => 'a-' + k),
   'i-potion', 'i-haste', 'i-wscroll', 'i-ascroll', 'i-coin', 'i-coins', 'i-box', ...Object.keys(PROPS)];
@@ -98,8 +98,8 @@ const SND = (() => {
 /* ================= 저장 ================= */
 const SAVE_KEY = 'rpg-save';
 let P = null;   // 저장되는 캐릭터 정보
-function newChar(str, dex, con, cls) {
-  return { v: 1, cls: cls === 'bow' ? 'bow' : 'sword', lv: 1, exp: 0, hp: 30, str, dex, con, pts: 0, coins: 50, hunt: 0,
+function newChar(str, dex, con, cls, name) {
+  return { v: 1, name: name || '', cls: cls === 'bow' ? 'bow' : 'sword', lv: 1, exp: 0, hp: 30, str, dex, con, pts: 0, coins: 50, hunt: 0,
     inv: [{ i: 'potion', n: 5 }], eq: { weapon: { g: 'w', k: cls === 'bow' ? 'bow1' : 'sword1', en: 0 }, armor: { g: 'a', k: 'armor1', en: 0 } },
     kills: 0, deaths: 0, t: Date.now() };
 }
@@ -384,7 +384,7 @@ function teleport(id) {
   const z = ZONE[id], spot = findFree(...z.spawn); if (!spot) return;
   M.occ[idx(player.x, player.y)] = 0;
   player.x = spot[0]; player.y = spot[1]; player.mv = null; player.glide = null;
-  player.px = player.x * CELL + CELL / 2; player.py = player.y * CELL + CELL / 2;
+  player.px = player.x * CELL + CELL / 2; player.py = player.y * CELL + CELL / 2; player.ox = player.oy = 0;
   M.occ[idx(player.x, player.y)] = player.id;
   cam.x = player.px; cam.y = player.py;
   resetControl(); setZone(z);
@@ -730,7 +730,7 @@ function startAttack(m) {
 // 화살: 활 시위를 놓으면 날아가서 닿을 때 맞아요
 let shots = [];
 function shoot(m) {
-  const x = player.px + player.face * 14, y = player.py - 24;
+  const x = player.px + player.face * 16, y = player.py + CELL * .32 - 92 * UK * .42;   // 활을 든 손 높이에서 나가요
   const tx = m.px, ty = m.py + CELL * .32 - m.d.h * .45;
   shots.push({ m, x0: x, y0: y, tx, ty, t: 0, d: Math.max(.08, Math.hypot(tx - x, ty - y) / 900) });
   SND.shoot();
@@ -1056,7 +1056,7 @@ function renderChar() {
   const [a, b] = weaponRange(P.eq.weapon), sb = strBonus();
   const row = (k, n, d) => `<div class="st"><span>${n}</span><b>${P[k]}</b>${P.pts > 0 ? `<button class="plus" data-st="${k}">+</button>` : ''}<em>${d}</em></div>`;
   $('char-body').innerHTML =
-    `<div class="lvline">Lv ${P.lv} <span>${P.lv >= MAX_LV ? '최고 레벨' : `경험치 ${P.exp.toLocaleString()} / ${needExp(P.lv).toLocaleString()}`}</span></div>` +
+    `${P.name ? `<div class="nmline"><i class="nm" style="color:${nameColor(P.lv)}">${esc(P.name)}</i></div>` : ''}<div class="lvline">Lv ${P.lv} <span>${P.lv >= MAX_LV ? '최고 레벨' : `경험치 ${P.exp.toLocaleString()} / ${needExp(P.lv).toLocaleString()}`}</span></div>` +
     row('str', '힘', `데미지 ${sb >= 0 ? '+' : ''}${sb}`) + row('dex', '민첩', `명중 +${hitBonus()}% · 치명타 ${critRate()}%`) + row('con', '체력', `최대 HP ${maxHP()}`) +
     (P.pts > 0 ? `<div class="ptsline">보너스 능력치 <b>${P.pts}</b>점을 찍을 수 있어요</div>` : '') +
     `<div class="sum"><div><span>공격</span><b>${a + sb === b + sb ? a + sb : (a + sb) + '~' + (b + sb)}</b></div><div><span>AC</span><b>${playerAC()}</b></div><div><span>HP</span><b>${Math.max(0, Math.ceil(P.hp))}/${maxHP()}</b></div></div>` +
@@ -1197,6 +1197,46 @@ function playerFrame() {
   if (winT > 0) return 'p-win';
   return 'p-idle';
 }
+// 캐릭터 아이디: Lv1~9 흰색 → 10~29 점점 파랗게 → 30 완전 파랑, 35·40·45·50에 문장(동·은·금·빛나는 금)
+const NAME_BLUE = [47, 107, 255];
+function nameColor(lv) {
+  if (lv < 10) return '#ffffff';
+  const t = Math.min(1, (lv - 9) / 21), a = [215, 236, 255];
+  const c = a.map((v, i) => Math.round(v + (NAME_BLUE[i] - v) * t));
+  return `rgb(${c.join(',')})`;
+}
+function emblemTier(lv) { return lv >= 50 ? 4 : lv >= 45 ? 3 : lv >= 40 ? 2 : lv >= 35 ? 1 : 0; }
+const EMBLEM_COL = [null, ['#c98a4b', '#7a4a1f'], ['#e4e9f0', '#7c8796'], ['#ffd84a', '#a8740c'], ['#ffe98a', '#c08a10']];
+function drawEmblem(tier, x, y, s) {
+  const im = IMG['emblem-' + tier];
+  if (tier === 4) { g.save(); g.shadowColor = '#ffe27a'; g.shadowBlur = 8 + Math.sin(performance.now() / 300) * 4; }
+  if (im) g.drawImage(im, x - s / 2, y - s / 2, s, s);
+  else {   // 그림이 오기 전: 작은 방패 모양
+    const [f, l] = EMBLEM_COL[tier];
+    g.beginPath(); g.moveTo(x - s * .4, y - s * .42); g.lineTo(x + s * .4, y - s * .42); g.lineTo(x + s * .4, y + s * .05); g.quadraticCurveTo(x + s * .3, y + s * .38, x, y + s * .5); g.quadraticCurveTo(x - s * .3, y + s * .38, x - s * .4, y + s * .05); g.closePath();
+    g.fillStyle = f; g.fill(); g.lineWidth = 1.6; g.strokeStyle = l; g.stroke();
+  }
+  if (tier === 4) g.restore();
+}
+function drawPlayerName(x, y) {
+  if (!P.name) return;
+  g.font = '13px Jua, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+  const tier = emblemTier(P.lv), tw = g.measureText(P.name).width, es = 16, gap = tier ? es + 3 : 0;
+  const tx = x + gap / 2;
+  g.lineWidth = 3.5; g.strokeStyle = 'rgba(15,12,35,.9)'; g.strokeText(P.name, tx, y);
+  g.fillStyle = nameColor(P.lv); g.fillText(P.name, tx, y);
+  if (tier) drawEmblem(tier, tx - tw / 2 - es / 2 - 3, y - 4.5, es);
+}
+// 아이디 규칙: 2~8글자, 한글·영어·숫자만, 나쁜 말 막기 (같은 아이디는 다른 학생도 쓸 수 있어요)
+const BAD_WORDS = ['시발', '씨발', '씨바', '시바', 'ㅅㅂ', 'ㅆㅂ', '병신', 'ㅂㅅ', '븅신', '개새', '개색', '새끼', '지랄', 'ㅈㄹ', '존나', '졸라', '좆', '니미', '느금', '엠창', '미친', '닥쳐', '꺼져', '섹스', '야동', 'fuck', 'shit', 'bitch', 'sex', 'damn'];
+function nameError(n) {
+  if (!n) return '아이디를 넣어 주세요';
+  if (!/^[가-힣a-zA-Z0-9]+$/.test(n)) return '한글, 영어, 숫자만 쓸 수 있어요';
+  if (n.length < 2 || n.length > 8) return '2~8글자로 만들어 주세요';
+  const low = n.toLowerCase();
+  if (BAD_WORDS.some(w => low.includes(w))) return '쓸 수 없는 말이 들어 있어요';
+  return '';
+}
 function drawPlayer() {
   const x = player.px + (player.ox || 0), y = player.py + (player.oy || 0) + CELL * .32;
   shadow(x, y, 22 * UK);
@@ -1215,6 +1255,7 @@ function drawPlayer() {
     g.beginPath(); g.arc(2, -h * .45, 52 * UK, -2.1, .9); g.stroke(); g.globalAlpha = 1;
   }
   g.restore();
+  if (!dead) drawPlayerName(x, y - 92 * UK - 4);
 }
 function drawMon(m) {
   const d = m.d; let x = m.px + m.kx + (m.ox || 0), y = m.py + CELL * .32 + m.ky + (m.oy || 0);
@@ -1467,8 +1508,10 @@ function closeIn(dt) {
   for (const u of units) {
     let o = null;
     if (u === player) { if (tgt && tgt.kind === 'mon' && !tgt.dying && !u.moving && !isBow() && cheb(u.x, u.y, tgt.x, tgt.y) <= 1) o = tgt; }
+    // 싸움이 끝나면 그 자리에 그대로 서 있다가, 걷기 시작할 때 거기서부터 걸어가요 (제자리로 휙 돌아가지 않게)
+    if (u === player && !o) { if (u.moving && (u.ox || u.oy)) { u.px += u.ox; u.py += u.oy; u.ox = u.oy = 0; } continue; }
     else if (u.kind === 'mon' && u.angry && !u.dying && !u.moving && !dead && cheb(u.x, u.y, player.x, player.y) <= 1) o = player;
-    const gx = o ? (o.px - u.px) * .22 : 0, gy = o ? (o.py - u.py) * .22 : 0;
+    const kk = u === player ? .5 : .25, gx = o ? (o.px - u.px) * kk : 0, gy = o ? (o.py - u.py) * kk : 0;   // 서로 다가가서 거의 붙어서 때려요
     u.ox = (u.ox || 0) + (gx - (u.ox || 0)) * k; u.oy = (u.oy || 0) + (gy - (u.oy || 0)) * k;
   }
 }
@@ -1545,12 +1588,13 @@ let paused = false;
 
 /* ================= 시작 ================= */
 let createPts = 5, cStats = { str: 10, dex: 10, con: 10 }, cCls = 'sword';
+let nameSlot = -1;
 function openSelect() { $('select').classList.remove('hidden'); renderSelect(); }
 function renderSelect() {
   const all = loadAll(), out = [];
   for (let i = 0; i < MAX_CHARS; i++) {
     const c = all.chars[i];
-    if (c) { const bow = c.cls === 'bow'; out.push(`<div class="cslotw"><button class="cslot" data-slot="${i}" type="button"><img src="img/${bow ? 'a' : 'p'}-idle.png" alt=""><b>${bow ? '깨순이' : '깨비샘'}</b><span>Lv ${c.lv}</span></button><button class="sdel" data-del="${i}" type="button">지우기</button></div>`); }
+    if (c) { const bow = c.cls === 'bow'; out.push(`<div class="cslotw"><button class="cslot" data-slot="${i}" type="button"><img src="img/${bow ? 'a' : 'p'}-idle.png" alt=""><b>${c.name ? `<i class="nm" style="color:${nameColor(c.lv)}">${esc(c.name)}</i>` : (bow ? '깨순이' : '깨비샘')}</b><span>${bow ? '깨순이' : '깨비샘'} · Lv ${c.lv}</span></button><button class="sdel" data-del="${i}" type="button">지우기</button></div>`); }
     else if (i === all.chars.length) out.push(`<div class="cslotw"><button class="cslot empty" data-new type="button"><i>+</i><b>새 캐릭터</b></button></div>`);
     else out.push(`<div class="cslotw"><div class="cslot none"></div></div>`);
   }
@@ -1559,7 +1603,9 @@ function renderSelect() {
 function renderCreate() {
   $('c-left').textContent = createPts;
   for (const k of ['str', 'dex', 'con']) $('c-' + k).textContent = cStats[k];
-  $('c-go').disabled = createPts > 0;
+  const err = nameError($('c-name').value.trim());
+  $('c-name-msg').textContent = $('c-name').value ? err : '';
+  $('c-go').disabled = createPts > 0 || !!err;
 }
 // 예전 저장: 다른 무기는 엽전으로 바꾸고, 낀 무기 강화 단계는 깨비샘의 검으로 옮겨요
 function migrateWeapons() {
@@ -1681,8 +1727,10 @@ function bindUI() {
       SND.ui(); renderSelect(); return;
     }
     const b = e.target.closest('.cslot'); if (!b) return;
-    if (b.dataset.new != null) { $('select').classList.add('hidden'); $('create').classList.remove('hidden'); createPts = 5; cStats = { str: 10, dex: 10, con: 10 }; renderCreate(); return; }
-    const all = loadAll(); slot = +b.dataset.slot; P = all.chars[slot]; if (!P) return;
+    if (b.dataset.new != null) { $('select').classList.add('hidden'); $('create').classList.remove('hidden'); createPts = 5; cStats = { str: 10, dex: 10, con: 10 }; $('c-name').value = ''; renderCreate(); return; }
+    const all = loadAll(), si = +b.dataset.slot; if (!all.chars[si]) return;
+    if (!all.chars[si].name) { nameSlot = si; $('nb-name').value = ''; $('nb-msg').textContent = ''; $('namebox').classList.remove('hidden'); $('nb-name').focus(); return; }
+    slot = si; P = all.chars[slot];
     if (P.hp <= 0) P.hp = maxHP(); startGame();
   });
   $('create').addEventListener('click', e => {
@@ -1693,8 +1741,20 @@ function bindUI() {
     SND.ui(); renderCreate();
   });
   $('c-back').addEventListener('click', () => { $('create').classList.add('hidden'); openSelect(); });
+  $('c-name').addEventListener('input', renderCreate);
+  $('c-name').addEventListener('keydown', e => e.stopPropagation());
+  $('nb-name').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') $('nb-ok').click(); });
+  $('nb-name').addEventListener('input', () => { $('nb-msg').textContent = nameError($('nb-name').value.trim()); });
+  $('nb-ok').addEventListener('click', () => {
+    const nm = $('nb-name').value.trim(), err = nameError(nm); if (err) { $('nb-msg').textContent = err; return; }
+    const all = loadAll(); if (!all.chars[nameSlot]) return;
+    all.chars[nameSlot].name = nm; all.t = Date.now();
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(all)); } catch (er) {}
+    $('namebox').classList.add('hidden'); slot = nameSlot; P = all.chars[slot]; if (P.hp <= 0) P.hp = maxHP(); startGame(); save(true);
+  });
+  $('nb-no').addEventListener('click', () => $('namebox').classList.add('hidden'));
   $('c-cls').addEventListener('click', e => { const b = e.target.closest('.cls'); if (!b) return; cCls = b.dataset.cls; document.querySelectorAll('.cls').forEach(x => x.classList.toggle('on', x === b)); SND.ui(); });
-  $('c-go').addEventListener('click', () => { const all = loadAll(); if (all.chars.length >= MAX_CHARS) return; slot = all.chars.length; P = newChar(cStats.str, cStats.dex, cStats.con, cCls); P.hp = maxHP(); save(true); SND.unlock(); startGame(); });
+  $('c-go').addEventListener('click', () => { const all = loadAll(); if (all.chars.length >= MAX_CHARS) return; slot = all.chars.length; const nm = $('c-name').value.trim(); if (nameError(nm)) return; P = newChar(cStats.str, cStats.dex, cStats.con, cCls, nm); P.hp = maxHP(); save(true); SND.unlock(); startGame(); });
   bindCode();
 }
 
