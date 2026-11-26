@@ -20,6 +20,14 @@ function loadImages() {
   ['tile-town', 'tile-field', 'tile-bamboo', 'tile-sand', 'tile-paddy', 'tile-deep', 'tile-rock', 'tile-sea'].forEach(n => jobs.push(new Promise(res => { const im = new Image(); im.onload = () => { IMG[n] = im; res(); }; im.onerror = res; im.src = 'img/' + n + '.jpg?v=2'; })));
   return Promise.all(jobs);
 }
+const GOLD = {};
+function gold(n) {   // 황금 몬스터: 금빛으로 물든 그림
+  if (GOLD[n]) return GOLD[n];
+  const im = IMG[n]; if (!im) return null;
+  const c = document.createElement('canvas'); c.width = im.width; c.height = im.height;
+  const g = c.getContext('2d'); g.drawImage(im, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(255,196,30,.55)'; g.fillRect(0, 0, c.width, c.height);
+  return (GOLD[n] = c);
+}
 function white(n) {   // 맞았을 때 하얗게 번쩍이는 그림
   if (WHITE[n]) return WHITE[n];
   const im = IMG[n]; if (!im) return null;
@@ -127,6 +135,8 @@ function save(now) {
 }
 function cloudCode() { try { return localStorage.getItem('rpg-save-code') || ''; } catch (e) { return ''; } }
 
+// 큰 수 줄여 쓰기: 9,999까지 그대로, 그 위는 1.2만 · 3억
+function shortNum(n) { if (n < 10000) return n.toLocaleString(); if (n < 1e8) return (n / 1e4).toFixed(n < 1e5 ? 1 : 0).replace(/\.0$/, '') + '만'; return (n / 1e8).toFixed(1).replace(/\.0$/, '') + '억'; }
 /* ================= 능력치 계산 ================= */
 const W_OF = () => P.eq.weapon ? WEAPONS[P.eq.weapon.k] : null;
 const isBow = () => !!P && P.cls === 'bow';
@@ -434,7 +444,9 @@ function spawnMonster(z, type) {
     if (!free(x, y) || M.road[c] && Math.random() < .7) continue;
     if (z.spawn && cheb(x, y, z.spawn[0], z.spawn[1]) < 6) continue;
     if (player && cheb(x, y, player.x, player.y) < 9) continue;
-    const d = MONS[type];
+    let d = MONS[type];
+    // 가끔 황금 몬스터: 안 덤비고, 튼튼하고, 엽전·부적을 훨씬 많이 떨어뜨려요
+    if (!d.boss && Math.random() < RARE.chance) d = { ...d, name: '황금 ' + d.name, hp: d.hp * RARE.hp, exp: d.exp * RARE.exp, aggro: 0, rare: 1 };
     return addUnit({ kind: 'mon', type, d, zone: z, x, y, hp: d.hp, step: d.step * 1.35, home: [x, y], atkT: 0, wander: Math.random() * 3, flash: 0, kx: 0, ky: 0, sq: 0, dmgShow: 0 });
   }
   return null;
@@ -748,18 +760,19 @@ function onUp(e) {
 }
 function talk(npc) {
   tgt = null;
-  if (npc.role === 'shop' || npc.role === 'smith') { shopWho = npc.role; openWin('shop'); }
+  if (npc.role === 'shop' || npc.role === 'smith') { if (wins.includes('shop') && shopWho !== npc.role) { shopWho = npc.role; closeBuy(); renderShop(); focusWin('shop'); } else { shopWho = npc.role; openWin('shop'); } }
   else if (npc.role === 'board') openWin('board');
   else openWin('guide');
-  winNpc = winOpen ? npc : null;
+  const w = npc.role === 'shop' || npc.role === 'smith' ? 'shop' : npc.role === 'board' ? 'board' : 'guide';
+  winNpc = wins.includes(w) ? { npc, w } : null;
 }
 // NPC 창(상점 등)은 그 NPC에게서 멀어지면 저절로 닫혀요
 let winNpc = null;
 function checkNpcWin() {
   if (!winNpc) return;
-  if (!winOpen) { winNpc = null; return; }
-  const n = winNpc, nx = n.prop ? n.prop.x : (n.x + .5) * CELL, ny = n.prop ? n.prop.y : (n.y + .5) * CELL;
-  if (dead || Math.hypot(player.px - nx, player.py - ny) > CELL * 4.5) closeWin();
+  if (!wins.includes(winNpc.w)) { winNpc = null; return; }
+  const n = winNpc.npc, nx = n.prop ? n.prop.x : (n.x + .5) * CELL, ny = n.prop ? n.prop.y : (n.y + .5) * CELL;
+  if (dead || Math.hypot(player.px - nx, player.py - ny) > CELL * 4.5) closeWin(winNpc.w);
 }
 
 function playerThink(dt) {
@@ -850,12 +863,14 @@ function killMonster(m) {
   log(`<b>${josa(m.d.name, '을를')}</b> 쓰러뜨렸어요 <span class="dim">경험치 +${m.d.exp}</span>`);
   dropLoot(m);
   const z = m.zone;
+  if (m.d.rare) { banner(`${josa(m.d.name, '을를')} 잡았어요!`); SND.coin(); }
   if (m.d.boss) { z.bossAlive = false; z.bossTimer = BOSS_AGAIN; banner(`${josa(m.d.name, '을를')} 물리쳤어요!`); }
   else { const w = M; setTimeout(() => { if (M === w && units.filter(u => u.kind === 'mon' && u.zone === z && !u.d.boss && !u.dying).length < z.count) spawnMonster(z); }, 5000 + Math.random() * 4000); }
 }
 function dropLoot(m) {
   const dr = m.zone.drop, bag = [];
-  const c = m.d.boss ? rnd(dr.coin[0] * 20, dr.coin[1] * 20) : (Math.random() < .7 ? rnd(dr.coin[0], dr.coin[1]) : 0);
+  const c = m.d.boss ? rnd(dr.coin[0] * 20, dr.coin[1] * 20) : m.d.rare ? rnd(dr.coin[0] * RARE.coin, dr.coin[1] * RARE.coin) : (Math.random() < .7 ? rnd(dr.coin[0], dr.coin[1]) : 0);
+  const rm = m.d.rare ? RARE.drop : 1;   // 황금 몬스터는 부적·방어구 확률이 크게 올라가요
   if (c) bag.push({ coin: c });
   const tier = m.zone.tier;
   const gearOf = () => { const pool = [...Object.keys(ARMORS).filter(k => ARMORS[k].tier === tier).map(k => ({ g: 'a', k }))]; const it = pool[rnd(0, pool.length - 1)]; return { item: { g: it.g, k: it.k, en: 0 }, rare: 1 }; };
@@ -864,11 +879,11 @@ function dropLoot(m) {
     if (Math.random() < ACC_DROP) { const pool = Object.keys(ACCS).filter(k => ACCS[k].boss === m.d.id || ACCS[k].boss === m.type); if (pool.length) bag.push({ item: { g: 'c', k: pool[rnd(0, pool.length - 1)], en: 0 }, rare: 1 }); }
     const n = rnd(3, 5); for (let i = 0; i < n; i++) bag.push({ item: { i: Math.random() < 1 / 3 ? 'wscroll' : 'ascroll', n: 1 }, rare: 1 });
   } else {
-    if (Math.random() < dr.w) bag.push({ item: { i: 'wscroll', n: 1 }, rare: 1 });
-    if (Math.random() < dr.a) bag.push({ item: { i: 'ascroll', n: 1 }, rare: 1 });
-    if (Math.random() < dr.gear) bag.push(gearOf());
+    if (Math.random() < dr.w * rm) bag.push({ item: { i: 'wscroll', n: 1 }, rare: 1 });
+    if (Math.random() < dr.a * rm) bag.push({ item: { i: 'ascroll', n: 1 }, rare: 1 });
+    if (Math.random() < dr.gear * rm) bag.push(gearOf());
     if (Math.random() < .03) bag.push({ item: { i: 'potion', n: 1 } });
-    if (Math.random() < .015) bag.push({ item: { i: 'haste', n: 1 }, rare: 1 });
+    if (Math.random() < (m.d.rare ? .3 : .015)) bag.push({ item: { i: 'haste', n: 1 }, rare: 1 });
     if (Math.random() < .02) bag.push({ item: { i: 'ret', n: 1 } });
     if (Math.random() < .02) bag.push({ item: { i: 'tele', n: 1 } });
   }
@@ -994,7 +1009,7 @@ function giveItem(it) {
   if (it.i) { const s = P.inv.find(x => x.i === it.i); if (s) { s.n += it.n || 1; return true; } }
   if (P.inv.length >= INV_MAX) return false;
   P.inv.push(it.i ? { i: it.i, n: it.n || 1 } : { g: it.g, k: it.k, en: it.en || 0 });
-  if (winOpen === 'inv') renderInv();
+  if (wins.includes('inv')) renderInv();
   return true;
 }
 function useItem(ix) {
@@ -1031,7 +1046,7 @@ function drinkHaste() {
   SND.potion(); addNum(player.px, player.py - 40, '빨라졌어요!', 'heal');
   fx.push({ k: 'heal', x: player.px, y: player.py, t: 0, d: .6 });
   log('초록 물약을 마셨어요. 5분 동안 걷기와 공격이 빨라져요', 'sys');
-  dirty = true; updateHUD(); if (winOpen === 'inv') renderInv();
+  dirty = true; updateHUD(); if (wins.includes('inv')) renderInv();
 }
 // 단축키 1~4: 가방에서 아이템을 골라 넣어요 (리니지처럼 아이템 위에서 숫자 누르기, 또는 칸을 누르고 아이템 고르기)
 const QUSE = ['potion', 'haste', 'ret', 'tele', 'wscroll', 'ascroll'];
@@ -1041,12 +1056,12 @@ function setQuick(k, id) {
   const ks = qkeys(); const was = ks.indexOf(id); if (was >= 0) ks[was] = ks[k] === id ? null : ks[k];
   ks[k] = id; dirty = true; SND.ui();
   log(`<b>${ITEMS[id].name}</b>을(를) 단축키 ${k + 1}에 넣었어요`, 'sys');
-  updateHUD(); if (winOpen === 'inv') renderInv();
+  updateHUD(); if (wins.includes('inv')) renderInv();
 }
 const qDrag = { id: null, from: -1, x: 0, y: 0, on: false, done: false };
 function useQuick(k) {
   const id = qkeys()[k];
-  if (!id) { if (winOpen !== 'inv') openWin('inv'); return; }
+  if (!id) { if (!wins.includes('inv')) openWin('inv'); return; }
   const ix = P.inv.findIndex(x => x.i === id);
   if (ix < 0) { log(`${ITEMS[id].name}이(가) 없어요`, 'warn'); return; }
   useItem(ix);
@@ -1075,7 +1090,7 @@ function renderBuffs() {
 }
 function updateHaste() { renderQuick(); renderBuffs(); }
 // 마을 귀환 주문서 (3) · 순간이동 주문서 (4)
-function useOne(id) { const s = P.inv.find(x => x.i === id); if (!s) return false; s.n--; if (s.n <= 0) P.inv.splice(P.inv.indexOf(s), 1); dirty = true; if (winOpen === 'inv') renderInv(); updateHUD(); return true; }
+function useOne(id) { const s = P.inv.find(x => x.i === id); if (!s) return false; s.n--; if (s.n <= 0) P.inv.splice(P.inv.indexOf(s), 1); dirty = true; if (wins.includes('inv')) renderInv(); updateHUD(); return true; }
 function readReturn() {
   if (dead) return;
   if (inTown()) { log('여기는 이미 마을이에요', 'warn'); return; }
@@ -1101,14 +1116,14 @@ function drinkPotion() {
   P.hp = Math.min(maxHP(), P.hp + ITEMS.potion.heal);
   SND.potion(); addNum(player.px, player.py - 40, '+' + ITEMS.potion.heal, 'heal');
   fx.push({ k: 'heal', x: player.px, y: player.py, t: 0, d: .6 });
-  dirty = true; updateHUD(); if (winOpen === 'inv') renderInv();
+  dirty = true; updateHUD(); if (wins.includes('inv')) renderInv();
 }
 
 /* ================= 강화 ================= */
 let enchantPick = null, enchanting = false;
 function startEnchantPick(scroll) {
   enchantPick = scroll;
-  if (winOpen !== 'inv') openWin('inv'); else renderInv();
+  if (!wins.includes('inv')) openWin('inv'); else renderInv();
   $('inv-hint').textContent = scroll === 'wscroll' ? '강화할 무기를 고르세요' : '강화할 방어구를 고르세요';
   document.body.classList.add('picking');
 }
@@ -1154,12 +1169,19 @@ function playEnchant(it, risky, ok, done) {
 }
 
 /* ================= 창 ================= */
-let winOpen = null;
+let wins = [], winZ = 30;   // 열린 창들 (마지막이 맨 위)
 // 창 제목을 잡고 끌어서 옮겨요 (자리는 이 기기에 기억)
 let winPos = {}; try { winPos = JSON.parse(localStorage.getItem('rpg-winpos') || '{}'); } catch (e) {}
 function placeWin(el) {
-  const p = winPos[el.id]; if (!p) { el.style.left = el.style.top = el.style.right = ''; return; }
   const r = el.getBoundingClientRect();
+  let p = winPos[el.id];
+  if (!p) {   // 처음 여는 창: 이미 열린 창 옆(왼쪽)에 나란히
+    const others = wins.map(n => $('w-' + n)).filter(o => o !== el).map(o => o.getBoundingClientRect());
+    let x = innerWidth - r.width - 16, y = r.top;
+    while (others.some(o => x < o.right && x + r.width > o.left && Math.abs(o.top - y) < 40)) x -= r.width + 12;
+    if (x < 0) { x = innerWidth - r.width - 16 - 30 * others.length; y += 30 * others.length; }
+    p = { x, y };
+  }
   el.style.right = 'auto';
   el.style.left = clamp(p.x, 0, Math.max(0, innerWidth - r.width)) + 'px';
   el.style.top = clamp(p.y, 0, Math.max(0, innerHeight - 60)) + 'px';
@@ -1176,14 +1198,25 @@ document.querySelectorAll('.win').forEach(el => {
     h.addEventListener('pointermove', mv); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
   });
 });
+function focusWin(w) { const el = $('w-' + w); el.style.zIndex = ++winZ; wins = wins.filter(n => n !== w); wins.push(w); }
 function openWin(w) {
-  if (winOpen === w) { closeWin(); return; }
-  closeWin(true);
-  winOpen = w; $('w-' + w).classList.remove('hidden'); placeWin($('w-' + w)); SND.ui();
+  if (wins.includes(w)) { closeWin(w); return; }
+  const el = $('w-' + w); el.classList.remove('hidden'); focusWin(w); placeWin(el); SND.ui();
   if (w === 'inv') renderInv(); if (w === 'char') renderChar(); if (w === 'shop') { closeBuy(); renderShop(); } if (w === 'guide') renderGuide(); if (w === 'gate') renderGate();
   document.body.classList.add('win-open');
 }
-function closeWin(quiet) { winNpc = null; if (!winOpen) return; $('w-' + winOpen).classList.add('hidden'); winOpen = null; document.body.classList.remove('win-open'); cancelEnchant(); hideTip(); if (!quiet) SND.ui(); }
+// closeWin(): 맨 위 창 닫기 · closeWin('shop'): 그 창 닫기 · closeWin(true): 맨 위 창 조용히 닫기
+function closeWin(w, quiet) {
+  if (w === true) { quiet = true; w = undefined; }
+  if (w === undefined) w = wins[wins.length - 1];
+  if (!w || !wins.includes(w)) return;
+  $('w-' + w).classList.add('hidden'); wins = wins.filter(n => n !== w);
+  if (winNpc && winNpc.w === w) winNpc = null;
+  if (!wins.length) document.body.classList.remove('win-open');
+  if (w === 'inv') cancelEnchant();
+  hideTip(); if (!quiet) SND.ui();
+}
+function closeAllWins() { while (wins.length) closeWin(true); }
 
 function gearInfo(it) {
   if (it.i) { const d = ITEMS[it.i]; return `<b>${d.name}</b>` + (it.i === 'potion' ? `<br>HP ${d.heal} 회복` : it.i === 'haste' ? '<br>5분 동안 걷기와 공격이 빨라져요' : it.i === 'ret' ? '<br>읽으면 마을로 돌아가요' : it.i === 'tele' ? '<br>지금 사냥터 안 아무 곳으로 순간이동해요' : `<br>${it.i === 'wscroll' ? '무기' : '방어구'}를 한 단계 강화해요`); }
@@ -1287,7 +1320,7 @@ function goRegion(id) {
     if (window.KPOINT && !KPOINT.spend(KPOINT.COST || 1)) { $('guide-time').innerHTML = '<span class="bad">포인트가 모자라요.</span> <span class="dim">+1 포인트 게임을 끝까지 하면 모여요</span>'; return; }
     P.hunt = HUNT_MS; log('1포인트를 써서 사냥 시간 10분을 받았어요', 'sys');
   }
-  closeWin(true); SND.warp();
+  closeWin('guide', true); SND.warp();
   warpFade(() => { curZone = null; teleport(id); save(true); });
 }
 function warpFade(fn) { const f = $('fade'); f.classList.add('on'); setTimeout(() => { fn(); setTimeout(() => f.classList.remove('on'), 60); }, 260); }
@@ -1296,7 +1329,7 @@ function goTown(msg) { if (inTown()) return; warpFade(() => { teleport('town'); 
 function renderGate() { const k = window.KPOINT ? KPOINT.info() : null; $('gate-pts').textContent = k ? `내 포인트 ${k.pts}점` : ''; $('gate-msg').innerHTML = ''; }
 function payGate() {
   if (window.KPOINT && !KPOINT.spend(KPOINT.COST || 1)) { $('gate-msg').innerHTML = '<span class="bad">포인트가 모자라요.</span> <span class="dim">+1 포인트 게임을 끝까지 하면 모여요</span>'; return; }
-  P.hunt = HUNT_MS; dirty = true; log('1포인트를 써서 사냥 시간 10분을 받았어요', 'sys'); SND.coin(); closeWin(true); save(true);
+  P.hunt = HUNT_MS; dirty = true; log('1포인트를 써서 사냥 시간 10분을 받았어요', 'sys'); SND.coin(); closeWin('gate', true); save(true);
 }
 
 /* ================= 화면 정보 ================= */
@@ -1310,12 +1343,12 @@ function updateHUD() {
   $('xpfill').style.width = (P.lv >= MAX_LV ? 100 : P.exp / needExp(P.lv) * 100) + '%';
   $('xptxt').textContent = P.lv >= MAX_LV ? '최고 레벨' : (P.exp / needExp(P.lv) * 100).toFixed(1) + '%';
   $('lv').textContent = P.lv;
-  $('coins').textContent = P.coins.toLocaleString();
+  $('coins').textContent = shortNum(P.coins); $('coins').parentNode.title = P.coins.toLocaleString() + '냥';
   renderQuick();
   $('acv').textContent = playerAC();
 
-  if (winOpen === 'char') renderChar();
-  if (winOpen === 'shop') renderShop();
+  if (wins.includes('char')) renderChar();
+  if (wins.includes('shop')) renderShop();
 }
 
 /* ================= 그리기 ================= */
@@ -1331,7 +1364,8 @@ const PSCALE = 92 / 300 * UK;   // 깨비샘 그림 크기
 const PANCHOR = { 'p-walk-0': .486, 'p-walk-1': .488, 'p-walk-2': .485, 'p-walk-3': .481, 'p-walk-4': .483, 'p-walk-5': .478, 'p-idle': .49, 'p-walk1': .534, 'p-walk2': .539, 'p-wind': .64, 'p-swing': .385, 'p-hurt': .515, 'p-dead': .5, 'p-win': .542,
   'a-walk-0': .479, 'a-walk-1': .489, 'a-walk-2': .494, 'a-walk-3': .477, 'a-walk-4': .472, 'a-walk-5': .482, 'a-idle': .49, 'a-walk1': .485, 'a-walk2': .484, 'a-wind': .407, 'a-swing': .451, 'a-hurt': .506, 'a-dead': .442, 'a-win': .493 };
 function drawSprite(name, x, y, h, flip, opts = {}) {
-  const im = IMG[name]; if (!im) return;
+  let im = IMG[name]; if (!im) return;
+  if (opts.gold) im = gold(name) || im;
   const s = h / im.height * (opts.scale || 1), w = im.width * s, hh = im.height * s;
   g.save(); g.translate(x, y);
   if (opts.rot) g.rotate(opts.rot);
@@ -1429,15 +1463,16 @@ function drawMon(m) {
   const fr = 'm-' + m.type + '-' + ((m.moving ? m.walk : Math.floor(performance.now() / 600 + m.id)) % 2);
   const bob = m.moving ? 0 : Math.sin(performance.now() / 300 + m.id) * 1.5;
   const sq = m.sq;
-  const opts = { flash: m.flash, sx: 1 + .14 * sq, sy: 1 - .12 * sq };
+  const opts = { flash: m.flash, sx: 1 + .14 * sq, sy: 1 - .12 * sq, gold: d.rare };
+  if (d.rare && !m.dying) { const t = performance.now() / 400 + m.id; g.save(); g.globalAlpha = .5 + .25 * Math.sin(t); g.fillStyle = '#ffd84a'; g.beginPath(); g.ellipse(x, y, d.h * .55, d.h * .2, 0, 0, Math.PI * 2); g.fill(); g.restore(); }
   if (m.dying) { const k = m.dying / .55; opts.rot = m.face * -1.4 * Math.min(1, k * 1.6); opts.alpha = k > .5 ? (Math.floor(k * 14) % 2 ? .25 : .9) : 1; }
   drawSprite(fr, x, y + bob, d.h, m.face < 0, opts);
-  if (!m.dying && (m === tgt || m.dmgShow > 0 || d.boss) && m.hp < d.hp) {
+  if (!m.dying && (m === tgt || m.dmgShow > 0 || d.boss || d.rare) && m.hp < d.hp) {
     const bw = d.boss ? 64 : 34, bx = x - bw / 2, by = y - d.h - 12;
     g.fillStyle = 'rgba(20,14,30,.75)'; g.fillRect(bx - 2, by - 2, bw + 4, 9);
     g.fillStyle = d.boss ? '#ff5d7a' : '#ff6b5b'; g.fillRect(bx, by, bw * Math.max(0, m.hp) / d.hp, 5);
   }
-  if (!m.dying && (m === tgt || d.boss || m === hoverMon)) nameTag(d.name + ' Lv ' + d.lv + (m === tgt && auto ? ' · 자동' : ''), x, y + 24, d.boss ? '#ffcf5a' : m === tgt && auto ? '#ffcf3e' : '#fff');
+  if (!m.dying && (m === tgt || d.boss || d.rare || m === hoverMon)) nameTag(d.name + ' Lv ' + d.lv + (m === tgt && auto ? ' · 자동' : ''), x, y + 24, d.boss || d.rare ? '#ffcf5a' : m === tgt && auto ? '#ffcf3e' : '#fff');
 }
 function jobTag(t, x, y) {
   g.font = '12px "Do Hyeon", sans-serif'; g.textAlign = 'center'; g.lineJoin = 'round'; g.lineWidth = 3; g.strokeStyle = 'rgba(20,14,40,.85)'; g.strokeText(t, x, y); g.fillStyle = '#fff'; g.fillText(t, x, y);
@@ -1631,6 +1666,7 @@ function drawMini(dt) {
   x.drawImage(miniBase, 0, 0);
   for (const u of units) {
     if (u.kind === 'mon' && !u.dying) {
+      if (u.d.rare) { x.fillStyle = '#ffd84a'; x.beginPath(); x.arc((u.x + .5) * S, (u.y + .5) * S, 3.5, 0, 7); x.fill(); }
       if (u.d.boss) { x.fillStyle = '#ff3b3b'; x.beginPath(); x.arc((u.x + .5) * S, (u.y + .5) * S, 5, 0, 7); x.fill(); x.strokeStyle = '#fff'; x.lineWidth = 1.5; x.stroke(); }
       else if (cheb(u.x, u.y, player.x, player.y) < 30) { x.fillStyle = 'rgba(255,110,90,.9)'; x.fillRect(u.x * S, u.y * S, S, S); }
     } else if (u.kind === 'npc') { x.fillStyle = u.role === 'shop' ? '#7fe0ff' : '#ffd23e'; x.fillRect(u.x * S - 2, u.y * S - 2, S + 4, S + 4); }
@@ -1817,7 +1853,7 @@ function bindUI() {
     if (k >= '1' && k <= '4') {
       e.preventDefault();
       // 가방이 열려 있고 아이템 위에 마우스가 있으면 그 아이템을 그 번호에 넣어요
-      const hov = winOpen === 'inv' && document.querySelector('#inv-grid .slot:hover');
+      const hov = wins.includes('inv') && document.querySelector('#inv-grid .slot:hover');
       const it = hov && P.inv[+hov.dataset.inv];
       if (it && it.i) setQuick(+k - 1, it.i); else useQuick(+k - 1);
     }
@@ -1878,7 +1914,8 @@ function bindUI() {
   $('b-snd').addEventListener('click', () => { SND.on = !SND.on; $('b-snd').classList.toggle('off', !SND.on); });
   $('b-snd').classList.toggle('off', !SND.on);
   KBGM.button({ after: $('b-snd'), icon: '<svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg>음악' });
-  document.querySelectorAll('.win .x').forEach(b => b.addEventListener('click', () => closeWin()));
+  document.querySelectorAll('.win .x').forEach(b => b.addEventListener('click', () => closeWin(b.closest('.win').id.slice(2))));
+document.querySelectorAll('.win').forEach(el => el.addEventListener('pointerdown', () => { const n = el.id.slice(2); if (wins.includes(n) && wins[wins.length - 1] !== n) focusWin(n); }, true));
   // 가방
   const tip = $('tip');
   function showTip(el, html) { tip.innerHTML = html; tip.classList.remove('hidden'); const r = el.getBoundingClientRect(); tip.style.left = clamp(r.left - tip.offsetWidth - 8, 6, innerWidth - tip.offsetWidth - 6) + 'px'; tip.style.top = clamp(r.top, 6, innerHeight - tip.offsetHeight - 6) + 'px'; }

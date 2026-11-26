@@ -96,6 +96,8 @@ const REGIONS = [
   { id: 'cave', name: '왼뿔 곶 도깨비 동굴', lv: '20~30' },
   { id: 'ship', name: '배 타고 새 섬으로', lv: '30~' },
 ];
+// 황금 몬스터: 일반 몬스터가 나올 때 1.5% 확률. HP 4배, 경험치 5배, 엽전 30배, 부적·방어구 확률 15배, 초록 물약 30%
+const RARE = { chance: .015, hp: 4, exp: 5, coin: 30, drop: 15 };
 const BOSS_FIRST = 180, BOSS_AGAIN = 300;   // 사냥터에서 3분 뒤 첫 우두머리, 쓰러뜨리면 5분 뒤 다시
 const HUNT_MS = 10 * 60 * 1000;              // 1포인트 = 사냥 10분
 
