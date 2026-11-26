@@ -143,9 +143,11 @@
   #b-snd.off { opacity:.55; }
 
 
-  #log { position:absolute; left:14px; bottom:96px; width:min(420px,60vw); display:flex; flex-direction:column; gap:2px; }
-  #log .ln { font-size:15px; color:#fff; text-shadow:0 1px 2px #000, 0 0 6px rgba(0,0,0,.6); transition:opacity 1.2s; word-break:keep-all; }
-  #log .ln.old { opacity:0; }
+  /* 게임 알림: 화면 가운데 아래에서 올라오다가 흐려져요 (캐릭터까지는 안 올라가게 4줄까지만) */
+  #log { position:absolute; left:50%; transform:translateX(-50%); bottom:96px; width:min(520px,80vw); display:flex; flex-direction:column; align-items:center; gap:2px; pointer-events:none; }
+  #log .ln { font-size:15px; color:#fff; text-align:center; text-shadow:0 1px 2px #000, 0 0 6px rgba(0,0,0,.6); transition:opacity 1s, transform 1s; word-break:keep-all; animation:logIn .25s ease-out; }
+  @keyframes logIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+  #log .ln.old { opacity:0; transform:translateY(-8px); }
   #log b { font-weight:normal; color:#ffe27a; }
   #log .warn { color:#ffb3b3; } #log .item b { color:#9fffb4; } #log .boss { color:#ffcf5a; } #log .sys { color:#cfe6ff; }
   #log .dim { color:#d8d2e8; }

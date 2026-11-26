@@ -949,8 +949,8 @@ let bannerT = 0;
 function banner(html, sec = 1.8) { const b = $('banner'); b.innerHTML = html; b.classList.add('show'); clearTimeout(bannerT); bannerT = setTimeout(() => b.classList.remove('show'), sec * 1000); }
 function log(html, cls = '') {
   const box = $('log'); const d = document.createElement('div'); d.className = 'ln ' + cls; d.innerHTML = html; box.appendChild(d);
-  while (box.children.length > 6) box.firstChild.remove();
-  setTimeout(() => d.classList.add('old'), 7000);
+  while (box.children.length > 4) box.firstChild.remove();
+  setTimeout(() => d.classList.add('old'), 4000); setTimeout(() => d.remove(), 5200);
 }
 
 /* ================= 가방·장비 ================= */
@@ -1253,8 +1253,9 @@ function updateHUD() {
 
 /* ================= 그리기 ================= */
 function resize() {
-  DPR = Math.min(2, window.devicePixelRatio || 1);
   VW = innerWidth; VH = innerHeight;
+  // 큰 화면에선 그리는 점 수를 약 220만 개로 제한해요 (모니터가 커도 부드럽게)
+  DPR = Math.min(2, window.devicePixelRatio || 1, Math.sqrt(2.2e6 / (VW * VH)));
   cv.width = Math.round(VW * DPR); cv.height = Math.round(VH * DPR);
   zoom = clamp(Math.min(VW / (CELL * 17), VH / (CELL * 10.2)), .65, 1.6);
 }
