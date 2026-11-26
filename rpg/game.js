@@ -1300,7 +1300,7 @@ function drawPlayerName(x, y) {
   g.font = '13px Jua, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'alphabetic';
   const tier = emblemTier(P.lv), tw = g.measureText(P.name).width, es = 16, gap = tier ? es + 3 : 0;
   const tx = x + gap / 2;
-  g.lineWidth = 3.5; g.strokeStyle = 'rgba(15,12,35,.9)'; g.strokeText(P.name, tx, y);
+  g.lineJoin = 'round'; g.lineWidth = 3.5; g.strokeStyle = 'rgba(15,12,35,.9)'; g.strokeText(P.name, tx, y);
   g.fillStyle = nameColor(P.lv); g.fillText(P.name, tx, y);
   if (tier) drawEmblem(tier, tx - tw / 2 - es / 2 - 3, y - 4.5, es);
 }
@@ -1352,10 +1352,10 @@ function drawMon(m) {
   if (!m.dying && (m === tgt || d.boss || m === hoverMon)) nameTag(d.name + ' Lv ' + d.lv + (m === tgt && auto ? ' · 자동' : ''), x, y + 24, d.boss ? '#ffcf5a' : m === tgt && auto ? '#ffcf3e' : '#fff');
 }
 function jobTag(t, x, y) {
-  g.font = '12px Jua, sans-serif'; g.textAlign = 'center'; g.lineWidth = 3; g.strokeStyle = 'rgba(20,14,40,.85)'; g.strokeText(t, x, y); g.fillStyle = '#fff'; g.fillText(t, x, y);
+  g.font = '12px Jua, sans-serif'; g.textAlign = 'center'; g.lineJoin = 'round'; g.lineWidth = 3; g.strokeStyle = 'rgba(20,14,40,.85)'; g.strokeText(t, x, y); g.fillStyle = '#fff'; g.fillText(t, x, y);
 }
 function nameTag(t, x, y, col) {
-  g.font = '15px Jua, sans-serif'; g.textAlign = 'center'; g.lineWidth = 4; g.strokeStyle = 'rgba(20,14,40,.85)'; g.strokeText(t, x, y); g.fillStyle = col; g.fillText(t, x, y);
+  g.font = '15px Jua, sans-serif'; g.textAlign = 'center'; g.lineJoin = 'round'; g.lineWidth = 4; g.strokeStyle = 'rgba(20,14,40,.85)'; g.strokeText(t, x, y); g.fillStyle = col; g.fillText(t, x, y);
 }
 let hoverMon = null;
 // 몬스터 위에 올리면 칼 모양 마우스 (칼끝이 누르는 자리)
