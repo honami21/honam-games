@@ -1297,7 +1297,7 @@ function drawEmblem(tier, x, y, s) {
 }
 function drawPlayerName(x, y) {
   if (!P.name) return;
-  g.font = '13px Jua, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+  g.font = '13px "Do Hyeon", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'alphabetic';
   const tier = emblemTier(P.lv), tw = g.measureText(P.name).width, es = 16, gap = tier ? es + 3 : 0;
   const tx = x + gap / 2;
   g.lineJoin = 'round'; g.lineWidth = 3.5; g.strokeStyle = 'rgba(15,12,35,.9)'; g.strokeText(P.name, tx, y);
@@ -1352,10 +1352,10 @@ function drawMon(m) {
   if (!m.dying && (m === tgt || d.boss || m === hoverMon)) nameTag(d.name + ' Lv ' + d.lv + (m === tgt && auto ? ' · 자동' : ''), x, y + 24, d.boss ? '#ffcf5a' : m === tgt && auto ? '#ffcf3e' : '#fff');
 }
 function jobTag(t, x, y) {
-  g.font = '12px Jua, sans-serif'; g.textAlign = 'center'; g.lineJoin = 'round'; g.lineWidth = 3; g.strokeStyle = 'rgba(20,14,40,.85)'; g.strokeText(t, x, y); g.fillStyle = '#fff'; g.fillText(t, x, y);
+  g.font = '12px "Do Hyeon", sans-serif'; g.textAlign = 'center'; g.lineJoin = 'round'; g.lineWidth = 3; g.strokeStyle = 'rgba(20,14,40,.85)'; g.strokeText(t, x, y); g.fillStyle = '#fff'; g.fillText(t, x, y);
 }
 function nameTag(t, x, y, col) {
-  g.font = '15px Jua, sans-serif'; g.textAlign = 'center'; g.lineJoin = 'round'; g.lineWidth = 4; g.strokeStyle = 'rgba(20,14,40,.85)'; g.strokeText(t, x, y); g.fillStyle = col; g.fillText(t, x, y);
+  g.font = '15px "Do Hyeon", sans-serif'; g.textAlign = 'center'; g.lineJoin = 'round'; g.lineWidth = 4; g.strokeStyle = 'rgba(20,14,40,.85)'; g.strokeText(t, x, y); g.fillStyle = col; g.fillText(t, x, y);
 }
 let hoverMon = null;
 // 몬스터 위에 올리면 칼 모양 마우스 (칼끝이 누르는 자리)
@@ -1443,10 +1443,10 @@ function drawNum(n) {
   const y = n.y - (n.kind === 'crit' ? 30 : 40) * Math.min(1, n.t / .7) - (n.t < .15 ? 0 : 0);
   g.save(); g.globalAlpha = n.t > .55 ? 1 - (n.t - .55) / .35 : 1;
   g.translate(n.x, y); g.scale(pop, pop);
-  g.font = (n.kind === 'hit' || n.kind === 'crit' || n.kind === 'hurt' ? '700 ' : '') + size + 'px Fredoka, Jua, sans-serif';
+  g.font = (n.kind === 'hit' || n.kind === 'crit' || n.kind === 'hurt' ? '700 ' : '') + size + 'px Fredoka, "Do Hyeon", sans-serif';
   g.textAlign = 'center'; g.lineJoin = 'round'; g.lineWidth = size > 30 ? 7 : 5; g.strokeStyle = n.kind === 'crit' ? '#7a2a00' : 'rgba(20,14,40,.9)';
   g.strokeText(n.text, 0, 0); g.fillStyle = col; g.fillText(n.text, 0, 0);
-  if (n.kind === 'crit') { g.font = '15px Jua, sans-serif'; g.lineWidth = 4; g.strokeText('치명타!', 0, -size * .8); g.fillStyle = '#fff3b0'; g.fillText('치명타!', 0, -size * .8); }
+  if (n.kind === 'crit') { g.font = '15px "Do Hyeon", sans-serif'; g.lineWidth = 4; g.strokeText('치명타!', 0, -size * .8); g.fillStyle = '#fff3b0'; g.fillText('치명타!', 0, -size * .8); }
   g.restore();
 }
 
