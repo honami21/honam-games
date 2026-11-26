@@ -59,6 +59,11 @@
   .cst b { font-family:Fredoka,sans-serif; font-size:26px; text-align:center; }
   .cst em { font-style:normal; font-size:14px; color:var(--ink2); word-break:keep-all; }
   .rb { width:44px; height:44px; border-radius:50%; border:3px solid var(--line); background:var(--sun); font-family:Fredoka,sans-serif; font-size:24px; line-height:1; cursor:pointer; color:var(--ink); }
+  .cname { margin:8px 0 2px; } .cname input { width:min(240px,100%); font:inherit; font-size:20px; text-align:center; padding:6px 10px; border:3px solid var(--ink2); border-radius:14px; background:#fff; }
+  .cname .small { min-height:18px; color:var(--coral-d); }
+  #namebox { justify-content:center; z-index:45; } #namebox .btns { display:flex; gap:10px; justify-content:center; margin-top:10px; }
+  .nm { font-style:normal; -webkit-text-stroke:1px rgba(15,12,35,.9); paint-order:stroke fill; text-shadow:0 1px 0 rgba(15,12,35,.9), 0 0 2px rgba(15,12,35,.9); }
+  .nmline { font-size:22px; margin-bottom:4px; text-align:center; }
   .cleft { margin:10px 0 4px; font-size:18px; } .cleft b { font-family:Fredoka,sans-serif; color:var(--coral-d); font-size:24px; }
   .btns { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:14px; }
 
@@ -345,6 +350,15 @@
   </div>
 </div>
 
+<div class="screen hidden" id="namebox">
+  <div class="panel">
+    <h2>아이디 정하기</h2>
+    <p class="dim small">이 캐릭터의 아이디를 정해 주세요. 한 번 정하면 바꿀 수 없어요.</p>
+    <div class="cname"><input id="nb-name" maxlength="8" placeholder="아이디 (2~8글자)" autocomplete="off"><div class="dim small bad" id="nb-msg"></div></div>
+    <div class="btns"><button class="game-btn white small" id="nb-no" type="button">뒤로</button><button class="game-btn sun small" id="nb-ok" type="button">정하기</button></div>
+  </div>
+</div>
+
 <div class="screen hidden" id="create">
   <div class="panel">
     <h2>캐릭터 고르기</h2>
@@ -353,6 +367,7 @@
     <div class="cst"><span>힘</span><button class="rb" data-c="str:-" type="button">-</button><b id="c-str">10</b><button class="rb" data-c="str:+" type="button">+</button><em>더 세게 때려요</em></div>
     <div class="cst"><span>민첩</span><button class="rb" data-c="dex:-" type="button">-</button><b id="c-dex">10</b><button class="rb" data-c="dex:+" type="button">+</button><em>잘 맞히고 치명타</em></div>
     <div class="cst"><span>체력</span><button class="rb" data-c="con:-" type="button">-</button><b id="c-con">10</b><button class="rb" data-c="con:+" type="button">+</button><em>HP가 많아요</em></div>
+    <div class="cname"><input id="c-name" maxlength="8" placeholder="아이디 (2~8글자)" autocomplete="off"><div class="dim small" id="c-name-msg"></div></div>
     <div class="cleft">남은 점수 <b id="c-left">5</b></div>
     <div class="btns"><button class="game-btn white small" id="c-back" type="button">뒤로</button><button class="game-btn sun" id="c-go" type="button" disabled>모험 시작</button></div>
   </div>
