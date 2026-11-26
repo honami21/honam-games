@@ -124,6 +124,7 @@ function loadAll() { try { return normAll(JSON.parse(localStorage.getItem(SAVE_K
 let saveT = 0, cloudAt = 0;
 function save(now) {
   if (!P) return; P.t = Date.now();
+  if (player && units.includes(player)) P.pos = dead ? null : [player.x, player.y];   // 끈 자리에서 다시 시작해요
   const all = loadAll(); all.chars[slot] = P; all.t = P.t; if (STORE) all.store = STORE;
   const s = JSON.stringify(all);
   try { localStorage.setItem(SAVE_KEY, s); } catch (e) {}
@@ -438,7 +439,8 @@ let curZone = null;
 function enterWorld() {
   units = []; shots = []; drops = []; fx = []; nums = []; chunkCache.clear(); chunkJob = null; curZone = null;
   buildWorld();
-  const [ex, ey] = findFree(...ZONE.town.spawn);
+  const back = P.pos && inMap(P.pos[0], P.pos[1]) && findFree(P.pos[0], P.pos[1], 4);
+  const [ex, ey] = back || findFree(...ZONE.town.spawn);
   player = addUnit({ kind: 'player', x: ex, y: ey, step: .36 });
   for (const n of M.npcs) addUnit(Object.assign(n, { step: 1 }));
   for (const z of ZONES) if (z.count) for (let i = 0; i < z.count; i++) spawnMonster(z);
