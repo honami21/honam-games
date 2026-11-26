@@ -2027,16 +2027,26 @@ document.querySelectorAll('.win').forEach(el => el.addEventListener('pointerdown
   // 시작 화면
   $('t-new').addEventListener('click', () => { SND.unlock(); $('title').classList.add('hidden'); openSelect(); });
   $('s-back').addEventListener('click', () => { $('select').classList.add('hidden'); $('title').classList.remove('hidden'); });
-  let delArm = -1;
+  let delArm = -1, delWho = '';
+  // 캐릭터 지우기: 아이디를 똑같이 써야 지워져요
+  $('db-name').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') $('db-ok').click(); });
+  $('db-name').addEventListener('input', () => { $('db-ok').disabled = $('db-name').value.trim() !== delWho; });
+  $('db-no').addEventListener('click', () => { delArm = -1; $('delbox').classList.add('hidden'); });
+  $('db-ok').addEventListener('click', () => {
+    if (delArm < 0 || $('db-name').value.trim() !== delWho) return;
+    const all = loadAll(), c = all.chars[delArm]; if (!c || (c.name || (c.cls === 'bow' ? '깨순이' : '깨비샘')) !== delWho) return;
+    all.chars.splice(delArm, 1); all.t = Date.now(); delArm = -1;
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(all)); } catch (er) {}
+    if (window.RPG_CLOUD && cloudCode()) window.RPG_CLOUD.put(cloudCode(), { s: JSON.stringify(all), t: all.t }).catch(() => {});
+    $('delbox').classList.add('hidden'); SND.ui(); renderSelect();
+  });
   $('sel-list').addEventListener('click', e => {
     const del = e.target.closest('[data-del]');
     if (del) {
-      const i = +del.dataset.del;
-      if (delArm !== i) { delArm = i; del.textContent = '한 번 더 누르면 지워요'; return; }
-      delArm = -1; const all = loadAll(); all.chars.splice(i, 1); all.t = Date.now();
-      try { localStorage.setItem(SAVE_KEY, JSON.stringify(all)); } catch (er) {}
-      if (window.RPG_CLOUD && cloudCode()) window.RPG_CLOUD.put(cloudCode(), { s: JSON.stringify(all), t: all.t }).catch(() => {});
-      SND.ui(); renderSelect(); return;
+      const i = +del.dataset.del, c = loadAll().chars[i]; if (!c) return;
+      delArm = i; delWho = c.name || (c.cls === 'bow' ? '깨순이' : '깨비샘');
+      $('db-who').textContent = delWho; $('db-name').value = ''; $('db-name').placeholder = delWho; $('db-ok').disabled = true;
+      $('delbox').classList.remove('hidden'); $('db-name').focus(); SND.ui(); return;
     }
     const b = e.target.closest('.cslot'); if (!b) return;
     if (b.dataset.new != null) { $('select').classList.add('hidden'); $('create').classList.remove('hidden'); createPts = 5; cStats = { str: 10, dex: 10, con: 10 }; $('c-name').value = ''; renderCreate(); return; }

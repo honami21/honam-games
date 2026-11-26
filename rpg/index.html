@@ -41,7 +41,7 @@
   .game-btn { padding:11px 26px; font-size:clamp(17px,2.4vw,22px); border-radius:40px; border:3px solid var(--line); color:var(--ink); background:var(--coral);
     cursor:pointer; min-width:160px; font-family:'Do Hyeon',sans-serif; transition:transform .08s; }
   .game-btn:active { transform:scale(.97); }
-  .game-btn.sun { background:var(--sun); } .game-btn.white { background:#fff; } .game-btn.sky { background:var(--sky); }
+  .game-btn.red { background:#ff8f8f; }   .game-btn.sun { background:var(--sun); } .game-btn.white { background:#fff; } .game-btn.sky { background:var(--sky); }
   .game-btn.small { padding:7px 16px; font-size:16px; min-width:0; }
   .game-btn:disabled { opacity:.45; cursor:not-allowed; }
   #t-new.big, #t-continue { font-size:clamp(24px,3.6vw,34px); padding:14px 50px; }
@@ -71,7 +71,7 @@
   .rb { width:44px; height:44px; border-radius:50%; border:3px solid var(--line); background:var(--sun); font-family:Fredoka,sans-serif; font-size:24px; line-height:1; cursor:pointer; color:var(--ink); }
   .cname { margin:8px 0 2px; } .cname input { width:min(240px,100%); font:inherit; font-size:20px; text-align:center; padding:6px 10px; border:3px solid var(--ink2); border-radius:14px; background:#fff; }
   .cname .small { min-height:18px; color:var(--coral-d); }
-  #namebox { justify-content:center; z-index:45; } #namebox .btns { display:flex; gap:10px; justify-content:center; margin-top:10px; }
+  #namebox, #delbox { justify-content:center; z-index:45; } #delbox .btns { display:flex; gap:10px; justify-content:center; margin-top:10px; } #db-ok:disabled { opacity:.4; cursor:default; } #namebox .btns { display:flex; gap:10px; justify-content:center; margin-top:10px; }
   .nm { font-style:normal; -webkit-text-stroke:1px rgba(15,12,35,.9); paint-order:stroke fill; text-shadow:0 1px 0 rgba(15,12,35,.9), 0 0 2px rgba(15,12,35,.9); }
   .nmline { font-size:22px; margin-bottom:4px; text-align:center; }
   .cleft { margin:10px 0 4px; font-size:18px; } .cleft b { font-family:Fredoka,sans-serif; color:var(--coral-d); font-size:24px; }
@@ -414,6 +414,15 @@
     <h2>캐릭터 선택</h2>
     <div id="sel-list"></div>
     <div class="btns"><button class="game-btn white small" id="s-back" type="button">뒤로</button></div>
+  </div>
+</div>
+
+<div class="screen hidden" id="delbox">
+  <div class="panel">
+    <h2>캐릭터 지우기</h2>
+    <p class="dim small">지운 캐릭터는 되살릴 수 없어요. 지우려면 아래 칸에 <b id="db-who"></b> 라고 써 주세요.</p>
+    <div class="cname"><input id="db-name" maxlength="8" autocomplete="off"></div>
+    <div class="btns"><button class="game-btn white small" id="db-no" type="button">뒤로</button><button class="game-btn red small" id="db-ok" type="button" disabled>지우기</button></div>
   </div>
 </div>
 
