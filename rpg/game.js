@@ -984,7 +984,7 @@ function monThink(m, dt) {
   m.planT = (m.planT || 0) - dt;
   if (!dead && !curZone.town && (m.angry || (d.aggro && dist <= 4))) {
     m.angry = true;
-    if (cheb(m.x, m.y, m.home[0], m.home[1]) > 14 && dist > 3) { m.angry = false; m.glide = null; }
+    if (dist > 12) { m.angry = false; m.glide = null; }   // 싸움이 붙으면 구역을 넘어서라도 쫓아오고, 12칸 넘게 떨어져야 포기해요
     else if (dist <= 1) {
       m.glide = null;
       if (m.atkT <= 0) { faceTo(m, player); monAttack(m); m.atkT = d.boss ? 1.5 : 1.3; }
