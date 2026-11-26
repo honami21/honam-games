@@ -11,7 +11,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 
 /* ================= 그림 ================= */
 const IMG = {}, WHITE = {};
-const IMG_LIST = ['t-board', 't-forge', 'npc-smith', 'i-return', 'i-teleport', 'fence-panel', 'fence-v-post', 'fence-v-weave', 'emblem-1', 'emblem-2', 'emblem-3', 'emblem-4', 'a-walk-0', 'a-walk-1', 'a-walk-2', 'a-walk-3', 'a-walk-4', 'a-walk-5', 'a-idle', 'a-walk1', 'a-walk2', 'a-wind', 'a-swing', 'a-hurt', 'a-dead', 'a-win', 'arrow', 'fence-h', 'fence-post', 'fence-corner', 'gate-front', 'gate-side', 'gate-side-l', 'fence-side', 'fence-lamp', 'p-idle', 'p-walk-0', 'p-walk-1', 'p-walk-2', 'p-walk-3', 'p-walk-4', 'p-walk-5', 'p-wind', 'p-swing', 'p-hurt', 'p-dead', 'p-win', 'npc-shop', 'npc-guide',
+const IMG_LIST = ['t-board', 't-forge', 'npc-smith', 'i-return', 'i-teleport', 'fence-panel', 'fence-v-post', 'fence-v-weave', 'emblem-1', 'emblem-2', 'emblem-3', 'emblem-4', 'a-walk-0', 'a-walk-1', 'a-walk-2', 'a-walk-3', 'a-walk-4', 'a-walk-5', 'a-idle', 'a-walk1', 'a-walk2', 'a-wind', 'a-swing', 'a-hurt', 'a-dead', 'a-win', 'arrow', 'fence-h', 'fence-post', 'fence-corner', 'gate-front', 'gate-side', 'gate-side-l', 'fence-side', 'fence-lamp', 'p-idle', 'p-walk-0', 'p-walk-1', 'p-walk-2', 'p-walk-3', 'p-walk-4', 'p-walk-5', 'p-wind', 'p-swing', 'p-hurt', 'p-dead', 'p-win', 'npc-shop', 'npc-guide', 'npc-storage',
   ...Object.keys(MONS).flatMap(k => ['m-' + k + '-0', 'm-' + k + '-1']),
   ...Object.keys(WEAPONS).map(k => 'w-' + k), ...Object.keys(ARMORS).map(k => 'a-' + k), ...Object.keys(ACCS).map(k => 'c-' + k),
   'i-potion', 'i-haste', 'i-wscroll', 'i-ascroll', 'i-coin', 'i-coins', 'i-box', ...Object.keys(PROPS)];
@@ -247,7 +247,7 @@ function placeProp(name, cx, cy, force) {   // cx,cy = 밑동 가운데 칸
 // 마을 울타리 (네모, 동서남북에 문)
 const TOWN_HX = 10, TOWN_HY = 7;
 // 마을 건물 그림 (정면 그림이 오면 이름만 바꿔요)
-const TOWN_ART = { shop: 't-stall', store: 't-house1', keeper: 'npc-guide' };   // 한 화면에 들어오는 작은 마을
+const TOWN_ART = { shop: 't-shop', store: 't-storage', keeper: 'npc-storage' };   // 한 화면에 들어오는 작은 마을
 function buildTownWall(cx, cy) {
   const FS = .167, GS = 56 / 250, top = cy - TOWN_HY, bot = cy + TOWN_HY, lef = cx - TOWN_HX, rig = cx + TOWN_HX;
   const add = (name, x, y, sc) => { const im = IMG[name]; if (!im) return; M.props.push({ kind: 'prop', name, x, y, w: im.width * sc, h: im.height * sc, fade: 1 }); };
@@ -396,8 +396,8 @@ function buildWorld() {
   placeProp('t-forge', cx + 6, RN, 1);
   M.npcs.push({ kind: 'npc', role: 'smith', name: '쇠돌 아저씨', job: '대장간', img: 'npc-smith', x: cx + 7, y: RN + 1, h: 135 * UK, flip: 1 });
   placeProp(TOWN_ART.store, cx - 6, RS, 1);
-  M.npcs.push({ kind: 'npc', role: 'store', name: '복덩 할아버지', job: '창고', img: TOWN_ART.keeper, x: cx - 3, y: RS - 1, h: 120 * UK });
-  placeProp('t-well', cx + 6, RS, 1); placeProp('t-jars', cx - 8, cy + 2, 1); placeProp('t-jars', cx + 8, cy + 2, 1);
+  M.npcs.push({ kind: 'npc', role: 'store', name: '복덩 할아버지', job: '창고', img: TOWN_ART.keeper, x: cx - 3, y: RS - 1, h: 130 * UK });
+  placeProp('t-well-f', cx + 6, RS, 1); placeProp('t-jars-f', cx - 8, cy + 2, 1); placeProp('t-jars-f', cx + 8, cy + 2, 1);
   // 마을 문 장승 (길이 마을 밖으로 나가는 곳 양옆)
   buildTownWall(cx, cy);
   // 9) 사냥터 우두머리 + 갈림길 이정표 (마을로 돌아올 땐 마을 귀환 주문서)
