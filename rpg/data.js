@@ -119,7 +119,7 @@ const PROPS = {
   'c-dock': { w: 190, fw: 0, fh: 0, flat: 1 }, 'c-boat': { w: 150, fw: 2, fh: 1 }, 'c-lighthouse': { w: 130, fw: 2, fh: 1 },
   'c-cave': { w: 190, fw: 3, fh: 1 }, 'c-drift': { w: 72, fw: 2, fh: 1 },
   'l-bridge': { w: 250, fw: 0, fh: 0, flat: 1 }, 'l-cliff': { w: 170, fw: 3, fh: 1 }, 'l-wall': { w: 84, fw: 2, fh: 1 },
-  'l-sign': { w: 44, fw: 1, fh: 1 }, 'l-stones': { w: 190, fw: 0, fh: 0, flat: 1 }, 'l-pine': { w: 170, fw: 2, fh: 1 },
+  'l-sign': { w: 44, fw: 1, fh: 1 }, 'l-stones': { w: 215, fw: 0, fh: 0, flat: 1 }, 'l-pine': { w: 170, fw: 2, fh: 1 },
   'l-pavilion': { w: 200, fw: 3, fh: 2 }, 'l-reed': { w: 58, fw: 1, fh: 1 },
 };
 
