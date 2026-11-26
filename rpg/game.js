@@ -1005,9 +1005,9 @@ function equip(ix) {
   const it = P.inv[ix]; if (!it || !it.g) return;
   if (it.g === 'w') { log(`${HERO()}는 자기 무기만 쓸 수 있어요`, 'warn'); return; }
   const slot = it.g === 'w' ? 'weapon' : ARMORS[it.k].slot;
-  if (slot === 'shield' && P.eq.weapon && WEAPONS[P.eq.weapon.k].two) { log('방망이는 양손 무기라 방패를 들 수 없어요', 'warn'); return; }
+  if (slot === 'shield' && P.eq.weapon && WEAPONS[P.eq.weapon.k].two) { log(`${WTYPE[WEAPONS[P.eq.weapon.k].type]}${WEAPONS[P.eq.weapon.k].type === 'bow' ? '은' : '는'} 양손 무기라 방패를 들 수 없어요`, 'warn'); return; }
   P.inv.splice(ix, 1);
-  if (it.g === 'w' && WEAPONS[it.k].two && P.eq.shield) { P.inv.push(P.eq.shield); P.eq.shield = null; log('양손 방망이를 들어서 방패를 가방에 넣었어요', 'sys'); }
+  if (it.g === 'w' && WEAPONS[it.k].two && P.eq.shield) { P.inv.push(P.eq.shield); P.eq.shield = null; log('양손 무기를 들어서 방패를 가방에 넣었어요', 'sys'); }
   if (P.eq[slot]) P.inv.push(P.eq[slot]);
   P.eq[slot] = it; SND.ui();
   dirty = true; renderInv(); updateHUD();
@@ -1780,6 +1780,7 @@ function migrateWeapons() {
   if (!w || w.k !== want) P.eq.weapon = { g: 'w', k: want, en: w ? w.en : 0 };
   let c = 0; P.inv = P.inv.filter(it => { if (it.g === 'w') { c += sellOf(it); return false; } return true; });
   if (c) { P.coins += c; log(`이제 ${HERO()}는 자기 무기만 써요. 가방의 다른 무기는 엽전 ${c}냥으로 바꿨어요`, 'sys'); }
+  if (WEAPONS[P.eq.weapon.k].two && P.eq.shield) { P.inv.push(P.eq.shield); P.eq.shield = null; log('활은 양손 무기라 방패를 가방에 넣었어요', 'sys'); }
 }
 function startGame() {
   migrateWeapons();
