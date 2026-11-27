@@ -31,11 +31,17 @@ const ARMORS = {
   shield2: { name: '대나무 방패',     slot: 'shield', ac: 2, tier: 2 },
 };
 // 장신구: 목걸이·반지. 강화할 수 없고 우두머리만 떨어뜨려요 (boss: 떨어뜨리는 우두머리)
-const ACCS = {
-  neck1: { name: '허수아비 짚 목걸이', slot: 'neck', tier: 1, boss: 'kscare', hp: 15 },
-  ring1: { name: '허수아비 반지',      slot: 'ring', tier: 1, boss: 'kscare', str: 1 },
-  neck2: { name: '대나무 장군 목걸이', slot: 'neck', tier: 2, boss: 'general', hp: 30, ac: 1 },
+const ACCS = {   // 사냥이 편해지는 능력: str·dex·con, hit(명중 %), crit(치명타 %), dmg(데미지 +), regen(회복 +), ac
+  neck0: { name: '먼지 대왕 목걸이',   slot: 'neck', tier: 1, boss: 'kdust',   hit: 5 },
+  ring0: { name: '먼지 대왕 반지',     slot: 'ring', tier: 1, boss: 'kdust',   str: 1 },
+  neck1: { name: '허수아비 짚 목걸이', slot: 'neck', tier: 1, boss: 'kscare',  regen: 2 },
+  ring1: { name: '허수아비 반지',      slot: 'ring', tier: 1, boss: 'kscare',  dmg: 1 },
+  neck3: { name: '둔갑 너구리 목걸이', slot: 'neck', tier: 2, boss: 'tanuki2', crit: 3, hit: 3 },
+  ring3: { name: '둔갑 너구리 반지',   slot: 'ring', tier: 2, boss: 'tanuki2', dex: 1, dmg: 1 },
+  neck2: { name: '대나무 장군 목걸이', slot: 'neck', tier: 2, boss: 'general', ac: 1, regen: 3 },
   ring2: { name: '대나무 장군 반지',   slot: 'ring', tier: 2, boss: 'general', str: 1, dex: 1 },
+  neck4: { name: '저승사자 명부 목걸이', slot: 'neck', tier: 2, boss: 'reaper', crit: 5, hit: 5 },
+  ring4: { name: '저승사자 반지',      slot: 'ring', tier: 2, boss: 'reaper',  str: 2, dmg: 1 },
 };
 const ACC_DROP = 0.25;   // 우두머리를 잡으면 25% 확률로 장신구 하나
 const SLOTS = ['weapon', 'helm', 'armor', 'cloak', 'glove', 'boots', 'shield', 'neck', 'ring'];

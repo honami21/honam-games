@@ -201,15 +201,15 @@ function playerAC() {
   for (const s of SLOTS) { const it = P.eq[s]; if (it && it.g === 'a') ac -= ARMORS[it.k].ac + it.en; else if (it && it.g === 'c') ac -= ACCS[it.k].ac || 0; }
   return ac - Math.floor((ST('dex') - 10) / 3);
 }
-const strBonus = () => Math.floor((ST('str') - 10) / 2);
-const hitBonus = () => (ST('dex') - 10) * 2;
-const critRate = () => 5 + Math.floor((ST('dex') - 10) / 2);
+const strBonus = () => Math.floor((ST('str') - 10) / 2) + accBonus('dmg');
+const hitBonus = () => (ST('dex') - 10) * 2 + accBonus('hit');
+const critRate = () => 5 + Math.floor((ST('dex') - 10) / 2) + accBonus('crit');
 function weaponRange(it) {   // 무기 데미지 범위 (힘 보너스 제외)
   if (!it) return [1, 2];
   const base = WEAPONS[it.k].dmg + it.en;
   return [base, base + (it.en >= 7 ? 2 * (it.en - 6) : 0)];
 }
-function regenAmt() { return 1 + Math.floor(P.lv / 5) + Math.max(0, Math.floor((ST('con') - 10) / 2)); }
+function regenAmt() { return accBonus('regen') + 1 + Math.floor(P.lv / 5) + Math.max(0, Math.floor((ST('con') - 10) / 2)); }
 
 // 한 대의 결과: 명중 → 데미지 굴림 → 치명타 → AC 감소 → 0이면 막음
 function rollAttack(att, def) {
@@ -1333,7 +1333,7 @@ function gearInfo(it) {
       `<br><span class="dim">안전 강화 +${ENCH.w.safe}까지 · 최대 +${ENCH.w.max}</span>`;
   }
   if (it.g === 'c') {
-    const c = ACCS[it.k], parts = [c.hp && `최대 HP +${c.hp}`, c.str && `힘 +${c.str}`, c.dex && `민첩 +${c.dex}`, c.con && `체력 +${c.con}`, c.ac && `방어도 ${c.ac}`].filter(Boolean);
+    const c = ACCS[it.k], parts = [c.hp && `최대 HP +${c.hp}`, c.str && `힘 +${c.str}`, c.dex && `민첩 +${c.dex}`, c.con && `체력 +${c.con}`, c.hit && `명중 +${c.hit}%`, c.crit && `치명타 +${c.crit}%`, c.dmg && `데미지 +${c.dmg}`, c.regen && `회복 +${c.regen}`, c.ac && `방어도 ${c.ac}`].filter(Boolean);
     return `<b>${itemName(it)}</b><br>${SLOT_NAME[c.slot]} · 장신구<br>${parts.join(' · ')}<br><span class="dim">강화할 수 없어요 · 우두머리가 떨어뜨려요</span>`;
   }
   const d = ARMORS[it.k];
