@@ -68,32 +68,42 @@ const MONS = {
   general: { name: '대나무 장군',   lv: 22, hp: 2500, ac: -6, dmg: [15, 22], exp: 1500, h: 73, aggro: 1, step: .55, boss: 1 },
 };
 
-// 도깨비섬: 바다로 둘러싸인 섬 하나. 가운데 마을, 둘레 들판, 서쪽 논밭, 동쪽 대나무 숲, 남쪽 깊은 대숲, 북쪽 뿔 곶 두 개
-const WORLD = { w: 258, h: 218, cx: 129, cy: 126, k: 1.4 };   // k: 섬 크기 배율
-// tile: 바닥 그림, mons: [몬스터, 비율], count: 몬스터 수, road: 리스폰 지점이 놓이는 길 방향(도)과 거리
+// 도깨비섬 (C안): 큰 섬 하나 + 가운데 남북 산맥. 서쪽에 마을·들판·논밭, 산맥 북쪽 고갯길을 넘으면 동쪽 대나무 골·깊은 대숲·안개 늪
+// 좌표는 0~1 비율 (가로 w, 세로 h 칸). 바닥은 초록 계열로 통일하고 지역은 장식으로 구분해요
+const WORLD = { w: 360, h: 280, town: [.3, .45] };
+// tile: 바닥 그림, mons: [몬스터, 비율], count: 몬스터 수, at: 리스폰 지점(비율), seeds: 지역 씨앗(비율)
 const ZONES = [
   { id: 'town', name: '도깨비 마을', lv: '', tile: 'tile-town', town: true, color: '#c99b5e' },
-  { id: 'near', name: '마을 앞 들판', lv: '1~5', tile: 'tile-field', tier: 1, road: [-90, 17], count: 190,
+  { id: 'near', name: '마을 앞 들판', lv: '1~5', tile: 'tile-field', tier: 1, at: [.3, .3], seeds: [[.28, .27], [.37, .74]], count: 260,
     mons: [['dust', 5], ['rat', 4]], drop: { w: .002, a: .004, gear: .004, coin: [1, 2] } },
-  { id: 'paddy', name: '허수아비 논밭', lv: '5~10', tile: 'tile-paddy', tier: 1, road: [180, 31], count: 140, boss: 'kscare',
+  { id: 'paddy', name: '허수아비 논밭', lv: '5~10', tile: 'tile-field', tier: 1, at: [.2, .64], seeds: [[.19, .62]], count: 190, boss: 'kscare',
     mons: [['rat', 3], ['acorn', 6], ['scare', 3]], drop: { w: .003, a: .006, gear: .006, coin: [2, 4] } },
-  { id: 'bamboo', name: '대나무 숲', lv: '10~15', tile: 'tile-bamboo', tier: 2, road: [0, 35], count: 140,
+  { id: 'bamboo', name: '대나무 골', lv: '10~15', tile: 'tile-bamboo', tier: 2, at: [.68, .3], seeds: [[.73, .27]], count: 190,
     mons: [['shoot', 7], ['tanuki', 2]], drop: { w: .004, a: .008, gear: .004, coin: [3, 6] } },
-  { id: 'deep', name: '깊은 대숲', lv: '15~20', tile: 'tile-deep', tier: 2, road: [90, 30], count: 105, boss: 'general',
+  { id: 'deep', name: '깊은 대숲', lv: '15~20', tile: 'tile-deep', tier: 2, at: [.8, .52], seeds: [[.8, .55]], count: 150, boss: 'general',
     mons: [['tanuki', 1], ['bghost', 4], ['broom', 4]], drop: { w: .006, a: .012, gear: .006, coin: [5, 9] } },
+  { id: 'marsh', name: '안개 늪', lv: '', tile: 'tile-deep', tier: 2, seeds: [[.68, .8]] },
+  { id: 'mtn', name: '뿔바위 산맥', lv: '', tile: 'tile-rock', tier: 2 },
   { id: 'beach', name: '도깨비섬 바닷가', lv: '', tile: 'tile-sand', tier: 1 },
-  { id: 'hornL', name: '왼뿔 곶', lv: '', tile: 'tile-rock', tier: 1 },
-  { id: 'hornR', name: '오른뿔 곶', lv: '', tile: 'tile-rock', tier: 1 },
 ];
 const ZONE = Object.fromEntries(ZONES.map(z => [z.id, z]));
+// 섬 모양(해안선 꼭짓점), 작은 섬, 산맥 등줄기, 고갯길, 강
+const ISLE = {
+  coast: [[.14, .3], [.26, .14], [.44, .12], [.56, .2], [.7, .1], [.86, .18], [.92, .36], [.86, .5], [.92, .68], [.8, .86], [.6, .88], [.5, .78], [.38, .9], [.2, .84], [.1, .66], [.16, .52], [.08, .42]],
+  islets: [[[.02, .86], [.08, .84], [.1, .92], [.04, .94]], [[.94, .88], [.98, .86], [.99, .93], [.95, .94]], [[.62, .02], [.68, .01], [.69, .06], [.63, .07]]],
+  ridge: [[.43, .06], [.46, .2], [.5, .34], [.52, .46], [.55, .58], [.56, .7], [.53, .8], [.5, .9]],
+  pass: [.465, .235],
+  river: [[.49, .4], [.43, .5], [.44, .62], [.47, .74], [.47, .95]],
+};
 // 마을 순간이동 문 목록 (아직 안 연 곳은 준비 중)
 const REGIONS = [
   { id: 'town', name: '도깨비 마을', lv: '', open: true },
   { id: 'near', name: '마을 앞 들판', lv: '1~5', open: true },
   { id: 'paddy', name: '허수아비 논밭', lv: '5~10', open: true },
-  { id: 'bamboo', name: '대나무 숲', lv: '10~15', open: true },
+  { id: 'bamboo', name: '대나무 골', lv: '10~15', open: true },
   { id: 'deep', name: '깊은 대숲', lv: '15~20', open: true },
-  { id: 'cave', name: '왼뿔 곶 도깨비 동굴', lv: '20~30' },
+  { id: 'marsh', name: '안개 늪', lv: '20~25' },
+  { id: 'cave', name: '뿔바위 산맥 던전', lv: '25~30' },
   { id: 'ship', name: '배 타고 새 섬으로', lv: '30~' },
 ];
 // 황금 몬스터: 일반 몬스터가 나올 때 1.5% 확률. HP 4배, 경험치 5배, 엽전 30배, 부적·방어구 확률 15배, 초록 물약 30%

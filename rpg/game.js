@@ -125,7 +125,7 @@ function loadAll() { try { return normAll(JSON.parse(localStorage.getItem(SAVE_K
 let saveT = 0, cloudAt = 0;
 function save(now) {
   if (!P) return; P.t = Date.now();
-  if (player && units.includes(player)) P.pos = dead ? null : [player.x, player.y];   // 끈 자리에서 다시 시작해요
+  if (player && units.includes(player)) { P.pos = dead ? null : [player.x, player.y]; P.mapv = MAPV; }   // 끈 자리에서 다시 시작해요
   const all = loadAll(); all.chars[slot] = P; all.t = P.t; if (STORE) all.store = STORE;
   const s = JSON.stringify(all);
   try { localStorage.setItem(SAVE_KEY, s); } catch (e) {}
@@ -298,97 +298,98 @@ const DECO = {
   bamboo: [['b-bamboo1', 22], ['b-bamboo2', 22], ['b-rock', 8], ['b-fallen', 8], ['b-sasa', 16], ['b-pond', 3], ['b-tower', 5], ['l-cliff', 4]],
   deep: [['b-bamboo1', 30], ['b-bamboo2', 22], ['b-lantern', 8], ['b-tower', 6], ['b-rock', 8], ['l-cliff', 6], ['b-sasa', 12]],
   beach: [['c-pine', 16], ['c-shells', 18], ['c-drift', 8], ['f-rocks', 5], ['l-reed', 4]],
-  hornL: [['f-rock1', 8], ['f-rocks', 10], ['l-pine', 3], ['f-bush', 3]],
-  hornR: [['f-rock1', 8], ['f-rocks', 10], ['l-pine', 3], ['f-bush', 3]],
+  mtn: [['f-rock1', 10], ['f-rocks', 14], ['l-pine', 8], ['f-bush', 4]],
+  marsh: [['b-pond', 10], ['l-reed', 30], ['f-bush', 8], ['b-fallen', 6], ['c-drift', 4], ['b-sasa', 8]],
 };
-const polar = (r, deg) => [WORLD.cx + r * WORLD.k * Math.cos(deg * Math.PI / 180) * 1.4, WORLD.cy + r * WORLD.k * Math.sin(deg * Math.PI / 180)];
 
 function buildWorld() {
-  const { w: W, h: H, cx, cy, k: K } = WORLD, N = W * H;
+  const { w: W, h: H } = WORLD, N = W * H, cx = Math.round(WORLD.town[0] * W), cy = Math.round(WORLD.town[1] * H);
   M = { w: W, h: H, block: new Uint8Array(N), occ: new Int32Array(N), keep: new Uint8Array(N), water: new Uint8Array(N), zid: new Uint8Array(N), road: new Uint8Array(N),
-    props: [], flats: [], npcs: [], zcells: {} };
-  const R = seeded(17);
-  // 1) 섬 모양: 둥근 몸통 + 북쪽으로 휘어 오른 뿔 두 개
-  const hm = [[.05, R() * 6.28, 3], [.04, R() * 6.28, 5], [.03, R() * 6.28, 7], [.015, R() * 6.28, 11]];
-  const rad = a => 1 + hm.reduce((t, [m, p, k]) => t + m * Math.sin(k * a + p), 0);
-  const horns = [-1, 1].map(s => { const pts = []; for (let i = 0; i <= 40; i++) { const u = i / 40; pts.push([cx + s * (26 + 10 * u + 14 * u * u) * K, cy - (34 + 44 * u) * K, ((1 - u) * 12 + 2.6) * K]); } return pts; });
-  const horn = new Uint8Array(N);
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const i = idx(x, y), dx = (x - cx) / 70 / K, dy = (y - cy) / 50 / K, a = Math.atan2(dy, dx);
-    let land = Math.hypot(dx, dy) < rad(a);
-    if (!land) horns.forEach((pts, hi) => { if (!land) for (const [px, py, w] of pts) if ((x - px) ** 2 + (y - py) ** 2 < w * w) { land = true; horn[i] = hi + 1; break; } });
-    if (!land) M.water[i] = 1;
-  }
-  // 2) 지역: 가운데 마을 → 둘레 들판 → 서 논밭 · 동 대나무 숲 · 남 깊은 대숲, 경계는 구불구불
+    props: [], flats: [], npcs: [], zcells: {}, stream: new Uint8Array(N) };
+  const R = seeded(33), F = ([u, v]) => [u * W, v * H];
+  // 1) 섬 모양: 꼭짓점을 구불구불하게 쪼갠 해안선을 그려서 땅/바다를 정해요
+  const coast = (pts, amp) => {
+    let p = pts.map(F), a = amp * W;
+    for (let k = 0; k < 6; k++) { const n = []; for (let i = 0; i < p.length; i++) { const A = p[i], B = p[(i + 1) % p.length], dx = B[0] - A[0], dy = B[1] - A[1], L = Math.hypot(dx, dy) || 1, d = (R() - .5) * a * Math.min(1, L / (W * .12)); n.push(A, [(A[0] + B[0]) / 2 - dy / L * d, (A[1] + B[1]) / 2 + dx / L * d]); } p = n; a *= .55; }
+    for (let k = 0; k < 2; k++) { const n = []; for (let i = 0; i < p.length; i++) { const A = p[i], B = p[(i + 1) % p.length]; n.push([A[0] * .75 + B[0] * .25, A[1] * .75 + B[1] * .25], [A[0] * .25 + B[0] * .75, A[1] * .25 + B[1] * .75]); } p = n; }
+    return p;
+  };
+  { const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+    x.fillStyle = '#000'; for (const [pts, amp] of [[ISLE.coast, .11], ...ISLE.islets.map(l => [l, .03])]) { const p = coast(pts, amp); x.beginPath(); p.forEach((q, i) => i ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1])); x.closePath(); x.fill(); }
+    const d = x.getImageData(0, 0, W, H).data; for (let i = 0; i < N; i++) if (d[i * 4 + 3] < 128) M.water[i] = 1; }
+  // 2) 지역: 씨앗에서 가장 가까운 곳 (경계는 구불구불)
+  const seeds = []; for (const z of ZONES) for (const s2 of z.seeds || []) seeds.push([s2[0] * W, s2[1] * H, z.id]);
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     const i = idx(x, y); if (M.water[i]) continue;
-    if (horn[i]) { M.zid[i] = ZI[horn[i] === 1 ? 'hornL' : 'hornR']; continue; }
-    const dx = (x - cx) / 1.4 / K, dy = (y - cy) / K, r = Math.hypot(dx, dy), a = Math.atan2(dy, dx) * 180 / Math.PI;
-    const n = 9 * Math.sin(r * .17 + 1.3) + 5 * Math.sin(r * .41);
-    let id;
-    if (Math.abs(x - cx) <= TOWN_HX && Math.abs(y - cy) <= TOWN_HY) id = 'town';
-    else if (r < 26 + 3 * Math.sin(a * .052 + 1) + 2 * Math.sin(a * .13) || (a > -135 + n && a < -45 + n)) id = 'near';
-    else { let b = a - n; if (b < -180) b += 360; if (b >= 180) b -= 360; id = b >= -45 && b < 45 ? 'bamboo' : b >= 45 && b < 135 ? 'deep' : 'paddy'; }
+    const wx = x + Math.sin(y * .09) * 7 + Math.sin(y * .23 + x * .05) * 3, wy = y + Math.cos(x * .08) * 7;
+    let b = 1e9, id = 'near'; for (const [sx, sy, zid] of seeds) { const d = (wx - sx) ** 2 + (wy - sy) ** 2; if (d < b) { b = d; id = zid; } }
     M.zid[i] = ZI[id];
   }
-  // 3) 바닷가: 물에서 3칸까지는 모래사장
+  // 3) 산맥: 등줄기 가까이는 못 지나가고(고갯길만 열림), 그 둘레는 바위 땅
+  const segD = (x, y, pts) => { let b = 1e9; for (let k = 1; k < pts.length; k++) { const [ax, ay] = pts[k - 1], [bx, by] = pts[k], dx = bx - ax, dy = by - ay, t = clamp(((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy), 0, 1); b = Math.min(b, Math.hypot(x - ax - dx * t, y - ay - dy * t)); } return b; };
+  const ridge = ISLE.ridge.map(F), [pX, pY] = F(ISLE.pass), mtnCore = new Uint8Array(N); M.ridge = ridge; M.mtnCore = mtnCore;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const i = idx(x, y); if (M.water[i]) continue;
+    const d = segD(x, y, ridge) + 1.6 * Math.sin(y * .21) + Math.sin(x * .37 + y * .11), inPass = Math.hypot(x - pX, y - pY) < 6.5;
+    if (d < 15) M.zid[i] = ZI.mtn;
+    if (d < 9 && !inPass) mtnCore[i] = 1;
+  }
+  // 4) 바닷가: 물에서 3칸까지는 모래사장. 큰 섬과 이어지지 않은 작은 섬은 바닷가로만
   const dist = new Int16Array(N).fill(99), q = [];
   for (let i = 0; i < N; i++) if (M.water[i]) { dist[i] = 0; q.push(i); }
   for (let h = 0; h < q.length; h++) { const i = q[h], x = i % W, y = (i - x) / W; for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + ax, ny = y + ay; if (!inMap(nx, ny)) continue; const j = idx(nx, ny); if (dist[j] > dist[i] + 1) { dist[j] = dist[i] + 1; q.push(j); } } }
-  for (let i = 0; i < N; i++) if (!M.water[i] && dist[i] <= 3 && !horn[i] && M.zid[i] !== ZI.town) M.zid[i] = ZI.beach;
-  // 4) 길: 마을에서 사방으로
+  { const main = new Uint8Array(N), st = [idx(cx, cy)]; main[st[0]] = 1;
+    while (st.length) { const i = st.pop(), x = i % W, y = (i - x) / W; for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + ax, ny = y + ay; if (!inMap(nx, ny)) continue; const j = idx(nx, ny); if (!main[j] && !M.water[j]) { main[j] = 1; st.push(j); } } }
+    for (let i = 0; i < N; i++) if (!M.water[i] && (!main[i] || dist[i] <= 3) && M.zid[i] !== ZI.mtn) M.zid[i] = ZI.beach; }
+  // 5) 마을 자리
+  for (let y = cy - TOWN_HY; y <= cy + TOWN_HY; y++) for (let x = cx - TOWN_HX; x <= cx + TOWN_HX; x++) M.zid[idx(x, y)] = ZI.town;
+  // 6) 길: 마을 동서남북 문에서 나가요
+  M.roadLines = [];
   const line = (pts, wd = 1.25) => {
+    M.roadLines.push(pts);
     for (let k = 1; k < pts.length; k++) {
       const [ax, ay] = pts[k - 1], [bx, by] = pts[k], L = Math.hypot(bx - ax, by - ay);
       for (let t = 0; t <= L; t += .5) { const px = ax + (bx - ax) * t / L, py = ay + (by - ay) * t / L;
         for (let y = Math.floor(py - wd); y <= Math.ceil(py + wd); y++) for (let x = Math.floor(px - wd); x <= Math.ceil(px + wd); x++)
-          if (inMap(x, y) && (x + .5 - px) ** 2 + (y + .5 - py) ** 2 <= wd * wd) { const i = idx(x, y); M.road[i] = 1; M.keep[i] = 1; } }
+          if (inMap(x, y) && !M.water[idx(x, y)] && (x + .5 - px) ** 2 + (y + .5 - py) ** 2 <= wd * wd) { const i = idx(x, y); M.road[i] = 1; M.keep[i] = 1; } }
     }
   };
-  const P = (r, d) => polar(r, d);
-  line([P(0, 180), P(14, 180), P(24, 176), P(34, 183), P(44, 179), P(49, 180)]);
-  line([P(0, 0), P(14, 0), P(24, 3), P(34, -2), P(44, 1), P(49, 0)]);
-  line([P(0, 90), P(14, 90), P(24, 86), P(34, 93), P(42, 90), P(46, 90)]);
-  line([P(0, -90), P(14, -90), P(24, -88), P(32, -90)]);
-  horns.forEach(pts => line([P(32, -90), ...pts.slice(4, 33).filter((_, k) => k % 4 === 0).map(p => [p[0], p[1]])]));
-  const dockRoad = [P(34, -2), P(39, 20), P(45, 34), P(52, 38)];
-  line(dockRoad);
-  // 5) 개울: 북쪽 바다에서 내려와 연못으로 (동쪽 길은 다리로 건너요)
-  const sxAt = y => Math.round(cx + 30 * 1.4 * K + 2 * Math.sin(y * .12));
-  let ys = cy; while (ys > 0 && !M.water[idx(sxAt(ys), ys)]) ys--;
-  const yEnd = Math.round(cy + 9 * K), pond = [sxAt(yEnd), yEnd + 3], bridge = [], stones = [];
-  M.stream = new Uint8Array(N);
-  for (let y = ys; y <= yEnd; y++) for (const x of [sxAt(y) - 1, sxAt(y), sxAt(y) + 1]) {
-    const i = idx(x, y); if (M.road[i]) { bridge.push([x, y]); continue; }
-    M.water[i] = 1; M.zid[i] = 0; M.stream[i] = 1;
+  const L2 = (...pts) => pts.map(p => p.length === 2 && p[0] <= 1 && p[1] <= 1 && !Number.isInteger(p[0]) ? F(p) : p);
+  line(L2([cx, cy], [cx, cy - TOWN_HY - 6], [.31, .3], [.39, .245], ISLE.pass, [.53, .24], [.6, .26], [.68, .3], [.75, .4], [.8, .52], [.77, .64], [.72, .74], [.68, .8]));
+  line(L2([cx, cy], [cx, cy + TOWN_HY + 6], [.27, .58], [.2, .64], [.24, .74], [.3, .8]));
+  line(L2([cx, cy], [cx + TOWN_HX + 6, cy], [.4, .47], [.43, .56], [.47, .64], [.49, .72]));
+  const dockRoad = L2([cx, cy], [cx - TOWN_HX - 6, cy], [.19, .45], [.13, .43], [.08, .42]); line(dockRoad);
+  // 산맥 막기 (길이 지나는 고갯길은 열려 있어요)
+  for (let i = 0; i < N; i++) if (mtnCore[i] && !M.road[i]) M.block[i] = 1;
+  // 7) 강: 산에서 남쪽 바다로. 길과 만나는 곳은 징검다리
+  { const pts = ISLE.river.map(F), cross = [];
+    for (let k = 1; k < pts.length; k++) { const [ax, ay] = pts[k - 1], [bx, by] = pts[k], L = Math.hypot(bx - ax, by - ay);
+      for (let t = 0; t <= L; t += .5) { const px = ax + (bx - ax) * t / L + Math.sin((ay + (by - ay) * t / L) * .25) * 1.5, py = ay + (by - ay) * t / L;
+        for (let x = Math.round(px) - 1; x <= Math.round(px) + 1; x++) { const y = Math.round(py); if (!inMap(x, y)) continue; const i = idx(x, y); if (M.water[i] && !M.stream[i]) continue; if (M.road[i]) { if (!cross.some(c => c[0] === x && c[1] === y)) cross.push([x, y]); continue; } M.water[i] = 1; M.stream[i] = 1; M.zid[i] = 0; } } }
+    for (let i = 0; i < N; i++) if (M.water[i]) M.block[i] = 1;
+    const by = cross.length ? Math.round(cross.reduce((t, b) => t + b[1], 0) / cross.length) : -1, row = [];
+    for (const [x, y] of cross) { const i = idx(x, y); M.water[i] = 1; M.stream[i] = 1; M.road[i] = 0; M.block[i] = y === by ? 0 : 1; if (y === by) { row.push([x, y]); M.keep[i] = 1; } }
+    if (row.length) { const mx = row.reduce((t, b) => t + b[0], 0) / row.length; placeProp('l-stones', Math.round(mx), row[0][1], 1); const f = M.flats[M.flats.length - 1]; if (f) { f.x = (mx + .5) * CELL; f.y = (row[0][1] + .5) * CELL + f.h / 2 + 22; } }
+    for (let k = 0; k < 40; k++) { const p = pts[1 + Math.floor(R() * (pts.length - 2))], x = Math.round(p[0] + (R() - .5) * 30), y = Math.round(p[1] + (R() - .5) * 30); const i = inMap(x, y) ? idx(x, y) : -1; if (i >= 0 && !M.water[i] && (M.stream[i + 1] || M.stream[i - 1] || M.stream[i + 2] || M.stream[i - 2])) placeProp('l-reed', x, y); }
   }
-  for (let y = pond[1] - 3; y <= pond[1] + 3; y++) for (let x = pond[0] - 4; x <= pond[0] + 4; x++) if (((x - pond[0]) / 4.2) ** 2 + ((y - pond[1]) / 3.2) ** 2 <= 1) { const i = idx(x, y); M.water[i] = 1; M.zid[i] = 0; M.road[i] = 0; M.stream[i] = 1; }
-  const sy = Math.round(cy - 24 * K); for (const x of [sxAt(sy) - 1, sxAt(sy), sxAt(sy) + 1]) stones.push([x, sy]);
-  // 물은 지나갈 수 없어요 (다리·징검다리는 빼고)
-  for (let i = 0; i < N; i++) if (M.water[i]) M.block[i] = 1;
-  // 동쪽 길도 다리 대신 징검다리: 길 가운데 한 줄만 돌을 밟고 건너요
-  const by = bridge.length ? Math.round(bridge.reduce((t, b) => t + b[1], 0) / bridge.length) : -1, stones2 = [];
-  for (const [x, y] of bridge) { const i = idx(x, y); M.water[i] = 1; M.stream[i] = 1; M.road[i] = 0; M.block[i] = y === by ? 0 : 1; if (y === by) stones2.push([x, y]); }
-  for (const [x, y] of stones) { const i = idx(x, y); M.block[i] = 0; M.keep[i] = 1; }
-  for (const row of [stones, stones2]) if (row.length) {
-    const mx = row.reduce((t, b) => t + b[0], 0) / row.length;
-    placeProp('l-stones', Math.round(mx), row[0][1], 1); const f = M.flats[M.flats.length - 1]; f.x = (mx + .5) * CELL; f.y = (row[0][1] + .5) * CELL + f.h / 2 + 22;   // 돌 가운데가 밟는 칸에 오게
-  }
-  // 6) 선착장: 남동쪽 바닷가에서 바다로 (나중에 배를 타고 새 섬으로)
-  { let [px, py] = dockRoad[dockRoad.length - 1]; const [qx, qy] = dockRoad[dockRoad.length - 2]; const L = Math.hypot(px - qx, py - qy), ux = (px - qx) / L, uy = (py - qy) / L;
-    while (!M.water[idx(Math.round(px), Math.round(py))]) { px += ux; py += uy; }
+  // 8) 산 그림 (산 그림이 오기 전까지 바위로)
+  { const rocks = [['l-cliff', 3], ['b-rock', 3], ['c-rock', 2], ['f-rock1', 2]], bag = rocks.flatMap(([n, c]) => Array(c).fill(n));
+    for (let y = 2; y < H - 2; y += 2) for (let x = 2 + (y % 4 ? 1 : 0); x < W - 2; x += 3) { const i = idx(x, y); if (!mtnCore[i] || M.road[i] || M.water[i]) continue; placeProp(bag[Math.floor(R() * bag.length)], x + Math.round((R() - .5) * 2), y, 1); } }
+  // 9) 선착장: 서쪽 바닷가에서 바다로 (나중에 배를 타고 새 섬으로)
+  { let [px, py] = dockRoad[dockRoad.length - 2]; const [qx, qy] = dockRoad[dockRoad.length - 3]; const L = Math.hypot(px - qx, py - qy), ux = (px - qx) / L, uy = (py - qy) / L;
+    for (let t = 0; t < 80 && !M.water[idx(Math.round(px), Math.round(py))]; t++) { px += ux; py += uy; }
     const dk = []; for (let k = 0; k < 3; k++) { const x = Math.round(px + ux * k), y = Math.round(py + uy * k); for (const [ax, ay] of [[0, 0], [0, 1], [1, 0]]) dk.push([x + ax, y + ay]); }
-    for (const [x, y] of dk) { const i = idx(x, y); M.block[i] = 0; M.keep[i] = 1; }
+    for (const [x, y] of dk) if (inMap(x, y)) { const i = idx(x, y); M.block[i] = 0; M.keep[i] = 1; }
     placeProp('c-dock', Math.round(px + ux), Math.round(py + uy), 1);
-    placeProp('c-boat', Math.round(px + ux * 2) + 2, Math.round(py + uy * 2) + 1, 1);
+    placeProp('c-boat', Math.round(px + ux * 2), Math.round(py + uy * 2) + 2, 1);
     M.dock = [Math.round(px + ux), Math.round(py + uy)];
   }
+  placeProp('l-sign', Math.round(pX) - 4, Math.round(pY) + 3, 1);
   // 7) 지역 칸 목록, 리스폰 지점
   for (const z of ZONES) M.zcells[z.id] = [];
   for (let i = 0; i < N; i++) if (M.zid[i] && !M.block[i]) M.zcells[ZONES[M.zid[i] - 1].id].push(i);
   ZONE.town.spawn = [cx, cy + 3];
-  const T = (dx, dy) => [Math.round(cx + dx * K), Math.round(cy + dy * K)];
-  for (const z of ZONES) if (z.road) { const [x, y] = P(z.road[1], z.road[0]); z.spawn = [Math.round(x), Math.round(y)]; }
+  for (const z of ZONES) if (z.at) z.spawn = [Math.round(z.at[0] * W), Math.round(z.at[1] * H)];
   for (const z of ZONES) if (z.spawn) keepClear(z.spawn[0] - 3, z.spawn[1] - 3, z.spawn[0] + 3, z.spawn[1] + 3);
   // 8) 마을
   // 정돈된 마을: 북쪽 줄(잡화점·게시판·순간이동 문·대장간), 남쪽 줄(창고·우물·장독·집), 가운데 십자 길은 비워요
@@ -408,16 +409,7 @@ function buildWorld() {
   // 마을 문 장승 (길이 마을 밖으로 나가는 곳 양옆)
   buildTownWall(cx, cy);
   // 9) 사냥터 우두머리 + 갈림길 이정표 (마을로 돌아올 땐 마을 귀환 주문서)
-  for (const z of ZONES) if (z.road && z.boss) { z.bossTimer = BOSS_FIRST; z.bossAlive = false; }
-  for (const d of [0, 90, 180]) { const [x, y] = P(19, d - 8); placeProp('l-sign', Math.round(x), Math.round(y) + (d === 0 ? -2 : 0)); }
-  // 10) 뿔 끝: 왼쪽은 도깨비 동굴 입구, 오른쪽은 등대 (나중에 열어요)
-  { const a = horns[0][36], b = horns[1][36]; placeProp('c-cave', Math.round(a[0]), Math.round(a[1]), 1); placeProp('c-lighthouse', Math.round(b[0]), Math.round(b[1]), 1); }
-  // 11) 개울가 갈대, 바다 바위
-  for (let y = ys + 2; y < cy + 8; y += 3) { placeProp('l-reed', sxAt(y) - 2, y); placeProp('l-reed', sxAt(y) + 3, y + 1); }
-  for (let k = 0, t = 0; k < 26 && t < 3000; t++) { const x = rnd(2, W - 3), y = rnd(2, H - 3); const i = idx(x, y); if (!M.water[i] || dist[i] !== 0) continue;
-    let near = 0; for (let yy = y - 3; yy <= y + 3; yy++) for (let xx = x - 3; xx <= x + 3; xx++) if (inMap(xx, yy) && !M.water[idx(xx, yy)]) near++;
-    if (near < 2 || near > 10) continue; if (M.block[idx(x + 1, y)] !== 1 || M.keep[i]) continue; if (M.props.some(p => Math.abs(p.x - x * CELL) < CELL * 4 && Math.abs(p.y - y * CELL) < CELL * 3)) continue;
-    placeProp('c-rock', x, y, 1); k++; }
+  for (const z of ZONES) if (z.at && z.boss) { z.bossTimer = BOSS_FIRST; z.bossAlive = false; }
   // 12) 지역마다 장식
   for (const z of ZONES) {
     const cells = M.zcells[z.id], sc = cells.length / 2500;
@@ -441,10 +433,11 @@ function findFree(cx, cy, maxR = 8) {
 }
 
 let curZone = null;
+const MAPV = 2;   // 맵 모양이 바뀌면 올려요 (예전 자리는 무시하고 마을에서 시작)
 function enterWorld() {
   units = []; shots = []; drops = []; fx = []; nums = []; chunkCache.clear(); chunkJob = null; curZone = null;
   buildWorld();
-  const back = P.pos && inMap(P.pos[0], P.pos[1]) && findFree(P.pos[0], P.pos[1], 4);
+  const back = P.pos && P.mapv === MAPV && inMap(P.pos[0], P.pos[1]) && findFree(P.pos[0], P.pos[1], 4);   // 맵이 바뀌었으면 마을에서
   const [ex, ey] = back || findFree(...ZONE.town.spawn);
   player = addUnit({ kind: 'player', x: ex, y: ey, step: .36 });
   for (const n of M.npcs) addUnit(Object.assign(n, { step: 1 }));
@@ -1698,7 +1691,7 @@ function buildMini() {
   // 살짝 어둡게 테두리 (바다 끝)
   const gr = x.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .35, W / 2, H / 2, Math.max(W, H) * .62); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(10,20,50,.35)');
   x.fillStyle = gr; x.fillRect(0, 0, W, H);
-  miniBase = c;
+  miniBase = c; bigBase = null;
 }
 function miniDots(x, sc, ox, oy, big) {   // sc: 칸 → 화면 픽셀, ox/oy: 칸 0,0 의 화면 위치
   const P2 = (cx, cy) => [ox + (cx + .5) * sc, oy + (cy + .5) * sc], r0 = big ? 1.4 : 1;
@@ -1748,17 +1741,69 @@ function drawMini(dt) {
   }
   if (!$('bigmap').classList.contains('hidden')) drawBig();
 }
+// 섬 전체 지도: 자세한 그림 대신 단순한 색면 + 굵은 해안선 + 물결 + 산·나무 그림 (애니메이션풍)
+let bigBase = null;
+const BIG_COL = { town: '#e9cf86', near: '#a9d46f', paddy: '#bcd56a', bamboo: '#7fbf68', deep: '#4f9a5e', marsh: '#86ad95', mtn: '#b8a38c', beach: '#a9d46f' };
+function buildBig() {
+  const S = 4, W = M.w * S, H = M.h * S, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d'), R = seeded(5);
+  // 칸 단위 그림 (땅 = 지역 색, 물 = 투명) → 크게 늘려 부드럽게
+  const sm = document.createElement('canvas'); sm.width = M.w; sm.height = M.h; const sx = sm.getContext('2d'), im = sx.createImageData(M.w, M.h);
+  const mk = document.createElement('canvas'); mk.width = M.w; mk.height = M.h; const mx = mk.getContext('2d'), mm = mx.createImageData(M.w, M.h);
+  const hex = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+  for (let i = 0; i < M.w * M.h; i++) { if (M.water[i]) continue; const z = ZONES[M.zid[i] - 1], [r, g2, b] = hex(BIG_COL[z?.id] || '#a9d46f'); im.data.set([r, g2, b, 255], i * 4); mm.data.set([0, 0, 0, 255], i * 4); }
+  sx.putImageData(im, 0, 0); mx.putImageData(mm, 0, 0);
+  const tint = (col, grow) => { const t = document.createElement('canvas'); t.width = W; t.height = H; const tc = t.getContext('2d'); tc.imageSmoothingEnabled = true; tc.filter = `blur(${grow}px)`; tc.drawImage(mk, 0, 0, W, H); tc.filter = 'none';
+    const d = tc.getImageData(0, 0, W, H), dd = d.data, [r, g2, b] = hex(col); for (let i = 0; i < dd.length; i += 4) { const a = dd[i + 3] > 40 ? 255 : 0; dd[i] = r; dd[i + 1] = g2; dd[i + 2] = b; dd[i + 3] = a; } tc.putImageData(d, 0, 0); return t; };
+  // 바다
+  const sg = x.createRadialGradient(W / 2, H / 2, W * .1, W / 2, H / 2, W * .7); sg.addColorStop(0, '#5cc4d8'); sg.addColorStop(1, '#2a7fae'); x.fillStyle = sg; x.fillRect(0, 0, W, H);
+  x.save(); x.filter = 'blur(18px)'; x.globalAlpha = .8; x.drawImage(tint('#aef0f0', 10), 0, 0); x.restore();
+  x.strokeStyle = 'rgba(255,255,255,.55)'; x.lineWidth = 2.5; x.lineCap = 'round';
+  for (let k = 0; k < 140; k++) { const px = R() * W, py = R() * H, ci = idx(Math.floor(px / S), Math.floor(py / S)); let near = false; for (let d = -6; d <= 6 && !near; d += 3) for (let e = -6; e <= 6 && !near; e += 3) { const xx = Math.floor(px / S) + d, yy = Math.floor(py / S) + e; if (inMap(xx, yy) && !M.water[idx(xx, yy)]) near = true; } if (near || !M.water[ci]) continue;
+    x.beginPath(); x.moveTo(px - 14, py); x.quadraticCurveTo(px - 7, py - 7, px, py); x.quadraticCurveTo(px + 7, py - 7, px + 14, py); x.stroke(); }
+  // 해안선(진한 갈색) → 모래 → 땅
+  x.drawImage(tint('#5a3e25', 3.2), 0, 0); x.drawImage(tint('#f1dfae', 2.2), 0, 0);
+  { const t = document.createElement('canvas'); t.width = W; t.height = H; const tc = t.getContext('2d'); tc.imageSmoothingEnabled = true; tc.filter = 'blur(2px)'; tc.drawImage(sm, 0, 0, W, H); tc.filter = 'none'; tc.globalCompositeOperation = 'destination-in'; tc.filter = 'blur(.6px)'; tc.drawImage(tint('#000', 1.2), 0, 0); x.drawImage(t, 0, 0); }
+  // 강 (개울 칸을 다시 파랗게)
+  for (let i = 0; i < M.w * M.h; i++) if (M.stream[i]) { const cx = i % M.w, cy = (i - cx) / M.w; x.fillStyle = '#5a3e25'; x.beginPath(); x.arc((cx + .5) * S, (cy + .5) * S, S * 1.1, 0, 7); x.fill(); }
+  for (let i = 0; i < M.w * M.h; i++) if (M.stream[i]) { const cx = i % M.w, cy = (i - cx) / M.w; x.fillStyle = '#62c6dc'; x.beginPath(); x.arc((cx + .5) * S, (cy + .5) * S, S * .75, 0, 7); x.fill(); }
+  // 나무·논두렁·늪
+  const items = []; for (let k = 0; k < 9000; k++) { const cx = Math.floor(R() * M.w), cy = Math.floor(R() * M.h), i = idx(cx, cy); if (M.water[i] || M.road[i]) continue; items.push([cx * S + R() * S, cy * S + R() * S, ZONES[M.zid[i] - 1]?.id]); }
+  items.sort((a, b) => a[1] - b[1]);
+  for (const [px, py, z] of items) {
+    if ((z === 'deep' || z === 'bamboo') && R() < .5) { const r = z === 'deep' ? 7 : 5.5; x.fillStyle = z === 'deep' ? '#2c6b45' : '#4f9a55'; x.beginPath(); x.arc(px, py, r, 0, 7); x.fill(); x.fillStyle = z === 'deep' ? '#3f8a5a' : '#79c070'; x.beginPath(); x.arc(px - 1.5, py - 2, r * .6, 0, 7); x.fill(); }
+    else if (z === 'near' && R() < .05) { x.fillStyle = '#6fa64a'; x.beginPath(); x.arc(px, py, 5, 0, 7); x.fill(); x.fillStyle = '#8cc45d'; x.beginPath(); x.arc(px - 1, py - 1.5, 3, 0, 7); x.fill(); }
+    else if (z === 'paddy' && R() < .04) { x.strokeStyle = 'rgba(130,140,50,.55)'; x.lineWidth = 1.5; x.strokeRect(px - 9, py - 6, 18, 12); }
+    else if (z === 'marsh' && R() < .06) { x.fillStyle = 'rgba(90,160,170,.75)'; x.beginPath(); x.ellipse(px, py, 9, 4, 0, 0, 7); x.fill(); }
+  }
+  // 산 (등줄기를 따라 봉우리)
+  const peaks = []; for (let y = 0; y < M.h; y += 3) for (let xx = 0; xx < M.w; xx += 3) if (M.mtnCore[idx(xx, y)] && R() < .5) peaks.push([xx * S + R() * 8, y * S + R() * 8]);
+  peaks.sort((a, b) => a[1] - b[1]);
+  for (const [px, py] of peaks) { const h = 24 + R() * 18, w = h * .9;
+    x.fillStyle = '#8c735c'; x.beginPath(); x.moveTo(px - w, py); x.lineTo(px, py - h); x.lineTo(px + w, py); x.closePath(); x.fill();
+    x.fillStyle = '#b59c82'; x.beginPath(); x.moveTo(px - w, py); x.lineTo(px, py - h); x.lineTo(px - w * .15, py); x.closePath(); x.fill();
+    x.fillStyle = '#f5efe6'; x.beginPath(); x.moveTo(px - w * .28, py - h * .72); x.lineTo(px, py - h); x.lineTo(px + w * .28, py - h * .72); x.lineTo(px + w * .08, py - h * .64); x.closePath(); x.fill();
+    x.strokeStyle = '#4a3622'; x.lineWidth = 2; x.beginPath(); x.moveTo(px - w, py); x.lineTo(px, py - h); x.lineTo(px + w, py); x.stroke(); }
+  // 길 (점선)
+  x.setLineDash([9, 8]); x.strokeStyle = '#8a5a2b'; x.lineWidth = 4; x.lineCap = 'round';
+  for (const l of M.roadLines) { x.beginPath(); l.forEach(([a, b], k) => k ? x.lineTo(a * S, b * S) : x.moveTo(a * S, b * S)); x.stroke(); }
+  x.setLineDash([]);
+  // 마을
+  { const [tx, ty] = ZONE.town.spawn, px = tx * S, py = (ty - 3) * S; x.fillStyle = '#fff3c8'; x.strokeStyle = '#5a3e25'; x.lineWidth = 3.5; x.beginPath(); x.arc(px, py, 20, 0, 7); x.fill(); x.stroke();
+    x.fillStyle = '#4a3f7a'; x.beginPath(); x.moveTo(px - 15, py + 2); x.lineTo(px, py - 13); x.lineTo(px + 15, py + 2); x.closePath(); x.fill(); x.fillStyle = '#c0563a'; x.fillRect(px - 9, py + 2, 18, 10); }
+  bigBase = c;
+}
 function drawBig() {
   const bc = $('bigcv'), W = Math.round(bc.clientWidth * Math.min(2, devicePixelRatio || 1)); if (!W) return;
   const H = Math.round(W * M.h / M.w); if (bc.width !== W) { bc.width = W; bc.height = H; }
-  const x = bc.getContext('2d'); x.imageSmoothingQuality = 'high'; x.drawImage(miniBase, 0, 0, W, H);
+  if (!bigBase) buildBig();
+  const x = bc.getContext('2d'); x.imageSmoothingQuality = 'high'; x.drawImage(bigBase, 0, 0, W, H);
   const sc = W / M.w;
   // 지역 이름
   x.font = `600 ${Math.round(W / 46)}px "Gowun Dodum",sans-serif`; x.textAlign = 'center'; x.lineWidth = 4; x.lineJoin = 'round';
   for (const z of ZONES) {
     if (z.id === 'beach') continue; const cs = M.zcells[z.id]; if (!cs || !cs.length) continue;
     let sx = 0, sy = 0; for (const i of cs) { sx += i % M.w; sy += Math.floor(i / M.w); }
-    let lx = sx / cs.length, ly = sy / cs.length; if (z.road) [lx, ly] = polar(z.road[1] + 6, z.road[0]); if (z.town) ly -= 6;
+    let lx = sx / cs.length, ly = sy / cs.length; if (z.at) [lx, ly] = [z.at[0] * M.w, z.at[1] * M.h - 6]; if (z.town) ly -= 10;
     const nm = z.name.replace('도깨비섬 ', ''); x.strokeStyle = 'rgba(0,0,0,.7)'; x.fillStyle = '#fff6d8'; x.strokeText(nm, lx * sc, ly * sc); x.fillText(nm, lx * sc, ly * sc);
   }
   miniDots(x, sc, 0, 0, true);
