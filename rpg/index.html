@@ -82,6 +82,7 @@
   #codebox { position:fixed; inset:0; z-index:70; display:flex; align-items:center; justify-content:center; background:rgba(10,8,30,.6); padding:16px; }
   #code-show { font-family:Fredoka,sans-serif; font-size:40px; letter-spacing:6px; margin:6px 0 12px; color:var(--ink); }
   #code-input { width:100%; font-family:Fredoka,sans-serif; font-size:24px; text-align:center; letter-spacing:5px; padding:8px; border:3px solid var(--line); border-radius:14px; text-transform:uppercase; }
+  #syncbox { position:fixed; inset:0; z-index:90; display:flex; align-items:center; justify-content:center; background:rgba(10,8,30,.75); padding:16px; text-align:center; } #syncbox .btns { margin-top:12px; }
   #code-msg { min-height:22px; font-size:15px; margin-top:8px; word-break:keep-all; }
   .small { font-size:14px; }
 
@@ -560,6 +561,14 @@
     <input id="code-input" maxlength="8" placeholder="다른 기기의 코드" autocomplete="off">
     <div id="code-msg"></div>
     <div class="btns"><button class="game-btn white small" id="code-close" type="button">닫기</button><button class="game-btn sun small" id="code-load" type="button">불러오기</button></div>
+  </div>
+</div>
+
+<div id="syncbox" class="hidden">
+  <div class="panel">
+    <h2>다른 기기의 기록이 있어요</h2>
+    <p class="dim small">다른 기기에서 더 나중에 한 기록을 찾았어요. 그 기록으로 이어서 할게요.</p>
+    <div class="btns"><button class="game-btn sun small" id="sync-go" type="button">이어서 하기</button></div>
   </div>
 </div>
 

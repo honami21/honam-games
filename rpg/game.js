@@ -122,9 +122,23 @@ function normAll(d) {
   return { v: 2, chars: [], t: 0 };
 }
 function loadAll() { try { return normAll(JSON.parse(localStorage.getItem(SAVE_KEY) || 'null')); } catch (e) { return normAll(null); } }
-let saveT = 0, cloudAt = 0;
+let saveT = 0, cloudAt = 0, cloudT = 0, stale = false;   // cloudT: 인터넷 저장 칸에 마지막으로 있던 기록 시각 (내가 올렸거나 받아 온 것)
+// 다른 기기가 그 뒤에 저장했는지 확인해요. 그랬으면 그 기록을 받고 다시 시작해요
+async function checkCloud() {
+  const c = cloudCode(); if (!c || !window.RPG_CLOUD || stale) return stale;
+  let d = null; try { d = await window.RPG_CLOUD.get(c); } catch (e) { return false; }
+  if (!d || !d.s) return false;
+  const t = +d.t || 0;
+  if (!cloudT) { cloudT = t; return false; }
+  if (t === cloudT) return false;
+  stale = true; clearTimeout(saveT);
+  try { localStorage.setItem(SAVE_KEY, d.s); } catch (e) {}
+  $('syncbox').classList.remove('hidden');
+  return true;
+}
+function cloudPut(c, s, t) { cloudT = t; return window.RPG_CLOUD.put(c, { s, t }); }
 function save(now) {
-  if (!P) return; P.t = Date.now();
+  if (!P || stale) return; P.t = Date.now();
   if (player && units.includes(player)) { P.pos = dead ? null : [player.x, player.y]; P.mapv = MAPV; }   // 끈 자리에서 다시 시작해요
   const all = loadAll(); all.chars[slot] = P; all.t = P.t; if (STORE) all.store = STORE;
   const s = JSON.stringify(all);
@@ -132,8 +146,8 @@ function save(now) {
   // 인터넷 저장은 아껴서: 마을로 올 때·창을 닫을 때(now)나 2분에 한 번만
   if (window.RPG_CLOUD && cloudCode() && (now || Date.now() - cloudAt > 120000)) {
     cloudAt = Date.now(); clearTimeout(saveT);
-    const up = () => window.RPG_CLOUD.put(cloudCode(), { s, t: all.t }).catch(e => console.warn('저장 올리기 실패', e));
-    if (document.hidden) up(); else saveT = setTimeout(up, 300);   // 창을 닫을 때는 기다리지 않고 바로 올려요
+    const up = () => cloudPut(cloudCode(), s, all.t).catch(e => console.warn('저장 올리기 실패', e));
+    if (document.hidden) up(); else saveT = setTimeout(async () => { if (!(await checkCloud())) up(); }, 300);   // 올리기 전에 다른 기기 기록부터 확인   // 창을 닫을 때는 기다리지 않고 바로 올려요
   }
 }
 /* ================= 창고: 한 계정(이어하기 코드)의 캐릭터들이 함께 써요 ================= */
@@ -2047,7 +2061,8 @@ function bindUI() {
     else if (k === 'escape') { if (!$('bigmap').classList.contains('hidden')) toggleBig(false); else if (enchantPick) cancelEnchant(); else closeWin(); }
   });
   addEventListener('pagehide', () => save(true));
-  document.addEventListener('visibilitychange', () => { if (document.hidden) save(true); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) save(true); else checkCloud(); });   // 다시 보면 다른 기기 기록부터 확인
+  $('sync-go').addEventListener('click', () => location.reload());
   document.querySelectorAll('.bbtn.qs').forEach(b => b.addEventListener('click', () => { if (qDrag.done) return; useQuick(+b.dataset.k); }));
   // 단축키 끌어다 놓기: 가방 아이템 → 1~4 칸에 넣기, 칸 → 다른 칸으로 옮기기, 칸 → 바깥(맵)에 놓으면 빼기
   const qGhost = $('qghost');
@@ -2211,7 +2226,7 @@ document.querySelectorAll('.win').forEach(el => el.addEventListener('pointerdown
     const all = loadAll(), c = all.chars[delArm]; if (!c || (c.name || (c.cls === 'bow' ? '깨순이' : '깨비샘')) !== delWho) return;
     all.chars.splice(delArm, 1); all.t = Date.now(); delArm = -1;
     try { localStorage.setItem(SAVE_KEY, JSON.stringify(all)); } catch (er) {}
-    if (window.RPG_CLOUD && cloudCode()) window.RPG_CLOUD.put(cloudCode(), { s: JSON.stringify(all), t: all.t }).catch(() => {});
+    if (window.RPG_CLOUD && cloudCode()) cloudPut(cloudCode(), JSON.stringify(all), all.t).catch(() => {});
     $('delbox').classList.add('hidden'); SND.ui(); renderSelect();
   });
   $('sel-list').addEventListener('click', e => {
@@ -2270,7 +2285,7 @@ function bindCode() {
     try {
       for (let i = 0; i < 5 && !c; i++) { let t = ''; for (let j = 0; j < 6; j++) t += CODE_ABC[1 + Math.floor(Math.random() * (CODE_ABC.length - 1))]; if (!(await window.RPG_CLOUD.get(t))) c = t; }
       if (!c) throw new Error('no code');
-      await window.RPG_CLOUD.put(c, { s: JSON.stringify(local), t: local.t || Date.now() });
+      await cloudPut(c, JSON.stringify(local), local.t || Date.now());
       try { localStorage.setItem('rpg-save-code', c); } catch (e) {}
       $('code-show').textContent = fmt(c);
     } catch (e) { console.warn(e); $('code-show').textContent = '------'; msg('코드를 만들지 못했어요. 인터넷 연결을 확인해 주세요.', true); }
@@ -2288,6 +2303,7 @@ function bindCode() {
     if (!dall || !dall.chars.length) { msg('코드가 맞지 않아요', true); return; }
     if (arm !== t) { arm = t; $('code-load').textContent = '한 번 더 누르면 불러와요'; msg(`캐릭터 ${dall.chars.length}명 (${dall.chars.map(c => 'Lv ' + c.lv).join(', ')})이에요. 이 기기의 캐릭터가 바뀌어요.`); return; }
     try { localStorage.setItem(SAVE_KEY, d.s); localStorage.setItem('rpg-save-code', t); } catch (e) {}
+    cloudT = +d.t || 0;
     msg('불러왔어요!'); $('code-show').textContent = fmt(t);
   });
 }
@@ -2295,6 +2311,7 @@ async function pullCloud() {   // 다른 기기에서 더 나중에 저장한 �
   const c = cloudCode(); if (!c || !window.RPG_CLOUD) return;
   try {
     const d = await window.RPG_CLOUD.get(c); const local = loadAll();
+    if (d && !stale) cloudT = +d.t || 0;
     if (d && d.s && (!local.chars.length || (+d.t || 0) > (local.t || 0))) { localStorage.setItem(SAVE_KEY, d.s); if (!$('select').classList.contains('hidden')) renderSelect(); }
   } catch (e) { console.warn('저장 받아 오기 실패', e); }
 }
