@@ -1309,7 +1309,7 @@ function renderChar() {
   const [a, b] = weaponRange(P.eq.weapon), sb = strBonus();
   const row = (k, n, d) => `<div class="st"><span>${n}</span><b>${P[k]}${accBonus(k) ? `<small> +${accBonus(k)}</small>` : ''}</b>${P.pts > 0 ? `<button class="plus" data-st="${k}">+</button>` : ''}<em>${d}</em></div>`;
   $('char-body').innerHTML =
-    `${P.name ? `<div class="nmline"><i class="nm" style="color:${nameColor(P.lv)}">${esc(P.name)}</i></div>` : ''}<div class="lvline">Lv ${P.lv} <span>${P.lv >= MAX_LV ? '최고 레벨' : `경험치 ${P.exp.toLocaleString()} / ${needExp(P.lv).toLocaleString()}`}</span></div>` +
+    `${P.name ? `<div class="nmline"><i class="nm" style="color:${nameColor(P.lv)}">${esc(P.name)}</i></div>` : ''}<div class="lvline">Lv ${P.lv} <span>${P.lv >= MAX_LV ? '최고 레벨' : `경험치 ${P.exp.toLocaleString()} / ${needExp(P.lv).toLocaleString()} (${(P.exp / needExp(P.lv) * 100).toFixed(1)}%)`}</span></div>` +
     row('str', '힘', `데미지 ${sb >= 0 ? '+' : ''}${sb}`) + row('dex', '민첩', `명중 +${hitBonus()}% · 치명타 ${critRate()}%`) + row('con', '체력', `최대 HP ${maxHP()}`) +
     (P.pts > 0 ? `<div class="ptsline">보너스 능력치 <b>${P.pts}</b>점을 찍을 수 있어요</div>` : '') +
     `<div class="sum"><div><span>공격</span><b>${a + sb === b + sb ? a + sb : (a + sb) + '~' + (b + sb)}</b></div><div><span>AC</span><b>${playerAC()}</b></div><div><span>HP</span><b>${Math.max(0, Math.ceil(P.hp))}/${maxHP()}</b></div></div>` +
