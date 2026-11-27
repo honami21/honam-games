@@ -358,7 +358,7 @@ function buildWorld() {
   const L2 = (...pts) => pts.map(p => p.length === 2 && p[0] <= 1 && p[1] <= 1 && !Number.isInteger(p[0]) ? F(p) : p);
   line(L2([cx, cy], [cx, cy - TOWN_HY - 6], [.33, .32], [.41, .29], [.46, .275], ISLE.pass, [.56, .255], [.62, .25], [.67, .27], [.71, .32], [.73, .42], [.74, .52], [.72, .64], [.7, .74], [.69, .8]));
   line(L2([cx, cy], [cx, cy + TOWN_HY + 6], [.26, .55], [.21, .6], [.24, .7], [.28, .78]));
-  line(L2([cx, cy], [cx + TOWN_HX + 6, cy], [.38, .45], [.44, .5], [.47, .58], [.49, .68]));
+  line(L2([cx, cy], [cx + TOWN_HX + 6, cy], [.38, .45], [.42, .452], [.46, .452], [.47, .5], [.47, .58], [.49, .68]));   // 강이 좁은 곳(약 4칸)에서 다리로 건너요
   const dockRoad = L2([cx, cy], [cx - TOWN_HX - 6, cy], [.16, .42], [.1, .42], [.04, .42]); line(dockRoad);
   // 산맥 막기 (길이 지나는 고갯길은 열려 있어요)
   for (let i = 0; i < N; i++) if (mtnCore[i] && !M.road[i]) M.block[i] = 1;
@@ -367,12 +367,14 @@ function buildWorld() {
   { const cs = cross.map(i => [i % W, Math.floor(i / W)]), groups = [];
     for (const c of cs) { const gq = groups.find(gq => gq.some(o => Math.abs(o[0] - c[0]) <= 2 && Math.abs(o[1] - c[1]) <= 2)); if (gq) gq.push(c); else groups.push([c]); }
     for (const gq of groups) {
-      const by = Math.round(gq.reduce((t, b) => t + b[1], 0) / gq.length); let row = gq.filter(c => c[1] === by);
+      const by0 = Math.round(gq.reduce((t, b) => t + b[1], 0) / gq.length), by = by0 - 1; let row = gq.filter(c => c[1] === by0).map(c => [c[0], by]);   // 한 칸 위 줄로 건너요 (다리 기둥이 강 안에 서도록)
       // 강 폭 전체를 가로질러 한 줄 (양쪽 땅까지)
       let x0 = Math.min(...row.map(c => c[0])), x1 = Math.max(...row.map(c => c[0]));
       while (x0 > 0 && M.stream[idx(x0 - 1, by)]) x0--; while (x1 < W - 1 && M.stream[idx(x1 + 1, by)]) x1++;
       row = []; for (let x = x0; x <= x1; x++) { const i = idx(x, by); M.block[i] = 0; M.keep[i] = 1; row.push([x, by]); }
-      const mx = (x0 + x1) / 2; placeProp('l-stones', Math.round(mx), by, 1); const f = M.flats[M.flats.length - 1]; if (f) { f.x = (mx + .5) * CELL; f.y = (by + .5) * CELL + f.h / 2 + 22; f.w *= Math.max(1, (x1 - x0 + 1) / 4); }
+      // 나무 다리 한 장을 강 폭(양쪽 땅 한 칸씩 포함)에 맞춰 놓아요
+      const mx = (x0 + x1) / 2; placeProp('l-bridge2', Math.round(mx), by, 1); const f = M.flats[M.flats.length - 1];
+      if (f) { const k = (x1 - x0 + 2) * CELL / f.w; f.w *= k; f.h *= k; f.x = (mx + .5) * CELL; f.y = (by + .5) * CELL + f.h * .5 - 26; }
     }
     // 강가 갈대
     const R2 = seeded(9); for (let k = 0, t = 0; k < 60 && t < 4000; t++) { const i = Math.floor(R2() * N); if (M.water[i] || M.keep[i]) continue; if (M.stream[i + 1] || M.stream[i - 1] || M.stream[i + 2] || M.stream[i - 2]) { if (placeProp('l-reed', i % W, Math.floor(i / W))) k++; } }
@@ -384,6 +386,14 @@ function buildWorld() {
     placeProp('mt-dungeon', ddx + 1, ddy, 1); M.dungeon = [ddx - 1, ddy + 1]; keepClear(ddx - 3, ddy - 1, ddx + 1, ddy + 3);
     const spots = []; for (let y = 1, ry = 0; y < H - 1; y += 3, ry++) for (let x = 1 + (ry % 2) * 2; x < W - 1; x += 4) { const i = idx(x, y); if (mtnCore[i] && !M.road[i] && !M.water[i] && !M.keep[i]) spots.push([x + Math.round((R() - .5) * 2), y]); }
     for (const [x, y] of spots) { const e = segD(x, y, ridge); placeProp(e < 7 ? (R() < .55 ? 'mt-peak1' : 'mt-peak2') : (R() < .5 ? 'mt-peak2' : 'mt-cliff'), x, y, 1); }
+    // 못 지나가는 산 칸은 모두 산 그림으로 덮여야 해요 (빈 땅처럼 보이는데 막힌 곳이 없게)
+    const mts = M.props.filter(q => q.name.startsWith('mt-') && q.name !== 'mt-pass');
+    const covered = (cx2, cy2) => { const px = (cx2 + .5) * CELL, py = (cy2 + .5) * CELL; return mts.some(q => Math.abs(q.x - px) < q.w * .36 && py <= q.y + 4 && py >= q.y - q.h * .62); };
+    for (let y = H - 2; y > 0; y--) for (let x = 1; x < W - 1; x++) {
+      const i = idx(x, y); if (!M.block[i] || !mtnCore[i] || M.water[i] || covered(x, y)) continue;
+      const nm = segD(x, y, ridge) < 7 ? 'mt-peak1' : (R() < .6 ? 'mt-peak2' : 'mt-cliff');
+      if (placeProp(nm, x, y + 1, 1)) mts.push(M.props[M.props.length - 1]);
+    }
   }
   // 9) 선착장: 서쪽 바닷가에서 바다로 (나중에 배를 타고 새 섬으로)
   { let [px, py] = dockRoad[dockRoad.length - 2]; const [qx, qy] = dockRoad[dockRoad.length - 3]; const L = Math.hypot(px - qx, py - qy), ux = (px - qx) / L, uy = (py - qy) / L;
@@ -1043,6 +1053,9 @@ function log(html, cls = '') {
   const box = $('log'); const d = document.createElement('div'); d.className = 'ln ' + cls; d.innerHTML = html; box.appendChild(d);
   while (box.children.length > 4) box.firstChild.remove();
   setTimeout(() => d.classList.add('old'), 4000); setTimeout(() => d.remove(), 5200);
+  // 컴퓨터 아래 정보창의 알림 기록 (최근 40줄, 맨 아래가 최신)
+  const pl = $('plog'); const e = document.createElement('div'); e.className = 'ln ' + cls; e.innerHTML = html; pl.appendChild(e);
+  while (pl.children.length > 40) pl.firstChild.remove(); pl.scrollTop = pl.scrollHeight;
 }
 
 /* ================= 가방·장비 ================= */
@@ -1296,7 +1309,7 @@ function renderChar() {
   const [a, b] = weaponRange(P.eq.weapon), sb = strBonus();
   const row = (k, n, d) => `<div class="st"><span>${n}</span><b>${P[k]}${accBonus(k) ? `<small> +${accBonus(k)}</small>` : ''}</b>${P.pts > 0 ? `<button class="plus" data-st="${k}">+</button>` : ''}<em>${d}</em></div>`;
   $('char-body').innerHTML =
-    `${P.name ? `<div class="nmline"><i class="nm" style="color:${nameColor(P.lv)}">${esc(P.name)}</i></div>` : ''}<div class="lvline">Lv ${P.lv} <span>${P.lv >= MAX_LV ? '최고 레벨' : `경험치 ${P.exp.toLocaleString()} / ${needExp(P.lv).toLocaleString()}`}</span></div>` +
+    `${P.name ? `<div class="nmline"><i class="nm" style="color:${nameColor(P.lv)}">${esc(P.name)}</i></div>` : ''}<div class="lvline">Lv ${P.lv} <span>${P.lv >= MAX_LV ? '최고 레벨' : `경험치 ${P.exp.toLocaleString()} / ${needExp(P.lv).toLocaleString()} (${(P.exp / needExp(P.lv) * 100).toFixed(1)}%)`}</span></div>` +
     row('str', '힘', `데미지 ${sb >= 0 ? '+' : ''}${sb}`) + row('dex', '민첩', `명중 +${hitBonus()}% · 치명타 ${critRate()}%`) + row('con', '체력', `최대 HP ${maxHP()}`) +
     (P.pts > 0 ? `<div class="ptsline">보너스 능력치 <b>${P.pts}</b>점을 찍을 수 있어요</div>` : '') +
     `<div class="sum"><div><span>공격</span><b>${a + sb === b + sb ? a + sb : (a + sb) + '~' + (b + sb)}</b></div><div><span>AC</span><b>${playerAC()}</b></div><div><span>HP</span><b>${Math.max(0, Math.ceil(P.hp))}/${maxHP()}</b></div></div>` +
@@ -1388,6 +1401,7 @@ function updateHUD() {
   const mh = maxHP();
   $('hpfill').style.width = clamp(P.hp / mh * 100, 0, 100) + '%';
   $('hptxt').textContent = Math.max(0, Math.ceil(P.hp)) + ' / ' + mh;
+  { const sp = $('spfill'), c = P.cls || 'sword'; if (sp.dataset.c !== c) { sp.dataset.c = c; sp.className = c; $('sptxt').textContent = ({ sword: '용기', bow: '집중', mage: '정신력', tank: '분노' })[c] || '용기'; } }   // 직업 게이지 (스킬이 생기면 채워져요)
   $('xpfill').style.width = (P.lv >= MAX_LV ? 100 : P.exp / needExp(P.lv) * 100) + '%';
   $('xptxt').textContent = P.lv >= MAX_LV ? '최고 레벨' : (P.exp / needExp(P.lv) * 100).toFixed(1) + '%';
   $('lv').textContent = P.lv;
@@ -1401,7 +1415,7 @@ function updateHUD() {
 
 /* ================= 그리기 ================= */
 function resize() {
-  VW = innerWidth; VH = innerHeight;
+  VW = innerWidth; VH = innerHeight - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dock')) || 0);   // 컴퓨터는 아래 정보창만큼 뺀 높이
   // 큰 화면에선 그리는 점 수를 약 220만 개로 제한해요 (모니터가 커도 부드럽게)
   DPR = Math.min(2, window.devicePixelRatio || 1, Math.sqrt(2.2e6 / (VW * VH)));
   cv.width = Math.round(VW * DPR); cv.height = Math.round(VH * DPR);
@@ -1725,8 +1739,19 @@ function miniDots(x, sc, ox, oy, big, meOnly) {   // sc: 칸 → 화면 픽셀, 
 }
 function drawMini(dt) {
   miniT -= dt; if (miniT > 0 || !miniBase) return; miniT = 1 / 20;
-  const mc = $('mini'), D = Math.round(mc.clientWidth * Math.min(2, devicePixelRatio || 1)); if (!D) return;
-  if (mc.width !== D) mc.width = mc.height = D;
+  const mc = $('mini'), dpr = Math.min(2, devicePixelRatio || 1), D = Math.round(mc.clientWidth * dpr), Dh = Math.round(mc.clientHeight * dpr); if (!D || !Dh) return;
+  if (mc.width !== D || mc.height !== Dh) { mc.width = D; mc.height = Dh; }
+  if (D !== Dh) {   // 컴퓨터: 아래 정보창에 꼭 맞는 네모 미니맵 (리니지식)
+    const x = mc.getContext('2d'), R = MINI_R[miniZ], sc = Dh / 2 / R, Rx = D / 2 / sc;
+    const pcx = player.px / CELL - .5, pcy = player.py / CELL - .5;
+    x.fillStyle = '#2b6f96'; x.fillRect(0, 0, D, Dh);
+    const s0x = (pcx + .5 - Rx) * MINI_S, s0y = (pcy + .5 - R) * MINI_S, sw = Rx * 2 * MINI_S, sh = R * 2 * MINI_S, k = D / sw;
+    const ax = Math.max(0, s0x), ay = Math.max(0, s0y), bx = Math.min(miniBase.width, s0x + sw), by = Math.min(miniBase.height, s0y + sh);
+    if (bx > ax && by > ay) x.drawImage(miniBase, ax, ay, bx - ax, by - ay, (ax - s0x) * k, (ay - s0y) * k, (bx - ax) * k, (by - ay) * k);
+    miniDots(x, sc, D / 2 - (pcx + .5) * sc, Dh / 2 - (pcy + .5) * sc, false);
+    if (!$('bigmap').classList.contains('hidden')) drawBig();
+    return;
+  }
   const x = mc.getContext('2d'), R = MINI_R[miniZ], ring = D * .05, rad = D / 2 - ring * 2.1, sc = rad / R;   // 동서남북 표시가 잘리지 않게 안쪽으로
   const pcx = player.px / CELL - .5, pcy = player.py / CELL - .5;   // 부드럽게 따라가도록 픽셀 위치 기준
   x.clearRect(0, 0, D, D);
@@ -1838,7 +1863,9 @@ function walkToCell(cx, cy) {
 function miniClick(e) {
   if (!P || dead || !M) return;
   e.stopPropagation();
-  const r = $('mini').getBoundingClientRect(), D = r.width, rad = D / 2 - D * .05 * 2.1, R = MINI_R[miniZ];
+  const r = $('mini').getBoundingClientRect(), D = r.width;
+  if (Math.abs(r.width - r.height) > 2) { const sc = r.height / 2 / MINI_R[miniZ]; walkToCell(Math.floor(player.px / CELL + (e.clientX - r.left - D / 2) / sc), Math.floor(player.py / CELL + (e.clientY - r.top - r.height / 2) / sc)); return; }
+  const rad = D / 2 - D * .05 * 2.1, R = MINI_R[miniZ];
   const dx = e.clientX - r.left - D / 2, dy = e.clientY - r.top - D / 2; if (Math.hypot(dx, dy) > rad) return;
   walkToCell(Math.floor(player.px / CELL + dx / rad * R), Math.floor(player.py / CELL + dy / rad * R));
 }

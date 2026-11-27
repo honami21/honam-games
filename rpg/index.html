@@ -21,7 +21,7 @@
   html, body { width:100%; height:100%; overflow:hidden; background:var(--night); font-family:'Do Hyeon','Apple SD Gothic Neo','Malgun Gothic',sans-serif; color:var(--ink); }
   body { -webkit-user-select:none; user-select:none; touch-action:none; }
   .hidden { display:none !important; }
-  #cv { position:fixed; inset:0; width:100%; height:100%; display:block; }
+  #cv { position:fixed; inset:0; width:100%; height:calc(100% - var(--dock, 0px)); display:block; }
   .dim { color:var(--ink2); }
   .bad { color:var(--coral-d); }
 
@@ -110,6 +110,7 @@
   #htime.low { color:#ff8f8f; }
   body.in-town #htimeC { display:none; }
   body.win-open #miniwrap { display:none; }
+  @media (min-width:761px) and (min-height:521px) { body.win-open #miniwrap { display:flex; } }
   #w-gate { text-align:center; }
   #w-gate .gate-t { font-size:18px; margin:6px 0 14px; word-break:keep-all; line-height:1.5; }
   #w-gate .game-btn { margin-bottom:8px; }
@@ -125,9 +126,13 @@
   .gauge { position:relative; height:20px; border-radius:10px; background:#3a2b33; overflow:hidden; border:2px solid var(--line); }
   .gauge.xp { height:14px; }
   .gauge i { position:absolute; inset:0 auto 0 0; display:block; transition:width .15s; }
-  #hpfill { background:linear-gradient(#ff7b7b,#e0414f); } #xpfill { background:linear-gradient(#ffe27a,#f0b21c); }
+  #hpfill { background:linear-gradient(#ff7b7b,#e0414f); }
+  .gauge.sp { height:12px; } .gauge.sp span { font-size:10px; line-height:9px; }
+  #spfill { background:linear-gradient(#ffc070,#e8792a); width:0; }   /* 직업 게이지: 검사 용기 · 궁수 집중 · 마법사 정신력 · 탱커 분노 */
+  #spfill.bow { background:linear-gradient(#9ff0b8,#2fae62); } #spfill.mage { background:linear-gradient(#9ec9ff,#3a6fe0); } #spfill.tank { background:linear-gradient(#ff8a8a,#a3242f); } #xpfill { background:linear-gradient(#ffe27a,#f0b21c); }
   .gauge span { position:absolute; inset:0; text-align:center; color:#fff; font-family:Fredoka,sans-serif; font-size:14px; line-height:16px; text-shadow:0 1px 2px #000; }
   .gauge.xp span { font-size:11px; line-height:11px; }
+  #xptxt { display:none; }   /* 경험치 %는 능력치 창(C)에서만 */
   .stat { display:flex; flex-direction:column; align-items:center; font-size:12px; color:var(--ink2); line-height:1.1; min-width:44px; }
   .stat b { font-family:Fredoka,sans-serif; font-size:19px; color:var(--ink); font-weight:600; }
   .stat img { width:22px; height:22px; }
@@ -284,6 +289,44 @@
   #ench-txt small { display:block; font-size:16px; color:#ffd9a0; margin-top:4px; }
   #ench-txt .good { font-weight:normal; color:#ffe46b; font-size:34px; } #ench-txt .bad { font-weight:normal; color:#ff8080; font-size:34px; }
 
+  /* 컴퓨터: 리니지처럼 화면 아래를 꽉 채우는 정보창 (왼쪽 상태 · 가운데 알림 기록 · 오른쪽 단축키와 메뉴) */
+  .pstat, .pbtns { display:contents; } #plog { display:none; }
+  @media (min-width:761px) and (min-height:521px) {
+    :root { --dock:160px; }
+    #bar { left:0; right:0; bottom:14px; transform:none; width:auto; height:calc(var(--dock) - 14px); border-radius:0; border:0 solid transparent; padding:16px 92px 14px; gap:14px; align-items:stretch;
+      background:#2a1c3c; box-shadow:0 -4px 14px rgba(0,0,0,.45);
+      border-image:url(img/ui-dock.png?v=2) 12 130 14 130 fill / 8px 90px 10px 90px stretch; }   /* 금테·단청 틀 그림 (양 끝 장식, 가운데는 늘어남) */
+    #bar.drop { background:linear-gradient(#5a4a1a,#2e2410); }
+    #bar .pstat { display:flex; flex-wrap:wrap; align-content:center; gap:8px 10px; width:min(290px, 26vw); flex:none; }
+    #bar #lvbox { width:58px; height:58px; } #bar #lv { font-size:24px; } #bar #lvbox small { font-size:12px; }
+    #bar .bars { flex:1 1 calc(100% - 70px); gap:6px; }
+    #bar .gauge { height:24px; border-color:#0d0a14; } #bar .gauge span { font-size:15px; line-height:20px; }
+    #bar .gauge.sp { height:18px; } #bar .gauge.sp span { font-size:12px; line-height:15px; }
+    /* 경험치: 리니지처럼 화면 맨 아래 전체 너비 */
+    #bar .gauge.xp { position:fixed; left:0; right:0; bottom:0; height:14px; border:0; border-top:2px solid #0d0a14; border-radius:0; background:#241b2c; }
+    #bar .gauge.xp span { font-size:11px; line-height:12px; }
+    #pmini { flex:none; width:196px; }
+    #miniwrap { top:auto; right:calc(92px + 266px + 14px); bottom:calc(14px + 14px); width:196px; z-index:2; }
+    #miniring { width:196px; height:calc(var(--dock) - 14px - 30px); }
+    #mini { border-radius:6px; border:2px solid #c9a24a; box-sizing:border-box; box-shadow:inset 0 0 8px rgba(0,0,0,.5); }
+    #topinfo { position:fixed; top:12px; left:50%; right:auto; transform:translateX(-50%); width:auto; min-width:0; justify-content:center; gap:12px; padding:5px 20px 3px; background:rgba(22,16,34,.55); border-color:rgba(201,162,74,.7); box-shadow:none; backdrop-filter:blur(2px); }   /* 지역 이름: 화면 가운데 위 */
+    #topinfo .chip { text-align:center; font-size:19px; }
+    .mbtn { width:22px; height:22px; font-size:15px; border-width:1px; } #m-in { right:4px; top:4px; bottom:auto; } #m-out { right:4px; top:28px; bottom:auto; }
+    #m-big { left:4px; top:4px; bottom:auto; height:20px; font-size:11px; padding:1px 6px 0; }
+    #bar .stat { flex-direction:row; align-items:center; gap:7px; padding:3px 12px 2px; border-radius:10px; background:rgba(255,255,255,.07); border:1px solid rgba(201,162,74,.6); color:#c9b98a; font-size:14px; }
+    #bar .stat b { color:#ffe9a8; font-size:19px; } #bar .stat img { width:20px; height:20px; }
+    #plog { display:flex; flex-direction:column; flex:1; min-width:180px; overflow-y:auto; padding:6px 12px; border-radius:10px; background:rgba(0,0,0,.35); border:2px solid #4a3d24; scrollbar-width:thin; scrollbar-color:#6a5a34 transparent; }
+    #plog .ln { font-size:15px; line-height:1.45; color:#f1ecff; word-break:keep-all; }
+    #plog .ln:first-child { margin-top:auto; }
+    #plog b { font-weight:normal; color:#ffe27a; } #plog .warn { color:#ffb3b3; } #plog .item b { color:#9fffb4; } #plog .boss { color:#ffcf5a; } #plog .sys { color:#cfe6ff; } #plog .dim { color:#b8b0cc; }
+    #log { display:none; }
+    #bar .pbtns { display:grid; grid-template-columns:repeat(4, 62px); grid-auto-rows:1fr; gap:6px; flex:none; }
+    #bar .bbtn { width:auto; min-width:0; height:auto; border:0 solid transparent; border-radius:12px; background:none; border-image:url(img/ui-slot.png?v=2) 36 fill / 10px stretch; color:#ffe9a8; font-size:13px; }
+    #bar .bbtn:hover { filter:brightness(1.25); }
+    #bar .bbtn kbd { color:#c9a24a; left:10px; top:7px; } #bar .bbtn .n { color:#fff; text-shadow:0 1px 2px #000; right:10px; bottom:7px; font-size:12px; }   /* 금테 안쪽으로 */
+    #bar .bbtn { padding:10px 8px; gap:0; } #bar .bbtn img { width:26px; height:26px; } #bar .bbtn svg { width:20px; height:20px; }
+    .win { max-height:calc(100% - var(--dock) - 80px); }
+  }
   @media (max-width:760px), (max-height:520px) {
     .topbar a .t, .topbar button .t { display:none; }
     .bbtn { min-width:44px; height:46px; font-size:0; } .bbtn kbd { display:none; }
@@ -347,13 +390,19 @@
   <div id="log"></div>
   <div id="bar">
     <div id="buffs"></div>
+    <div class="pstat">
     <div id="lvbox"><small>Lv</small><span id="lv">1</span></div>
     <div class="bars">
       <div class="gauge"><i id="hpfill"></i><span id="hptxt">30 / 30</span></div>
+      <div class="gauge sp"><i id="spfill"></i><span id="sptxt">용기</span></div>
       <div class="gauge xp"><i id="xpfill"></i><span id="xptxt">0%</span></div>
     </div>
     <div class="stat"><span>AC</span><b id="acv">10</b></div>
     <div class="stat hide-s coinstat"><img src="img/i-coin.png" alt=""><b id="coins">0</b></div>
+    </div>
+    <div id="plog"></div>
+    <div id="pmini"></div>
+    <div class="pbtns">
     <button class="bbtn qs" data-k="0" type="button"><kbd>1</kbd><img alt=""><span class="n"></span><span class="bt"></span></button>
     <button class="bbtn qs" data-k="1" type="button"><kbd>2</kbd><img alt=""><span class="n"></span><span class="bt"></span></button>
     <button class="bbtn qs" data-k="2" type="button"><kbd>3</kbd><img alt=""><span class="n"></span><span class="bt"></span></button>
@@ -362,6 +411,7 @@
     <button class="bbtn" id="b-char" type="button" title="능력치 (C)"><kbd>C</kbd><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>능력치</button>
 
     <button class="bbtn" id="b-snd" type="button" title="효과음 켜기/끄기"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="w" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>소리</button>
+    </div>
   </div>
 </div>
 <div id="banner"></div>
