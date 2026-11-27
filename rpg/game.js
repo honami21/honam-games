@@ -746,7 +746,7 @@ function gateOK(nx, ny) {
 }
 
 /* ================= 플레이어 조작 ================= */
-let tgt = null, moveGoal = null, moveGoalPt = null, goalKey = '', planT = 0, held = false, auto = false, pending = 0, pointer = { x: 0, y: 0, down: false, onMon: null, drag: false };
+let goalTry = 0, tgt = null, moveGoal = null, moveGoalPt = null, goalKey = '', planT = 0, held = false, auto = false, pending = 0, pointer = { x: 0, y: 0, down: false, onMon: null, drag: false };
 // 관리자 모드: 이 기기에서 포인트 없이 사냥 시간 무한
 function isAdmin() { try { return localStorage.getItem('rpg-admin') === '1'; } catch (e) { return false; } }
 // 초록 물약: 걷기 1.33배, 공격 1.33배 빠르게
@@ -853,11 +853,11 @@ function playerThink(dt) {
   }
   if (moveGoal) {
     const key = moveGoal + '|' + moveGoalPt;
-    if (key !== goalKey && planT <= 0) { goalKey = key; planT = .1; if (!planGlide(p, moveGoal[0], moveGoal[1], false, moveGoalPt) && !pointer.down) moveGoal = null; return; }
+    if (key !== goalKey && planT <= 0) { goalKey = key; goalTry = 0; planT = .1; if (!planGlide(p, moveGoal[0], moveGoal[1], false, moveGoalPt) && !pointer.down) moveGoal = null; return; }
     if (!p.moving && key === goalKey) {
       const end = moveGoalPt || [moveGoal[0] * CELL + CELL / 2, moveGoal[1] * CELL + CELL / 2];
       if (Math.hypot(end[0] - p.px, end[1] - p.py) < 3 || (p.x === moveGoal[0] && p.y === moveGoal[1] && !moveGoalPt)) { if (!pointer.down) moveGoal = null; return; }
-      if (planT <= 0) { planT = .3; if (!planGlide(p, moveGoal[0], moveGoal[1], false, moveGoalPt) && !pointer.down) moveGoal = null; }
+      if (planT <= 0) { planT = .3; if ((++goalTry > 3 || !planGlide(p, moveGoal[0], moveGoal[1], false, moveGoalPt)) && !pointer.down) { moveGoal = null; goalTry = 0; } }   // 더 못 가면 그만
     }
   } else if (p.moving && !atkAnim) { /* 목표가 없어지면 그 자리에 멈춰요 */ p.glide = null; p.moving = false; }
 }
@@ -1729,10 +1729,10 @@ function miniDots(x, sc, ox, oy, big, meOnly) {   // sc: 칸 → 화면 픽셀, 
       x.beginPath(); x.moveTo(px, py - 6 * r0); x.lineTo(px + 6 * r0, py); x.lineTo(px, py + 6 * r0); x.lineTo(px - 6 * r0, py); x.closePath(); x.fill(); x.stroke();
     }
   }
-  if (moveGoal && !meOnly) { const [gx, gy] = P2(moveGoal[0], moveGoal[1]); x.strokeStyle = '#fff'; x.lineWidth = 2; x.beginPath(); x.arc(gx, gy, 5 * r0, 0, 7); x.stroke(); }
+  if (moveGoal && !meOnly && player.moving) { const [gx, gy] = moveGoalPt ? [ox + moveGoalPt[0] / CELL * sc, oy + moveGoalPt[1] / CELL * sc] : P2(moveGoal[0], moveGoal[1]); /* 걷는 동안만 목적지 표시 */ x.strokeStyle = '#fff'; x.lineWidth = 2; x.beginPath(); x.arc(gx, gy, 5 * r0, 0, 7); x.stroke(); }
   // 나 = 금색 화살표 (걷는 쪽을 가리켜요). 섬 지도에서는 빨간 핀으로 따로
   if (big) return;
-  const [px, py] = P2(player.x, player.y), ang = Math.atan2(player.mdy || 0, player.mdx ?? player.face), k = 1.25 * r0;
+  const px = ox + player.px / CELL * sc, py = oy + player.py / CELL * sc, ang = Math.atan2(player.mdy || 0, player.mdx ?? player.face), k = 1.25 * r0;
   x.save(); x.translate(px, py); x.rotate(ang); x.shadowColor = 'rgba(0,0,0,.6)'; x.shadowBlur = 4;
   x.fillStyle = '#ffd23e'; x.strokeStyle = '#4a2c00'; x.lineWidth = 1.6;
   x.beginPath(); x.moveTo(9 * k, 0); x.lineTo(-6 * k, -6.5 * k); x.lineTo(-2.5 * k, 0); x.lineTo(-6 * k, 6.5 * k); x.closePath(); x.fill(); x.stroke(); x.restore();

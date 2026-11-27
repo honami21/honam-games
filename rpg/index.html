@@ -123,7 +123,7 @@
   #lvbox { width:54px; height:54px; flex:none; border-radius:50%; background:var(--sun); border:3px solid var(--line); display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1; }
   #lvbox small { font-size:11px; } #lv { font-family:Fredoka,sans-serif; font-size:22px; }
   /* 레벨: 단축키 칸과 같은 금테 그림, 한 줄로 "Lv 12" */
-  #bar #lvbox { flex-direction:row; align-items:baseline; justify-content:center; gap:5px; border-radius:12px; background:none; border:0 solid transparent; border-image:url(img/ui-slot.png?v=2) 36 fill / 9px stretch; color:#c9a24a; line-height:1; padding:0 10px; box-sizing:border-box; }
+  #bar #lvbox { flex-direction:row; align-items:center; justify-content:center; gap:6px; border-radius:0; background:none; border:0; color:#c9a24a; line-height:1; padding:0 4px; box-sizing:border-box; }   /* 테두리 없이 한 줄 "Lv 12" */
   #bar #lvbox small { color:#c9a24a; } #bar #lv { color:#ffe9a8; text-shadow:0 1px 2px #000; font-weight:600; }
   .bars { flex:1; display:flex; flex-direction:column; gap:5px; min-width:120px; }
   .gauge { position:relative; height:20px; border-radius:10px; background:#3a2b33; overflow:hidden; border:2px solid var(--line); }
@@ -301,8 +301,8 @@
       border-image:url(img/ui-dock.png?v=2) 12 130 14 130 fill / 8px 90px 10px 90px stretch; }   /* 금테·단청 틀 그림 (양 끝 장식, 가운데는 늘어남) */
     #bar.drop { background:linear-gradient(#5a4a1a,#2e2410); }
     #bar .pstat { display:flex; flex-wrap:wrap; align-content:center; gap:8px 10px; width:min(290px, 26vw); flex:none; }
-    #bar #lvbox { width:auto; min-width:86px; height:58px; padding:0 14px; } #bar #lv { font-size:24px; } #bar #lvbox small { font-size:15px; }
-    #bar .bars { flex:1 1 calc(100% - 100px); gap:6px; }
+    #bar #lvbox { width:auto; min-width:78px; height:58px; } #bar #lv { font-size:28px; } #bar #lvbox small { font-size:17px; }
+    #bar .bars { flex:1 1 calc(100% - 92px); gap:6px; }
     #bar .gauge { height:24px; border-color:#0d0a14; } #bar .gauge span { font-size:15px; line-height:20px; }
     #bar .gauge.sp { height:18px; } #bar .gauge.sp span { font-size:12px; line-height:15px; }
     /* 경험치: 리니지처럼 화면 맨 아래 전체 너비 */
