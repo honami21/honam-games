@@ -1124,7 +1124,7 @@ function renderQuick() {
     if (im.getAttribute('src') !== src) { if (src) im.setAttribute('src', src); else im.removeAttribute('src'); }
     b.querySelector('.n').textContent = id ? n : '';
     b.title = id ? `${ITEMS[id].name} (${k + 1})` : `빈 칸 (${k + 1}) · 눌러서 아이템 넣기`;
-    const on = id === 'haste' && hasted(); b.classList.toggle('on', on); b.querySelector('.bt').textContent = on ? fmtTime(P.haste) : '';
+    const on = id === 'haste' && hasted(); b.classList.toggle('on', on); b.querySelector('.bt').textContent = '';   // 남은 시간은 왼쪽 위 버프 아이콘에만
   });
 }
 // 받은 버프: 상태창 왼쪽 위에 그림과 남은 시간 (새 버프는 BUFFS에 한 줄 추가)
@@ -1702,9 +1702,9 @@ function buildMini() {
   x.fillStyle = gr; x.fillRect(0, 0, W, H);
   miniBase = c; bigBase = null;
 }
-function miniDots(x, sc, ox, oy, big) {   // sc: 칸 → 화면 픽셀, ox/oy: 칸 0,0 의 화면 위치
+function miniDots(x, sc, ox, oy, big, meOnly) {   // sc: 칸 → 화면 픽셀, ox/oy: 칸 0,0 의 화면 위치
   const P2 = (cx, cy) => [ox + (cx + .5) * sc, oy + (cy + .5) * sc], r0 = big ? 1.4 : 1;
-  for (const u of units) {
+  if (!meOnly) for (const u of units) {
     if (u.kind === 'mon' && !u.dying) {
       const [px, py] = P2(u.x, u.y);
       if (u.d.boss) { x.fillStyle = '#ff3b3b'; x.strokeStyle = '#fff'; x.lineWidth = 2; x.beginPath(); x.arc(px, py, 6 * r0, 0, 7); x.fill(); x.stroke(); }
@@ -1715,7 +1715,7 @@ function miniDots(x, sc, ox, oy, big) {   // sc: 칸 → 화면 픽셀, ox/oy: �
       x.beginPath(); x.moveTo(px, py - 6 * r0); x.lineTo(px + 6 * r0, py); x.lineTo(px, py + 6 * r0); x.lineTo(px - 6 * r0, py); x.closePath(); x.fill(); x.stroke();
     }
   }
-  if (moveGoal) { const [gx, gy] = P2(moveGoal[0], moveGoal[1]); x.strokeStyle = '#fff'; x.lineWidth = 2; x.beginPath(); x.arc(gx, gy, 5 * r0, 0, 7); x.stroke(); }
+  if (moveGoal && !meOnly) { const [gx, gy] = P2(moveGoal[0], moveGoal[1]); x.strokeStyle = '#fff'; x.lineWidth = 2; x.beginPath(); x.arc(gx, gy, 5 * r0, 0, 7); x.stroke(); }
   // 나 = 금색 화살표 (걷는 쪽을 가리켜요)
   const [px, py] = P2(player.x, player.y), ang = Math.atan2(player.mdy || 0, player.mdx ?? player.face), k = 1.25 * r0;
   x.save(); x.translate(px, py); x.rotate(ang); x.shadowColor = 'rgba(0,0,0,.6)'; x.shadowBlur = 4;
@@ -1807,15 +1807,18 @@ function drawBig() {
   const art = IMG[WORLD.map]; if (!art && !bigBase) buildBig();
   const x = bc.getContext('2d'); x.imageSmoothingQuality = 'high'; x.drawImage(art || bigBase, 0, 0, W, H);
   const sc = W / M.w;
+  miniDots(x, sc, 0, 0, true);   // 점을 먼저, 이름 띠를 위에 (글씨가 가려지지 않게)
   // 지역 이름
   x.font = `600 ${Math.round(W / 46)}px "Gowun Dodum",sans-serif`; x.textAlign = 'center'; x.lineWidth = 4; x.lineJoin = 'round';
   for (const z of ZONES) {
     if (z.id === 'beach') continue; const cs = M.zcells[z.id]; if (!cs || !cs.length) continue;
     let sx = 0, sy = 0; for (const i of cs) { sx += i % M.w; sy += Math.floor(i / M.w); }
     let lx = sx / cs.length, ly = sy / cs.length; if (z.at) [lx, ly] = [z.at[0] * M.w, z.at[1] * M.h - 6]; if (z.town) ly -= 10;
-    const nm = z.name.replace('도깨비섬 ', ''); x.strokeStyle = 'rgba(0,0,0,.7)'; x.fillStyle = '#fff6d8'; x.strokeText(nm, lx * sc, ly * sc); x.fillText(nm, lx * sc, ly * sc);
+    const nm = z.name.replace('도깨비섬 ', ''), fs = Math.round(W / 46), tw = x.measureText(nm).width, bx = lx * sc - tw / 2 - fs * .5, by = ly * sc - fs * 1.05, bw = tw + fs, bh = fs * 1.45;
+    x.fillStyle = 'rgba(30,20,40,.72)'; x.beginPath(); x.roundRect(bx, by, bw, bh, bh / 2); x.fill(); x.strokeStyle = 'rgba(232,194,100,.9)'; x.lineWidth = 1.5; x.stroke();
+    x.fillStyle = '#fff6d8'; x.fillText(nm, lx * sc, ly * sc);
   }
-  miniDots(x, sc, 0, 0, true);
+  miniDots(x, sc, 0, 0, true, true);   // 내 위치 화살표는 맨 위에
 }
 function setMiniZ(d) { miniZ = clamp(miniZ + d, 0, MINI_R.length - 1); try { localStorage.setItem('rpg-miniz', miniZ); } catch (e) {} miniT = 0; SND.ui(); }
 function toggleBig(on) { const b = $('bigmap'); b.classList.toggle('hidden', on === undefined ? !b.classList.contains('hidden') : !on); miniT = 0; }
