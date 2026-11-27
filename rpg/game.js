@@ -384,6 +384,14 @@ function buildWorld() {
     placeProp('mt-dungeon', ddx + 1, ddy, 1); M.dungeon = [ddx - 1, ddy + 1]; keepClear(ddx - 3, ddy - 1, ddx + 1, ddy + 3);
     const spots = []; for (let y = 1, ry = 0; y < H - 1; y += 3, ry++) for (let x = 1 + (ry % 2) * 2; x < W - 1; x += 4) { const i = idx(x, y); if (mtnCore[i] && !M.road[i] && !M.water[i] && !M.keep[i]) spots.push([x + Math.round((R() - .5) * 2), y]); }
     for (const [x, y] of spots) { const e = segD(x, y, ridge); placeProp(e < 7 ? (R() < .55 ? 'mt-peak1' : 'mt-peak2') : (R() < .5 ? 'mt-peak2' : 'mt-cliff'), x, y, 1); }
+    // 못 지나가는 산 칸은 모두 산 그림으로 덮여야 해요 (빈 땅처럼 보이는데 막힌 곳이 없게)
+    const mts = M.props.filter(q => q.name.startsWith('mt-') && q.name !== 'mt-pass');
+    const covered = (cx2, cy2) => { const px = (cx2 + .5) * CELL, py = (cy2 + .5) * CELL; return mts.some(q => Math.abs(q.x - px) < q.w * .36 && py <= q.y + 4 && py >= q.y - q.h * .62); };
+    for (let y = H - 2; y > 0; y--) for (let x = 1; x < W - 1; x++) {
+      const i = idx(x, y); if (!M.block[i] || !mtnCore[i] || M.water[i] || covered(x, y)) continue;
+      const nm = segD(x, y, ridge) < 7 ? 'mt-peak1' : (R() < .6 ? 'mt-peak2' : 'mt-cliff');
+      if (placeProp(nm, x, y + 1, 1)) mts.push(M.props[M.props.length - 1]);
+    }
   }
   // 9) 선착장: 서쪽 바닷가에서 바다로 (나중에 배를 타고 새 섬으로)
   { let [px, py] = dockRoad[dockRoad.length - 2]; const [qx, qy] = dockRoad[dockRoad.length - 3]; const L = Math.hypot(px - qx, py - qy), ux = (px - qx) / L, uy = (py - qy) / L;
