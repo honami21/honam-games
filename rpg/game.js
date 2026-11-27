@@ -478,7 +478,7 @@ function enterWorld() {
   cam.x = player.px; cam.y = player.py;
   resetControl(); setZone(zoneAt(player.x, player.y), true);
 }
-function resetControl() { tgt = null; moveGoal = null; moveGoalPt = null; held = false; auto = false; pending = 0; player.path = null; player.glide = null; player.moving = false; }
+function resetControl() { tq = []; tgt = null; moveGoal = null; moveGoalPt = null; held = false; auto = false; pending = 0; player.path = null; player.glide = null; player.moving = false; }
 // 지역(리스폰 지점)으로 순간 이동
 function teleport(id) {
   const z = ZONE[id], spot = findFree(...z.spawn); if (!spot) return;
@@ -760,7 +760,7 @@ function gateOK(nx, ny) {
 }
 
 /* ================= 플레이어 조작 ================= */
-let goalTry = 0, tgt = null, moveGoal = null, moveGoalPt = null, goalKey = '', planT = 0, held = false, auto = false, pending = 0, pointer = { x: 0, y: 0, down: false, onMon: null, drag: false };
+let tq = [], goalTry = 0, tgt = null, moveGoal = null, moveGoalPt = null, goalKey = '', planT = 0, held = false, auto = false, pending = 0, pointer = { x: 0, y: 0, down: false, onMon: null, drag: false };
 // 관리자 모드: 이 기기에서 포인트 없이 사냥 시간 무한
 function isAdmin() { try { return localStorage.getItem('rpg-admin') === '1'; } catch (e) { return false; } }
 // 초록 물약: 걷기 1.33배, 공격 1.33배 빠르게
@@ -800,10 +800,27 @@ function onDown(e) {
   if (npc) { tgt = npc; moveGoal = null; held = false; auto = false; pending = 0; pointer.onMon = null; return; }
   const m = unitAt(wx, wy, ['mon']);
   // 몬스터를 한 번 누르면 쓰러질 때까지 자동으로 공격해요 (컴퓨터·휴대폰 같음)
+  // 싸우는 중에 쉬프트+클릭: 지금 몬스터를 잡은 뒤 차례로 잡을 몬스터 예약 (최대 3마리, 다시 누르면 취소)
+  const fighting = m && tgt && tgt.kind === 'mon' && auto && m !== tgt;
+  if (fighting && e.shiftKey) { pointer.down = false; toggleQueue(m); return; }
+  // 휴대폰: 싸우는 중 다른 몬스터를 꾹 누르면 예약, 톡 누르면 그 몬스터로 바꾸기
+  if (fighting && e.pointerType === 'touch') {
+    const sx = e.clientX, sy = e.clientY;
+    lp = { m, sx, sy, t: setTimeout(() => { if (!lp) return; lp = null; pointer.down = false; toggleQueue(m); try { navigator.vibrate && navigator.vibrate(30); } catch (er) {} }, 450) };
+    return;
+  }
+  tq = [];
   if (m) { tgt = m; moveGoal = null; held = false; auto = true; pending = 0; pointer.onMon = m; return; }
   // 땅: 그쪽으로 걸어가기 (누르고 있으면 계속 따라감)
   tgt = null; auto = false; held = false; pending = 0; pointer.onMon = null;
   setGoal(wx, wy);
+}
+let lp = null;   // 꾹 누르기 기다리는 중
+function toggleQueue(m) {
+  const i = tq.indexOf(m);
+  if (i >= 0) { tq.splice(i, 1); log(`<b>${josa(m.d.name, '을를')}</b> 예약에서 뺐어요`, 'sys'); }
+  else if (tq.length < 3) { tq.push(m); log(`다음에 <b>${josa(m.d.name, '을를')}</b> 잡아요 <span class="dim">(예약 ${tq.length}/3)</span>`, 'sys'); }
+  else log('예약은 3마리까지예요', 'warn');
 }
 function setGoal(wx, wy) {
   const cx = clamp(Math.floor(wx / CELL), 0, M.w - 1), cy = clamp(Math.floor(wy / CELL), 0, M.h - 1);
@@ -811,6 +828,7 @@ function setGoal(wx, wy) {
 }
 function onMove(e) {
   pointer.x = e.clientX; pointer.y = e.clientY;
+  if (lp && Math.hypot(e.clientX - lp.sx, e.clientY - lp.sy) > 14) { clearTimeout(lp.t); lp = null; }   // 끌면 꾹 누르기 취소
   if (!M) return;
   if (pointer.drag) { $('bar').classList.toggle('drop', overBar(e.clientX, e.clientY)); return; }
   if (pointer.down && !tgt) { const [wx, wy] = screenToWorld(e.clientX, e.clientY); setGoal(wx, wy); }
@@ -820,6 +838,7 @@ function onMove(e) {
 }
 function overBar(x, y) { const r = $('bar').getBoundingClientRect(); return y >= r.top - 6 && x >= r.left && x <= r.right; }
 function onUp(e) {
+  if (lp) { const m = lp.m; clearTimeout(lp.t); lp = null; tq = []; if (!m.dying && units.includes(m)) { tgt = m; moveGoal = null; held = false; auto = true; pending = 0; } pointer.down = false; return; }   // 짧게 톡: 그 몬스터로 바꾸기
   if (!pointer.down) return;
   pointer.down = false;
   if (pointer.drag) {
@@ -850,7 +869,11 @@ function playerThink(dt) {
   if (dead) return;
   const p = player;
   planT -= dt;
-  if (tgt && (tgt.dead || tgt.dying || !units.includes(tgt))) { tgt = null; auto = false; held = false; pending = 0; }
+  if (tgt && (tgt.dead || tgt.dying || !units.includes(tgt))) {
+    const was = tgt.kind === 'mon' && auto; tq = tq.filter(u => !u.dead && !u.dying && units.includes(u));
+    if (was && tq.length) { tgt = tq.shift(); auto = true; held = false; pending = 0; }   // 예약한 다음 몬스터로
+    else { tgt = null; auto = false; held = false; pending = 0; tq = []; }
+  }
   const settle = () => { const c = [p.x * CELL + CELL / 2, p.y * CELL + CELL / 2]; if (Math.hypot(c[0] - p.px, c[1] - p.py) > 1) { p.glide = [c]; return false; } p.glide = null; return true; };
   if (tgt && tgt.kind === 'npc') {
     if (cheb(p.x, p.y, tgt.x, tgt.y) <= 1) { if (settle()) { faceTo(p, tgt); talk(tgt); } return; }
@@ -1549,7 +1572,8 @@ function drawMon(m) {
     g.fillStyle = 'rgba(20,14,30,.75)'; g.fillRect(bx - 2, by - 2, bw + 4, 9);
     g.fillStyle = d.boss ? '#ff5d7a' : '#ff6b5b'; g.fillRect(bx, by, bw * Math.max(0, m.hp) / d.hp, 5);
   }
-  if (!m.dying && (m === tgt || d.boss || d.rare || m === hoverMon)) nameTag(d.name + ' Lv ' + d.lv + (m === tgt && auto ? ' · 자동' : ''), x, y + 24, d.boss || d.rare ? '#ffcf5a' : m === tgt && auto ? '#ffcf3e' : '#fff');
+  const qi = tq.indexOf(m);
+  if (!m.dying && (m === tgt || d.boss || d.rare || m === hoverMon || qi >= 0)) nameTag(d.name + ' Lv ' + d.lv + (m === tgt && auto ? ' · 자동' : qi >= 0 ? ' · 다음 ' + (qi + 1) : ''), x, y + 24, qi >= 0 ? '#9fd8ff' : d.boss || d.rare ? '#ffcf5a' : m === tgt && auto ? '#ffcf3e' : '#fff');
 }
 function jobTag(t, x, y) {
   g.font = '12px "Do Hyeon", sans-serif'; g.textAlign = 'center'; g.lineJoin = 'round'; g.lineWidth = 3; g.strokeStyle = 'rgba(20,14,40,.85)'; g.strokeText(t, x, y); g.fillStyle = '#fff'; g.fillText(t, x, y);
