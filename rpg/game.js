@@ -373,8 +373,8 @@ function buildWorld() {
       while (x0 > 0 && M.stream[idx(x0 - 1, by)]) x0--; while (x1 < W - 1 && M.stream[idx(x1 + 1, by)]) x1++;
       row = []; for (let x = x0; x <= x1; x++) { const i = idx(x, by); M.block[i] = 0; M.keep[i] = 1; row.push([x, by]); }
       // 나무 다리 한 장을 강 폭(양쪽 땅 한 칸씩 포함)에 맞춰 놓아요
-      const mx = (x0 + x1) / 2; placeProp('l-bridge', Math.round(mx), by, 1); const f = M.flats[M.flats.length - 1];
-      if (f) { const k = (x1 - x0 + 2.4) * CELL / f.w; f.w *= k; f.h *= k; f.x = (mx + .5) * CELL; f.y = (by + .5) * CELL + f.h * .6; }
+      const mx = (x0 + x1) / 2; placeProp('l-bridge2', Math.round(mx), by, 1); const f = M.flats[M.flats.length - 1];
+      if (f) { const k = (x1 - x0 + 3.2) * CELL / f.w; f.w *= k; f.h *= k; f.x = (mx + .5) * CELL; f.y = (by + .5) * CELL + f.h * .5; }
     }
     // 강가 갈대
     const R2 = seeded(9); for (let k = 0, t = 0; k < 60 && t < 4000; t++) { const i = Math.floor(R2() * N); if (M.water[i] || M.keep[i]) continue; if (M.stream[i + 1] || M.stream[i - 1] || M.stream[i + 2] || M.stream[i - 2]) { if (placeProp('l-reed', i % W, Math.floor(i / W))) k++; } }
@@ -1053,6 +1053,9 @@ function log(html, cls = '') {
   const box = $('log'); const d = document.createElement('div'); d.className = 'ln ' + cls; d.innerHTML = html; box.appendChild(d);
   while (box.children.length > 4) box.firstChild.remove();
   setTimeout(() => d.classList.add('old'), 4000); setTimeout(() => d.remove(), 5200);
+  // 컴퓨터 아래 정보창의 알림 기록 (최근 40줄, 맨 아래가 최신)
+  const pl = $('plog'); const e = document.createElement('div'); e.className = 'ln ' + cls; e.innerHTML = html; pl.appendChild(e);
+  while (pl.children.length > 40) pl.firstChild.remove(); pl.scrollTop = pl.scrollHeight;
 }
 
 /* ================= 가방·장비 ================= */
@@ -1411,7 +1414,7 @@ function updateHUD() {
 
 /* ================= 그리기 ================= */
 function resize() {
-  VW = innerWidth; VH = innerHeight;
+  VW = innerWidth; VH = innerHeight - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dock')) || 0);   // 컴퓨터는 아래 정보창만큼 뺀 높이
   // 큰 화면에선 그리는 점 수를 약 220만 개로 제한해요 (모니터가 커도 부드럽게)
   DPR = Math.min(2, window.devicePixelRatio || 1, Math.sqrt(2.2e6 / (VW * VH)));
   cv.width = Math.round(VW * DPR); cv.height = Math.round(VH * DPR);

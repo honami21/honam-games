@@ -126,7 +126,7 @@ const PROPS = {
   'c-pine': { w: 150, fw: 1, fh: 1, sx: 0.82 }, 'c-rock': { w: 90, fw: 2, fh: 1 }, 'c-shells': { w: 46, fw: 0, fh: 0, flat: 1 },
   'c-dock': { w: 190, fw: 0, fh: 0, flat: 1 }, 'c-boat': { w: 150, fw: 2, fh: 1 }, 'c-lighthouse': { w: 130, fw: 2, fh: 1 },
   'c-cave': { w: 190, fw: 3, fh: 1 }, 'c-drift': { w: 72, fw: 2, fh: 1 },
-  'l-bridge': { w: 250, fw: 0, fh: 0, flat: 1 }, 'mt-peak1': { w: 300, fw: 4, fh: 2 }, 'mt-peak2': { w: 300, fw: 4, fh: 1 }, 'mt-cliff': { w: 250, fw: 4, fh: 1 }, 'mt-pass': { w: 330, fw: 0, fh: 0 }, 'mt-dungeon': { w: 250, fw: 4, fh: 2 }, 'l-cliff': { w: 170, fw: 3, fh: 1 }, 'l-wall': { w: 84, fw: 2, fh: 1 },
+  'l-bridge': { w: 250, fw: 0, fh: 0, flat: 1 }, 'l-bridge2': { w: 300, fw: 0, fh: 0, flat: 1 }, 'mt-peak1': { w: 300, fw: 4, fh: 2 }, 'mt-peak2': { w: 300, fw: 4, fh: 1 }, 'mt-cliff': { w: 250, fw: 4, fh: 1 }, 'mt-pass': { w: 330, fw: 0, fh: 0 }, 'mt-dungeon': { w: 250, fw: 4, fh: 2 }, 'l-cliff': { w: 170, fw: 3, fh: 1 }, 'l-wall': { w: 84, fw: 2, fh: 1 },
   'l-sign': { w: 44, fw: 1, fh: 1 }, 'l-stones': { w: 215, fw: 0, fh: 0, flat: 1 }, 'l-pine': { w: 170, fw: 2, fh: 1, sx: 0.82 },
   'l-pavilion': { w: 200, fw: 3, fh: 2 }, 'l-reed': { w: 58, fw: 1, fh: 1, sx: 0.7 },
 };
