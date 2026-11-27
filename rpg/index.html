@@ -103,7 +103,7 @@
   #bigmap.hidden { display:none; }
   .bm-box { position:relative; padding:12px; border-radius:18px; background:linear-gradient(#2b2338,#16111f); border:3px solid #c9a24a; box-shadow:0 8px 30px rgba(0,0,0,.6); }
   .bm-title { text-align:center; color:#ffd86b; font-size:20px; margin:-2px 0 8px; }
-  #bigcv { display:block; width:min(80vw, calc((100vh - 120px) * 1.28)); aspect-ratio:360/280; border-radius:10px; cursor:pointer; }
+  #bigcv { display:block; width:min(80vw, calc((100vh - 120px) * 1.333)); aspect-ratio:360/270; border-radius:10px; cursor:pointer; }
   #bm-x { position:static; display:block; margin:10px auto 0; width:auto; height:32px; border-radius:16px; padding:2px 16px 0; font-size:16px; }
   .chip { background:rgba(20,14,40,.68); color:#fff; border-radius:16px; padding:5px 14px 3px; font-size:18px; white-space:nowrap; }
   #htimeC { font-family:Fredoka,sans-serif; }
@@ -343,7 +343,7 @@
     <div id="miniring"><canvas id="mini" title="누르면 그곳으로 걸어가요"></canvas>
       <button class="mbtn" id="m-in" type="button" title="크게">+</button><button class="mbtn" id="m-out" type="button" title="작게">−</button><button class="mbtn" id="m-big" type="button" title="섬 지도 (M)">지도</button></div>
   </div>
-  <div id="bigmap" class="hidden"><div class="bm-box"><div class="bm-title">도깨비섬</div><canvas id="bigcv" title="누르면 그곳으로 걸어가요"></canvas><button class="mbtn" id="bm-x" type="button">닫기</button></div></div>
+  <div id="bigmap" class="hidden"><div class="bm-box"><div class="bm-title">도깨비섬</div><canvas id="bigcv"></canvas><button class="mbtn" id="bm-x" type="button">닫기</button></div></div>
   <div id="log"></div>
   <div id="bar">
     <div id="buffs"></div>

@@ -70,30 +70,28 @@ const MONS = {
 
 // 도깨비섬 (C안): 큰 섬 하나 + 가운데 남북 산맥. 서쪽에 마을·들판·논밭, 산맥 북쪽 고갯길을 넘으면 동쪽 대나무 골·깊은 대숲·안개 늪
 // 좌표는 0~1 비율 (가로 w, 세로 h 칸). 바닥은 초록 계열로 통일하고 지역은 장식으로 구분해요
-const WORLD = { w: 360, h: 280, town: [.3, .45] };
+const WORLD = { w: 360, h: 270, town: [.28, .42], map: 'world-map' };   // 섬 모양·강은 전체 지도 그림(world-map)에서 읽어요
 // tile: 바닥 그림, mons: [몬스터, 비율], count: 몬스터 수, at: 리스폰 지점(비율), seeds: 지역 씨앗(비율)
 const ZONES = [
   { id: 'town', name: '도깨비 마을', lv: '', tile: 'tile-town', town: true, color: '#c99b5e' },
-  { id: 'near', name: '마을 앞 들판', lv: '1~5', tile: 'tile-field', tier: 1, at: [.3, .3], seeds: [[.28, .27], [.37, .74]], count: 260,
+  { id: 'near', name: '마을 앞 들판', lv: '1~5', tile: 'tile-field', tier: 1, at: [.3, .27], seeds: [[.26, .22], [.38, .76], [.42, .5]], count: 260,
     mons: [['dust', 5], ['rat', 4]], drop: { w: .002, a: .004, gear: .004, coin: [1, 2] } },
-  { id: 'paddy', name: '허수아비 논밭', lv: '5~10', tile: 'tile-field', tier: 1, at: [.2, .64], seeds: [[.19, .62]], count: 190, boss: 'kscare',
+  { id: 'paddy', name: '허수아비 논밭', lv: '5~10', tile: 'tile-field', tier: 1, at: [.24, .6], seeds: [[.18, .6]], count: 190, boss: 'kscare',
     mons: [['rat', 3], ['acorn', 6], ['scare', 3]], drop: { w: .003, a: .006, gear: .006, coin: [2, 4] } },
-  { id: 'bamboo', name: '대나무 골', lv: '10~15', tile: 'tile-bamboo', tier: 2, at: [.68, .3], seeds: [[.73, .27]], count: 190,
+  { id: 'bamboo', name: '대나무 골', lv: '10~15', tile: 'tile-bamboo', tier: 2, at: [.7, .3], seeds: [[.76, .26]], count: 190,
     mons: [['shoot', 7], ['tanuki', 2]], drop: { w: .004, a: .008, gear: .004, coin: [3, 6] } },
-  { id: 'deep', name: '깊은 대숲', lv: '15~20', tile: 'tile-deep', tier: 2, at: [.8, .52], seeds: [[.8, .55]], count: 150, boss: 'general',
+  { id: 'deep', name: '깊은 대숲', lv: '15~20', tile: 'tile-deep', tier: 2, at: [.78, .52], seeds: [[.8, .54]], count: 150, boss: 'general',
     mons: [['tanuki', 1], ['bghost', 4], ['broom', 4]], drop: { w: .006, a: .012, gear: .006, coin: [5, 9] } },
-  { id: 'marsh', name: '안개 늪', lv: '', tile: 'tile-deep', tier: 2, seeds: [[.68, .8]] },
+  { id: 'marsh', name: '안개 늪', lv: '', tile: 'tile-deep', tier: 2, seeds: [[.68, .82]] },
   { id: 'mtn', name: '뿔바위 산맥', lv: '', tile: 'tile-rock', tier: 2 },
   { id: 'beach', name: '도깨비섬 바닷가', lv: '', tile: 'tile-sand', tier: 1 },
 ];
 const ZONE = Object.fromEntries(ZONES.map(z => [z.id, z]));
-// 섬 모양(해안선 꼭짓점), 작은 섬, 산맥 등줄기, 고갯길, 강
+// 산맥 등줄기, 고갯길, 던전 입구 (비율)
 const ISLE = {
-  coast: [[.14, .3], [.26, .14], [.44, .12], [.56, .2], [.7, .1], [.86, .18], [.92, .36], [.86, .5], [.92, .68], [.8, .86], [.6, .88], [.5, .78], [.38, .9], [.2, .84], [.1, .66], [.16, .52], [.08, .42]],
-  islets: [[[.02, .86], [.08, .84], [.1, .92], [.04, .94]], [[.94, .88], [.98, .86], [.99, .93], [.95, .94]], [[.62, .02], [.68, .01], [.69, .06], [.63, .07]]],
-  ridge: [[.43, .06], [.46, .2], [.5, .34], [.52, .46], [.55, .58], [.56, .7], [.53, .8], [.5, .9]],
-  pass: [.465, .235],
-  river: [[.49, .4], [.43, .5], [.44, .62], [.47, .74], [.47, .95]],
+  ridge: [[.44, .08], [.46, .2], [.5, .3], [.52, .4], [.54, .5], [.555, .6], [.565, .72]],
+  pass: [.5, .265],
+  dungeon: [.5, .52],
 };
 // 마을 순간이동 문 목록 (아직 안 연 곳은 준비 중)
 const REGIONS = [
@@ -128,7 +126,7 @@ const PROPS = {
   'c-pine': { w: 150, fw: 1, fh: 1, sx: 0.82 }, 'c-rock': { w: 90, fw: 2, fh: 1 }, 'c-shells': { w: 46, fw: 0, fh: 0, flat: 1 },
   'c-dock': { w: 190, fw: 0, fh: 0, flat: 1 }, 'c-boat': { w: 150, fw: 2, fh: 1 }, 'c-lighthouse': { w: 130, fw: 2, fh: 1 },
   'c-cave': { w: 190, fw: 3, fh: 1 }, 'c-drift': { w: 72, fw: 2, fh: 1 },
-  'l-bridge': { w: 250, fw: 0, fh: 0, flat: 1 }, 'l-cliff': { w: 170, fw: 3, fh: 1 }, 'l-wall': { w: 84, fw: 2, fh: 1 },
+  'l-bridge': { w: 250, fw: 0, fh: 0, flat: 1 }, 'mt-peak1': { w: 300, fw: 4, fh: 2 }, 'mt-peak2': { w: 300, fw: 4, fh: 1 }, 'mt-cliff': { w: 250, fw: 4, fh: 1 }, 'mt-pass': { w: 330, fw: 0, fh: 0 }, 'mt-dungeon': { w: 250, fw: 4, fh: 2 }, 'l-cliff': { w: 170, fw: 3, fh: 1 }, 'l-wall': { w: 84, fw: 2, fh: 1 },
   'l-sign': { w: 44, fw: 1, fh: 1 }, 'l-stones': { w: 215, fw: 0, fh: 0, flat: 1 }, 'l-pine': { w: 170, fw: 2, fh: 1, sx: 0.82 },
   'l-pavilion': { w: 200, fw: 3, fh: 2 }, 'l-reed': { w: 58, fw: 1, fh: 1, sx: 0.7 },
 };
