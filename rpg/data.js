@@ -65,6 +65,12 @@ const MONS = {
   tanuki:  { name: '너구리',        lv: 13, hp: 90,   ac: 0,  dmg: [6, 10],  exp: 18,   h: 30,  aggro: 1, step: .42 },
   bghost:  { name: '대나무 귀신',   lv: 16, hp: 120,  ac: -2, dmg: [8, 12],  exp: 24,   h: 39,  aggro: 1, step: .5 },
   broom:   { name: '몽당빗자루',    lv: 19, hp: 150,  ac: -4, dmg: [9, 14],  exp: 30,   h: 37,  aggro: 1, step: .45 },
+  kdust:   { name: '먼지 대왕',     lv: 6,  hp: 250,  ac: 6,  dmg: [4, 7],   exp: 120,  h: 58, aggro: 1, step: .5, boss: 1 },
+  tanuki2: { name: '둔갑 너구리',   lv: 17, hp: 1400, ac: -3, dmg: [11, 16], exp: 750,  h: 68, aggro: 1, step: .5, boss: 1 },
+  bonepup: { name: '뼈다귀 강아지', lv: 20, hp: 170,  ac: -4, dmg: [10, 15], exp: 34,   h: 30,  aggro: 1, step: .4 },
+  mongdal: { name: '몽달귀신',      lv: 22, hp: 200,  ac: -5, dmg: [11, 17], exp: 40,   h: 42,  aggro: 1, step: .5 },
+  skel:    { name: '해골 병사',     lv: 24, hp: 240,  ac: -7, dmg: [13, 19], exp: 48,   h: 42,  aggro: 1, step: .5 },
+  reaper:  { name: '저승사자',      lv: 28, hp: 4000, ac: -9, dmg: [20, 28], exp: 2500, h: 80, aggro: 1, step: .55, boss: 1 },
   general: { name: '대나무 장군',   lv: 22, hp: 2500, ac: -6, dmg: [15, 22], exp: 1500, h: 73, aggro: 1, step: .55, boss: 1 },
 };
 
@@ -74,15 +80,16 @@ const WORLD = { w: 360, h: 270, town: [.28, .42], map: 'world-map' };   // 섬 �
 // tile: 바닥 그림, mons: [몬스터, 비율], count: 몬스터 수, at: 리스폰 지점(비율), seeds: 지역 씨앗(비율)
 const ZONES = [
   { id: 'town', name: '도깨비 마을', lv: '', tile: 'tile-town', town: true, color: '#c99b5e' },
-  { id: 'near', name: '마을 앞 들판', lv: '1~5', tile: 'tile-field', tier: 1, at: [.3, .27], seeds: [[.26, .22], [.4, .26]], count: 200,
+  { id: 'near', name: '마을 앞 들판', lv: '1~5', tile: 'tile-field', tier: 1, at: [.3, .27], seeds: [[.26, .22], [.4, .26]], count: 200, boss: 'kdust',
     mons: [['dust', 5], ['rat', 4]], drop: { w: .002, a: .004, gear: .004, coin: [1, 2] } },
   { id: 'paddy', name: '허수아비 논밭', lv: '5~10', tile: 'tile-field', tier: 1, at: [.24, .6], seeds: [[.18, .6], [.38, .74], [.42, .52]], count: 330, boss: 'kscare',
     mons: [['rat', 3], ['acorn', 6], ['scare', 3]], drop: { w: .003, a: .006, gear: .006, coin: [2, 4] } },
-  { id: 'bamboo', name: '대나무 골', lv: '10~15', tile: 'tile-bamboo', tier: 2, at: [.7, .3], seeds: [[.76, .26], [.6, .18]], count: 225,
+  { id: 'bamboo', name: '대나무 골', lv: '10~15', tile: 'tile-bamboo', tier: 2, at: [.7, .3], seeds: [[.76, .26], [.6, .18]], count: 225, boss: 'tanuki2',
     mons: [['shoot', 7], ['tanuki', 2]], drop: { w: .004, a: .008, gear: .004, coin: [3, 6] } },
   { id: 'deep', name: '깊은 대숲', lv: '15~20', tile: 'tile-deep', tier: 2, at: [.78, .52], seeds: [[.8, .54], [.64, .44]], count: 175, boss: 'general',
     mons: [['tanuki', 1], ['bghost', 4], ['broom', 4]], drop: { w: .006, a: .012, gear: .006, coin: [5, 9] } },
-  { id: 'marsh', name: '안개 늪', lv: '', tile: 'tile-deep', tier: 2, seeds: [[.68, .82]] },
+  { id: 'marsh', name: '안개 늪', lv: '20~25', tile: 'tile-marsh', tier: 2, at: [.66, .8], seeds: [[.68, .82]], count: 160, boss: 'reaper',
+    mons: [['bonepup', 4], ['mongdal', 4], ['skel', 3]], drop: { w: .007, a: .014, gear: .007, coin: [6, 11] } },
   { id: 'mtn', name: '뿔바위 산맥', lv: '', tile: 'tile-rock', tier: 2 },
   { id: 'beach', name: '도깨비섬 바닷가', lv: '', tile: 'tile-sand', tier: 1 },
 ];
@@ -100,7 +107,7 @@ const REGIONS = [
   { id: 'paddy', name: '허수아비 논밭', lv: '5~10', open: true },
   { id: 'bamboo', name: '대나무 골', lv: '10~15', open: true },
   { id: 'deep', name: '깊은 대숲', lv: '15~20', open: true },
-  { id: 'marsh', name: '안개 늪', lv: '20~25' },
+  { id: 'marsh', name: '안개 늪', lv: '20~25', open: true },
   { id: 'cave', name: '뿔바위 산맥 던전', lv: '25~30' },
   { id: 'ship', name: '배 타고 새 섬으로', lv: '30~' },
 ];
