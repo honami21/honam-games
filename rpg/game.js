@@ -116,9 +116,16 @@ function newChar(str, dex, con, cls, name) {
 // 저장: 캐릭터 여러 명 { v: 2, chars: [캐릭터...], t } (예전 한 명 저장 v1도 읽어요)
 const MAX_CHARS = 4;
 let slot = 0;
+// 예전 장신구(우두머리별)는 직업별 장신구로 바꿔요
+function fixAcc(it, cls) { if (it && it.g === 'c' && !ACCS[it.k]) it.k = (/^ring/.test(it.k) ? 'ring_' : 'neck_') + (CLS_NAME[cls] ? cls : 'sword'); return it; }
+function fixAccs(d) {
+  for (const c of d.chars) { if (!c) continue; for (const k in c.eq || {}) fixAcc(c.eq[k], c.cls); (c.inv || []).forEach(it => fixAcc(it, c.cls)); }
+  if (d.store && d.store.items) d.store.items.forEach(it => fixAcc(it, 'sword'));
+  return d;
+}
 function normAll(d) {
-  if (d && d.v === 1) return { v: 2, chars: [d], t: d.t || 0 };
-  if (d && d.v === 2 && Array.isArray(d.chars)) return d;
+  if (d && d.v === 1) return fixAccs({ v: 2, chars: [d], t: d.t || 0 });
+  if (d && d.v === 2 && Array.isArray(d.chars)) return fixAccs(d);
   return { v: 2, chars: [], t: 0 };
 }
 function loadAll() { try { return normAll(JSON.parse(localStorage.getItem(SAVE_KEY) || 'null')); } catch (e) { return normAll(null); } }
@@ -191,7 +198,7 @@ function shortNum(n) { if (n < 10000) return n.toLocaleString(); if (n < 1e8) re
 const W_OF = () => P.eq.weapon ? WEAPONS[P.eq.weapon.k] : null;
 const isBow = () => !!P && P.cls === 'bow';
 const reach = () => { const w = W_OF(); return w && w.range || 1; };
-const HERO = () => isBow() ? '깨순이' : '깨비샘';
+const HERO = () => isBow() ? '궁수' : '검사';
 // 장신구가 더해 주는 능력치
 function accBonus(k) { let v = 0; for (const s of ['neck', 'ring']) { const it = P.eq[s]; if (it && it.g === 'c') v += ACCS[it.k][k] || 0; } return v; }
 const ST = k => P[k] + accBonus(k);
@@ -979,7 +986,7 @@ function dropLoot(m) {
   const gearOf = () => { const pool = [...Object.keys(ARMORS).filter(k => ARMORS[k].tier === tier).map(k => ({ g: 'a', k }))]; const it = pool[rnd(0, pool.length - 1)]; return { item: { g: it.g, k: it.k, en: 0 }, rare: 1 }; };
   if (m.d.boss) {
     bag.push(gearOf());
-    if (Math.random() < ACC_DROP) { const pool = Object.keys(ACCS).filter(k => ACCS[k].boss === m.d.id || ACCS[k].boss === m.type); if (pool.length) bag.push({ item: { g: 'c', k: pool[rnd(0, pool.length - 1)], en: 0 }, rare: 1 }); }
+    if (Math.random() < ACC_DROP) { const pool = Object.keys(ACCS); if (pool.length) bag.push({ item: { g: 'c', k: pool[rnd(0, pool.length - 1)], en: 0 }, rare: 1 }); }
     const n = rnd(3, 5); for (let i = 0; i < n; i++) bag.push({ item: { i: Math.random() < 1 / 3 ? 'wscroll' : 'ascroll', n: 1 }, rare: 1 });
   } else {
     if (Math.random() < dr.w * rm) bag.push({ item: { i: 'wscroll', n: 1 }, rare: 1 });
@@ -1334,7 +1341,7 @@ function gearInfo(it) {
   }
   if (it.g === 'c') {
     const c = ACCS[it.k], parts = [c.hp && `최대 HP +${c.hp}`, c.str && `힘 +${c.str}`, c.dex && `민첩 +${c.dex}`, c.con && `체력 +${c.con}`, c.hit && `명중 +${c.hit}%`, c.crit && `치명타 +${c.crit}%`, c.dmg && `데미지 +${c.dmg}`, c.regen && `회복 +${c.regen}`, c.ac && `방어도 ${c.ac}`].filter(Boolean);
-    return `<b>${itemName(it)}</b><br>${SLOT_NAME[c.slot]} · 장신구<br>${parts.join(' · ')}<br><span class="dim">강화할 수 없어요 · 우두머리가 떨어뜨려요</span>`;
+    return `<b>${itemName(it)}</b><br>${CLS_NAME[c.cls] ? CLS_NAME[c.cls] + '용 ' : ''}${SLOT_NAME[c.slot]}<br>${parts.join(' · ')}<br><span class="dim">강화할 수 없어요 · 우두머리가 가끔 떨어뜨려요</span>`;
   }
   const d = ARMORS[it.k];
   return `<b>${itemName(it)}</b><br>${SLOT_NAME[d.slot]} · ${d.tier}단계<br>방어도 ${d.ac + it.en}${it.en ? ` (기본 ${d.ac} +${it.en})` : ''}<br><span class="dim">안전 강화 +${ENCH.a.safe}까지 · 최대 +${ENCH.a.max}</span>`;
@@ -2036,7 +2043,7 @@ function renderSelect() {
   const all = loadAll(), out = [];
   for (let i = 0; i < MAX_CHARS; i++) {
     const c = all.chars[i];
-    if (c) { const bow = c.cls === 'bow'; out.push(`<div class="cslotw"><button class="cslot" data-slot="${i}" type="button"><img src="img/${bow ? 'a' : 'p'}-idle.png" alt=""><b>${c.name ? `<i class="nm" style="color:${nameColor(c.lv)}">${esc(c.name)}</i>` : (bow ? '깨순이' : '깨비샘')}</b><span>${bow ? '깨순이' : '깨비샘'} · Lv ${c.lv}</span></button><button class="sdel" data-del="${i}" type="button">지우기</button></div>`); }
+    if (c) { const bow = c.cls === 'bow'; out.push(`<div class="cslotw"><button class="cslot" data-slot="${i}" type="button"><img src="img/${bow ? 'a' : 'p'}-idle.png" alt=""><b>${c.name ? `<i class="nm" style="color:${nameColor(c.lv)}">${esc(c.name)}</i>` : (bow ? '궁수' : '검사')}</b><span>${bow ? '궁수' : '검사'} · Lv ${c.lv}</span></button><button class="sdel" data-del="${i}" type="button">지우기</button></div>`); }
     else if (i === all.chars.length) out.push(`<div class="cslotw"><button class="cslot empty" data-new type="button"><i>+</i><b>새 캐릭터</b></button></div>`);
     else out.push(`<div class="cslotw"><div class="cslot none"></div></div>`);
   }
@@ -2256,7 +2263,7 @@ document.querySelectorAll('.win').forEach(el => el.addEventListener('pointerdown
   $('db-no').addEventListener('click', () => { delArm = -1; $('delbox').classList.add('hidden'); });
   $('db-ok').addEventListener('click', () => {
     if (delArm < 0 || $('db-name').value.trim() !== delWho) return;
-    const all = loadAll(), c = all.chars[delArm]; if (!c || (c.name || (c.cls === 'bow' ? '깨순이' : '깨비샘')) !== delWho) return;
+    const all = loadAll(), c = all.chars[delArm]; if (!c || (c.name || (c.cls === 'bow' ? '궁수' : '검사')) !== delWho) return;
     all.chars.splice(delArm, 1); all.t = Date.now(); delArm = -1;
     try { localStorage.setItem(SAVE_KEY, JSON.stringify(all)); } catch (er) {}
     if (window.RPG_CLOUD && cloudCode()) cloudPut(cloudCode(), JSON.stringify(all), all.t).catch(() => {});
@@ -2266,7 +2273,7 @@ document.querySelectorAll('.win').forEach(el => el.addEventListener('pointerdown
     const del = e.target.closest('[data-del]');
     if (del) {
       const i = +del.dataset.del, c = loadAll().chars[i]; if (!c) return;
-      delArm = i; delWho = c.name || (c.cls === 'bow' ? '깨순이' : '깨비샘');
+      delArm = i; delWho = c.name || (c.cls === 'bow' ? '궁수' : '검사');
       $('db-who').textContent = delWho; $('db-name').value = ''; $('db-name').placeholder = delWho; $('db-ok').disabled = true;
       $('delbox').classList.remove('hidden'); $('db-name').focus(); SND.ui(); return;
     }
