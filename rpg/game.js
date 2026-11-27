@@ -374,7 +374,7 @@ function buildWorld() {
       row = []; for (let x = x0; x <= x1; x++) { const i = idx(x, by); M.block[i] = 0; M.keep[i] = 1; row.push([x, by]); }
       // 나무 다리 한 장을 강 폭(양쪽 땅 한 칸씩 포함)에 맞춰 놓아요
       const mx = (x0 + x1) / 2; placeProp('l-bridge2', Math.round(mx), by, 1); const f = M.flats[M.flats.length - 1];
-      if (f) { const k = (x1 - x0 + 3.2) * CELL / f.w; f.w *= k; f.h *= k; f.x = (mx + .5) * CELL; f.y = (by + .5) * CELL + f.h * .5; }
+      if (f) { const k = (x1 - x0 + 2) * CELL / f.w; f.w *= k; f.h *= k; f.x = (mx + .5) * CELL; f.y = (by + .5) * CELL + f.h * .5; }
     }
     // 강가 갈대
     const R2 = seeded(9); for (let k = 0, t = 0; k < 60 && t < 4000; t++) { const i = Math.floor(R2() * N); if (M.water[i] || M.keep[i]) continue; if (M.stream[i + 1] || M.stream[i - 1] || M.stream[i + 2] || M.stream[i - 2]) { if (placeProp('l-reed', i % W, Math.floor(i / W))) k++; } }
@@ -1739,8 +1739,19 @@ function miniDots(x, sc, ox, oy, big, meOnly) {   // sc: 칸 → 화면 픽셀, 
 }
 function drawMini(dt) {
   miniT -= dt; if (miniT > 0 || !miniBase) return; miniT = 1 / 20;
-  const mc = $('mini'), D = Math.round(mc.clientWidth * Math.min(2, devicePixelRatio || 1)); if (!D) return;
-  if (mc.width !== D) mc.width = mc.height = D;
+  const mc = $('mini'), dpr = Math.min(2, devicePixelRatio || 1), D = Math.round(mc.clientWidth * dpr), Dh = Math.round(mc.clientHeight * dpr); if (!D || !Dh) return;
+  if (mc.width !== D || mc.height !== Dh) { mc.width = D; mc.height = Dh; }
+  if (D !== Dh) {   // 컴퓨터: 아래 정보창에 꼭 맞는 네모 미니맵 (리니지식)
+    const x = mc.getContext('2d'), R = MINI_R[miniZ], sc = Dh / 2 / R, Rx = D / 2 / sc;
+    const pcx = player.px / CELL - .5, pcy = player.py / CELL - .5;
+    x.fillStyle = '#2b6f96'; x.fillRect(0, 0, D, Dh);
+    const s0x = (pcx + .5 - Rx) * MINI_S, s0y = (pcy + .5 - R) * MINI_S, sw = Rx * 2 * MINI_S, sh = R * 2 * MINI_S, k = D / sw;
+    const ax = Math.max(0, s0x), ay = Math.max(0, s0y), bx = Math.min(miniBase.width, s0x + sw), by = Math.min(miniBase.height, s0y + sh);
+    if (bx > ax && by > ay) x.drawImage(miniBase, ax, ay, bx - ax, by - ay, (ax - s0x) * k, (ay - s0y) * k, (bx - ax) * k, (by - ay) * k);
+    miniDots(x, sc, D / 2 - (pcx + .5) * sc, Dh / 2 - (pcy + .5) * sc, false);
+    if (!$('bigmap').classList.contains('hidden')) drawBig();
+    return;
+  }
   const x = mc.getContext('2d'), R = MINI_R[miniZ], ring = D * .05, rad = D / 2 - ring * 2.1, sc = rad / R;   // 동서남북 표시가 잘리지 않게 안쪽으로
   const pcx = player.px / CELL - .5, pcy = player.py / CELL - .5;   // 부드럽게 따라가도록 픽셀 위치 기준
   x.clearRect(0, 0, D, D);
@@ -1852,7 +1863,9 @@ function walkToCell(cx, cy) {
 function miniClick(e) {
   if (!P || dead || !M) return;
   e.stopPropagation();
-  const r = $('mini').getBoundingClientRect(), D = r.width, rad = D / 2 - D * .05 * 2.1, R = MINI_R[miniZ];
+  const r = $('mini').getBoundingClientRect(), D = r.width;
+  if (Math.abs(r.width - r.height) > 2) { const sc = r.height / 2 / MINI_R[miniZ]; walkToCell(Math.floor(player.px / CELL + (e.clientX - r.left - D / 2) / sc), Math.floor(player.py / CELL + (e.clientY - r.top - r.height / 2) / sc)); return; }
+  const rad = D / 2 - D * .05 * 2.1, R = MINI_R[miniZ];
   const dx = e.clientX - r.left - D / 2, dy = e.clientY - r.top - D / 2; if (Math.hypot(dx, dy) > rad) return;
   walkToCell(Math.floor(player.px / CELL + dx / rad * R), Math.floor(player.py / CELL + dy / rad * R));
 }
