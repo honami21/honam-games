@@ -1401,7 +1401,7 @@ function updateHUD() {
   const mh = maxHP();
   $('hpfill').style.width = clamp(P.hp / mh * 100, 0, 100) + '%';
   $('hptxt').textContent = Math.max(0, Math.ceil(P.hp)) + ' / ' + mh;
-  { const sp = $('spfill'), c = P.cls || 'sword'; if (sp.dataset.c !== c) { sp.dataset.c = c; sp.className = c; $('sptxt').textContent = ({ sword: '용기', bow: '집중', mage: '정신력', tank: '분노' })[c] || '용기'; } }   // 직업 게이지 (스킬이 생기면 채워져요)
+  { const sp = $('spfill'), c = P.cls || 'sword'; if (sp.dataset.c !== c) { sp.dataset.c = c; sp.className = c; $('spname').textContent = ({ sword: '용기', bow: '집중', mage: '정신력', tank: '분노' })[c] || '용기'; } $('sptxt').textContent = (P.sp || 0) + ' / ' + (P.spMax || 0); }   // 직업 게이지 (스킬이 생기면 채워져요)
   $('xpfill').style.width = (P.lv >= MAX_LV ? 100 : P.exp / needExp(P.lv) * 100) + '%';
   $('xptxt').textContent = P.lv >= MAX_LV ? '최고 레벨' : (P.exp / needExp(P.lv) * 100).toFixed(1) + '%';
   $('lv').textContent = P.lv;
@@ -1415,7 +1415,8 @@ function updateHUD() {
 
 /* ================= 그리기 ================= */
 function resize() {
-  VW = innerWidth; VH = innerHeight - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dock')) || 0);   // 컴퓨터는 아래 정보창만큼 뺀 높이
+  VW = innerWidth; { const b = document.getElementById('bar'); if (b) document.documentElement.style.setProperty('--barh', b.offsetHeight + 'px'); }
+  VH = innerHeight - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dock')) || 0);   // 컴퓨터는 아래 정보창만큼 뺀 높이
   // 큰 화면에선 그리는 점 수를 약 220만 개로 제한해요 (모니터가 커도 부드럽게)
   DPR = Math.min(2, window.devicePixelRatio || 1, Math.sqrt(2.2e6 / (VW * VH)));
   cv.width = Math.round(VW * DPR); cv.height = Math.round(VH * DPR);
@@ -2028,6 +2029,7 @@ function bindUI() {
   addEventListener('pointerup', onUp);
   addEventListener('pointercancel', onUp);
   addEventListener('resize', resize);
+  if (window.ResizeObserver) new ResizeObserver(() => document.documentElement.style.setProperty('--barh', $('bar').offsetHeight + 'px')).observe($('bar'));
   addEventListener('keydown', e => {
     if (!P || !document.body.classList.contains('playing')) return;
     if (e.target.tagName === 'INPUT') return;

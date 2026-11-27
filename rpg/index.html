@@ -130,11 +130,12 @@
   .gauge.xp { height:14px; }
   .gauge i { position:absolute; inset:0 auto 0 0; display:block; transition:width .15s; }
   #hpfill { background:linear-gradient(#ff7b7b,#e0414f); }
-  .gauge.sp { height:12px; } .gauge.sp span { font-size:10px; line-height:9px; }
-  #spfill { background:linear-gradient(#ffc070,#e8792a); width:0; }   /* 직업 게이지: 검사 용기 · 궁수 집중 · 마법사 정신력 · 탱커 분노 */
+  #spfill { background:linear-gradient(#c9a0ff,#7a3fd0); width:0; }   /* 직업 게이지: 검사 용기 · 궁수 집중 · 마법사 정신력 · 탱커 분노 */
   #spfill.bow { background:linear-gradient(#9ff0b8,#2fae62); } #spfill.mage { background:linear-gradient(#9ec9ff,#3a6fe0); } #spfill.tank { background:linear-gradient(#ff8a8a,#a3242f); } #xpfill { background:linear-gradient(#ffe27a,#f0b21c); }
   .gauge span { position:absolute; inset:0; text-align:center; color:#fff; font-family:Fredoka,sans-serif; font-size:14px; line-height:16px; text-shadow:0 1px 2px #000; }
   .gauge.xp span { font-size:11px; line-height:11px; }
+  .gauge em { position:absolute; left:10px; top:0; bottom:0; display:flex; align-items:center; font-style:normal; color:#fff; font-size:12px; text-shadow:0 1px 2px #000; z-index:1; }   /* 이름은 왼쪽, 숫자는 가운데 */
+  .gauge span { z-index:1; } .gauge.xp em { display:none; }
   #xptxt { display:none; }   /* 경험치 %는 능력치 창(C)에서만 */
   .stat { display:flex; flex-direction:column; align-items:center; font-size:12px; color:var(--ink2); line-height:1.1; min-width:44px; }
   .stat b { font-family:Fredoka,sans-serif; font-size:19px; color:var(--ink); font-weight:600; }
@@ -304,7 +305,7 @@
     #bar #lvbox { width:auto; min-width:78px; height:58px; } #bar #lv { font-size:28px; } #bar #lvbox small { font-size:17px; }
     #bar .bars { flex:1 1 calc(100% - 92px); gap:6px; }
     #bar .gauge { height:24px; border-color:#0d0a14; } #bar .gauge span { font-size:15px; line-height:20px; }
-    #bar .gauge.sp { height:18px; } #bar .gauge.sp span { font-size:12px; line-height:15px; }
+    #bar .gauge em { font-size:14px; left:12px; }
     /* 경험치: 리니지처럼 화면 맨 아래 전체 너비 */
     #bar .gauge.xp { position:fixed; left:0; right:0; bottom:0; height:14px; border:0; border-top:2px solid #0d0a14; border-radius:0; background:#241b2c; }
     #bar .gauge.xp span { font-size:11px; line-height:12px; }
@@ -364,6 +365,7 @@
     #bar .gauge.xp { position:fixed; left:0; right:0; bottom:env(safe-area-inset-bottom, 0px); height:8px; border:0; border-radius:0; background:#241b2c; }
     #topinfo { position:fixed; top:10px; left:50%; right:auto; transform:translateX(-50%); width:auto; justify-content:center; padding:3px 14px 1px; background:rgba(22,16,34,.55); border-color:rgba(201,162,74,.7); box-shadow:none; }
     #miniwrap { top:48px; }
+    #log { bottom:calc(var(--barh, 110px) + 20px + env(safe-area-inset-bottom, 0px)); }   /* 알림 글은 정보창 바로 위에 */
   }   /* 휴대폰에서 아이템을 단축키 칸으로 끌어 놓을 수 있게 */
 </style>
 <script src="../points.js"></script>
@@ -410,8 +412,8 @@
     <div class="pstat">
     <div id="lvbox"><small>Lv</small><span id="lv">1</span></div>
     <div class="bars">
-      <div class="gauge"><i id="hpfill"></i><span id="hptxt">30 / 30</span></div>
-      <div class="gauge sp"><i id="spfill"></i><span id="sptxt">용기</span></div>
+      <div class="gauge"><i id="hpfill"></i><em>HP</em><span id="hptxt">30 / 30</span></div>
+      <div class="gauge sp"><i id="spfill"></i><em id="spname">용기</em><span id="sptxt">0 / 0</span></div>
       <div class="gauge xp"><i id="xpfill"></i><span id="xptxt">0%</span></div>
     </div>
     <div class="stat"><span>AC</span><b id="acv">10</b></div>
