@@ -372,7 +372,9 @@ function buildWorld() {
       let x0 = Math.min(...row.map(c => c[0])), x1 = Math.max(...row.map(c => c[0]));
       while (x0 > 0 && M.stream[idx(x0 - 1, by)]) x0--; while (x1 < W - 1 && M.stream[idx(x1 + 1, by)]) x1++;
       row = []; for (let x = x0; x <= x1; x++) { const i = idx(x, by); M.block[i] = 0; M.keep[i] = 1; row.push([x, by]); }
-      const mx = (x0 + x1) / 2; placeProp('l-stones', Math.round(mx), by, 1); const f = M.flats[M.flats.length - 1]; if (f) { f.x = (mx + .5) * CELL; f.y = (by + .5) * CELL + f.h / 2 + 22; f.w *= Math.max(1, (x1 - x0 + 1) / 4); }
+      // 돌 그림 한 장은 약 3.6칸 → 강 폭만큼 이어 붙여요
+      const n = Math.max(1, Math.ceil((x1 - x0 + 1) / 3.4)), step = (x1 - x0 + 1) / n;
+      for (let k = 0; k < n; k++) { const mx = x0 - .5 + step * (k + .5); placeProp('l-stones', Math.round(mx), by, 1); const f = M.flats[M.flats.length - 1]; if (f) { f.x = (mx + .5) * CELL; f.y = (by + .5) * CELL + f.h / 2 + 22; f.w = Math.max(f.w, step * CELL * 1.08); } }
     }
     // 강가 갈대
     const R2 = seeded(9); for (let k = 0, t = 0; k < 60 && t < 4000; t++) { const i = Math.floor(R2() * N); if (M.water[i] || M.keep[i]) continue; if (M.stream[i + 1] || M.stream[i - 1] || M.stream[i + 2] || M.stream[i - 2]) { if (placeProp('l-reed', i % W, Math.floor(i / W))) k++; } }
