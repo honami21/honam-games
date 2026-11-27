@@ -2113,7 +2113,9 @@ function bindUI() {
 document.querySelectorAll('.win').forEach(el => el.addEventListener('pointerdown', () => { const n = el.id.slice(2); if (wins.includes(n) && wins[wins.length - 1] !== n) focusWin(n); }, true));
   // 가방
   const tip = $('tip');
-  function showTip(el, html) { tip.innerHTML = html; tip.classList.remove('hidden'); const r = el.getBoundingClientRect(); tip.style.left = clamp(r.left - tip.offsetWidth - 8, 6, innerWidth - tip.offsetWidth - 6) + 'px'; tip.style.top = clamp(r.top, 6, innerHeight - tip.offsetHeight - 6) + 'px'; }
+  function showTip(el, html) { tip.innerHTML = html; tip.classList.remove('hidden'); const r = el.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
+    if (r.left - tw - 8 >= 6) { tip.style.left = (r.left - tw - 8) + 'px'; tip.style.top = clamp(r.top, 6, innerHeight - th - 6) + 'px'; }   // 칸 왼쪽에
+    else { tip.style.left = clamp(r.left + r.width / 2 - tw / 2, 6, innerWidth - tw - 6) + 'px'; tip.style.top = (r.top - th - 8 >= 6 ? r.top - th - 8 : Math.min(innerHeight - th - 6, r.bottom + 8)) + 'px'; } }   // 자리가 없으면 칸 위에
   window.hideTip = () => tip.classList.add('hidden');
   ['eq-grid', 'inv-grid'].forEach(id => {
     const box = $(id);
@@ -2131,6 +2133,23 @@ document.querySelectorAll('.win').forEach(el => el.addEventListener('pointerdown
   $('store-grid').addEventListener('click', e => { const s = e.target.closest('.slot'); if (!s || sDrag.done) return; fromStore(+s.dataset.st); hideTip(); });
   $('store-grid').addEventListener('mouseover', e => { const s = e.target.closest('.slot'); const it = s && STORE.items[+s.dataset.st]; if (it) showTip(s, gearInfo(it)); else hideTip(); });
   $('store-grid').addEventListener('mouseleave', hideTip);
+  // 휴대폰: 칸을 꾹 누르면(0.45초) 아이템 설명이 떠요. 손을 떼도 잠깐 남고, 그때의 '누름'은 사용으로 치지 않아요
+  let lpT = 0, lpX = 0, lpY = 0, lpEat = false, lpHide = 0;
+  const longTip = (box, sel, info) => {
+    box.addEventListener('pointerdown', e => {
+      if (e.pointerType === 'mouse') return; const s = e.target.closest(sel); if (!s) return;
+      clearTimeout(lpT); lpX = e.clientX; lpY = e.clientY; lpEat = false;
+      lpT = setTimeout(() => { const h = info(s); if (!h) return; showTip(s, h); lpEat = true; clearTimeout(lpHide); lpHide = setTimeout(hideTip, 3000); }, 450);
+    });
+    box.addEventListener('pointermove', e => { if (Math.hypot(e.clientX - lpX, e.clientY - lpY) > 10) clearTimeout(lpT); });
+    ['pointerup', 'pointercancel'].forEach(t => box.addEventListener(t, () => clearTimeout(lpT)));
+    box.addEventListener('click', e => { if (lpEat) { lpEat = false; e.stopImmediatePropagation(); e.preventDefault(); } }, true);
+    box.addEventListener('contextmenu', e => e.preventDefault());
+  };
+  longTip($('eq-grid'), '.slot', s => { const it = P.eq[s.dataset.eq]; return it && gearInfo(it); });
+  longTip($('inv-grid'), '.slot', s => { const it = P.inv[+s.dataset.inv]; return it && gearInfo(it); });
+  longTip($('store-grid'), '.slot', s => { const it = STORE.items[+s.dataset.st]; return it && gearInfo(it); });
+  longTip($('bar'), '.bbtn.qs', s => { const id = qkeys()[+s.dataset.k]; return id && ITEMS[id] && gearInfo({ i: id, n: 1 }); });
   $('store-in').addEventListener('click', () => storeCoins(1));
   $('store-out').addEventListener('click', () => storeCoins(-1));
   // 가방 ↔ 창고 끌어서 옮기기
