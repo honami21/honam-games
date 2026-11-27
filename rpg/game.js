@@ -819,8 +819,7 @@ let lp = null;   // 꾹 누르기 기다리는 중
 function toggleQueue(m) {
   const i = tq.indexOf(m);
   if (i >= 0) { tq.splice(i, 1); log(`<b>${josa(m.d.name, '을를')}</b> 예약에서 뺐어요`, 'sys'); }
-  else if (tq.length < 5) { tq.push(m); log(`다음에 <b>${josa(m.d.name, '을를')}</b> 잡아요 <span class="dim">(예약 ${tq.length}/5)</span>`, 'sys'); }
-  else log('예약은 5마리까지예요', 'warn');
+  else { tq.push(m); log(`다음에 <b>${josa(m.d.name, '을를')}</b> 잡아요 <span class="dim">(예약 ${tq.length}마리)</span>`, 'sys'); }   // 예약은 제한 없어요
 }
 function setGoal(wx, wy) {
   const cx = clamp(Math.floor(wx / CELL), 0, M.w - 1), cy = clamp(Math.floor(wy / CELL), 0, M.h - 1);
