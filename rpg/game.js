@@ -1137,7 +1137,6 @@ function useItem(ix) {
 function equip(ix) {
   const it = P.inv[ix]; if (!it || !it.g) return;
   if (it.g === 'w') { log(`${HERO()}는 자기 무기만 쓸 수 있어요`, 'warn'); return; }
-  if (it.g === 'c' && ACCS[it.k].cls && ACCS[it.k].cls !== (P.cls || 'sword')) { log(`${CLS_NAME[ACCS[it.k].cls]} 전용 장신구예요. 창고에 넣어 ${CLS_NAME[ACCS[it.k].cls]} 캐릭터에게 줄 수 있어요`, 'warn'); return; }
   const slot = it.g === 'w' ? 'weapon' : GDEF(it).slot;
   if (slot === 'shield' && P.eq.weapon && WEAPONS[P.eq.weapon.k].two) { log(`${WTYPE[WEAPONS[P.eq.weapon.k].type]}${WEAPONS[P.eq.weapon.k].type === 'bow' ? '은' : '는'} 양손 무기라 방패를 들 수 없어요`, 'warn'); return; }
   P.inv.splice(ix, 1);
@@ -1342,7 +1341,7 @@ function gearInfo(it) {
   }
   if (it.g === 'c') {
     const c = ACCS[it.k], parts = [c.hp && `최대 HP +${c.hp}`, c.str && `힘 +${c.str}`, c.dex && `민첩 +${c.dex}`, c.con && `체력 +${c.con}`, c.hit && `명중 +${c.hit}%`, c.crit && `치명타 +${c.crit}%`, c.dmg && `데미지 +${c.dmg}`, c.regen && `회복 +${c.regen}`, c.ac && `방어도 ${c.ac}`].filter(Boolean);
-    return `<b>${itemName(it)}</b><br>${CLS_NAME[c.cls] ? CLS_NAME[c.cls] + ' 전용 ' : ''}${SLOT_NAME[c.slot]}<br>${parts.join(' · ')}<br><span class="dim">강화할 수 없어요 · 우두머리가 가끔 떨어뜨려요</span>`;
+    return `<b>${itemName(it)}</b><br>${CLS_NAME[c.cls] ? CLS_NAME[c.cls] + '용 ' : ''}${SLOT_NAME[c.slot]}<br>${parts.join(' · ')}<br><span class="dim">강화할 수 없어요 · 우두머리가 가끔 떨어뜨려요</span>`;
   }
   const d = ARMORS[it.k];
   return `<b>${itemName(it)}</b><br>${SLOT_NAME[d.slot]} · ${d.tier}단계<br>방어도 ${d.ac + it.en}${it.en ? ` (기본 ${d.ac} +${it.en})` : ''}<br><span class="dim">안전 강화 +${ENCH.a.safe}까지 · 최대 +${ENCH.a.max}</span>`;
