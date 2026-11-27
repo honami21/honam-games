@@ -367,7 +367,7 @@ function buildWorld() {
   { const cs = cross.map(i => [i % W, Math.floor(i / W)]), groups = [];
     for (const c of cs) { const gq = groups.find(gq => gq.some(o => Math.abs(o[0] - c[0]) <= 2 && Math.abs(o[1] - c[1]) <= 2)); if (gq) gq.push(c); else groups.push([c]); }
     for (const gq of groups) {
-      const by = Math.round(gq.reduce((t, b) => t + b[1], 0) / gq.length); let row = gq.filter(c => c[1] === by);
+      const by0 = Math.round(gq.reduce((t, b) => t + b[1], 0) / gq.length), by = by0 - 1; let row = gq.filter(c => c[1] === by0).map(c => [c[0], by]);   // 한 칸 위 줄로 건너요 (다리 기둥이 강 안에 서도록)
       // 강 폭 전체를 가로질러 한 줄 (양쪽 땅까지)
       let x0 = Math.min(...row.map(c => c[0])), x1 = Math.max(...row.map(c => c[0]));
       while (x0 > 0 && M.stream[idx(x0 - 1, by)]) x0--; while (x1 < W - 1 && M.stream[idx(x1 + 1, by)]) x1++;
