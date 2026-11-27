@@ -374,14 +374,14 @@ function buildWorld() {
       row = []; for (let x = x0; x <= x1; x++) { const i = idx(x, by); M.block[i] = 0; M.keep[i] = 1; row.push([x, by]); }
       // 나무 다리 한 장을 강 폭(양쪽 땅 한 칸씩 포함)에 맞춰 놓아요
       const mx = (x0 + x1) / 2; placeProp('l-bridge2', Math.round(mx), by, 1); const f = M.flats[M.flats.length - 1];
-      if (f) { const k = (x1 - x0 + 2) * CELL / f.w; f.w *= k; f.h *= k; f.x = (mx + .5) * CELL; f.y = (by + .5) * CELL + f.h * .5 - 26; }
+      if (f) { const k = (x1 - x0 + 2) * CELL / f.w; f.w *= k; f.h *= k; f.x = (mx + .5) * CELL; f.y = (by + .5) * CELL + f.h * .5 - 6; }
     }
     // 강가 갈대
     const R2 = seeded(9); for (let k = 0, t = 0; k < 60 && t < 4000; t++) { const i = Math.floor(R2() * N); if (M.water[i] || M.keep[i]) continue; if (M.stream[i + 1] || M.stream[i - 1] || M.stream[i + 2] || M.stream[i - 2]) { if (placeProp('l-reed', i % W, Math.floor(i / W))) k++; } }
   }
   // 8) 산: 큰 봉우리·작은 봉우리를 등줄기 따라 빽빽하게, 고갯길 그림, 던전 입구(준비 중)
   { const [qx, qy] = [Math.round(pX), Math.round(pY)];
-    placeProp('mt-pass', qx, qy + 2, 1);
+    // 고갯길 그림은 넣지 않아요 (산을 빈틈없이 채운 뒤로 혼자 떠 보여서)
     const [dx0, dy0] = F(ISLE.dungeon); let ddx = Math.round(dx0), ddy = Math.round(dy0); while (ddx > 0 && mtnCore[idx(ddx - 1, ddy)]) ddx--;   // 산 서쪽 비탈
     placeProp('mt-dungeon', ddx + 1, ddy, 1); M.dungeon = [ddx - 1, ddy + 1]; keepClear(ddx - 3, ddy - 1, ddx + 1, ddy + 3);
     const spots = []; for (let y = 1, ry = 0; y < H - 1; y += 3, ry++) for (let x = 1 + (ry % 2) * 2; x < W - 1; x += 4) { const i = idx(x, y); if (mtnCore[i] && !M.road[i] && !M.water[i] && !M.keep[i]) spots.push([x + Math.round((R() - .5) * 2), y]); }
