@@ -1744,7 +1744,7 @@ function miniDots(x, sc, ox, oy, big, meOnly) {   // sc: 칸 → 화면 픽셀, 
       x.beginPath(); x.moveTo(px, py - 6 * r0); x.lineTo(px + 6 * r0, py); x.lineTo(px, py + 6 * r0); x.lineTo(px - 6 * r0, py); x.closePath(); x.fill(); x.stroke();
     }
   }
-  if (moveGoal && !meOnly && player.moving) { const [gx, gy] = moveGoalPt ? [ox + moveGoalPt[0] / CELL * sc, oy + moveGoalPt[1] / CELL * sc] : P2(moveGoal[0], moveGoal[1]); /* 걷는 동안만 목적지 표시 */ x.strokeStyle = '#fff'; x.lineWidth = 2; x.beginPath(); x.arc(gx, gy, 5 * r0, 0, 7); x.stroke(); }
+  // 목적지 원은 그리지 않아요 (내 위치 화살표와 헷갈려서)
   // 나 = 금색 화살표 (걷는 쪽을 가리켜요). 섬 지도에서는 빨간 핀으로 따로
   if (big) return;
   const px = ox + player.px / CELL * sc, py = oy + player.py / CELL * sc, ang = Math.atan2(player.mdy || 0, player.mdx ?? player.face), k = 1.25 * r0;
