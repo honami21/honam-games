@@ -347,7 +347,21 @@
   }
   /* 휴대폰 가로: 창은 오른쪽에 좁게 */
   @media (max-height:520px) and (min-width:601px) { .win { width:min(380px, 50vw); max-height:calc(100% - 130px); } }
-  #inv-grid .slot, .bbtn.qs { touch-action:none; }   /* 휴대폰에서 아이템을 단축키 칸으로 끌어 놓을 수 있게 */
+  #inv-grid .slot, .bbtn.qs { touch-action:none; }
+  .slot, .bbtn { -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }   /* 꾹 눌러 설명 볼 때 복사 메뉴가 안 뜨게 */
+  /* 휴대폰: 컴퓨터와 같은 금테·단청 정보창 (두 줄), 경험치는 맨 아래 전체 너비, 지역 이름은 가운데 위 */
+  @media (max-width:760px), (max-height:520px) {
+    #bar { left:0; right:0; transform:none; width:auto; bottom:calc(8px + env(safe-area-inset-bottom, 0px)); border-radius:0; border:0 solid transparent; padding:9px 30px 8px;
+      background:#2a1c3c; border-image:url(img/ui-dock.png?v=2) 12 130 14 130 fill / 5px 34px 6px 34px stretch; }
+    #bar.drop { filter:brightness(1.3); }
+    #bar .bbtn { border:0 solid transparent; background:none; border-image:url(img/ui-slot.png?v=2) 36 fill / 7px stretch; color:#ffe9a8; }
+    #bar .bbtn .n { color:#fff; text-shadow:0 1px 2px #000; right:6px; bottom:4px; }
+    #bar .gauge { border-color:#0d0a14; }
+    #bar .stat { color:#c9b98a; } #bar .stat b { color:#ffe9a8; }
+    #bar .gauge.xp { position:fixed; left:0; right:0; bottom:env(safe-area-inset-bottom, 0px); height:8px; border:0; border-radius:0; background:#241b2c; }
+    #topinfo { position:fixed; top:10px; left:50%; right:auto; transform:translateX(-50%); width:auto; justify-content:center; padding:3px 14px 1px; background:rgba(22,16,34,.55); border-color:rgba(201,162,74,.7); box-shadow:none; }
+    #miniwrap { top:48px; }
+  }   /* 휴대폰에서 아이템을 단축키 칸으로 끌어 놓을 수 있게 */
 </style>
 <script src="../points.js"></script>
 </head>
