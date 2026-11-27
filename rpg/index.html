@@ -36,7 +36,7 @@
   /* 시작 화면 */
   .screen { position:fixed; inset:0; z-index:40; display:flex; flex-direction:column; align-items:center; justify-content:space-between;
     padding:max(70px,8vh) 16px max(30px,7vh); background:linear-gradient(rgba(10,6,30,.05), rgba(10,6,30,0) 45%, rgba(10,6,30,.5)), url(img/start-bg.jpg?v=1) center/cover no-repeat #2a1d40; }
-  @media (orientation:portrait) and (max-width:820px) { .screen #logo { margin-top:13vh; } .screen { background-image:linear-gradient(rgba(10,6,30,.05), rgba(10,6,30,0) 45%, rgba(10,6,30,.5)), url(img/start-bg-m.jpg?v=1); } }   /* 휴대폰 세로: 세로 배경 */
+  @media (orientation:portrait) and (max-width:820px) { .screen #logo { margin-top:13vh; } #title .tbtns { margin-bottom:17vh; } .screen { background-image:linear-gradient(rgba(10,6,30,.05), rgba(10,6,30,0) 45%, rgba(10,6,30,.5)), url(img/start-bg-m.jpg?v=1); } }   /* 휴대폰 세로: 세로 배경 */
   #logo { width:min(640px,88vw); max-height:40vh; margin-top:2vh; object-fit:contain; filter:drop-shadow(0 6px 12px rgba(20,10,40,.6)); animation:float 3.2s ease-in-out infinite; }
   @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }
   .tbtns { display:flex; flex-direction:column; align-items:center; gap:12px; }
