@@ -358,7 +358,7 @@ function buildWorld() {
   const L2 = (...pts) => pts.map(p => p.length === 2 && p[0] <= 1 && p[1] <= 1 && !Number.isInteger(p[0]) ? F(p) : p);
   line(L2([cx, cy], [cx, cy - TOWN_HY - 6], [.33, .32], [.41, .29], [.46, .275], ISLE.pass, [.56, .255], [.62, .25], [.67, .27], [.71, .32], [.73, .42], [.74, .52], [.72, .64], [.7, .74], [.69, .8]));
   line(L2([cx, cy], [cx, cy + TOWN_HY + 6], [.26, .55], [.21, .6], [.24, .7], [.28, .78]));
-  line(L2([cx, cy], [cx + TOWN_HX + 6, cy], [.38, .45], [.44, .5], [.47, .58], [.49, .68]));
+  line(L2([cx, cy], [cx + TOWN_HX + 6, cy], [.38, .45], [.42, .452], [.46, .452], [.47, .5], [.47, .58], [.49, .68]));   // 강이 좁은 곳(약 4칸)에서 다리로 건너요
   const dockRoad = L2([cx, cy], [cx - TOWN_HX - 6, cy], [.16, .42], [.1, .42], [.04, .42]); line(dockRoad);
   // 산맥 막기 (길이 지나는 고갯길은 열려 있어요)
   for (let i = 0; i < N; i++) if (mtnCore[i] && !M.road[i]) M.block[i] = 1;
@@ -372,9 +372,9 @@ function buildWorld() {
       let x0 = Math.min(...row.map(c => c[0])), x1 = Math.max(...row.map(c => c[0]));
       while (x0 > 0 && M.stream[idx(x0 - 1, by)]) x0--; while (x1 < W - 1 && M.stream[idx(x1 + 1, by)]) x1++;
       row = []; for (let x = x0; x <= x1; x++) { const i = idx(x, by); M.block[i] = 0; M.keep[i] = 1; row.push([x, by]); }
-      // 돌 그림 한 장은 약 3.6칸 → 강 폭만큼 이어 붙여요
-      const n = Math.max(1, Math.ceil((x1 - x0 + 1) / 3.4)), step = (x1 - x0 + 1) / n;
-      for (let k = 0; k < n; k++) { const mx = x0 - .5 + step * (k + .5); placeProp('l-stones', Math.round(mx), by, 1); const f = M.flats[M.flats.length - 1]; if (f) { f.x = (mx + .5) * CELL; f.y = (by + .5) * CELL + f.h / 2 + 22; f.w = Math.max(f.w, step * CELL * 1.08); } }
+      // 나무 다리 한 장을 강 폭(양쪽 땅 한 칸씩 포함)에 맞춰 놓아요
+      const mx = (x0 + x1) / 2; placeProp('l-bridge', Math.round(mx), by, 1); const f = M.flats[M.flats.length - 1];
+      if (f) { const k = (x1 - x0 + 2.4) * CELL / f.w; f.w *= k; f.h *= k; f.x = (mx + .5) * CELL; f.y = (by + .5) * CELL + f.h * .6; }
     }
     // 강가 갈대
     const R2 = seeded(9); for (let k = 0, t = 0; k < 60 && t < 4000; t++) { const i = Math.floor(R2() * N); if (M.water[i] || M.keep[i]) continue; if (M.stream[i + 1] || M.stream[i - 1] || M.stream[i + 2] || M.stream[i - 2]) { if (placeProp('l-reed', i % W, Math.floor(i / W))) k++; } }
