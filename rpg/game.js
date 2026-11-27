@@ -294,7 +294,7 @@ function keepClear(x0, y0, x1, y1) { for (let y = y0; y <= y1; y++) for (let x =
 const DECO = {
   town: [['f-tree2', 5], ['f-bush', 8], ['f-flowers', 14]],
   near: [['f-tree1', 9], ['f-tree2', 13], ['f-bush', 15], ['f-rock1', 6], ['f-rocks', 10], ['f-flowers', 22], ['l-pine', 4], ['l-pavilion', 1]],
-  paddy: [['f-hay', 18], ['l-wall', 12], ['f-tree2', 7], ['f-rocks', 8], ['l-reed', 8], ['f-bush', 6], ['f-sign', 2], ['f-flowers', 6]],
+  paddy: [['f-hay', 18], ['l-wall', 12], ['f-tree2', 7], ['f-rocks', 8], ['l-reed', 8], ['f-bush', 6], ['f-flowers', 6]],
   bamboo: [['b-bamboo1', 22], ['b-bamboo2', 22], ['b-rock', 8], ['b-fallen', 8], ['b-sasa', 16], ['b-pond', 3], ['b-tower', 5], ['l-cliff', 4]],
   deep: [['b-bamboo1', 30], ['b-bamboo2', 22], ['b-lantern', 8], ['b-tower', 6], ['b-rock', 8], ['l-cliff', 6], ['b-sasa', 12]],
   beach: [['c-pine', 16], ['c-shells', 18], ['c-drift', 8], ['f-rocks', 5], ['l-reed', 4]],
