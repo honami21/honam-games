@@ -42,7 +42,7 @@ const ACCS = {
   neck_tank:  { name: '든든 목걸이',     slot: 'neck', cls: 'tank',  tier: 2, ac: 2 },
   ring_tank:  { name: '분노의 반지',     slot: 'ring', cls: 'tank',  tier: 2, con: 1, regen: 3 },
 };
-const CLS_NAME = { sword: '검사', bow: '궁수', mage: '마법사', tank: '탱커' };
+const CLS_NAME = { sword: '검사', bow: '궁수', mage: '마법사', tank: '전사' };
 const ACC_DROP = 0.1;   // 우두머리를 잡으면 10% 확률로 8개 중 하나
 const SLOTS = ['weapon', 'helm', 'armor', 'cloak', 'glove', 'boots', 'shield', 'neck', 'ring'];
 const SLOT_NAME = { weapon: '무기', helm: '투구', armor: '갑옷', cloak: '망토', glove: '장갑', boots: '고무신', shield: '방패', neck: '목걸이', ring: '반지' };

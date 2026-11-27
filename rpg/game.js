@@ -198,7 +198,7 @@ function shortNum(n) { if (n < 10000) return n.toLocaleString(); if (n < 1e8) re
 const W_OF = () => P.eq.weapon ? WEAPONS[P.eq.weapon.k] : null;
 const isBow = () => !!P && P.cls === 'bow';
 const reach = () => { const w = W_OF(); return w && w.range || 1; };
-const HERO = () => isBow() ? '깨순이' : '깨비샘';
+const HERO = () => isBow() ? '궁수' : '검사';
 // 장신구가 더해 주는 능력치
 function accBonus(k) { let v = 0; for (const s of ['neck', 'ring']) { const it = P.eq[s]; if (it && it.g === 'c') v += ACCS[it.k][k] || 0; } return v; }
 const ST = k => P[k] + accBonus(k);
@@ -2043,7 +2043,7 @@ function renderSelect() {
   const all = loadAll(), out = [];
   for (let i = 0; i < MAX_CHARS; i++) {
     const c = all.chars[i];
-    if (c) { const bow = c.cls === 'bow'; out.push(`<div class="cslotw"><button class="cslot" data-slot="${i}" type="button"><img src="img/${bow ? 'a' : 'p'}-idle.png" alt=""><b>${c.name ? `<i class="nm" style="color:${nameColor(c.lv)}">${esc(c.name)}</i>` : (bow ? '깨순이' : '깨비샘')}</b><span>${bow ? '깨순이' : '깨비샘'} · Lv ${c.lv}</span></button><button class="sdel" data-del="${i}" type="button">지우기</button></div>`); }
+    if (c) { const bow = c.cls === 'bow'; out.push(`<div class="cslotw"><button class="cslot" data-slot="${i}" type="button"><img src="img/${bow ? 'a' : 'p'}-idle.png" alt=""><b>${c.name ? `<i class="nm" style="color:${nameColor(c.lv)}">${esc(c.name)}</i>` : (bow ? '궁수' : '검사')}</b><span>${bow ? '궁수' : '검사'} · Lv ${c.lv}</span></button><button class="sdel" data-del="${i}" type="button">지우기</button></div>`); }
     else if (i === all.chars.length) out.push(`<div class="cslotw"><button class="cslot empty" data-new type="button"><i>+</i><b>새 캐릭터</b></button></div>`);
     else out.push(`<div class="cslotw"><div class="cslot none"></div></div>`);
   }
@@ -2263,7 +2263,7 @@ document.querySelectorAll('.win').forEach(el => el.addEventListener('pointerdown
   $('db-no').addEventListener('click', () => { delArm = -1; $('delbox').classList.add('hidden'); });
   $('db-ok').addEventListener('click', () => {
     if (delArm < 0 || $('db-name').value.trim() !== delWho) return;
-    const all = loadAll(), c = all.chars[delArm]; if (!c || (c.name || (c.cls === 'bow' ? '깨순이' : '깨비샘')) !== delWho) return;
+    const all = loadAll(), c = all.chars[delArm]; if (!c || (c.name || (c.cls === 'bow' ? '궁수' : '검사')) !== delWho) return;
     all.chars.splice(delArm, 1); all.t = Date.now(); delArm = -1;
     try { localStorage.setItem(SAVE_KEY, JSON.stringify(all)); } catch (er) {}
     if (window.RPG_CLOUD && cloudCode()) cloudPut(cloudCode(), JSON.stringify(all), all.t).catch(() => {});
@@ -2273,7 +2273,7 @@ document.querySelectorAll('.win').forEach(el => el.addEventListener('pointerdown
     const del = e.target.closest('[data-del]');
     if (del) {
       const i = +del.dataset.del, c = loadAll().chars[i]; if (!c) return;
-      delArm = i; delWho = c.name || (c.cls === 'bow' ? '깨순이' : '깨비샘');
+      delArm = i; delWho = c.name || (c.cls === 'bow' ? '궁수' : '검사');
       $('db-who').textContent = delWho; $('db-name').value = ''; $('db-name').placeholder = delWho; $('db-ok').disabled = true;
       $('delbox').classList.remove('hidden'); $('db-name').focus(); SND.ui(); return;
     }
