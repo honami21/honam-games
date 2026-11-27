@@ -1822,10 +1822,10 @@ function drawBig() {
   // 내 위치: 퍼지는 고리 + 빨간 핀 + '나' (맨 위에)
   { const px = player.px / CELL * sc, py = player.py / CELL * sc, k = W / 900, t = (performance.now() / 1200) % 1;
     x.strokeStyle = `rgba(255,70,60,${1 - t})`; x.lineWidth = 4 * k; x.beginPath(); x.arc(px, py, (10 + 34 * t) * k, 0, 7); x.stroke();
-    x.save(); x.translate(px, py); x.scale(k, k); x.shadowColor = 'rgba(0,0,0,.55)'; x.shadowBlur = 6;
+    x.save(); x.translate(px, py); x.scale(k * .62, k * .62); x.shadowColor = 'rgba(0,0,0,.55)'; x.shadowBlur = 6;
     x.fillStyle = '#ff3d3d'; x.strokeStyle = '#fff'; x.lineWidth = 3.5;
     x.beginPath(); x.moveTo(0, 0); x.bezierCurveTo(-6, -12, -15, -20, -15, -31); x.arc(0, -31, 15, Math.PI, 0); x.bezierCurveTo(15, -20, 6, -12, 0, 0); x.closePath(); x.fill(); x.stroke();
-    x.shadowBlur = 0; x.fillStyle = '#fff'; x.font = '700 15px "Do Hyeon",sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('나', 0, -30); x.restore(); x.textBaseline = 'alphabetic'; }
+    x.shadowBlur = 0; x.fillStyle = '#fff'; x.beginPath(); x.arc(0, -31, 6, 0, 7); x.fill(); x.restore(); }
 }
 function setMiniZ(d) { miniZ = clamp(miniZ + d, 0, MINI_R.length - 1); try { localStorage.setItem('rpg-miniz', miniZ); } catch (e) {} miniT = 0; SND.ui(); }
 function toggleBig(on) { const b = $('bigmap'); b.classList.toggle('hidden', on === undefined ? !b.classList.contains('hidden') : !on); miniT = 0; }
