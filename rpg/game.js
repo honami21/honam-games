@@ -648,7 +648,7 @@ function stepTo(u, nx, ny) {
   if (u === player ? !gateOK(nx, ny) : (u.kind === 'mon' && zoneAt(nx, ny).town)) return false;
   M.occ[idx(u.x, u.y)] = 0; M.occ[idx(nx, ny)] = u.id;
   u.mv = { fx: u.px, fy: u.py, t: 0, dur: u.step * (dx && dy ? 1.3 : 1) };
-  u.x = nx; u.y = ny; if (dx) u.face = dx > 0 ? 1 : -1; u.walk = (u.walk || 0) + 1;
+  u.x = nx; u.y = ny; u.mdx = dx; u.mdy = dy; if (dx) u.face = dx > 0 ? 1 : -1; u.walk = (u.walk || 0) + 1;
   return true;
 }
 function stepToward(u, tx, ty, adj) {
@@ -1675,65 +1675,115 @@ function render() {
 }
 
 /* ================= 미니맵 ================= */
-const MINI_S = 2;   // 미니맵 한 칸 = 2픽셀 (캔버스 기준)
-let miniBase = null, miniT = 0;
-function avgColor(im, fb) {
-  if (!im) return fb;
-  try { const c = document.createElement('canvas'); c.width = c.height = 8; const x = c.getContext('2d'); x.drawImage(im, 0, 0, 8, 8); const d = x.getImageData(0, 0, 8, 8).data; let r = 0, gg = 0, b = 0; for (let i = 0; i < d.length; i += 4) { r += d[i]; gg += d[i + 1]; b += d[i + 2]; } const n = d.length / 4; return [r / n, gg / n, b / n]; } catch (e) { return fb; }
-}
+// 섬 전체를 작은 그림 지도로 한 번 그려 두고(바닥 무늬+건물·나무), 둥근 미니맵에는 내 둘레만 잘라 보여줘요
+const MINI_S = 6;   // 그림 지도 한 칸 = 6픽셀
+const MINI_R = [12, 18, 28];   // 미니맵 반지름(칸): 크게·보통·작게
+let miniBase = null, miniT = 0, miniZ = 1; try { const v = localStorage.getItem('rpg-miniz'); if (v !== null) miniZ = clamp(+v || 0, 0, 2); } catch (e) {}
 function buildMini() {
-  const W = M.w, H = M.h, c = document.createElement('canvas'); c.width = W * MINI_S; c.height = H * MINI_S;
-  const x = c.getContext('2d'), img = x.createImageData(W * MINI_S, H * MINI_S);
-  const col = ZONES.map(z => avgColor(IMG[z.tile], [106, 143, 58])), road = avgColor(IMG['tile-town'], [200, 160, 110]).map(v => Math.min(255, v * 1.12));
-  for (let cy = 0; cy < H; cy++) for (let cx = 0; cx < W; cx++) {
-    const i = idx(cx, cy); let [r, gg, b] = M.water[i] ? (M.block[i] ? [58, 140, 190] : [150, 110, 70]) : M.road[i] ? road : col[M.zid[i] - 1] || [58, 140, 190];
-    if (M.block[i] && !M.water[i]) { r *= .6; gg *= .6; b *= .6; }
-    for (let j = 0; j < MINI_S; j++) for (let k = 0; k < MINI_S; k++) { const p = ((cy * MINI_S + j) * W * MINI_S + cx * MINI_S + k) * 4; img.data[p] = r; img.data[p + 1] = gg; img.data[p + 2] = b; img.data[p + 3] = 255; }
+  const S = MINI_S, W = M.w * S, H = M.h * S, f = S / CELL, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d'), t = document.createElement('canvas'); t.width = W; t.height = H; const tc = t.getContext('2d');
+  const fillPat = (ctx, name, fb) => { const pat = M.patterns[name]; if (pat) { ctx.save(); ctx.scale(TS * f * 2.2, TS * f * 2.2); ctx.fillStyle = pat; ctx.fillRect(0, 0, W / (TS * f * 2.2) + 2, H / (TS * f * 2.2) + 2); ctx.restore(); } else { ctx.fillStyle = fb; ctx.fillRect(0, 0, W, H); } };
+  fillPat(x, 'tile-sea', '#3a98c2');
+  x.imageSmoothingEnabled = tc.imageSmoothingEnabled = true; tc.imageSmoothingQuality = 'high';
+  for (const l of M.layers) {
+    tc.globalCompositeOperation = 'source-over'; tc.clearRect(0, 0, W, H);
+    if (l.tile) fillPat(tc, l.tile, '#6a8f3a'); else { tc.fillStyle = l.fill; tc.fillRect(0, 0, W, H); }
+    tc.globalCompositeOperation = 'destination-in'; tc.drawImage(l.cv, 0, 0, W, H);
+    x.globalAlpha = l.alpha || 1; x.drawImage(t, 0, 0); x.globalAlpha = 1;
   }
-  x.putImageData(img, 0, 0);
-  // 지역 이름 (지역 칸들의 가운데)
-  x.font = '600 19px "Gowun Dodum",sans-serif'; x.textAlign = 'center'; x.lineWidth = 4; x.lineJoin = 'round';
-  for (const z of ZONES) {
-    if (z.id === 'beach') continue;
-    const cs = M.zcells[z.id]; if (!cs.length) continue;
-    let sx = 0, sy = 0; for (const i of cs) { sx += i % W; sy += Math.floor(i / W); }
-    let lx = sx / cs.length, ly = sy / cs.length;
-    if (z.road) [lx, ly] = polar(z.road[1] + 6, z.road[0]);
-    if (z.town) ly -= 6;
-    const nm = z.name.replace('도깨비섬 ', '');
-    x.strokeStyle = 'rgba(0,0,0,.65)'; x.fillStyle = '#fff'; x.strokeText(nm, lx * MINI_S, ly * MINI_S); x.fillText(nm, lx * MINI_S, ly * MINI_S);
-  }
+  // 바닥 그림(징검다리 등) → 건물·나무 (아래쪽부터)
+  const put = p => { const im = IMG[p.name]; if (!im) return; const h = p.h * f * 1.25, w = h * im.width / im.height * (PROPS[p.name]?.sx || 1); x.drawImage(im, p.x * f - w / 2, p.y * f - h, w, h); };
+  for (const p of M.flats) { const im = IMG[p.name]; if (im) { const h = p.h * f, w = p.w * f; x.drawImage(im, p.x * f - w / 2, p.y * f - h / 2, w, h); } }
+  for (const p of [...M.props].sort((a, b) => a.y - b.y)) put(p);
+  // 살짝 어둡게 테두리 (바다 끝)
+  const gr = x.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .35, W / 2, H / 2, Math.max(W, H) * .62); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(10,20,50,.35)');
+  x.fillStyle = gr; x.fillRect(0, 0, W, H);
   miniBase = c;
-  const mc = $('mini'); mc.width = c.width; mc.height = c.height;
 }
-function drawMini(dt) {
-  miniT -= dt; if (miniT > 0 || !miniBase) return; miniT = .2;
-  const mc = $('mini'), x = mc.getContext('2d'), S = MINI_S;
-  x.drawImage(miniBase, 0, 0);
+function miniDots(x, sc, ox, oy, big) {   // sc: 칸 → 화면 픽셀, ox/oy: 칸 0,0 의 화면 위치
+  const P2 = (cx, cy) => [ox + (cx + .5) * sc, oy + (cy + .5) * sc], r0 = big ? 1.4 : 1;
   for (const u of units) {
     if (u.kind === 'mon' && !u.dying) {
-      if (u.d.rare) { x.fillStyle = '#ffd84a'; x.beginPath(); x.arc((u.x + .5) * S, (u.y + .5) * S, 3.5, 0, 7); x.fill(); }
-      if (u.d.boss) { x.fillStyle = '#ff3b3b'; x.beginPath(); x.arc((u.x + .5) * S, (u.y + .5) * S, 5, 0, 7); x.fill(); x.strokeStyle = '#fff'; x.lineWidth = 1.5; x.stroke(); }
-      else if (cheb(u.x, u.y, player.x, player.y) < 30) { x.fillStyle = 'rgba(255,110,90,.9)'; x.fillRect(u.x * S, u.y * S, S, S); }
-    } else if (u.kind === 'npc') { x.fillStyle = u.role === 'shop' ? '#7fe0ff' : '#ffd23e'; x.fillRect(u.x * S - 2, u.y * S - 2, S + 4, S + 4); }
+      const [px, py] = P2(u.x, u.y);
+      if (u.d.boss) { x.fillStyle = '#ff3b3b'; x.strokeStyle = '#fff'; x.lineWidth = 2; x.beginPath(); x.arc(px, py, 6 * r0, 0, 7); x.fill(); x.stroke(); }
+      else if (u.d.rare) { x.fillStyle = '#ffd84a'; x.strokeStyle = '#3a2b10'; x.lineWidth = 1.5; x.beginPath(); x.arc(px, py, 4.5 * r0, 0, 7); x.fill(); x.stroke(); }
+      else if (!big && cheb(u.x, u.y, player.x, player.y) < 32) { x.fillStyle = '#ff5a4a'; x.strokeStyle = 'rgba(60,0,0,.8)'; x.lineWidth = 1.2; x.beginPath(); x.arc(px, py, 3.2, 0, 7); x.fill(); x.stroke(); }
+    } else if (u.kind === 'npc' && !u.hide) {
+      const [px, py] = P2(u.x, u.y); x.fillStyle = u.role === 'shop' ? '#7fe0ff' : '#ffd23e'; x.strokeStyle = '#2a1d10'; x.lineWidth = 1.5;
+      x.beginPath(); x.moveTo(px, py - 6 * r0); x.lineTo(px + 6 * r0, py); x.lineTo(px, py + 6 * r0); x.lineTo(px - 6 * r0, py); x.closePath(); x.fill(); x.stroke();
+    }
   }
-  // 지금 보이는 화면
-  const hw = VW / 2 / zoom, hh = VH / 2 / zoom;
-  x.strokeStyle = 'rgba(255,255,255,.85)'; x.lineWidth = 1.5;
-  x.strokeRect((cam.x - hw) / CELL * S, (cam.y - hh) / CELL * S, hw * 2 / CELL * S, hh * 2 / CELL * S);
-  if (moveGoal) { x.strokeStyle = '#fff'; x.beginPath(); x.arc((moveGoal[0] + .5) * S, (moveGoal[1] + .5) * S, 4, 0, 7); x.stroke(); }
-  x.fillStyle = '#fff'; x.beginPath(); x.arc((player.x + .5) * S, (player.y + .5) * S, 4.5, 0, 7); x.fill();
-  x.fillStyle = '#3d7bff'; x.beginPath(); x.arc((player.x + .5) * S, (player.y + .5) * S, 3, 0, 7); x.fill();
+  if (moveGoal) { const [gx, gy] = P2(moveGoal[0], moveGoal[1]); x.strokeStyle = '#fff'; x.lineWidth = 2; x.beginPath(); x.arc(gx, gy, 5 * r0, 0, 7); x.stroke(); }
+  // 나 = 금색 화살표 (걷는 쪽을 가리켜요)
+  const [px, py] = P2(player.x, player.y), ang = Math.atan2(player.mdy || 0, player.mdx ?? player.face), k = 1.25 * r0;
+  x.save(); x.translate(px, py); x.rotate(ang); x.shadowColor = 'rgba(0,0,0,.6)'; x.shadowBlur = 4;
+  x.fillStyle = '#ffd23e'; x.strokeStyle = '#4a2c00'; x.lineWidth = 1.6;
+  x.beginPath(); x.moveTo(9 * k, 0); x.lineTo(-6 * k, -6.5 * k); x.lineTo(-2.5 * k, 0); x.lineTo(-6 * k, 6.5 * k); x.closePath(); x.fill(); x.stroke(); x.restore();
+}
+function drawMini(dt) {
+  miniT -= dt; if (miniT > 0 || !miniBase) return; miniT = 1 / 20;
+  const mc = $('mini'), D = Math.round(mc.clientWidth * Math.min(2, devicePixelRatio || 1)); if (!D) return;
+  if (mc.width !== D) mc.width = mc.height = D;
+  const x = mc.getContext('2d'), R = MINI_R[miniZ], ring = D * .055, rad = D / 2 - ring, sc = rad / R;
+  const pcx = player.px / CELL - .5, pcy = player.py / CELL - .5;   // 부드럽게 따라가도록 픽셀 위치 기준
+  x.clearRect(0, 0, D, D);
+  x.save(); x.beginPath(); x.arc(D / 2, D / 2, rad, 0, 7); x.clip();
+  x.fillStyle = '#2b6f96'; x.fillRect(0, 0, D, D);
+  const s0x = (pcx + .5 - R) * MINI_S, s0y = (pcy + .5 - R) * MINI_S;
+  { // 지도 밖으로 나간 부분은 잘라서 그려요 (사파리는 밖을 가리키면 아예 안 그림)
+    const sw = R * 2 * MINI_S, k = rad * 2 / sw, ax = Math.max(0, s0x), ay = Math.max(0, s0y), bx = Math.min(miniBase.width, s0x + sw), by = Math.min(miniBase.height, s0y + sw);
+    if (bx > ax && by > ay) x.drawImage(miniBase, ax, ay, bx - ax, by - ay, ring + (ax - s0x) * k, ring + (ay - s0y) * k, (bx - ax) * k, (by - ay) * k); }
+  miniDots(x, sc, D / 2 - (pcx + .5) * sc, D / 2 - (pcy + .5) * sc, false);
+  // 안쪽 그림자
+  const ig = x.createRadialGradient(D / 2, D / 2, rad * .7, D / 2, D / 2, rad); ig.addColorStop(0, 'rgba(0,0,0,0)'); ig.addColorStop(1, 'rgba(0,0,0,.38)');
+  x.fillStyle = ig; x.fillRect(0, 0, D, D); x.restore();
+  // 금테 + 동서남북 마름모
+  const gg = x.createLinearGradient(0, 0, D, D); gg.addColorStop(0, '#fff0b0'); gg.addColorStop(.35, '#d9a83c'); gg.addColorStop(.7, '#8a5a17'); gg.addColorStop(1, '#e8c264');
+  x.lineWidth = ring * 1.15; x.strokeStyle = '#2a1a08'; x.beginPath(); x.arc(D / 2, D / 2, rad + ring * .45, 0, 7); x.stroke();
+  x.lineWidth = ring * .8; x.strokeStyle = gg; x.beginPath(); x.arc(D / 2, D / 2, rad + ring * .45, 0, 7); x.stroke();
+  for (let i = 0; i < 4; i++) {
+    const a = i * Math.PI / 2 - Math.PI / 2, cx = D / 2 + Math.cos(a) * (rad + ring * .45), cy = D / 2 + Math.sin(a) * (rad + ring * .45), q = ring * 1.15;
+    x.save(); x.translate(cx, cy); x.rotate(a); x.fillStyle = gg; x.strokeStyle = '#2a1a08'; x.lineWidth = ring * .22;
+    x.beginPath(); x.moveTo(q * 1.3, 0); x.lineTo(0, -q * .8); x.lineTo(-q * .9, 0); x.lineTo(0, q * .8); x.closePath(); x.fill(); x.stroke(); x.restore();
+  }
+  if (!$('bigmap').classList.contains('hidden')) drawBig();
+}
+function drawBig() {
+  const bc = $('bigcv'), W = Math.round(bc.clientWidth * Math.min(2, devicePixelRatio || 1)); if (!W) return;
+  const H = Math.round(W * M.h / M.w); if (bc.width !== W) { bc.width = W; bc.height = H; }
+  const x = bc.getContext('2d'); x.imageSmoothingQuality = 'high'; x.drawImage(miniBase, 0, 0, W, H);
+  const sc = W / M.w;
+  // 지역 이름
+  x.font = `600 ${Math.round(W / 46)}px "Gowun Dodum",sans-serif`; x.textAlign = 'center'; x.lineWidth = 4; x.lineJoin = 'round';
+  for (const z of ZONES) {
+    if (z.id === 'beach') continue; const cs = M.zcells[z.id]; if (!cs || !cs.length) continue;
+    let sx = 0, sy = 0; for (const i of cs) { sx += i % M.w; sy += Math.floor(i / M.w); }
+    let lx = sx / cs.length, ly = sy / cs.length; if (z.road) [lx, ly] = polar(z.road[1] + 6, z.road[0]); if (z.town) ly -= 6;
+    const nm = z.name.replace('도깨비섬 ', ''); x.strokeStyle = 'rgba(0,0,0,.7)'; x.fillStyle = '#fff6d8'; x.strokeText(nm, lx * sc, ly * sc); x.fillText(nm, lx * sc, ly * sc);
+  }
+  miniDots(x, sc, 0, 0, true);
+}
+function setMiniZ(d) { miniZ = clamp(miniZ + d, 0, MINI_R.length - 1); try { localStorage.setItem('rpg-miniz', miniZ); } catch (e) {} miniT = 0; SND.ui(); }
+function toggleBig(on) { const b = $('bigmap'); b.classList.toggle('hidden', on === undefined ? !b.classList.contains('hidden') : !on); miniT = 0; }
+function walkToCell(cx, cy) {
+  cx = clamp(cx, 1, M.w - 2); cy = clamp(cy, 1, M.h - 2);
+  if (blocked(cx, cy)) { let best = null; for (let rr = 1; rr < 6 && !best; rr++) for (let y = cy - rr; y <= cy + rr; y++) for (let x = cx - rr; x <= cx + rr; x++) if (!best && !blocked(x, y)) best = [x, y]; if (!best) return; [cx, cy] = best; }
+  tgt = null; auto = false; held = false; pending = 0; moveGoal = [cx, cy]; moveGoalPt = null; player.path = null; SND.ui();
 }
 // 미니맵을 누르면 그곳으로 걸어가요
 function miniClick(e) {
   if (!P || dead || !M) return;
-  const r = $('mini').getBoundingClientRect();
-  let cx = Math.floor((e.clientX - r.left) / r.width * M.w), cy = Math.floor((e.clientY - r.top) / r.height * M.h);
-  cx = clamp(cx, 1, M.w - 2); cy = clamp(cy, 1, M.h - 2);
-  if (blocked(cx, cy)) { let best = null; for (let rr = 1; rr < 6 && !best; rr++) for (let y = cy - rr; y <= cy + rr; y++) for (let x = cx - rr; x <= cx + rr; x++) if (!best && !blocked(x, y)) best = [x, y]; if (!best) return; [cx, cy] = best; }
-  tgt = null; auto = false; held = false; pending = 0; moveGoal = [cx, cy]; moveGoalPt = null; player.path = null; SND.ui();
   e.stopPropagation();
+  const r = $('mini').getBoundingClientRect(), D = r.width, rad = D / 2 * (1 - .11), R = MINI_R[miniZ];
+  const dx = e.clientX - r.left - D / 2, dy = e.clientY - r.top - D / 2; if (Math.hypot(dx, dy) > rad) return;
+  walkToCell(Math.floor(player.px / CELL + dx / rad * R), Math.floor(player.py / CELL + dy / rad * R));
+}
+function bigClick(e) {
+  if (!P || dead || !M) return;
+  e.stopPropagation();
+  const r = $('bigcv').getBoundingClientRect();
+  walkToCell(Math.floor((e.clientX - r.left) / r.width * M.w), Math.floor((e.clientY - r.top) / r.height * M.h));
+  toggleBig(false);
 }
 
 /* ================= 한 프레임 ================= */
@@ -1906,7 +1956,8 @@ function bindUI() {
     }
     else if (k === 'i' || k === 'ㅑ') openWin('inv');
     else if (k === 'c' || k === 'ㅊ') openWin('char');
-    else if (k === 'escape') { if (enchantPick) cancelEnchant(); else closeWin(); }
+    else if (k === 'm' || k === 'ㅡ') toggleBig();
+    else if (k === 'escape') { if (!$('bigmap').classList.contains('hidden')) toggleBig(false); else if (enchantPick) cancelEnchant(); else closeWin(); }
   });
   addEventListener('pagehide', () => save(true));
   document.addEventListener('visibilitychange', () => { if (document.hidden) save(true); });
@@ -1957,6 +2008,13 @@ function bindUI() {
   $('b-char').addEventListener('click', () => openWin('char'));
 
   $('mini').addEventListener('pointerdown', miniClick);
+  $('bigcv').addEventListener('pointerdown', bigClick);
+  $('bigmap').addEventListener('pointerdown', e => { e.stopPropagation(); if (e.target.id === 'bigmap') toggleBig(false); });
+  $('m-in').addEventListener('click', e => { e.stopPropagation(); setMiniZ(-1); });
+  $('m-out').addEventListener('click', e => { e.stopPropagation(); setMiniZ(1); });
+  $('m-big').addEventListener('click', e => { e.stopPropagation(); toggleBig(); });
+  $('bm-x').addEventListener('click', e => { e.stopPropagation(); toggleBig(false); });
+  ['m-in', 'm-out', 'm-big', 'bm-x'].forEach(id => $(id).addEventListener('pointerdown', e => e.stopPropagation()));
   $('gate-pay').addEventListener('click', payGate);
   // 휴대폰: 배경음악을 끄면 다른 앱(유튜브 등) 소리와 섞여서 나게 (아이폰은 이때 무음 모드면 효과음도 안 나요)
   const audioMode = () => { try { if (navigator.audioSession) navigator.audioSession.type = (KBGM.on && KBGM.vol > 0) ? 'auto' : 'ambient'; } catch (e) {} };
