@@ -1724,7 +1724,7 @@ function drawMini(dt) {
   miniT -= dt; if (miniT > 0 || !miniBase) return; miniT = 1 / 20;
   const mc = $('mini'), D = Math.round(mc.clientWidth * Math.min(2, devicePixelRatio || 1)); if (!D) return;
   if (mc.width !== D) mc.width = mc.height = D;
-  const x = mc.getContext('2d'), R = MINI_R[miniZ], ring = D * .055, rad = D / 2 - ring, sc = rad / R;
+  const x = mc.getContext('2d'), R = MINI_R[miniZ], ring = D * .05, rad = D / 2 - ring * 2.1, sc = rad / R;   // 동서남북 표시가 잘리지 않게 안쪽으로
   const pcx = player.px / CELL - .5, pcy = player.py / CELL - .5;   // 부드럽게 따라가도록 픽셀 위치 기준
   x.clearRect(0, 0, D, D);
   x.save(); x.beginPath(); x.arc(D / 2, D / 2, rad, 0, 7); x.clip();
@@ -1732,7 +1732,7 @@ function drawMini(dt) {
   const s0x = (pcx + .5 - R) * MINI_S, s0y = (pcy + .5 - R) * MINI_S;
   { // 지도 밖으로 나간 부분은 잘라서 그려요 (사파리는 밖을 가리키면 아예 안 그림)
     const sw = R * 2 * MINI_S, k = rad * 2 / sw, ax = Math.max(0, s0x), ay = Math.max(0, s0y), bx = Math.min(miniBase.width, s0x + sw), by = Math.min(miniBase.height, s0y + sw);
-    if (bx > ax && by > ay) x.drawImage(miniBase, ax, ay, bx - ax, by - ay, ring + (ax - s0x) * k, ring + (ay - s0y) * k, (bx - ax) * k, (by - ay) * k); }
+    if (bx > ax && by > ay) x.drawImage(miniBase, ax, ay, bx - ax, by - ay, D / 2 - rad + (ax - s0x) * k, D / 2 - rad + (ay - s0y) * k, (bx - ax) * k, (by - ay) * k); }
   miniDots(x, sc, D / 2 - (pcx + .5) * sc, D / 2 - (pcy + .5) * sc, false);
   // 안쪽 그림자
   const ig = x.createRadialGradient(D / 2, D / 2, rad * .7, D / 2, D / 2, rad); ig.addColorStop(0, 'rgba(0,0,0,0)'); ig.addColorStop(1, 'rgba(0,0,0,.38)');
@@ -1774,7 +1774,7 @@ function walkToCell(cx, cy) {
 function miniClick(e) {
   if (!P || dead || !M) return;
   e.stopPropagation();
-  const r = $('mini').getBoundingClientRect(), D = r.width, rad = D / 2 * (1 - .11), R = MINI_R[miniZ];
+  const r = $('mini').getBoundingClientRect(), D = r.width, rad = D / 2 - D * .05 * 2.1, R = MINI_R[miniZ];
   const dx = e.clientX - r.left - D / 2, dy = e.clientY - r.top - D / 2; if (Math.hypot(dx, dy) > rad) return;
   walkToCell(Math.floor(player.px / CELL + dx / rad * R), Math.floor(player.py / CELL + dy / rad * R));
 }
