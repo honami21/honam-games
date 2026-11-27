@@ -17,7 +17,7 @@ const IMG_LIST = ['t-board', 't-forge', 'npc-smith', 'i-return', 'i-teleport', '
   'i-potion', 'i-haste', 'i-wscroll', 'i-ascroll', 'i-coin', 'i-coins', 'i-box', ...Object.keys(PROPS)];
 function loadImages() {
   const jobs = IMG_LIST.map(n => new Promise(res => { const im = new Image(); im.onload = () => { IMG[n] = im; res(); }; im.onerror = res; im.src = 'img/' + n + '.png?v=1'; }));
-  ['tile-town', 'tile-field', 'tile-bamboo', 'tile-sand', 'tile-paddy', 'tile-deep', 'tile-rock', 'tile-sea', 'world-map'].forEach(n => jobs.push(new Promise(res => { const im = new Image(); im.onload = () => { IMG[n] = im; res(); }; im.onerror = res; im.src = 'img/' + n + '.jpg?v=2'; })));
+  ['tile-town', 'tile-field', 'tile-bamboo', 'tile-sand', 'tile-paddy', 'tile-deep', 'tile-marsh', 'tile-rock', 'tile-sea', 'world-map'].forEach(n => jobs.push(new Promise(res => { const im = new Image(); im.onload = () => { IMG[n] = im; res(); }; im.onerror = res; im.src = 'img/' + n + '.jpg?v=2'; })));
   return Promise.all(jobs);
 }
 const GOLD = {};
@@ -43,7 +43,7 @@ const UK = .5;
 /* ================= 배경 음악 (지역마다 바뀜) ================= */
 KBGM.init({ key: 'rpg', start: 'title', tracks: { title: 'audio/bgm-title.mp3', town: 'audio/bgm-town.mp3', field: 'audio/bgm-field.mp3', bamboo: 'audio/bgm-bamboo.mp3', boss: 'audio/bgm-boss.mp3' } });
 KBGM.full();
-const ZONE_BGM = { town: 'town', bamboo: 'bamboo', deep: 'bamboo' };
+const ZONE_BGM = { town: 'town', bamboo: 'bamboo', deep: 'bamboo', marsh: 'bamboo' };
 let bgmT = 0;
 function updateMusic(dt) {
   if ((bgmT -= dt) > 0) return; bgmT = .5;
@@ -201,15 +201,15 @@ function playerAC() {
   for (const s of SLOTS) { const it = P.eq[s]; if (it && it.g === 'a') ac -= ARMORS[it.k].ac + it.en; else if (it && it.g === 'c') ac -= ACCS[it.k].ac || 0; }
   return ac - Math.floor((ST('dex') - 10) / 3);
 }
-const strBonus = () => Math.floor((ST('str') - 10) / 2);
-const hitBonus = () => (ST('dex') - 10) * 2;
-const critRate = () => 5 + Math.floor((ST('dex') - 10) / 2);
+const strBonus = () => Math.floor((ST('str') - 10) / 2) + accBonus('dmg');
+const hitBonus = () => (ST('dex') - 10) * 2 + accBonus('hit');
+const critRate = () => 5 + Math.floor((ST('dex') - 10) / 2) + accBonus('crit');
 function weaponRange(it) {   // 무기 데미지 범위 (힘 보너스 제외)
   if (!it) return [1, 2];
   const base = WEAPONS[it.k].dmg + it.en;
   return [base, base + (it.en >= 7 ? 2 * (it.en - 6) : 0)];
 }
-function regenAmt() { return 1 + Math.floor(P.lv / 5) + Math.max(0, Math.floor((ST('con') - 10) / 2)); }
+function regenAmt() { return accBonus('regen') + 1 + Math.floor(P.lv / 5) + Math.max(0, Math.floor((ST('con') - 10) / 2)); }
 
 // 한 대의 결과: 명중 → 데미지 굴림 → 치명타 → AC 감소 → 0이면 막음
 function rollAttack(att, def) {
@@ -324,7 +324,7 @@ function buildWorld() {
   // 1) 섬 모양·강: 전체 지도 그림을 칸 크기로 줄여서 바다색이면 물. 바다와 이어지지 않은 물은 강(개울)
   { const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d'); x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
     if (IMG[WORLD.map]) x.drawImage(IMG[WORLD.map], 0, 0, W, H); else { x.fillStyle = '#0aa'; x.fillRect(0, 0, W, H); x.fillStyle = '#6a3'; x.beginPath(); x.ellipse(W / 2, H / 2, W * .4, H * .38, 0, 0, 7); x.fill(); }
-    const d = x.getImageData(0, 0, W, H).data;
+    const d = x.getImageData(0, 0, W, H).data; M.rgb = d;
     for (let i = 0; i < N; i++) { const r = d[i * 4], gg = d[i * 4 + 1], b = d[i * 4 + 2]; if (b > 140 && r < 130 && b - r > 60 && gg > 110) M.water[i] = 1; }
     // 바닥 띠 한 칸짜리 구멍·섬 정리
     const w2 = M.water.slice(); for (let y = 1; y < H - 1; y++) for (let x2 = 1; x2 < W - 1; x2++) { const i = idx(x2, y); let n = 0; for (const j of [i - 1, i + 1, i - W, i + W, i - W - 1, i - W + 1, i + W - 1, i + W + 1]) n += w2[j]; if (n >= 7) M.water[i] = 1; else if (n <= 1) M.water[i] = 0; }
@@ -339,6 +339,16 @@ function buildWorld() {
     const wx = x + Math.sin(y * .09) * 7 + Math.sin(y * .23 + x * .05) * 3, wy = y + Math.cos(x * .08) * 7;
     let b = 1e9, id = 'near'; for (const [sx, sy, zid] of seeds) { const d = (wx - sx) ** 2 + (wy - sy) ** 2; if (d < b) { b = d; id = zid; } }
     M.zid[i] = ZI[id];
+  }
+  // 2-1) 산맥 동쪽(대나무 골·깊은 대숲·안개 늪)은 전체 지도 그림의 색으로 나눠요: 밝은 초록=대나무, 짙은 초록=대숲, 잿빛 푸른색=늪
+  if (IMG[WORLD.map] && M.rgb) {
+    const E = new Set([ZI.bamboo, ZI.deep, ZI.marsh]), ch = [0, 1, 2].map(c => { const f = new Float32Array(N); for (let i = 0; i < N; i++) f[i] = M.rgb[i * 4 + c]; return boxBlur(f, 4); });
+    const REF = [[ZI.bamboo, 105, 166, 35], [ZI.deep, 37, 108, 63], [ZI.marsh, 142, 175, 172]];
+    const nz = M.zid.slice();
+    for (let i = 0; i < N; i++) if (E.has(M.zid[i])) { let b = 1e9; for (const [z, r0, g0, b0] of REF) { if (z === ZI.marsh && (i / W) < H * .6) continue; const dd = (ch[0][i] - r0) ** 2 + (ch[1][i] - g0) ** 2 + (ch[2][i] - b0) ** 2; if (dd < b) { b = dd; nz[i] = z; } } }
+    // 자잘한 얼룩 없애기 (둘레에서 가장 많은 지역으로)
+    for (let pass = 0; pass < 3; pass++) { const src = nz.slice(); for (let y = 3; y < H - 3; y++) for (let x = 3; x < W - 3; x++) { const i = idx(x, y); if (!E.has(src[i])) continue; const c = {}; for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) { const v = src[i + dy * W + dx]; if (E.has(v)) c[v] = (c[v] || 0) + 1; } let bv = src[i], bn = 0; for (const k in c) if (c[k] > bn) { bn = c[k]; bv = +k; } nz[i] = bv; } }
+    M.zid = nz;
   }
   // 3) 산맥: 등줄기 가까이는 못 지나가고(고갯길만 열림), 그 둘레는 바위 땅
   const segD = (x, y, pts) => { let b = 1e9; for (let k = 1; k < pts.length; k++) { const [ax, ay] = pts[k - 1], [bx, by] = pts[k], dx = bx - ax, dy = by - ay, t = clamp(((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy), 0, 1); b = Math.min(b, Math.hypot(x - ax - dx * t, y - ay - dy * t)); } return b; };
@@ -540,7 +550,7 @@ function buildGroundMasks() {
   const L = [];
   const foam = boxBlur(landI, 2); for (let i = 0; i < N; i++) foam[i] = M.stream[i] ? 0 : Math.min(1, foam[i] * 1.7);
   L.push({ fill: 'rgba(225,246,255,.55)', m: foam }, { tile: 'tile-sand', m: land1 });
-  for (const t of ['tile-field', 'tile-paddy', 'tile-bamboo', 'tile-deep', 'tile-rock', 'tile-town']) {
+  for (const t of ['tile-field', 'tile-paddy', 'tile-bamboo', 'tile-deep', 'tile-marsh', 'tile-rock', 'tile-town']) {
     const ind = new Float32Array(N); let any = 0;
     for (let i = 0; i < N; i++) { const z = M.zid[i] && ZONES[M.zid[i] - 1]; if (z && z.tile === t && z.id !== 'beach') { ind[i] = 1; any = 1; } }
     if (!any) continue;
@@ -1323,7 +1333,7 @@ function gearInfo(it) {
       `<br><span class="dim">안전 강화 +${ENCH.w.safe}까지 · 최대 +${ENCH.w.max}</span>`;
   }
   if (it.g === 'c') {
-    const c = ACCS[it.k], parts = [c.hp && `최대 HP +${c.hp}`, c.str && `힘 +${c.str}`, c.dex && `민첩 +${c.dex}`, c.con && `체력 +${c.con}`, c.ac && `방어도 ${c.ac}`].filter(Boolean);
+    const c = ACCS[it.k], parts = [c.hp && `최대 HP +${c.hp}`, c.str && `힘 +${c.str}`, c.dex && `민첩 +${c.dex}`, c.con && `체력 +${c.con}`, c.hit && `명중 +${c.hit}%`, c.crit && `치명타 +${c.crit}%`, c.dmg && `데미지 +${c.dmg}`, c.regen && `회복 +${c.regen}`, c.ac && `방어도 ${c.ac}`].filter(Boolean);
     return `<b>${itemName(it)}</b><br>${SLOT_NAME[c.slot]} · 장신구<br>${parts.join(' · ')}<br><span class="dim">강화할 수 없어요 · 우두머리가 떨어뜨려요</span>`;
   }
   const d = ARMORS[it.k];
