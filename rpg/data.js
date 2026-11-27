@@ -74,13 +74,13 @@ const WORLD = { w: 360, h: 270, town: [.28, .42], map: 'world-map' };   // 섬 �
 // tile: 바닥 그림, mons: [몬스터, 비율], count: 몬스터 수, at: 리스폰 지점(비율), seeds: 지역 씨앗(비율)
 const ZONES = [
   { id: 'town', name: '도깨비 마을', lv: '', tile: 'tile-town', town: true, color: '#c99b5e' },
-  { id: 'near', name: '마을 앞 들판', lv: '1~5', tile: 'tile-field', tier: 1, at: [.3, .27], seeds: [[.26, .22], [.38, .76], [.42, .5]], count: 260,
+  { id: 'near', name: '마을 앞 들판', lv: '1~5', tile: 'tile-field', tier: 1, at: [.3, .27], seeds: [[.26, .22], [.4, .26]], count: 170,
     mons: [['dust', 5], ['rat', 4]], drop: { w: .002, a: .004, gear: .004, coin: [1, 2] } },
-  { id: 'paddy', name: '허수아비 논밭', lv: '5~10', tile: 'tile-field', tier: 1, at: [.24, .6], seeds: [[.18, .6]], count: 190, boss: 'kscare',
+  { id: 'paddy', name: '허수아비 논밭', lv: '5~10', tile: 'tile-field', tier: 1, at: [.24, .6], seeds: [[.18, .6], [.38, .74], [.42, .52]], count: 280, boss: 'kscare',
     mons: [['rat', 3], ['acorn', 6], ['scare', 3]], drop: { w: .003, a: .006, gear: .006, coin: [2, 4] } },
-  { id: 'bamboo', name: '대나무 골', lv: '10~15', tile: 'tile-bamboo', tier: 2, at: [.7, .3], seeds: [[.76, .26]], count: 190,
+  { id: 'bamboo', name: '대나무 골', lv: '10~15', tile: 'tile-bamboo', tier: 2, at: [.7, .3], seeds: [[.76, .26], [.6, .18]], count: 190,
     mons: [['shoot', 7], ['tanuki', 2]], drop: { w: .004, a: .008, gear: .004, coin: [3, 6] } },
-  { id: 'deep', name: '깊은 대숲', lv: '15~20', tile: 'tile-deep', tier: 2, at: [.78, .52], seeds: [[.8, .54]], count: 150, boss: 'general',
+  { id: 'deep', name: '깊은 대숲', lv: '15~20', tile: 'tile-deep', tier: 2, at: [.78, .52], seeds: [[.8, .54], [.64, .44]], count: 150, boss: 'general',
     mons: [['tanuki', 1], ['bghost', 4], ['broom', 4]], drop: { w: .006, a: .012, gear: .006, coin: [5, 9] } },
   { id: 'marsh', name: '안개 늪', lv: '', tile: 'tile-deep', tier: 2, seeds: [[.68, .82]] },
   { id: 'mtn', name: '뿔바위 산맥', lv: '', tile: 'tile-rock', tier: 2 },
