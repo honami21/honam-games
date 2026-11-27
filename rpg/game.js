@@ -1716,7 +1716,8 @@ function miniDots(x, sc, ox, oy, big, meOnly) {   // sc: 칸 → 화면 픽셀, 
     }
   }
   if (moveGoal && !meOnly) { const [gx, gy] = P2(moveGoal[0], moveGoal[1]); x.strokeStyle = '#fff'; x.lineWidth = 2; x.beginPath(); x.arc(gx, gy, 5 * r0, 0, 7); x.stroke(); }
-  // 나 = 금색 화살표 (걷는 쪽을 가리켜요)
+  // 나 = 금색 화살표 (걷는 쪽을 가리켜요). 섬 지도에서는 빨간 핀으로 따로
+  if (big) return;
   const [px, py] = P2(player.x, player.y), ang = Math.atan2(player.mdy || 0, player.mdx ?? player.face), k = 1.25 * r0;
   x.save(); x.translate(px, py); x.rotate(ang); x.shadowColor = 'rgba(0,0,0,.6)'; x.shadowBlur = 4;
   x.fillStyle = '#ffd23e'; x.strokeStyle = '#4a2c00'; x.lineWidth = 1.6;
@@ -1818,7 +1819,13 @@ function drawBig() {
     x.fillStyle = 'rgba(30,20,40,.72)'; x.beginPath(); x.roundRect(bx, by, bw, bh, bh / 2); x.fill(); x.strokeStyle = 'rgba(232,194,100,.9)'; x.lineWidth = 1.5; x.stroke();
     x.fillStyle = '#fff6d8'; x.fillText(nm, lx * sc, ly * sc);
   }
-  miniDots(x, sc, 0, 0, true, true);   // 내 위치 화살표는 맨 위에
+  // 내 위치: 퍼지는 고리 + 빨간 핀 + '나' (맨 위에)
+  { const px = player.px / CELL * sc, py = player.py / CELL * sc, k = W / 900, t = (performance.now() / 1200) % 1;
+    x.strokeStyle = `rgba(255,70,60,${1 - t})`; x.lineWidth = 4 * k; x.beginPath(); x.arc(px, py, (10 + 34 * t) * k, 0, 7); x.stroke();
+    x.save(); x.translate(px, py); x.scale(k, k); x.shadowColor = 'rgba(0,0,0,.55)'; x.shadowBlur = 6;
+    x.fillStyle = '#ff3d3d'; x.strokeStyle = '#fff'; x.lineWidth = 3.5;
+    x.beginPath(); x.moveTo(0, 0); x.bezierCurveTo(-6, -12, -15, -20, -15, -31); x.arc(0, -31, 15, Math.PI, 0); x.bezierCurveTo(15, -20, 6, -12, 0, 0); x.closePath(); x.fill(); x.stroke();
+    x.shadowBlur = 0; x.fillStyle = '#fff'; x.font = '700 15px "Do Hyeon",sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('나', 0, -30); x.restore(); x.textBaseline = 'alphabetic'; }
 }
 function setMiniZ(d) { miniZ = clamp(miniZ + d, 0, MINI_R.length - 1); try { localStorage.setItem('rpg-miniz', miniZ); } catch (e) {} miniT = 0; SND.ui(); }
 function toggleBig(on) { const b = $('bigmap'); b.classList.toggle('hidden', on === undefined ? !b.classList.contains('hidden') : !on); miniT = 0; }
