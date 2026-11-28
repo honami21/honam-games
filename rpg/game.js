@@ -817,13 +817,13 @@ function onDown(e) {
   if (npc) { tgt = npc; moveGoal = null; held = false; auto = false; pending = 0; pointer.onMon = null; return; }
   const m = unitAt(wx, wy, ['mon']);
   // 몬스터를 한 번 누르면 쓰러질 때까지 자동으로 공격해요 (컴퓨터·휴대폰 같음)
-  // 싸우는 중에 쉬프트+클릭: 지금 몬스터를 잡은 뒤 차례로 잡을 몬스터 예약 (최대 3마리, 다시 누르면 취소)
+  // 싸우는 중에 쉬프트+클릭: 지금 몬스터를 잡은 뒤 차례로 잡을 몬스터 예약 (제한 없음, 다시 누르면 취소)
   const fighting = m && tgt && tgt.kind === 'mon' && auto && m !== tgt;
   if (fighting && e.shiftKey) { pointer.down = false; toggleQueue(m); return; }
-  // 휴대폰: 싸우는 중 다른 몬스터를 꾹 누르면 예약, 톡 누르면 그 몬스터로 바꾸기
+  // 휴대폰: 싸우는 중 다른 몬스터를 톡 누르면 예약, 꾹 누르면 바로 그 몬스터로 바꾸기 (바닥을 톡 누르면 멈춤)
   if (fighting && e.pointerType === 'touch') {
     const sx = e.clientX, sy = e.clientY;
-    lp = { m, sx, sy, t: setTimeout(() => { if (!lp) return; lp = null; pointer.down = false; toggleQueue(m); try { navigator.vibrate && navigator.vibrate(30); } catch (er) {} }, 450) };
+    lp = { m, sx, sy, t: setTimeout(() => { if (!lp) return; lp = null; pointer.down = false; tq = []; if (!m.dying && units.includes(m)) { tgt = m; moveGoal = null; held = false; auto = true; pending = 0; } try { navigator.vibrate && navigator.vibrate(30); } catch (er) {} }, 450) };
     return;
   }
   tq = [];
@@ -854,7 +854,7 @@ function onMove(e) {
 }
 function overBar(x, y) { const r = $('bar').getBoundingClientRect(); return y >= r.top - 6 && x >= r.left && x <= r.right; }
 function onUp(e) {
-  if (lp) { const m = lp.m; clearTimeout(lp.t); lp = null; tq = []; if (!m.dying && units.includes(m)) { tgt = m; moveGoal = null; held = false; auto = true; pending = 0; } pointer.down = false; return; }   // 짧게 톡: 그 몬스터로 바꾸기
+  if (lp) { const m = lp.m; clearTimeout(lp.t); lp = null; pointer.down = false; if (!m.dying && units.includes(m)) toggleQueue(m); return; }   // 짧게 톡: 다음 몬스터로 예약 (꾹 누르면 바로 바꾸기)
   if (!pointer.down) return;
   pointer.down = false;
   if (pointer.drag) {
