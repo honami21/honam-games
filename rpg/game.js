@@ -16,7 +16,7 @@ const IMG_LIST = ['t-board', 't-forge', 'npc-smith', 'i-return', 'i-teleport', '
   ...Object.keys(WEAPONS).map(k => 'w-' + k), ...Object.keys(ARMORS).map(k => 'a-' + k), ...Object.keys(ACCS).map(k => 'c-' + k),
   'i-potion', 'i-haste', 'i-wscroll', 'i-ascroll', 'i-coin', 'i-coins', 'i-box', ...Object.keys(PROPS)];
 function loadImages() {
-  const jobs = IMG_LIST.map(n => new Promise(res => { const im = new Image(); im.onload = () => { IMG[n] = im; res(); }; im.onerror = res; im.src = 'img/' + n + '.png?v=2'; }));
+  const jobs = IMG_LIST.map(n => new Promise(res => { const im = new Image(); im.onload = () => { IMG[n] = im; res(); }; im.onerror = res; im.src = 'img/' + n + '.png?v=3'; }));
   ['tile-town', 'tile-field', 'tile-bamboo', 'tile-sand', 'tile-paddy', 'tile-deep', 'tile-marsh', 'tile-rock', 'tile-sea', 'world-map'].forEach(n => jobs.push(new Promise(res => { const im = new Image(); im.onload = () => { IMG[n] = im; res(); }; im.onerror = res; im.src = 'img/' + n + '.jpg?v=2'; })));
   return Promise.all(jobs);
 }
@@ -1569,7 +1569,7 @@ function resize() {
 }
 const PSCALE = 92 / 300 * UK;   // 깨비샘 그림 크기
 // 프레임마다 몸 가운데 위치(그림 너비 비율): 검이 한쪽으로 뻗어도 몸이 흔들리지 않게
-const PANCHOR = { 'p-walk-0': .408, 'p-walk-1': .411, 'p-walk-2': .422, 'p-walk-3': .409, 'p-walk-4': .424, 'p-walk-5': .396, 'p-idle': .407, 'p-walk1': .534, 'p-walk2': .539, 'p-wind': .654, 'p-swing': .355, 'p-hurt': .531, 'p-dead': .494, 'p-win': .548,
+const PANCHOR = { 'p-walk-0': .408, 'p-walk-1': .411, 'p-walk-2': .422, 'p-walk-3': .409, 'p-walk-4': .424, 'p-walk-5': .396, 'p-idle': .407, 'p-walk1': .534, 'p-walk2': .539, 'p-wind': .669, 'p-swing': .304, 'p-hurt': .438, 'p-dead': .494, 'p-win': .548,
   'a-walk-0': .479, 'a-walk-1': .489, 'a-walk-2': .494, 'a-walk-3': .477, 'a-walk-4': .472, 'a-walk-5': .482, 'a-idle': .49, 'a-walk1': .485, 'a-walk2': .484, 'a-wind': .407, 'a-swing': .451, 'a-hurt': .506, 'a-dead': .442, 'a-win': .493 };
 function drawSprite(name, x, y, h, flip, opts = {}) {
   let im = IMG[name]; if (!im) return;
