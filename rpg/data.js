@@ -22,13 +22,13 @@ const ARMORS = {
   cloak1:  { name: '낡은 천 망토',    slot: 'cloak',  ac: 1, tier: 1, price: 30 },
   glove1:  { name: '무명 장갑',       slot: 'glove',  ac: 1, tier: 1, price: 30 },
   boots1:  { name: '낡은 고무신',     slot: 'boots',  ac: 1, tier: 1, price: 30 },
-  shield1: { name: '나무 방패',       slot: 'shield', ac: 1, tier: 1, price: 40 },
+  shield1: { name: '나무 방패',       slot: 'shield', ac: 1, tier: 1, price: 40, blk: 10 },   // blk: 전사가 들면 공격을 막을 확률(%)
   armor2:  { name: '대나무 갑옷',     slot: 'armor',  ac: 4, tier: 2 },
   helm2:   { name: '가죽 투구',       slot: 'helm',   ac: 2, tier: 2 },
   cloak2:  { name: '대나무 무늬 망토', slot: 'cloak', ac: 1, tier: 2 },
   glove2:  { name: '가죽 장갑',       slot: 'glove',  ac: 1, tier: 2 },
   boots2:  { name: '남색 고무신',     slot: 'boots',  ac: 1, tier: 2 },
-  shield2: { name: '대나무 방패',     slot: 'shield', ac: 2, tier: 2 },
+  shield2: { name: '대나무 방패',     slot: 'shield', ac: 2, tier: 2, blk: 15 },
 };
 // 장신구: 직업마다 목걸이·반지 하나씩 (모두 8개). 강화할 수 없고, 어느 우두머리든 적은 확률로 떨어뜨려요 (창고로 다른 캐릭터에게 줄 수 있어요)
 // 능력: str·dex·con, hit(명중 %), crit(치명타 %), dmg(데미지 +), regen(회복 +), ac(방어도)
