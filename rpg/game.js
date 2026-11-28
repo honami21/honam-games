@@ -41,7 +41,7 @@ const GDEF = it => (it.g === 'w' ? WEAPONS : it.g === 'c' ? ACCS : ARMORS)[it.k]
 // 캐릭터·몬스터·NPC 크기 (1 = 처음 크기, 2026-11-25 절반으로 줄임)
 const UK = .5;
 /* ================= 배경 음악 (지역마다 바뀜) ================= */
-KBGM.init({ key: 'rpg', start: 'title', tracks: { title: 'audio/bgm-title.mp3', town: 'audio/bgm-town.mp3', field: 'audio/bgm-field.mp3', bamboo: 'audio/bgm-bamboo.mp3', boss: 'audio/bgm-boss.mp3' } });
+KBGM.init({ key: 'rpg', start: 'title', tracks: { title: 'audio/bgm-title.mp3', town: 'audio/bgm-town.mp3', field: 'audio/bgm-field.mp3', bamboo: 'audio/bgm-bamboo.mp3', boss: 'audio/bgm-boss.mp3?v=2' } });
 KBGM.full();
 const ZONE_BGM = { town: 'town', bamboo: 'bamboo', deep: 'bamboo', marsh: 'bamboo' };
 let bgmT = 0;
