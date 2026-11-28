@@ -359,7 +359,8 @@
   @media (max-width:600px) {
     #bar { flex-wrap:wrap; gap:6px; padding:6px 8px; bottom:max(8px, env(safe-area-inset-bottom)); border-radius:18px; }
     #bar .bars { flex:1 1 calc(100% - 110px); }
-    #bar .bbtn { flex:1 1 34px; min-width:0; height:46px; padding:2px; border-radius:12px; }
+    #bar .bbtn { flex:0 0 calc((100% - 30px) / 6); min-width:0; height:46px; padding:2px; border-radius:12px; margin:0; }   /* 두 줄 6칸이 위아래로 딱 맞게 */
+    #bar #pmini { display:none; }   /* 빈 칸이 줄 앞에 틈을 만들지 않게 */
     #bar .bbtn.qs { order:2; } #bar #b-inv, #bar #b-char { order:3; } #bar .brk { display:block; order:4; flex:0 0 100%; height:0; } #bar .bbtn.sk { order:5; } #bar #b-snd, #bar .pmenu .bbtn.kbgm-btn { order:6; }
     #bar .bbtn.sk img { width:30px; height:30px; }
     #bar .bbtn img { width:24px; height:24px; } #bar .bbtn svg { width:20px; height:20px; }

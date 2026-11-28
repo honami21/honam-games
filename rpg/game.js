@@ -1644,6 +1644,7 @@ function nameError(n) {
   if (BAD_WORDS.some(w => low.includes(w))) return '쓸 수 없는 말이 들어 있어요';
   return '';
 }
+const playerFeet = () => [player.px + (player.ox || 0), player.py + (player.oy || 0) + CELL * .32 - 6];   // 캐릭터가 실제로 그려지는 발밑 (스킬 원의 가운데)
 function drawPlayer() {
   const x = player.px + (player.ox || 0), y = player.py + (player.oy || 0) + CELL * .32;
   shadow(x, y, 22 * UK);
@@ -1734,16 +1735,16 @@ function drawFx(f) {
       break;
     }
     case 'skW': {   // 돌려 베기: 몸 둘레를 도는 파란 회오리 (캐릭터 발밑을 따라가요)
-      g.translate(player.px, player.py + CELL * .3); g.scale(1, .5); g.lineCap = 'round';
+      g.translate(...playerFeet()); g.scale(1, .5); g.lineCap = 'round';
       for (let i = 0; i < 3; i++) {
-        const r = 70 + i * 16 + k * 18, s = k * Math.PI * 4 + i * 2.1;
+        const r = 52 + i * 14 + k * 14, s = k * Math.PI * 4 + i * 2.1;
         g.globalAlpha = (1 - k) * (1 - i * .2); g.strokeStyle = i === 1 ? '#ffffff' : '#5fc8ff'; g.lineWidth = (14 - i * 3) * (1 - k * .4);
         g.beginPath(); g.arc(0, 0, r, s, s + 2.6); g.stroke();
       }
       break;
     }
     case 'skE': {   // 기합: 붉은 기운이 퍼지는 고리
-      g.translate(player.px, player.py + CELL * .3); g.scale(1, .5); g.globalAlpha = 1 - k;
+      g.translate(...playerFeet()); g.scale(1, .5); g.globalAlpha = 1 - k;
       g.strokeStyle = '#ff6a2a'; g.lineWidth = 12 * (1 - k); g.beginPath(); g.arc(0, 0, 20 + k * 110, 0, Math.PI * 2); g.stroke();
       g.strokeStyle = '#ffd23e'; g.lineWidth = 6 * (1 - k); g.beginPath(); g.arc(0, 0, 10 + k * 80, 0, Math.PI * 2); g.stroke();
       break;
@@ -1852,7 +1853,7 @@ function render() {
   for (const s of shots) drawShot(s);
   for (const f of fx) drawFx(f);
   if (rushT > 0 && !dead) {   // 기합 중: 발밑에 붉은 기운 + 위로 솟는 불티
-    const t = performance.now() / 1000, x = player.px, y = player.py + CELL * .3;
+    const t = performance.now() / 1000, [x, y] = playerFeet();
     g.save(); g.globalAlpha = .35 + Math.sin(t * 8) * .1; g.fillStyle = '#ff5a1f'; g.beginPath(); g.ellipse(x, y, 34, 14, 0, 0, Math.PI * 2); g.fill();
     for (let i = 0; i < 6; i++) { const p = (t * .9 + i / 6) % 1, ox = Math.sin(i * 2.3 + t * 2) * 22; g.globalAlpha = (1 - p) * .9; g.fillStyle = i % 2 ? '#ffd23e' : '#ff6a2a'; g.beginPath(); g.arc(x + ox, y - p * 80, 5 * (1 - p) + 2, 0, Math.PI * 2); g.fill(); }
     g.restore();
