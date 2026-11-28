@@ -53,7 +53,7 @@ const SKILLS = { sword: [
 ] };
 const ACC_DROP = 0.1;   // 우두머리를 잡으면 10% 확률로 8개 중 하나
 const SLOTS = ['weapon', 'helm', 'armor', 'cloak', 'glove', 'boots', 'shield', 'neck', 'ring'];
-const SLOT_NAME = { weapon: '무기', helm: '투구', armor: '갑옷', cloak: '망토', glove: '장갑', boots: '고무신', shield: '방패', neck: '목걸이', ring: '반지' };
+const SLOT_NAME = { weapon: '무기', helm: '투구', armor: '갑옷', cloak: '망토', glove: '장갑', boots: '신발', shield: '방패', neck: '목걸이', ring: '반지' };
 
 // 쌓이는 아이템
 const ITEMS = {
