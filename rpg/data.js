@@ -60,7 +60,7 @@ const SKILLS = { sword: [
   { k: 'r', name: '용기 폭발', img: 'sk-sword-4', lv: 40, cost: 100, cd: 20, mult: 4, txt: '용기를 모두 모아 큰 한 방 (데미지 4배)' },
 ],
   bow: [
-  { k: 'q', name: '바람 화살', img: 'sk-bow-1', lv: 10, cost: 20, cd: 3, mult: 1.5, push: 1, txt: '세찬 바람 화살로 몬스터를 활이 닿는 끝까지 밀어내요 (데미지 1.5배, 우두머리는 안 밀려요)' },
+  { k: 'q', name: '바람 화살', img: 'sk-bow-1', lv: 10, cost: 20, cd: 5, mult: 1.5, push: 1, txt: '세찬 바람 화살로 몬스터를 4칸 밀어내요 (데미지 1.5배, 우두머리는 안 밀려요)' },
   { k: 'w', name: '화살비', img: 'sk-bow-2', lv: 20, cost: 40, cd: 5, mult: 1.5, rain: 3, txt: '활이 닿는 둘레 몬스터 최대 3마리에게 하늘에서 화살이 쏟아져요 (데미지 1.5배)' },
   { k: 'e', name: '매의 눈', img: 'sk-bow-3', lv: 30, cost: 30, cd: 30, hawk: 10, crit: 20, txt: '10초 동안 치명타 확률 +20%' },
   { k: 'r', name: '천둥 화살', img: 'sk-bow-4', lv: 40, cost: 100, cd: 20, mult: 4, splash: 1, txt: '집중을 모두 모은 천둥 화살 (데미지 4배), 맞은 몬스터 둘레 한 칸도 절반 피해' },
