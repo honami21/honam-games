@@ -198,6 +198,15 @@ function shortNum(n) { if (n < 10000) return n.toLocaleString(); if (n < 1e8) re
 const W_OF = () => P.eq.weapon ? WEAPONS[P.eq.weapon.k] : null;
 const isBow = () => !!P && P.cls === 'bow';
 const reach = () => { const w = W_OF(); return w && w.range || 1; };
+// 우두머리는 크게 그려져서 한 칸 떨어져서(2칸 거리) 싸워요
+const gapOf = u => (u && u.d && u.d.boss) ? 2 : 1;
+const reachTo = u => Math.max(reach(), gapOf(u));
+// 캐릭터(px,py)와 몬스터 m(mx,my) 사이 싸움 거리. 우두머리 위쪽(북쪽)에 서면 그림에 덮이니 한 줄 더 떨어져요
+function fightDist(px, py, m, mx = m.x, my = m.y) {
+  const dx = Math.abs(px - mx), dy = my - py;
+  if (!(m.d && m.d.boss)) return Math.max(dx, Math.abs(dy));
+  return Math.max(dx, dy > 0 ? dy - 1 : -dy);
+}
 const HERO = () => isBow() ? '궁수' : '검사';
 // 장신구가 더해 주는 능력치
 function accBonus(k) { let v = 0; for (const s of ['neck', 'ring']) { const it = P.eq[s]; if (it && it.g === 'c') v += ACCS[it.k][k] || 0; } return v; }
@@ -657,7 +666,7 @@ function heapPop(h) {
 function findPath(sx, sy, tx, ty, adj, self, limit = 3000) {
   // adj: 목표 옆 칸(공격 거리)까지만 / 가까운 유닛은 피해 감
   const W = M.w, start = sy * W + sx;
-  const goal = (x, y) => adj ? (cheb(x, y, tx, ty) <= 1 && !(x === tx && y === ty)) : (x === tx && y === ty);
+  const goal = (x, y) => typeof adj === 'function' ? (adj(x, y) && !(x === tx && y === ty)) : adj ? (cheb(x, y, tx, ty) <= +adj && !(x === tx && y === ty)) : (x === tx && y === ty);
   if (goal(sx, sy)) return [];
   const gS = new Map([[start, 0]]), from = new Map(), open = [], closed = new Set();
   heapPush(open, cheb(sx, sy, tx, ty), start);
@@ -899,9 +908,9 @@ function playerThink(dt) {
   if (tgt) {
     const want = held || auto || pending > 0;
     if (!want) { tgt = null; return; }
-    if (cheb(p.x, p.y, tgt.x, tgt.y) <= reach()) {
+    if (fightDist(p.x, p.y, tgt) <= reachTo(tgt)) {
       if (settle()) { faceTo(p, tgt); if (atkCD <= 0 && !atkAnim) startAttack(tgt); }
-    } else if (planT <= 0 || !p.moving) { planT = .25; planGlide(p, tgt.x, tgt.y, true); }
+    } else if (planT <= 0 || !p.moving) { planT = .25; planGlide(p, tgt.x, tgt.y, tgt.d.boss && reach() <= 2 ? (x, y) => fightDist(x, y, tgt) <= 2 : gapOf(tgt)); }
     return;
   }
   if (moveGoal) {
@@ -1055,10 +1064,10 @@ function monThink(m, dt) {
   if (!dead && !curZone.town && (m.angry || (d.aggro && dist <= 4))) {
     m.angry = true;
     if (dist > 12) { m.angry = false; m.glide = null; }   // 싸움이 붙으면 구역을 넘어서라도 쫓아오고, 12칸 넘게 떨어져야 포기해요
-    else if (dist <= 1) {
+    else if (fightDist(player.x, player.y, m) <= gapOf(m)) {
       m.glide = null;
       if (m.atkT <= 0) { faceTo(m, player); monAttack(m); m.atkT = d.boss ? 1.5 : 1.3; }
-    } else if (m.planT <= 0 || !m.moving) { m.planT = .35 + Math.random() * .2; planGlide(m, player.x, player.y, true); }
+    } else if (m.planT <= 0 || !m.moving) { m.planT = .35 + Math.random() * .2; planGlide(m, player.x, player.y, d.boss ? (x, y) => fightDist(player.x, player.y, m, x, y) <= 2 : 1); }
     return;
   }
   m.wander -= dt;
@@ -1073,7 +1082,7 @@ function monThink(m, dt) {
 function monAttack(m) {
   m.lunge = .2;
   setTimeout(() => {
-    if (dead || m.dying || !units.includes(m) || cheb(m.x, m.y, player.x, player.y) > 1) return;
+    if (dead || m.dying || !units.includes(m) || fightDist(player.x, player.y, m) > gapOf(m) + 1) return;
     const r = rollAttack({ lv: m.d.lv, dmg: m.d.dmg, crit: 0 }, { ac: playerAC(), lv: P.lv });
     const px = player.px, py = player.py - 36;
     if (r.miss) { addNum(px, py, '빗나감', 'miss'); return; }
@@ -1717,6 +1726,9 @@ function render() {
   const list = [];
   for (const p of M.props) if (p.x + p.w / 2 > vx0 && p.x - p.w / 2 < vx1 && p.y > vy0 && p.y - p.h < vy1) list.push([p.z ?? p.y, p]);
   for (const u of units) if (u.px > vx0 - 120 && u.px < vx1 + 120 && u.py > vy0 - 40 && u.py < vy1 + 200) list.push([u.py + CELL * .32, u]);
+  // 우두머리는 그림이 커서, 가까이 있으면 캐릭터보다 먼저(뒤에) 그려요. 캐릭터가 우두머리에 덮이지 않게
+  const pk = player.py + CELL * .32;
+  for (const e of list) { const o = e[1]; if (o.kind === 'mon' && o.d.boss && cheb(o.x, o.y, player.x, player.y) <= 5) e[0] = Math.min(e[0], pk - 1); }
   list.sort((a, b) => a[0] - b[0]);
   for (const [, o] of list) {
     if (o.kind === 'prop') drawProp(o);
@@ -1951,7 +1963,7 @@ function closeIn(dt) {
   const k = Math.min(1, dt * 10);
   for (const u of units) {
     let o = null;
-    if (u === player) { if (tgt && tgt.kind === 'mon' && !tgt.dying && !u.moving && !isBow() && cheb(u.x, u.y, tgt.x, tgt.y) <= 1) o = tgt; }
+    if (u === player) { if (tgt && tgt.kind === 'mon' && !tgt.dying && !u.moving && !isBow() && fightDist(u.x, u.y, tgt) <= gapOf(tgt)) o = tgt; }
     // 싸움이 끝나면 그 자리에 그대로 서 있다가, 걷기 시작할 때 거기서부터 걸어가요 (제자리로 휙 돌아가지 않게)
     if (u === player && !o) {
       if (u.moving && (u.ox || u.oy)) {
@@ -1960,7 +1972,7 @@ function closeIn(dt) {
       }
       continue;
     }
-    else if (u.kind === 'mon' && u.angry && !u.dying && !u.moving && !dead && cheb(u.x, u.y, player.x, player.y) <= 1) o = player;
+    else if (u.kind === 'mon' && u.angry && !u.dying && !u.moving && !dead && fightDist(player.x, player.y, u) <= gapOf(u)) o = player;
     const kk = u === player ? .5 : .25, gx = o ? (o.px - u.px) * kk : 0, gy = o ? (o.py - u.py) * kk : 0;   // 서로 다가가서 거의 붙어서 때려요
     u.ox = (u.ox || 0) + (gx - (u.ox || 0)) * k; u.oy = (u.oy || 0) + (gy - (u.oy || 0)) * k;
   }
@@ -1987,7 +1999,7 @@ function update(dt) {
   atkCD -= dt; hurtT -= dt; winT -= dt;
   if (atkAnim) {
     atkAnim.t += dt;
-    if (!atkAnim.hit && atkAnim.t >= atkAnim.wind) { atkAnim.hit = true; const m = atkAnim.m; if (!m.dying && units.includes(m) && cheb(player.x, player.y, m.x, m.y) <= reach() + 1) { if (atkAnim.type === 'bow') shoot(m); else doHit(m, atkAnim.type); } }
+    if (!atkAnim.hit && atkAnim.t >= atkAnim.wind) { atkAnim.hit = true; const m = atkAnim.m; if (!m.dying && units.includes(m) && fightDist(player.x, player.y, m) <= reachTo(m) + 1) { if (atkAnim.type === 'bow') shoot(m); else doHit(m, atkAnim.type); } }
     if (atkAnim && atkAnim.type === 'bow' && atkAnim.t > atkAnim.wind + .22) atkAnim = null;
     if (atkAnim.t > atkAnim.wind + .16) atkAnim = null;
   }
