@@ -783,7 +783,7 @@ function isAdmin() { try { return localStorage.getItem('rpg-admin') === '1'; } c
 // 초록 물약: 걷기 1.33배, 공격 1.33배 빠르게
 const HASTE = 1 / 1.33;
 function hasted() { return P && P.haste > 0; }
-let atkCD = 0, atkAnim = null, hurtT = 0, winT = 0, idleT = 0, regenT = 0, dead = false;
+let atkCD = 0, atkAnim = null, hurtT = 0, winT = 0, idleT = 0, regenT = 0, fightT = 99, dead = false;
 
 function screenToWorld(sx, sy) { return [(sx - VW / 2) / zoom + cam.x, (sy - VH / 2) / zoom + cam.y]; }
 function unitAt(wx, wy, kinds) {
@@ -1078,7 +1078,7 @@ function monAttack(m) {
     const px = player.px, py = player.py - 36;
     if (r.miss) { addNum(px, py, '빗나감', 'miss'); return; }
     if (r.block) { addNum(px, py, '막음', 'block'); SND.block(); return; }
-    P.hp -= r.dmg; hurtT = .18; idleT = 0;
+    P.hp -= r.dmg; hurtT = .18; idleT = 0; fightT = 0;
     addNum(px, py, String(r.dmg), 'hurt'); SND.hurt();
     shake.a = Math.max(shake.a, m.d.boss ? 6 : 2.5); shake.t = .15;
     $('hurtv').classList.remove('on'); void $('hurtv').offsetWidth; $('hurtv').classList.add('on');
@@ -1992,8 +1992,9 @@ function update(dt) {
   glideUpdate(player, dt);
   playerThink(dt);
   // 회복: 가만히 있으면 더 빨리
-  idleT += dt; regenT += dt;
-  if (regenT >= 2 && !dead) { regenT = 0; const mh = maxHP(); if (P.hp < mh) { P.hp = Math.min(mh, P.hp + regenAmt() * (idleT > 3 && !atkAnim ? 3 : 1)); updateHUD(); } }
+  idleT += dt; regenT += dt; fightT += dt;
+  if (atkAnim || (tgt && tgt.kind === 'mon' && auto)) fightT = 0;   // 싸우는 중(맞거나 때린 뒤 4초)에는 HP가 차지 않아요
+  if (regenT >= 2 && !dead && fightT >= 4) { regenT = 0; const mh = maxHP(); if (P.hp < mh) { P.hp = Math.min(mh, P.hp + regenAmt() * (idleT > 3 && !atkAnim ? 3 : 1)); updateHUD(); } }
   if (atkAnim || player.moving) idleT = 0;
   // 효과
   updateShots(dt);
