@@ -932,14 +932,15 @@ function hasted() { return P && P.haste > 0; }
 let atkCD = 0, atkAnim = null, hurtT = 0, winT = 0, idleT = 0, regenT = 0, fightT = 99, dead = false;
 
 function screenToWorld(sx, sy) { return [(sx - VW / 2) / zoom + cam.x, (sy - VH / 2) / zoom + cam.y]; }
+let touchPick = false;   // 휴대폰은 손가락이 커서 몬스터 머리 위쪽을 눌러도 잡히게 넓게 봐요
 function unitAt(wx, wy, kinds) {
-  let best = null;
+  let best = null; const tk = touchPick ? 1.6 : 1;
   for (const u of units) {
     if (!kinds.includes(u.kind) || u.dying) continue;
     if (u.prop) { const p = u.prop; if (wx > p.x - p.w / 2 && wx < p.x + p.w / 2 && wy > p.y - p.h && wy < p.y) if (!best || u.py > best.py) best = u; continue; }
     const mon = u.kind === 'mon', h = mon ? u.d.h : u.h || 88 * UK, pad = mon ? 14 : 0, w = Math.max(h * .8, 30) + pad * 2;
     const ux = u.px + (u.ox || 0), uy = u.py + (u.oy || 0);
-    if (wx > ux - w / 2 && wx < ux + w / 2 && wy > uy + CELL * .3 - Math.max(h, 36) - pad && wy < uy + CELL * .35 + pad / 2) if (!best || u.py > best.py) best = u;
+    if (wx > ux - w / 2 && wx < ux + w / 2 && wy > uy + CELL * .3 - Math.max(h, 36) * (mon ? tk : 1) - pad && wy < uy + CELL * .35 + pad / 2) if (!best || u.py > best.py) best = u;
   }
   if (best || !kinds.includes('mon')) return best;
   // 몬스터를 살짝 빗나가게 눌러도 가까이 있는 몬스터를 골라줘요 (움직이는 몬스터 누르기 쉽게)
@@ -947,7 +948,7 @@ function unitAt(wx, wy, kinds) {
   for (const u of units) {
     if (u.kind !== 'mon' || u.dying) continue;
     const h = Math.max(u.d.h, 36), cx = u.px + (u.ox || 0), cy = u.py + (u.oy || 0) + CELL * .3 - h / 2;
-    const d = Math.hypot(wx - cx, wy - cy), lim = h * .4 + 28;
+    const d = Math.hypot(wx - cx, wy - cy), lim = (h * .4 + 28) * tk;
     if (d < lim && d < bd) { bd = d; best = u; }
   }
   return best;
@@ -958,6 +959,7 @@ function onDown(e) {
   if (!P || dead || !M) return;
   const [wx, wy] = screenToWorld(e.clientX, e.clientY);
   pointer.down = true; pointer.x = e.clientX; pointer.y = e.clientY;
+  touchPick = e.pointerType === 'touch';
   if (enchantPick) { cancelEnchant(); }
   const npc = unitAt(wx, wy, ['npc']);
   if (npc) { tgt = npc; moveGoal = null; held = false; auto = false; pending = 0; pointer.onMon = null; return; }
@@ -2612,4 +2614,4 @@ bindUI();
 loadImages().then(() => { document.body.classList.add('ready'); });
 setTimeout(pullCloud, 600);
 requestAnimationFrame(frame);
-window.__rpg = { screenPos() { return [(player.px - cam.x) * zoom + VW / 2, (player.py - cam.y) * zoom + VH / 2]; }, get P() { return P; }, get M() { return M; }, get units() { return units; }, get player() { return player; }, get zone() { return curZone; }, enterWorld, teleport, talk, warpTo, goRegion, spawnMonster, gainExp, giveItem, rollAttack, playerAttacker, playerAC, set tgt(v) { tgt = v; }, set auto(v) { auto = v; } };
+window.__rpg = { screenPos() { return [(player.px - cam.x) * zoom + VW / 2, (player.py - cam.y) * zoom + VH / 2]; }, get P() { return P; }, get M() { return M; }, get units() { return units; }, get player() { return player; }, get zone() { return curZone; }, enterWorld, teleport, talk, warpTo, goRegion, spawnMonster, gainExp, giveItem, rollAttack, playerAttacker, playerAC, w2s(x, y) { return [(x - cam.x) * zoom + VW / 2, (y - cam.y) * zoom + VH / 2]; }, get tgt() { return tgt; }, set tgt(v) { tgt = v; }, set auto(v) { auto = v; } };
