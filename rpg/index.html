@@ -295,9 +295,9 @@
   #ench-txt .good { font-weight:normal; color:#ffe46b; font-size:34px; } #ench-txt .bad { font-weight:normal; color:#ff8080; font-size:34px; }
 
   /* 컴퓨터: 리니지처럼 화면 아래를 꽉 채우는 정보창 (왼쪽 상태 · 가운데 알림 기록 · 오른쪽 단축키와 메뉴) */
-  .pstat, .pbtns, .pmid, .pmenu { display:contents; } #plog { display:none; } .bbtn.sk { display:none; }
+  .pstat, .pbtns, .pmenu { display:contents; } #plog { display:none; } .bbtn.sk { display:none; }
   @media (min-width:761px) and (min-height:521px) {
-    :root { --dock:160px; }
+    :root { --dock:200px; }
     #bar { left:0; right:0; bottom:14px; transform:none; width:auto; height:calc(var(--dock) - 14px); border-radius:0; border:0 solid transparent; padding:16px 92px 14px; gap:14px; align-items:stretch;
       background:#2a1c3c; box-shadow:0 -4px 14px rgba(0,0,0,.45);
       border-image:url(img/ui-dock.png?v=2) 12 130 14 130 fill / 8px 90px 10px 90px stretch; }   /* 금테·단청 틀 그림 (양 끝 장식, 가운데는 늘어남) */
@@ -320,10 +320,9 @@
     #m-big { left:4px; top:4px; bottom:auto; height:20px; font-size:11px; padding:1px 6px 0; }
     #bar .stat { flex-direction:row; align-items:center; gap:7px; padding:3px 12px 2px; border-radius:10px; background:rgba(255,255,255,.07); border:1px solid rgba(201,162,74,.6); color:#c9b98a; font-size:14px; }
     #bar .stat b { color:#ffe9a8; font-size:19px; } #bar .stat img { width:20px; height:20px; }
-    #bar .pmid { display:flex; flex-direction:column; gap:6px; flex:1; min-width:180px; }
-    #bar .pmenu { display:flex; gap:6px; flex:none; }
-    #bar .pmenu .bbtn { flex:1; flex-direction:row; gap:6px; height:30px; padding:2px 10px; border-image-width:7px; font-size:13px; }
-    #bar .pmenu .bbtn kbd { position:static; } #bar .pmenu .bbtn svg { width:17px; height:17px; }
+    #bar .pmenu { display:flex; gap:5px; flex:1 1 100%; }
+    #bar .pmenu .bbtn { flex:1; flex-direction:row; gap:3px; height:30px; padding:2px 4px; border-image-width:7px; font-size:12px; }
+    #bar .pmenu .bbtn kbd { display:none; } #bar .pmenu .bbtn svg { width:15px; height:15px; }
     #bar .bbtn.sk { display:flex; font-size:11px; } #bar .bbtn.sk .nm { white-space:nowrap; line-height:1.1; }
     #bar .bbtn.sk.lock { filter:grayscale(1) brightness(.6); } #bar .bbtn.sk.lock img { opacity:.3; } #bar .bbtn.sk.low img { opacity:.45; }
     #bar .bbtn.sk .cd { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:Fredoka,sans-serif; font-size:22px; color:#fff; text-shadow:0 1px 3px #000; pointer-events:none; }
@@ -427,14 +426,14 @@
     </div>
     <div class="stat"><span>AC</span><b id="acv">10</b></div>
     <div class="stat hide-s coinstat"><img src="img/i-coin.png" alt=""><b id="coins">0</b></div>
-    </div>
-    <div class="pmid"><div id="plog"></div>
     <div class="pmenu">
     <button class="bbtn" id="b-inv" type="button" title="가방 (I)"><kbd>I</kbd><svg viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>가방</button>
     <button class="bbtn" id="b-char" type="button" title="능력치 (C)"><kbd>C</kbd><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>능력치</button>
 
     <button class="bbtn" id="b-snd" type="button" title="효과음 켜기/끄기"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="w" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>소리</button>
-    </div></div>
+    </div>
+    </div>
+    <div id="plog"></div>
     <div id="pmini"></div>
     <div class="pbtns">
     <button class="bbtn qs" data-k="0" type="button"><kbd>1</kbd><img alt=""><span class="n"></span><span class="bt"></span></button>
