@@ -316,10 +316,10 @@ function bowSkillHit(sh) {
   doHit(m, 'dagger', s.mult);
   if (s.push && !m.dying && units.includes(m) && !m.d.boss) pushBack(m);
 }
-// 바람 화살: 캐릭터 반대쪽으로 활이 닿는 끝까지 밀려나요 (막힌 곳·다른 몬스터·마을 앞에서 멈춰요)
+// 바람 화살: 캐릭터 반대쪽으로 4칸 밀려나요 (막힌 곳·다른 몬스터·마을 앞에서 멈춰요)
 function pushBack(m) {
   const p = player, dx = m.x - p.x, dy = m.y - p.y, L = Math.max(Math.abs(dx), Math.abs(dy)) || 1;
-  const ux = dx / L, uy = dy / L, R = reach();
+  const ux = dx / L, uy = dy / L, R = Math.min(reach(), L + Math.floor(reach() / 2));   // 사거리의 반(4칸)만큼, 사거리 끝은 넘지 않아요
   let bx = m.x, by = m.y;
   for (let k = L + 1; k <= R; k++) {
     const nx = Math.round(p.x + ux * k), ny = Math.round(p.y + uy * k);
