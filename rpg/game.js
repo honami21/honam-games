@@ -357,12 +357,12 @@ function buildWorld() {
     let b = 1e9, id = 'near'; for (const [sx, sy, zid] of seeds) { const d = (wx - sx) ** 2 + (wy - sy) ** 2; if (d < b) { b = d; id = zid; } }
     M.zid[i] = ZI[id];
   }
-  // 2-1) 산맥 동쪽(대나무 골·깊은 대숲·안개 늪)은 전체 지도 그림의 색으로 나눠요: 밝은 초록=대나무, 짙은 초록=대숲, 잿빛 푸른색=늪
+  // 2-1) 산맥 동쪽(대나무 골·깊은 대숲·안개 늪)은 전체 지도 그림의 색으로 나눠요: 밝은 초록=대나무, 짙은 초록=대숲, 잿빛 푸른색=늪. 산 기슭 연두색이 대나무로 읽히지 않게 대나무는 섬 위쪽(44%까지)만
   if (IMG[WORLD.map] && M.rgb) {
     const E = new Set([ZI.bamboo, ZI.deep, ZI.marsh]), ch = [0, 1, 2].map(c => { const f = new Float32Array(N); for (let i = 0; i < N; i++) f[i] = M.rgb[i * 4 + c]; return boxBlur(f, 4); });
     const REF = [[ZI.bamboo, 105, 166, 35], [ZI.deep, 37, 108, 63], [ZI.marsh, 142, 175, 172]];
     const nz = M.zid.slice();
-    for (let i = 0; i < N; i++) if (E.has(M.zid[i])) { let b = 1e9; for (const [z, r0, g0, b0] of REF) { if (z === ZI.marsh && (i / W) < H * .6) continue; const dd = (ch[0][i] - r0) ** 2 + (ch[1][i] - g0) ** 2 + (ch[2][i] - b0) ** 2; if (dd < b) { b = dd; nz[i] = z; } } }
+    for (let i = 0; i < N; i++) if (E.has(M.zid[i])) { let b = 1e9; for (const [z, r0, g0, b0] of REF) { if (z === ZI.marsh && (i / W) < H * .6) continue; if (z === ZI.bamboo && (i / W) > H * .44) continue; const dd = (ch[0][i] - r0) ** 2 + (ch[1][i] - g0) ** 2 + (ch[2][i] - b0) ** 2; if (dd < b) { b = dd; nz[i] = z; } } }
     // 자잘한 얼룩 없애기 (둘레에서 가장 많은 지역으로)
     for (let pass = 0; pass < 3; pass++) { const src = nz.slice(); for (let y = 3; y < H - 3; y++) for (let x = 3; x < W - 3; x++) { const i = idx(x, y); if (!E.has(src[i])) continue; const c = {}; for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) { const v = src[i + dy * W + dx]; if (E.has(v)) c[v] = (c[v] || 0) + 1; } let bv = src[i], bn = 0; for (const k in c) if (c[k] > bn) { bn = c[k]; bv = +k; } nz[i] = bv; } }
     M.zid = nz;
