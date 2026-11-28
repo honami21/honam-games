@@ -248,8 +248,8 @@ const mySkills = () => (P && SKILLS[isBow() ? 'bow' : (P.cls || 'sword')]) || []
 let rushT = 0, hawkT = 0, skCD = {}, skShow = 0, skName = '';
 const usesSp = () => isSword() || isBow();   // 용기(검사)·집중(궁수) 게이지를 쓰는 직업
 const spName = () => ({ sword: '용기', bow: '집중', mage: '정신력', tank: '분노' })[P.cls || 'sword'] || '용기';
-// 저승 세트: 입은 개수 (무기 포함)
-function setCount(id) { let n = 0; for (const s of SLOTS) { const it = P.eq[s]; if (it && (it.g === 'w' || it.g === 'a') && GDEF(it).set === id) n++; } return n; }
+// 저승 세트: 입은 방어구 개수 (무기는 빼요)
+function setCount(id) { let n = 0; for (const s of SLOTS) { const it = P.eq[s]; if (it && it.g === 'a' && GDEF(it).set === id) n++; } return n; }
 const myWType = () => isBow() ? 'bow' : 'sword';
 function gainSp(n) { P.spMax = COURAGE.max; P.sp = Math.min(COURAGE.max, (P.sp || 0) + n); }
 // 스킬 쓰기 (Q W E R)
@@ -351,12 +351,12 @@ function maxHP() { return 30 + (P.lv - 1) * 8 + (ST('con') - 10) * (P.lv + 2) + 
 function playerAC() {
   let ac = 10;
   for (const s of SLOTS) { const it = P.eq[s]; if (it && it.g === 'a') ac -= ARMORS[it.k].ac + it.en; else if (it && it.g === 'c') ac -= ACCS[it.k].ac || 0; }
-  return ac - Math.floor((ST('dex') - 10) / 3) - (setCount('jeo') >= 2 ? 1 : 0);
+  return ac - Math.floor((ST('dex') - 10) / 3) - (setCount('jeo') >= 2 ? 2 : 0);
 }
 const strBonus = () => Math.floor((ST('str') - 10) / 2) + accBonus('dmg');
 const wpnHit = it => it && it.en > ENCH.w.safe ? (it.en - ENCH.w.safe) * ENCH.w.hitPer : 0;   // 무기 +7부터 명중이 올라요
-const hitBonus = () => (ST('dex') - 10) * 2 + accBonus('hit') + wpnHit(P.eq.weapon) + (setCount('jeo') >= 4 ? 5 : 0);
-const critRate = () => 5 + Math.floor((ST('dex') - 10) / 2) + accBonus('crit') + (hawkT > 0 ? 20 : 0);
+const hitBonus = () => (ST('dex') - 10) * 2 + accBonus('hit') + wpnHit(P.eq.weapon) + (setCount('jeo') >= 4 ? 10 : 0);
+const critRate = () => 5 + Math.floor((ST('dex') - 10) / 2) + accBonus('crit') + (hawkT > 0 ? 20 : 0) + (setCount('jeo') >= 3 ? 3 : 0);
 function weaponRange(it) {   // 무기 데미지 범위 (힘 보너스 제외)
   if (!it) return [1, 2];
   const base = WEAPONS[it.k].dmg + it.en;
@@ -1110,8 +1110,8 @@ function doHit(m, type, mult = 1) {
   const dir = Math.sign(m.px - player.px) || player.face;
   if (r.miss) { addNum(mx, my - 10, '빗나감', 'miss'); SND.miss(); fx.push({ k: 'whiff', x: mx - dir * 10, y: my, dir, t: 0, d: .18 }); return; }
   if (r.block) { addNum(mx, my - 10, '막음', 'block'); SND.block(); fx.push({ k: 'spark', x: mx - dir * 14, y: my, t: 0, d: .2, n: 5, col: '#bfe6ff' }); m.flash = .05; freeze = Math.max(freeze, .03); return; }
+  if (m.d.undead && setCount('jeo') >= 5) r.dmg = Math.ceil(r.dmg * 1.2);   // 저승 세트 5개: 언데드에게 데미지 +20%
   m.hp -= r.dmg;
-  if (setCount('jeo') >= 6 && !dead) { const hv = Math.max(1, Math.round(r.dmg * .1)), mh = maxHP(); if (P.hp < mh) { P.hp = Math.min(mh, P.hp + hv); addNum(player.px, player.py - 50, '+' + hv, 'heal'); } }   // 저승 세트 6개: 흡혈
   const kill = m.hp <= 0;
   // 타격감: 히트 스톱 + 흔들림 + 번쩍임 + 밀림 + 찌그러짐 + 이펙트 + 숫자 + 소리
   freeze = Math.max(freeze, kill ? .15 : r.crit ? .12 : .06);
@@ -1957,14 +1957,6 @@ function render() {
   }
   for (const s of shots) drawShot(s);
   for (const f of fx) drawFx(f);
-  if (setCount('jeo') >= 6 && !dead) {   // 저승 세트 6개: 발밑에 푸른 안개
-    const t = performance.now() / 1000, [x, y] = playerFeet();
-    g.save();
-    for (let i = 0; i < 7; i++) { const a = t * .6 + i / 7 * Math.PI * 2, p = (t * .35 + i / 7) % 1;
-      g.globalAlpha = .22 * Math.sin(p * Math.PI); g.fillStyle = i % 2 ? '#7fd0ff' : '#b8e6ff';
-      g.beginPath(); g.ellipse(x + Math.cos(a) * 26, y + Math.sin(a) * 9 - p * 34, 20 + p * 12, 9 + p * 5, 0, 0, Math.PI * 2); g.fill(); }
-    g.restore();
-  }
   if (rushT > 0 && !dead) {   // 기합 중: 발밑에 붉은 기운 + 위로 솟는 불티
     const t = performance.now() / 1000, [x, y] = playerFeet();
     g.save(); g.globalAlpha = .35 + Math.sin(t * 8) * .1; g.fillStyle = '#ff5a1f'; g.beginPath(); g.ellipse(x, y, 34, 14, 0, 0, Math.PI * 2); g.fill();
