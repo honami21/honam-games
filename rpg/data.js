@@ -6,14 +6,14 @@ const CELL = 56;   // 한 칸 크기 (월드 픽셀)
 // 나머지는 예전 저장 호환용으로만 남겨 둬요.
 const WEAPONS = {
   dagger1: { name: '대나무 칼',     dmg: 3,  spd: 0.4, type: 'dagger', tier: 1 },
-  sword1:  { name: '깨비샘의 검',   dmg: 5,  spd: 0.6, type: 'sword',  tier: 1 },
+  sword1:  { name: '깨비샘의 검',   dmg: 5,  spd: 0.6, type: 'sword',  tier: 1, two: true },   // 검사는 양손검이라 방패를 못 들어요
   bow1:    { name: '깨순이의 활',   dmg: 4,  spd: 0.75, type: 'bow',  tier: 1, range: 8, two: true },   // 8칸 떨어져서 쏴요
   club1:   { name: '나무 방망이',   dmg: 8,  spd: 0.9, type: 'club',   tier: 1, two: true },
   dagger2: { name: '무쇠 단도',     dmg: 5,  spd: 0.4, type: 'dagger', tier: 2 },
-  sword2:  { name: '무쇠 검',       dmg: 8,  spd: 0.6, type: 'sword',  tier: 2 },
+  sword2:  { name: '무쇠 검',       dmg: 8,  spd: 0.6, type: 'sword',  tier: 2, two: true },
   club2:   { name: '무쇠 방망이',   dmg: 12, spd: 0.9, type: 'club',   tier: 2, two: true },
 };
-const WTYPE = { bow: '활', dagger: '단검', sword: '검', club: '방망이(양손)' };
+const WTYPE = { bow: '활', dagger: '단검', sword: '양손검', club: '방망이(양손)' };
 
 // 방어구: 칸, 방어도(AC를 낮춤)
 const ARMORS = {

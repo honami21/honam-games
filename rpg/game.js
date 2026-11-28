@@ -16,7 +16,7 @@ const IMG_LIST = ['t-board', 't-forge', 'npc-smith', 'i-return', 'i-teleport', '
   ...Object.keys(WEAPONS).map(k => 'w-' + k), ...Object.keys(ARMORS).map(k => 'a-' + k), ...Object.keys(ACCS).map(k => 'c-' + k),
   'i-potion', 'i-haste', 'i-wscroll', 'i-ascroll', 'i-coin', 'i-coins', 'i-box', ...Object.keys(PROPS)];
 function loadImages() {
-  const jobs = IMG_LIST.map(n => new Promise(res => { const im = new Image(); im.onload = () => { IMG[n] = im; res(); }; im.onerror = res; im.src = 'img/' + n + '.png?v=1'; }));
+  const jobs = IMG_LIST.map(n => new Promise(res => { const im = new Image(); im.onload = () => { IMG[n] = im; res(); }; im.onerror = res; im.src = 'img/' + n + '.png?v=2'; }));
   ['tile-town', 'tile-field', 'tile-bamboo', 'tile-sand', 'tile-paddy', 'tile-deep', 'tile-marsh', 'tile-rock', 'tile-sea', 'world-map'].forEach(n => jobs.push(new Promise(res => { const im = new Image(); im.onload = () => { IMG[n] = im; res(); }; im.onerror = res; im.src = 'img/' + n + '.jpg?v=2'; })));
   return Promise.all(jobs);
 }
@@ -1148,7 +1148,7 @@ function equip(ix) {
   const it = P.inv[ix]; if (!it || !it.g) return;
   if (it.g === 'w') { log(`${HERO()}는 자기 무기만 쓸 수 있어요`, 'warn'); return; }
   const slot = it.g === 'w' ? 'weapon' : GDEF(it).slot;
-  if (slot === 'shield' && P.eq.weapon && WEAPONS[P.eq.weapon.k].two) { log(`${WTYPE[WEAPONS[P.eq.weapon.k].type]}${WEAPONS[P.eq.weapon.k].type === 'bow' ? '은' : '는'} 양손 무기라 방패를 들 수 없어요`, 'warn'); return; }
+  if (slot === 'shield' && P.eq.weapon && WEAPONS[P.eq.weapon.k].two) { log(`${WTYPE[WEAPONS[P.eq.weapon.k].type]}${/bow|sword/.test(WEAPONS[P.eq.weapon.k].type) ? '은' : '는'} 양손 무기라 방패를 들 수 없어요`, 'warn'); return; }
   P.inv.splice(ix, 1);
   if (it.g === 'w' && WEAPONS[it.k].two && P.eq.shield) { P.inv.push(P.eq.shield); P.eq.shield = null; log('양손 무기를 들어서 방패를 가방에 넣었어요', 'sys'); }
   if (P.eq[slot]) P.inv.push(P.eq[slot]);
@@ -1489,7 +1489,7 @@ function resize() {
 }
 const PSCALE = 92 / 300 * UK;   // 깨비샘 그림 크기
 // 프레임마다 몸 가운데 위치(그림 너비 비율): 검이 한쪽으로 뻗어도 몸이 흔들리지 않게
-const PANCHOR = { 'p-walk-0': .486, 'p-walk-1': .488, 'p-walk-2': .485, 'p-walk-3': .481, 'p-walk-4': .483, 'p-walk-5': .478, 'p-idle': .49, 'p-walk1': .534, 'p-walk2': .539, 'p-wind': .64, 'p-swing': .385, 'p-hurt': .515, 'p-dead': .5, 'p-win': .542,
+const PANCHOR = { 'p-walk-0': .408, 'p-walk-1': .411, 'p-walk-2': .422, 'p-walk-3': .409, 'p-walk-4': .424, 'p-walk-5': .396, 'p-idle': .407, 'p-walk1': .534, 'p-walk2': .539, 'p-wind': .654, 'p-swing': .355, 'p-hurt': .531, 'p-dead': .494, 'p-win': .548,
   'a-walk-0': .479, 'a-walk-1': .489, 'a-walk-2': .494, 'a-walk-3': .477, 'a-walk-4': .472, 'a-walk-5': .482, 'a-idle': .49, 'a-walk1': .485, 'a-walk2': .484, 'a-wind': .407, 'a-swing': .451, 'a-hurt': .506, 'a-dead': .442, 'a-win': .493 };
 function drawSprite(name, x, y, h, flip, opts = {}) {
   let im = IMG[name]; if (!im) return;
@@ -2079,7 +2079,7 @@ function migrateWeapons() {
   if (!w || w.k !== want) P.eq.weapon = { g: 'w', k: want, en: w ? w.en : 0 };
   let c = 0; P.inv = P.inv.filter(it => { if (it.g === 'w') { c += sellOf(it); return false; } return true; });
   if (c) { P.coins += c; log(`이제 ${HERO()}는 자기 무기만 써요. 가방의 다른 무기는 엽전 ${c}냥으로 바꿨어요`, 'sys'); }
-  if (WEAPONS[P.eq.weapon.k].two && P.eq.shield) { P.inv.push(P.eq.shield); P.eq.shield = null; log('활은 양손 무기라 방패를 가방에 넣었어요', 'sys'); }
+  if (WEAPONS[P.eq.weapon.k].two && P.eq.shield) { P.inv.push(P.eq.shield); P.eq.shield = null; log(`${isBow() ? '활은' : '검사는 양손검이라'} 방패를 들 수 없어서 방패를 가방에 넣었어요`, 'sys'); }
 }
 function startGame() {
   loadStore();
