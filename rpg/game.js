@@ -218,7 +218,7 @@ function useSkill(i) {
   const s = mySkills()[i];
   if (!s) { log('이 직업의 스킬은 아직 준비 중이에요', 'warn'); return; }
   if (P.lv < s.lv) { log(`${josa(s.name, '은는')} 레벨 ${s.lv}에 배워요`, 'warn'); return; }
-  if ((skCD[s.k] || 0) > 0) { log(`${josa(s.name, '은는')} ${Math.ceil(skCD[s.k])}초 뒤에 다시 쓸 수 있어요`, 'warn'); return; }
+  if ((skCD[s.k] || 0) > 0) return;   // 다시 쓰기 시간은 칸 위 숫자로만
   if ((P.sp || 0) < s.cost) { log(`용기가 모자라요 (${s.cost} 필요)`, 'warn'); return; }
   if (dead) return;
   const p = player, near = m => m && m.kind === 'mon' && !m.dying && units.includes(m) && fightDist(p.x, p.y, m) <= reachTo(m) + 1;
@@ -244,7 +244,7 @@ function renderSkills() {
     b.classList.toggle('lock', lock); b.classList.toggle('low', !lock && (P.sp || 0) < s.cost);
     const im = b.querySelector('img'), src = s ? `img/${s.img}.png` : '';
     if (im.getAttribute('src') !== src) { if (src) im.setAttribute('src', src); else im.removeAttribute('src'); }
-    b.querySelector('.nm').textContent = s ? (lock ? 'Lv ' + s.lv : s.name) : '';
+    b.querySelector('.nm').textContent = s && lock ? 'Lv ' + s.lv : '';
     b.querySelector('.cd').textContent = cd > 0 ? cd : '';
     b.title = s ? `${s.name} (${s.k.toUpperCase()}) · 레벨 ${s.lv} · 용기 ${s.cost}\n${s.txt}` + (s.cd > 3 ? `\n다시 쓰기 ${s.cd}초` : '') : '스킬 준비 중';
   });
