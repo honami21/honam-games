@@ -1544,7 +1544,7 @@ function renderChar() {
     `<div class="dim small">잡은 몬스터 ${P.kills.toLocaleString()} · 쓰러진 횟수 ${P.deaths}</div>`;
   $('b-char').classList.toggle('alert', P.pts > 0);
 }
-// 할머니: 물약·주문서, 대장장이: 방어구 (무기는 캐릭터마다 하나라 강화만 해요)
+// 할머니: 물약·주문서, 대장장이: 기본 무기(내 직업 것)·기본 방어구
 const SHOPS = { shop: { name: '꽃분 할머니 · 잡화', list: [{ i: 'potion' }, { i: 'haste' }, { i: 'ret' }, { i: 'tele' }] },
   smith: { name: '쇠돌 아저씨 · 대장간', list: Object.keys(ARMORS).filter(k => ARMORS[k].price).map(k => ({ g: 'a', k })) } };
 let shopWho = 'shop', SHOP_LIST = SHOPS.shop.list;
@@ -1556,16 +1556,18 @@ function sellOf(it) {
   if (it.g === 'c') return d.tier === 1 ? 150 : 400;
   return Math.round(({ 1: 12, 2: 70, 3: 300 }[d.tier] || 70) * (1 + it.en * .5) * (it.g === 'w' ? 1.5 : 1));
 }
-function renderShop() {
-  SHOP_LIST = SHOPS[shopWho].list; $('shop-name').textContent = SHOPS[shopWho].name;
+function renderShop() {   // 대장간은 내 직업 기본 무기도 팔아요
+  SHOP_LIST = shopWho === 'smith' ? [{ g: 'w', k: myWType() + '1' }, ...SHOPS.smith.list] : SHOPS[shopWho].list; $('shop-name').textContent = SHOPS[shopWho].name;
   $('shop-coins').textContent = P.coins.toLocaleString();
   document.querySelectorAll('#w-shop .tab').forEach(b => b.classList.toggle('on', b.dataset.tab === shopTab));
+  let h;
   if (shopTab === 'buy') {
-    $('shop-list').innerHTML = SHOP_LIST.map((it, i) => `<button class="shop-it" data-buy="${i}" ${P.coins < priceOf(it) ? 'disabled' : ''}><img src="img/${gearImg(it)}.png" alt=""><span>${esc(it.i ? ITEMS[it.i].name : GDEF(it).name)}</span><b>${priceOf(it)}</b></button>`).join('');
+    h = SHOP_LIST.map((it, i) => `<button class="shop-it" data-buy="${i}" ${P.coins < priceOf(it) ? 'disabled' : ''}><img src="img/${gearImg(it)}.png" alt=""><span>${esc(it.i ? ITEMS[it.i].name : GDEF(it).name)}</span><b>${priceOf(it)}</b></button>`).join('');
   } else {
     const list = P.inv.map((it, i) => [it, i]);
-    $('shop-list').innerHTML = list.length ? list.map(([it, i]) => `<button class="shop-it" data-sell="${i}"><img src="img/${gearImg(it)}.png" alt=""><span>${esc(itemName(it))}</span><b>${sellOf(it)}${it.n > 1 ? ' /개' : ''}</b></button>`).join('') : '<p class="dim">팔 물건이 없어요</p>';
+    h = list.length ? list.map(([it, i]) => `<button class="shop-it" data-sell="${i}"><img src="img/${gearImg(it)}.png" alt=""><span>${esc(itemName(it))}</span><b>${sellOf(it)}${it.n > 1 ? ' /개' : ''}</b></button>`).join('') : '<p class="dim">팔 물건이 없어요</p>';
   }
+  const box = $('shop-list'); if (box.dataset.h !== h) { box.dataset.h = h; box.innerHTML = h; }   // 바뀐 게 있을 때만 다시 그려요 (반짝임 방지)
 }
 let sellArm = -1, buyIx = -1, buyN = 1;
 function buyMax(it) {
@@ -2305,10 +2307,10 @@ function renderCreate() {
 function migrateWeapons() {
   const w = P.eq.weapon;
   const want = isBow() ? 'bow1' : 'sword1';
-  if (!w || !WEAPONS[w.k] || WEAPONS[w.k].type !== myWType()) P.eq.weapon = { g: 'w', k: want, en: w ? w.en : 0 };
+  if (w && (!WEAPONS[w.k] || WEAPONS[w.k].type !== myWType())) P.eq.weapon = { g: 'w', k: want, en: w ? w.en : 0 };
   let c = 0; P.inv = P.inv.filter(it => { if (it.g === 'w' && !(WEAPONS[it.k] && WEAPONS[it.k].set)) { c += sellOf(it); return false; } return true; });   // 저승 무기는 그대로 둬요
   if (c) { P.coins += c; log(`이제 ${HERO()}는 자기 무기만 써요. 가방의 다른 무기는 엽전 ${c}냥으로 바꿨어요`, 'sys'); }
-  if (WEAPONS[P.eq.weapon.k].two && P.eq.shield) { P.inv.push(P.eq.shield); P.eq.shield = null; log(`${isBow() ? '활은' : '검사는 양손검이라'} 방패를 들 수 없어서 방패를 가방에 넣었어요`, 'sys'); }
+  if (P.eq.weapon && WEAPONS[P.eq.weapon.k].two && P.eq.shield) { P.inv.push(P.eq.shield); P.eq.shield = null; log(`${isBow() ? '활은' : '검사는 양손검이라'} 방패를 들 수 없어서 방패를 가방에 넣었어요`, 'sys'); }
 }
 function startGame() {
   loadStore();
