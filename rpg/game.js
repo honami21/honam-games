@@ -1087,7 +1087,10 @@ function monAttack(m) {
     const r = rollAttack({ lv: m.d.lv, dmg: m.d.dmg, crit: 0 }, { ac: playerAC(), lv: P.lv });
     const px = player.px, py = player.py - 36;
     if (r.miss) { addNum(px, py, '빗나감', 'miss'); return; }
-    if (r.block) { addNum(px, py, '막음', 'block'); SND.block(); return; }
+    // 막기는 전사(탱커)가 방패를 들었을 때만: 방패마다 막을 확률. 막으면 분노가 차요(분노는 스킬과 함께 쓸 예정)
+    const sh = P.cls === 'tank' && P.eq.shield ? ARMORS[P.eq.shield.k] : null;
+    if (sh && Math.random() * 100 < (sh.blk || 0)) { addNum(px, py, '막음', 'block'); SND.block(); P.rage = Math.min(100, (P.rage || 0) + 10); return; }
+    if (r.block) r.dmg = 1;   // 다른 직업은 방어도로 0이 되어도 1은 들어와요
     P.hp -= r.dmg; hurtT = .18; idleT = 0; fightT = 0;
     addNum(px, py, String(r.dmg), 'hurt'); SND.hurt();
     shake.a = Math.max(shake.a, m.d.boss ? 6 : 2.5); shake.t = .15;
@@ -1356,7 +1359,7 @@ function gearInfo(it) {
     return `<b>${itemName(it)}</b><br>${CLS_NAME[c.cls] ? CLS_NAME[c.cls] + '용 ' : ''}${SLOT_NAME[c.slot]}<br>${parts.join(' · ')}<br><span class="dim">강화할 수 없어요 · 우두머리가 가끔 떨어뜨려요</span>`;
   }
   const d = ARMORS[it.k];
-  return `<b>${itemName(it)}</b><br>${SLOT_NAME[d.slot]} · ${d.tier}단계<br>방어도 ${d.ac + it.en}${it.en ? ` (기본 ${d.ac} +${it.en})` : ''}<br><span class="dim">안전 강화 +${ENCH.a.safe}까지 · 최대 +${ENCH.a.max}</span>`;
+  return `<b>${itemName(it)}</b><br>${SLOT_NAME[d.slot]} · ${d.tier}단계<br>방어도 ${d.ac + it.en}${it.en ? ` (기본 ${d.ac} +${it.en})` : ''}${d.blk ? `<br>막기 ${d.blk}% <span class="dim">(전사만)</span>` : ''}<br><span class="dim">안전 강화 +${ENCH.a.safe}까지 · 최대 +${ENCH.a.max}</span>`;
 }
 function slotHTML(it, attrs) {
   if (!it) return `<div class="slot empty" ${attrs}></div>`;
