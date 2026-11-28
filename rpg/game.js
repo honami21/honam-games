@@ -166,19 +166,43 @@ function save(now) {
 const STORE_MAX = 40;
 let STORE = null;
 function loadStore() { const a = loadAll(); STORE = a.store && Array.isArray(a.store.items) ? a.store : { items: [], coins: 0 }; }
+// 여러 개 쌓인 물건(물약·주문서)은 몇 개 옮길지 물어봐요
+function askQty(it, dir, go) {
+  const n = it.n || 1; if (!it.i || n <= 1) { go(n); return; }
+  const box = $('qtybox'), inp = $('qty-n');
+  $('qty-title').textContent = `${ITEMS[it.i].name} 몇 개를 ${dir > 0 ? '맡길까요' : '찾을까요'}?`;
+  inp.max = n; inp.value = n; box.classList.remove('hidden');
+  box.onclick = e => {
+    const b = e.target.closest('button'); if (!b) return; e.stopPropagation();
+    const v = clamp(Math.floor(+inp.value || 0), 0, n);
+    if (b.dataset.q === 'ok') { box.classList.add('hidden'); if (v > 0) go(v); }
+    else if (b.dataset.q === 'no') box.classList.add('hidden');
+    else if (b.dataset.q === 'all') inp.value = n;
+    else inp.value = clamp(v + +b.dataset.q, 1, n);
+  };
+}
 function toStore(ix) {
   const it = P.inv[ix]; if (!it) return;
-  const same = it.i && STORE.items.find(x => x.i === it.i);
-  if (!same && STORE.items.length >= STORE_MAX) { log('창고가 가득 찼어요', 'warn'); return; }
-  P.inv.splice(ix, 1);
-  if (same) same.n += it.n || 1; else STORE.items.push(it);
-  SND.ui(); save(true); renderStore(); renderInv(); updateHUD(); renderQuick();
+  askQty(it, 1, k => {
+    if (P.inv[ix] !== it) return;
+    const same = it.i && STORE.items.find(x => x.i === it.i);
+    if (!same && STORE.items.length >= STORE_MAX) { log('창고가 가득 찼어요', 'warn'); return; }
+    const all = !it.i || k >= (it.n || 1);
+    if (all) P.inv.splice(ix, 1); else it.n -= k;
+    const put = it.i ? { i: it.i, n: k } : it;
+    if (same) same.n += k; else STORE.items.push(put);
+    SND.ui(); save(true); renderStore(); renderInv(); updateHUD(); renderQuick();
+  });
 }
 function fromStore(ix) {
   const it = STORE.items[ix]; if (!it) return;
-  if (!giveItem({ ...it })) { log('가방이 가득 찼어요', 'warn'); return; }
-  STORE.items.splice(ix, 1);
-  SND.ui(); save(true); renderStore(); renderInv(); updateHUD(); renderQuick();
+  askQty(it, -1, k => {
+    if (STORE.items[ix] !== it) return;
+    const all = !it.i || k >= (it.n || 1);
+    if (!giveItem(it.i ? { i: it.i, n: k } : { ...it })) { log('가방이 가득 찼어요', 'warn'); return; }
+    if (all) STORE.items.splice(ix, 1); else it.n -= k;
+    SND.ui(); save(true); renderStore(); renderInv(); updateHUD(); renderQuick();
+  });
 }
 function storeCoins(dir) {
   const v = Math.floor(+$('store-amt').value || 0), have = dir > 0 ? P.coins : STORE.coins;
@@ -268,7 +292,8 @@ function playerAC() {
   return ac - Math.floor((ST('dex') - 10) / 3);
 }
 const strBonus = () => Math.floor((ST('str') - 10) / 2) + accBonus('dmg');
-const hitBonus = () => (ST('dex') - 10) * 2 + accBonus('hit');
+const wpnHit = it => it && it.en > ENCH.w.safe ? (it.en - ENCH.w.safe) * ENCH.w.hitPer : 0;   // 무기 +7부터 명중이 올라요
+const hitBonus = () => (ST('dex') - 10) * 2 + accBonus('hit') + wpnHit(P.eq.weapon);
 const critRate = () => 5 + Math.floor((ST('dex') - 10) / 2) + accBonus('crit');
 function weaponRange(it) {   // 무기 데미지 범위 (힘 보너스 제외)
   if (!it) return [1, 2];
@@ -425,9 +450,9 @@ function buildWorld() {
     if (d < 17) M.zid[i] = ZI.mtn;
     if (d < 11 && !inPass) mtnCore[i] = 1;
   }
-  // 4) 바닷가: 물에서 3칸까지는 모래사장. 큰 섬과 이어지지 않은 작은 섬은 바닷가로만
+  // 4) 바닷가: 바다에서 3칸까지는 모래사장. 큰 섬과 이어지지 않은 작은 섬은 바닷가로만
   const dist = new Int16Array(N).fill(99), q = [];
-  for (let i = 0; i < N; i++) if (M.water[i]) { dist[i] = 0; q.push(i); }
+  for (let i = 0; i < N; i++) if (M.water[i] && !(M.stream && M.stream[i])) { dist[i] = 0; q.push(i); }   // 바다에서만 재요 (늪 웅덩이·냇물 둘레는 바닷가가 아니에요)
   for (let h = 0; h < q.length; h++) { const i = q[h], x = i % W, y = (i - x) / W; for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + ax, ny = y + ay; if (!inMap(nx, ny)) continue; const j = idx(nx, ny); if (dist[j] > dist[i] + 1) { dist[j] = dist[i] + 1; q.push(j); } } }
   { const main = new Uint8Array(N), st = [idx(cx, cy)]; main[st[0]] = 1;
     while (st.length) { const i = st.pop(), x = i % W, y = (i - x) / W; for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + ax, ny = y + ay; if (!inMap(nx, ny)) continue; const j = idx(nx, ny); if (!main[j] && !M.water[j]) { main[j] = 1; st.push(j); } } }
@@ -1321,7 +1346,7 @@ function enchantTarget(ref) {   // ref: {eq:slot} 또는 {inv:index}
   const s = P.inv.find(x => x.i === scroll); if (!s) return;
   s.n--; if (s.n <= 0) P.inv.splice(P.inv.indexOf(s), 1);
   const risky = it.en >= rule.safe;
-  const ok = !risky || Math.random() < ENCH.rate;
+  const ok = !risky || Math.random() < enchRate(kind, it.en);
   dirty = true;
   playEnchant(it, risky, ok, () => {
     if (ok) { it.en++; log(`<b>${itemName(it)}</b> 강화 성공!`, 'item'); }
@@ -1336,7 +1361,7 @@ function playEnchant(it, risky, ok, done) {
   enchanting = true;
   const ov = $('ench'), img = $('ench-img'), txt = $('ench-txt');
   img.src = 'img/' + gearImg(it) + '.png';
-  txt.innerHTML = esc(itemName(it)) + (risky ? '<small>성공 확률 25%</small>' : '');
+  txt.innerHTML = esc(itemName(it)) + (risky ? `<small>성공 확률 ${Math.round(enchRate(it.g, it.en) * 100)}%</small>` : '');
   ov.className = 'on ' + (risky ? 'risky' : 'safe');
   const wait = risky ? 1500 : 350;
   if (risky) { SND.charge(1.4); let k = 0; const tk = setInterval(() => { SND.tick(); if (++k > 8) clearInterval(tk); }, 150); }
@@ -1384,7 +1409,7 @@ function openWin(w) {
   if (wins.includes(w)) { closeWin(w); return; }
   const el = $('w-' + w); el.classList.remove('hidden'); focusWin(w); placeWin(el); SND.ui();
   if (w === 'inv') renderInv(); if (w === 'char') renderChar(); if (w === 'shop') { closeBuy(); renderShop(); } if (w === 'guide') renderGuide(); if (w === 'store') renderStore(); if (w === 'gate') renderGate();
-  document.body.classList.add('win-open');
+  document.body.classList.add('win-open'); document.body.classList.toggle('storing', wins.includes('store'));
 }
 // closeWin(): 맨 위 창 닫기 · closeWin('shop'): 그 창 닫기 · closeWin(true): 맨 위 창 조용히 닫기
 function closeWin(w, quiet) {
@@ -1393,7 +1418,7 @@ function closeWin(w, quiet) {
   if (!w || !wins.includes(w)) return;
   $('w-' + w).classList.add('hidden'); wins = wins.filter(n => n !== w);
   if (winNpc && winNpc.w === w) winNpc = null;
-  if (!wins.length) document.body.classList.remove('win-open');
+  if (!wins.length) document.body.classList.remove('win-open'); document.body.classList.toggle('storing', wins.includes('store'));
   if (w === 'inv') cancelEnchant();
   hideTip(); if (!quiet) SND.ui();
 }
@@ -1403,7 +1428,7 @@ function gearInfo(it) {
   if (it.i) { const d = ITEMS[it.i]; return `<b>${d.name}</b>` + (it.i === 'potion' ? `<br>HP ${d.heal} 회복` : it.i === 'haste' ? '<br>5분 동안 걷기와 공격이 빨라져요<br><span class="dim">여러 개 마시면 30분까지 쌓여요</span>' : it.i === 'ret' ? '<br>읽으면 마을로 돌아가요' : it.i === 'tele' ? '<br>지금 사냥터 안 아무 곳으로 순간이동해요' : `<br>${it.i === 'wscroll' ? '무기' : '방어구'}를 한 단계 강화해요`); }
   if (it.g === 'w') {
     const d = WEAPONS[it.k], [a, b] = weaponRange(it);
-    return `<b>${itemName(it)}</b><br>${WTYPE[d.type]} · ${d.tier}단계<br>데미지 ${a === b ? a : a + '~' + b} · 한 대 ${d.spd}초` +
+    return `<b>${itemName(it)}</b><br>${WTYPE[d.type]} · ${d.tier}단계<br>데미지 ${a === b ? a : a + '~' + b} · 한 대 ${d.spd}초` + (wpnHit(it) ? `<br>명중 +${wpnHit(it)}%` : '') +
       `<br><span class="dim">안전 강화 +${ENCH.w.safe}까지 · 최대 +${ENCH.w.max}</span>`;
   }
   if (it.g === 'c') {
@@ -1708,8 +1733,8 @@ function drawFx(f) {
       g.strokeStyle = '#fffbe0'; g.lineWidth = 7 * (1 - k * .5); g.beginPath(); g.arc(f.x - f.dir * 14, f.y, r - 4, a0 + .2, a1 - .2); g.stroke();
       break;
     }
-    case 'skW': {   // 돌려 베기: 몸 둘레를 도는 파란 회오리
-      g.translate(f.x, f.y); g.scale(1, .5); g.lineCap = 'round';
+    case 'skW': {   // 돌려 베기: 몸 둘레를 도는 파란 회오리 (캐릭터 발밑을 따라가요)
+      g.translate(player.px, player.py + CELL * .3); g.scale(1, .5); g.lineCap = 'round';
       for (let i = 0; i < 3; i++) {
         const r = 70 + i * 16 + k * 18, s = k * Math.PI * 4 + i * 2.1;
         g.globalAlpha = (1 - k) * (1 - i * .2); g.strokeStyle = i === 1 ? '#ffffff' : '#5fc8ff'; g.lineWidth = (14 - i * 3) * (1 - k * .4);
@@ -1718,7 +1743,7 @@ function drawFx(f) {
       break;
     }
     case 'skE': {   // 기합: 붉은 기운이 퍼지는 고리
-      g.translate(f.x, f.y); g.scale(1, .5); g.globalAlpha = 1 - k;
+      g.translate(player.px, player.py + CELL * .3); g.scale(1, .5); g.globalAlpha = 1 - k;
       g.strokeStyle = '#ff6a2a'; g.lineWidth = 12 * (1 - k); g.beginPath(); g.arc(0, 0, 20 + k * 110, 0, Math.PI * 2); g.stroke();
       g.strokeStyle = '#ffd23e'; g.lineWidth = 6 * (1 - k); g.beginPath(); g.arc(0, 0, 10 + k * 80, 0, Math.PI * 2); g.stroke();
       break;
