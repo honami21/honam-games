@@ -98,6 +98,11 @@ const SND = (() => {
     fail() { noise(.6, .8, 'highpass', 3000, 600); tone('sawtooth', 300, 60, .5, .35); [1800, 2400, 3100].forEach((f, i) => tone('triangle', f, f * .9, .08, .12, .05 + i * .07)); },
     charge(d) { tone('sine', 220, 880, d, .2); noise(d, .12, 'bandpass', 400, 3000, 4); },
     tick() { tone('square', 900, 900, .03, .08); },
+    // 검사 스킬 소리
+    skQ() { noise(.12, .7, 'bandpass', 3000, 600, 1.2); tone('sawtooth', 300, 70, .25, .5, .02); tone('sine', 120, 40, .3, .9, .04); },
+    skW() { noise(.45, .55, 'bandpass', 500, 3500, 2.5); tone('triangle', 300, 900, .4, .2); noise(.15, .5, 'highpass', 2000, 5000, 1, .3); },
+    skE() { tone('sawtooth', 110, 220, .35, .35); tone('square', 220, 440, .35, .15, .05); noise(.4, .35, 'lowpass', 400, 2500, 1); [523, 784].forEach((f, i) => tone('triangle', f, f, .18, .2, .25 + i * .08)); },
+    skR() { tone('sine', 900, 200, .25, .25); tone('sine', 90, 30, .9, 1, .12); noise(.8, .9, 'lowpass', 2500, 120, 1, .12); [1046, 1318, 1568].forEach((f, i) => tone('triangle', f, f, .3, .15, .15 + i * .05)); },
     die() { [392, 330, 262, 196].forEach((f, i) => tone('triangle', f, f, .3, .3, i * .14)); },
     boss() { tone('sawtooth', 110, 110, .6, .3); tone('sawtooth', 165, 165, .6, .22, .02); noise(.6, .3, 'lowpass', 300, 100); },
     warp() { tone('sine', 300, 1200, .4, .3); noise(.4, .2, 'bandpass', 800, 4000, 3); },
@@ -218,21 +223,25 @@ function useSkill(i) {
   const s = mySkills()[i];
   if (!s) { log('이 직업의 스킬은 아직 준비 중이에요', 'warn'); return; }
   if (P.lv < s.lv) { log(`${josa(s.name, '은는')} 레벨 ${s.lv}에 배워요`, 'warn'); return; }
-  if ((skCD[s.k] || 0) > 0) { log(`${josa(s.name, '은는')} ${Math.ceil(skCD[s.k])}초 뒤에 다시 쓸 수 있어요`, 'warn'); return; }
+  if ((skCD[s.k] || 0) > 0) return;   // 다시 쓰기 시간은 칸 위 숫자로만
   if ((P.sp || 0) < s.cost) { log(`용기가 모자라요 (${s.cost} 필요)`, 'warn'); return; }
   if (dead) return;
   const p = player, near = m => m && m.kind === 'mon' && !m.dying && units.includes(m) && fightDist(p.x, p.y, m) <= reachTo(m) + 1;
-  skName = s.name + '!';
-  if (s.rush) { rushT = s.rush; log(`<b>${s.name}!</b> 공격이 빨라져요`, 'sys'); fx.push({ k: 'spark', x: p.px, y: p.py - 40, t: 0, d: .5, n: 18, col: '#ffd23e' }); SND.coin(); }
+  skName = s.name + '!'; (SND['sk' + s.k.toUpperCase()] || (() => {}))();
+  if (s.rush) { rushT = s.rush; log(`<b>${s.name}!</b> 10초 동안 공격이 빨라져요`, 'sys'); fx.push({ k: 'skE', x: p.px, y: p.py + CELL * .3, t: 0, d: .5 }); fx.push({ k: 'spark', x: p.px, y: p.py - 40, t: 0, d: .5, n: 18, col: '#ff8a3a' }); shake.a = Math.max(shake.a, 4); shake.t = .2; renderBuffs(); }
   else if (s.area) {
     const ms = units.filter(near); if (!ms.length) { log('둘레에 몬스터가 없어요', 'warn'); return; }
-    fx.push({ k: 'club', x: p.px, y: p.py - 30, dir: p.face, t: 0, d: .3, crit: true });
+    fx.push({ k: 'skW', x: p.px, y: p.py, t: 0, d: .45 });
     atkAnim = { t: 0, hit: true, m: ms[0], type: 'sword', wind: .06 }; atkCD = Math.max(atkCD, .3);
     ms.forEach(m => doHit(m, 'sword', s.mult));
   } else {
     if (!near(tgt)) { log('먼저 몬스터 가까이에서 싸워야 해요', 'warn'); return; }
     faceTo(p, tgt); atkAnim = { t: 0, hit: true, m: tgt, type: 'sword', wind: .06 }; atkCD = Math.max(atkCD, .3);
+    const tx = tgt.px, ty = tgt.py - tgt.d.h * .45;
+    if (s.k === 'r') { fx.push({ k: 'skR', x: tx, y: ty, t: 0, d: .7 }); freeze = Math.max(freeze, .2); }
+    else fx.push({ k: 'skQ', x: tx, y: ty, dir: Math.sign(tgt.px - p.px) || p.face, t: 0, d: .3 });
     doHit(tgt, 'club', s.mult);
+    if (s.k === 'r') { shake.a = Math.max(shake.a, 14); shake.t = .45; }
   }
   P.sp -= s.cost; skCD[s.k] = s.cd; fightT = 0; renderSkills(); updateHUD();
 }
@@ -244,7 +253,7 @@ function renderSkills() {
     b.classList.toggle('lock', lock); b.classList.toggle('low', !lock && (P.sp || 0) < s.cost);
     const im = b.querySelector('img'), src = s ? `img/${s.img}.png` : '';
     if (im.getAttribute('src') !== src) { if (src) im.setAttribute('src', src); else im.removeAttribute('src'); }
-    b.querySelector('.nm').textContent = s ? (lock ? 'Lv ' + s.lv : s.name) : '';
+    b.querySelector('.nm').textContent = s && lock ? 'Lv ' + s.lv : '';
     b.querySelector('.cd').textContent = cd > 0 ? cd : '';
     b.title = s ? `${s.name} (${s.k.toUpperCase()}) · 레벨 ${s.lv} · 용기 ${s.cost}\n${s.txt}` + (s.cd > 3 ? `\n다시 쓰기 ${s.cd}초` : '') : '스킬 준비 중';
   });
@@ -1252,7 +1261,7 @@ function renderQuick() {
   });
 }
 // 받은 버프: 상태창 왼쪽 위에 그림과 남은 시간 (새 버프는 BUFFS에 한 줄 추가)
-const BUFFS = [{ id: 'haste', img: 'i-haste', left: () => P.haste, max: () => Math.max(ITEMS.haste.sec * 1000, P.hasteMax || 0) }];
+const BUFFS = [{ id: 'haste', img: 'i-haste', left: () => P.haste, max: () => Math.max(ITEMS.haste.sec * 1000, P.hasteMax || 0) }, { id: 'rush', img: 'sk-sword-3', left: () => rushT * 1000, max: () => 10000 }];
 function renderBuffs() {
   const box = $('buffs'); if (!box) return;
   const on = BUFFS.filter(b => b.left() > 0);
@@ -1692,6 +1701,38 @@ function drawFx(f) {
       }
       break;
     }
+    case 'skQ': {   // 힘껏 베기: 크고 굵은 금빛 반달
+      const r = 58 + k * 22, a0 = f.dir > 0 ? -1.5 : Math.PI - 1.5 + .4, a1 = f.dir > 0 ? 1.1 : Math.PI + 1.1 + .4;
+      g.lineCap = 'round'; g.globalAlpha = 1 - k;
+      g.strokeStyle = '#ffcf3e'; g.lineWidth = 20 * (1 - k * .5); g.beginPath(); g.arc(f.x - f.dir * 14, f.y, r, a0, a1); g.stroke();
+      g.strokeStyle = '#fffbe0'; g.lineWidth = 7 * (1 - k * .5); g.beginPath(); g.arc(f.x - f.dir * 14, f.y, r - 4, a0 + .2, a1 - .2); g.stroke();
+      break;
+    }
+    case 'skW': {   // 돌려 베기: 몸 둘레를 도는 파란 회오리
+      g.translate(f.x, f.y); g.scale(1, .5); g.lineCap = 'round';
+      for (let i = 0; i < 3; i++) {
+        const r = 70 + i * 16 + k * 18, s = k * Math.PI * 4 + i * 2.1;
+        g.globalAlpha = (1 - k) * (1 - i * .2); g.strokeStyle = i === 1 ? '#ffffff' : '#5fc8ff'; g.lineWidth = (14 - i * 3) * (1 - k * .4);
+        g.beginPath(); g.arc(0, 0, r, s, s + 2.6); g.stroke();
+      }
+      break;
+    }
+    case 'skE': {   // 기합: 붉은 기운이 퍼지는 고리
+      g.translate(f.x, f.y); g.scale(1, .5); g.globalAlpha = 1 - k;
+      g.strokeStyle = '#ff6a2a'; g.lineWidth = 12 * (1 - k); g.beginPath(); g.arc(0, 0, 20 + k * 110, 0, Math.PI * 2); g.stroke();
+      g.strokeStyle = '#ffd23e'; g.lineWidth = 6 * (1 - k); g.beginPath(); g.arc(0, 0, 10 + k * 80, 0, Math.PI * 2); g.stroke();
+      break;
+    }
+    case 'skR': {   // 용기 폭발: 화면이 번쩍 + 보라·금빛 폭발
+      g.globalAlpha = Math.max(0, .45 - k * 1.5); g.fillStyle = '#fff4d6'; g.fillRect(f.x - 3000, f.y - 3000, 6000, 6000);
+      g.translate(f.x, f.y);
+      g.globalAlpha = 1 - k; g.lineCap = 'round';
+      for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2 + .2, r0 = 20 + k * 40, r1 = 60 + k * 150 * (i % 2 ? .7 : 1);
+        g.strokeStyle = i % 2 ? '#b25cff' : '#ffd23e'; g.lineWidth = 9 * (1 - k); g.beginPath(); g.moveTo(Math.cos(a) * r0, Math.sin(a) * r0 * .7); g.lineTo(Math.cos(a) * r1, Math.sin(a) * r1 * .7); g.stroke(); }
+      g.save(); g.translate(0, 40); g.scale(1, .45); g.strokeStyle = '#9a4dff'; g.lineWidth = 14 * (1 - k); g.beginPath(); g.arc(0, 0, 30 + k * 170, 0, Math.PI * 2); g.stroke(); g.restore();
+      g.fillStyle = '#fff'; g.globalAlpha = Math.max(0, 1 - k * 2); g.beginPath(); g.arc(0, 0, 40 * (1 - k), 0, Math.PI * 2); g.fill();
+      break;
+    }
     case 'sword': {   // 반달 모양 호
       g.globalAlpha = 1 - k; g.strokeStyle = f.crit ? '#ffe46b' : '#fff'; g.lineWidth = (f.crit ? 12 : 8) * (1 - k * .5); g.lineCap = 'round';
       const r = (f.crit ? 40 : 30) + k * 10;
@@ -1785,6 +1826,12 @@ function render() {
   }
   for (const s of shots) drawShot(s);
   for (const f of fx) drawFx(f);
+  if (rushT > 0 && !dead) {   // 기합 중: 발밑에 붉은 기운 + 위로 솟는 불티
+    const t = performance.now() / 1000, x = player.px, y = player.py + CELL * .3;
+    g.save(); g.globalAlpha = .35 + Math.sin(t * 8) * .1; g.fillStyle = '#ff5a1f'; g.beginPath(); g.ellipse(x, y, 34, 14, 0, 0, Math.PI * 2); g.fill();
+    for (let i = 0; i < 6; i++) { const p = (t * .9 + i / 6) % 1, ox = Math.sin(i * 2.3 + t * 2) * 22; g.globalAlpha = (1 - p) * .9; g.fillStyle = i % 2 ? '#ffd23e' : '#ff6a2a'; g.beginPath(); g.arc(x + ox, y - p * 80, 5 * (1 - p) + 2, 0, Math.PI * 2); g.fill(); }
+    g.restore();
+  }
   for (const n of nums) drawNum(n);
   // 드래그 중: 몬스터에서 커서까지 줄
   if (pointer.drag && tgt && tgt.kind === 'mon') {
@@ -2057,7 +2104,7 @@ function update(dt) {
   if (rushT > 0 && (rushT -= dt) <= 0) { rushT = 0; log('기합이 끝났어요', 'sys'); }
   for (const k in skCD) if (skCD[k] > 0) skCD[k] = Math.max(0, skCD[k] - dt);
   if (isSword() && fightT >= 4 && P.sp > 0) P.sp = Math.max(0, P.sp - COURAGE.decay * dt);   // 싸움이 끝나면 용기가 천천히 줄어요
-  if ((skShow -= dt) <= 0) { skShow = .25; renderSkills(); updateHUD(); }
+  if ((skShow -= dt) <= 0) { skShow = .25; renderSkills(); updateHUD(); if (rushT > 0 || $('buffs').dataset.k) renderBuffs(); }
   if (atkAnim || (tgt && tgt.kind === 'mon' && auto)) fightT = 0;   // 싸우는 중(맞거나 때린 뒤 4초)에는 HP가 차지 않아요
   if (regenT >= 2 && !dead && fightT >= 4) { regenT = 0; const mh = maxHP(); if (P.hp < mh) { P.hp = Math.min(mh, P.hp + regenAmt() * (idleT > 3 && !atkAnim ? 3 : 1)); updateHUD(); } }
   if (atkAnim || player.moving) idleT = 0;
