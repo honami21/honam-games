@@ -12,6 +12,8 @@ const WEAPONS = {
   dagger2: { name: '무쇠 단도',     dmg: 5,  spd: 0.4, type: 'dagger', tier: 2 },
   sword2:  { name: '무쇠 검',       dmg: 8,  spd: 0.6, type: 'sword',  tier: 2, two: true },
   club2:   { name: '무쇠 방망이',   dmg: 12, spd: 0.9, type: 'club',   tier: 2, two: true },
+  sword3:  { name: '저승 대검',     dmg: 11, spd: 0.6, type: 'sword',  tier: 3, two: true, set: 'jeo' },   // 안개 늪: 저승사자 15%, 일반 몬스터 0.1%
+  bow3:    { name: '망령 활',       dmg: 7,  spd: 0.75, type: 'bow',   tier: 3, range: 8, two: true, set: 'jeo' },
 };
 const WTYPE = { bow: '활', dagger: '단검', sword: '양손검', club: '방망이(양손)' };
 
@@ -29,6 +31,12 @@ const ARMORS = {
   glove2:  { name: '가죽 장갑',       slot: 'glove',  ac: 1, tier: 2 },
   boots2:  { name: '남색 고무신',     slot: 'boots',  ac: 1, tier: 2 },
   shield2: { name: '대나무 방패',     slot: 'shield', ac: 2, tier: 2, blk: 15 },
+  helm3:   { name: '해골 투구',       slot: 'helm',   ac: 3, tier: 3, set: 'jeo' },   // 저승 세트 (안개 늪)
+  armor3:  { name: '해골 갑옷',       slot: 'armor',  ac: 6, tier: 3, set: 'jeo' },
+  cloak3:  { name: '저승 망토',       slot: 'cloak',  ac: 2, tier: 3, set: 'jeo' },
+  glove3:  { name: '뼈마디 장갑',     slot: 'glove',  ac: 2, tier: 3, set: 'jeo' },
+  boots3:  { name: '저승 짚신',       slot: 'boots',  ac: 2, tier: 3, set: 'jeo' },
+  shield3: { name: '해골 방패',       slot: 'shield', ac: 3, tier: 3, blk: 20 },   // 세트에는 안 들어가요
 };
 // 장신구: 직업마다 목걸이·반지 하나씩 (모두 8개). 강화할 수 없고, 어느 우두머리든 적은 확률로 떨어뜨려요 (창고로 다른 캐릭터에게 줄 수 있어요)
 // 능력: str·dex·con, hit(명중 %), crit(치명타 %), dmg(데미지 +), regen(회복 +), ac(방어도)
@@ -50,7 +58,17 @@ const SKILLS = { sword: [
   { k: 'w', name: '돌려 베기', img: 'sk-sword-2', lv: 20, cost: 40, cd: 5, mult: 1.2, area: 1, txt: '둘레 한 칸의 몬스터를 모두 베어요 (데미지 1.2배)' },
   { k: 'e', name: '기합', img: 'sk-sword-3', lv: 30, cost: 30, cd: 30, rush: 10, txt: '10초 동안 공격이 빨라져요' },
   { k: 'r', name: '용기 폭발', img: 'sk-sword-4', lv: 40, cost: 100, cd: 20, mult: 4, txt: '용기를 모두 모아 큰 한 방 (데미지 4배)' },
+],
+  bow: [
+  { k: 'q', name: '바람 화살', img: 'sk-bow-1', lv: 10, cost: 20, cd: 3, mult: 1.5, push: 1, txt: '세찬 바람 화살로 몬스터를 활이 닿는 끝까지 밀어내요 (데미지 1.5배, 우두머리는 안 밀려요)' },
+  { k: 'w', name: '화살비', img: 'sk-bow-2', lv: 20, cost: 40, cd: 5, mult: 1.5, rain: 3, txt: '활이 닿는 둘레 몬스터 최대 3마리에게 하늘에서 화살이 쏟아져요 (데미지 1.5배)' },
+  { k: 'e', name: '매의 눈', img: 'sk-bow-3', lv: 30, cost: 30, cd: 30, hawk: 10, crit: 20, txt: '10초 동안 치명타 확률 +20%' },
+  { k: 'r', name: '천둥 화살', img: 'sk-bow-4', lv: 40, cost: 100, cd: 20, mult: 4, splash: 1, txt: '집중을 모두 모은 천둥 화살 (데미지 4배), 맞은 몬스터 둘레 한 칸도 절반 피해' },
 ] };
+// 궁수 집중: 맞히면 +5, 치명타 +10, 가만히 서서 쏘면 두 배. 싸움이 끝나면 천천히 줄어요
+const FOCUS = { hit: 5, crit: 10, still: 2 };
+// 세트 효과: 같은 세트를 많이 입을수록 효과가 늘어요 (무기 포함 6개)
+const SETS = { jeo: { name: '저승 세트', n: 6, fx: [[2, 'AC 1 좋아짐'], [4, '명중 +5%'], [6, '준 데미지의 10% 흡혈 + 푸른 안개']] } };
 const ACC_DROP = 0.1;   // 우두머리를 잡으면 10% 확률로 8개 중 하나
 const SLOTS = ['weapon', 'helm', 'armor', 'cloak', 'glove', 'boots', 'shield', 'neck', 'ring'];
 const SLOT_NAME = { weapon: '무기', helm: '투구', armor: '갑옷', cloak: '망토', glove: '장갑', boots: '신발', shield: '방패', neck: '목걸이', ring: '반지' };
@@ -104,8 +122,8 @@ const ZONES = [
     mons: [['shoot', 7], ['tanuki', 2]], drop: { w: .004, a: .008, gear: .004, coin: [3, 6] } },
   { id: 'deep', name: '깊은 대숲', lv: '15~20', tile: 'tile-deep', tier: 2, at: [.78, .52], seeds: [[.8, .54], [.64, .44]], count: 265, boss: 'general',
     mons: [['tanuki', 1], ['bghost', 4], ['broom', 4]], drop: { w: .006, a: .012, gear: .006, coin: [5, 9] } },
-  { id: 'marsh', name: '안개 늪', lv: '20~25', tile: 'tile-marsh', tier: 2, at: [.66, .8], seeds: [[.68, .82]], count: 240, boss: 'reaper',
-    mons: [['bonepup', 4], ['mongdal', 4], ['skel', 3]], drop: { w: .007, a: .014, gear: .007, coin: [6, 11] } },
+  { id: 'marsh', name: '안개 늪', lv: '20~25', tile: 'tile-marsh', tier: 3, at: [.66, .8], seeds: [[.68, .82]], count: 240, boss: 'reaper',
+    mons: [['bonepup', 4], ['mongdal', 4], ['skel', 3]], drop: { w: .007, a: .014, gear: .007, wpn: .001, bossWpn: .15, coin: [6, 11] } },
   { id: 'mtn', name: '뿔바위 산맥', lv: '', tile: 'tile-rock', tier: 2 },
   { id: 'beach', name: '도깨비섬 바닷가', lv: '', tile: 'tile-sand', tier: 1 },
 ];
