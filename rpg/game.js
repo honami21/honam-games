@@ -201,11 +201,12 @@ const reach = () => { const w = W_OF(); return w && w.range || 1; };
 // 우두머리는 크게 그려져서 한 칸 떨어져서(2칸 거리) 싸워요
 const gapOf = u => (u && u.d && u.d.boss) ? 2 : 1;
 const reachTo = u => Math.max(reach(), gapOf(u));
-// 캐릭터(px,py)와 몬스터 m(mx,my) 사이 싸움 거리. 우두머리 위쪽(북쪽)에 서면 그림에 덮이니 한 줄 더 떨어져요
+// 캐릭터(px,py)와 몬스터 m(mx,my) 사이 싸움 거리.
+// 우두머리는 그림이 커서 옆(왼쪽·오른쪽)으로 세 칸, 같은 줄이나 한 줄 아래에서만 싸워요 (2를 돌려줌). 다른 자리는 더 먼 것으로 쳐요
 function fightDist(px, py, m, mx = m.x, my = m.y) {
-  const dx = Math.abs(px - mx), dy = my - py;
+  const dx = Math.abs(px - mx), dy = py - my;
   if (!(m.d && m.d.boss)) return Math.max(dx, Math.abs(dy));
-  return Math.max(dx, dy > 0 ? dy - 1 : -dy);
+  return (dx === 3 && dy >= 0 && dy <= 1) ? 2 : Math.max(dx, Math.abs(dy)) + 2;
 }
 const HERO = () => isBow() ? '궁수' : '검사';
 // 장신구가 더해 주는 능력치
@@ -908,7 +909,7 @@ function playerThink(dt) {
   if (tgt) {
     const want = held || auto || pending > 0;
     if (!want) { tgt = null; return; }
-    if (fightDist(p.x, p.y, tgt) <= reachTo(tgt)) {
+    if ((isBow() ? cheb(p.x, p.y, tgt.x, tgt.y) : fightDist(p.x, p.y, tgt)) <= reachTo(tgt)) {
       if (settle()) { faceTo(p, tgt); if (atkCD <= 0 && !atkAnim) startAttack(tgt); }
     } else if (planT <= 0 || !p.moving) { planT = .25; planGlide(p, tgt.x, tgt.y, tgt.d.boss && reach() <= 2 ? (x, y) => fightDist(x, y, tgt) <= 2 : gapOf(tgt)); }
     return;
@@ -1999,7 +2000,7 @@ function update(dt) {
   atkCD -= dt; hurtT -= dt; winT -= dt;
   if (atkAnim) {
     atkAnim.t += dt;
-    if (!atkAnim.hit && atkAnim.t >= atkAnim.wind) { atkAnim.hit = true; const m = atkAnim.m; if (!m.dying && units.includes(m) && fightDist(player.x, player.y, m) <= reachTo(m) + 1) { if (atkAnim.type === 'bow') shoot(m); else doHit(m, atkAnim.type); } }
+    if (!atkAnim.hit && atkAnim.t >= atkAnim.wind) { atkAnim.hit = true; const m = atkAnim.m; if (!m.dying && units.includes(m) && (atkAnim.type === 'bow' ? cheb(player.x, player.y, m.x, m.y) : fightDist(player.x, player.y, m)) <= reachTo(m) + 1) { if (atkAnim.type === 'bow') shoot(m); else doHit(m, atkAnim.type); } }
     if (atkAnim && atkAnim.type === 'bow' && atkAnim.t > atkAnim.wind + .22) atkAnim = null;
     if (atkAnim.t > atkAnim.wind + .16) atkAnim = null;
   }
