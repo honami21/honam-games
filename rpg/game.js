@@ -2195,7 +2195,7 @@ function renderCreate() {
   $('c-name-msg').textContent = $('c-name').value ? err : '';
   $('c-go').disabled = createPts > 0 || !!err;
 }
-// 예전 저장: 다른 무기는 엽전으로 바꾸고, 낀 무기 강화 단계는 깨비샘의 검으로 옮겨요
+// 예전 저장: 다른 무기는 엽전으로 바꾸고, 낀 무기 강화 단계는 나무 대검(나무 활)으로 옮겨요
 function migrateWeapons() {
   const w = P.eq.weapon;
   const want = isBow() ? 'bow1' : 'sword1';
