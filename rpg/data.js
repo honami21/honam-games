@@ -12,8 +12,8 @@ const WEAPONS = {
   dagger2: { name: '무쇠 단도',     dmg: 5,  spd: 0.4, type: 'dagger', tier: 2 },
   sword2:  { name: '무쇠 검',       dmg: 8,  spd: 0.6, type: 'sword',  tier: 2, two: true },
   club2:   { name: '무쇠 방망이',   dmg: 12, spd: 0.9, type: 'club',   tier: 2, two: true },
-  sword3:  { name: '저승 대검',     dmg: 11, spd: 0.6, type: 'sword',  tier: 3, two: true, set: 'jeo' },   // 안개 늪: 저승사자 15%, 일반 몬스터 0.1%
-  bow3:    { name: '망령 활',       dmg: 7,  spd: 0.75, type: 'bow',   tier: 3, range: 8, two: true, set: 'jeo' },
+  sword3:  { name: '저승 대검',     dmg: 11, spd: 0.6, type: 'sword',  tier: 3, two: true },   // 안개 늪: 저승사자 15%, 일반 몬스터 0.1%
+  bow3:    { name: '망령 활',       dmg: 7,  spd: 0.75, type: 'bow',   tier: 3, range: 8, two: true },
 };
 const WTYPE = { bow: '활', dagger: '단검', sword: '양손검', club: '방망이(양손)' };
 
@@ -67,8 +67,8 @@ const SKILLS = { sword: [
 ] };
 // 궁수 집중: 맞히면 +5, 치명타 +10, 가만히 서서 쏘면 두 배. 싸움이 끝나면 천천히 줄어요
 const FOCUS = { hit: 5, crit: 10, still: 2 };
-// 세트 효과: 같은 세트를 많이 입을수록 효과가 늘어요 (무기 포함 6개)
-const SETS = { jeo: { name: '저승 세트', n: 6, fx: [[2, 'AC 1 좋아짐'], [4, '명중 +5%'], [6, '준 데미지의 10% 흡혈 + 푸른 안개']] } };
+// 세트 효과: 같은 세트 방어구를 많이 입을수록 효과가 늘어요 (무기는 빼고 5개)
+const SETS = { jeo: { name: '저승 세트', n: 5, fx: [[2, 'AC 2 좋아짐'], [3, '치명타 확률 +3%'], [4, '명중 +10%'], [5, '언데드 몬스터에게 데미지 +20%']] } };
 const ACC_DROP = 0.1;   // 우두머리를 잡으면 10% 확률로 8개 중 하나
 const SLOTS = ['weapon', 'helm', 'armor', 'cloak', 'glove', 'boots', 'shield', 'neck', 'ring'];
 const SLOT_NAME = { weapon: '무기', helm: '투구', armor: '갑옷', cloak: '망토', glove: '장갑', boots: '신발', shield: '방패', neck: '목걸이', ring: '반지' };
@@ -101,10 +101,10 @@ const MONS = {
   broom:   { name: '몽당빗자루',    lv: 19, hp: 150,  ac: -4, dmg: [9, 14],  exp: 30,   h: 37,  aggro: 1, step: .45 },
   kdust:   { name: '먼지 대왕',     lv: 6,  hp: 250,  ac: 6,  dmg: [4, 7],   exp: 120,  h: 58, aggro: 1, step: .5, boss: 1 },
   tanuki2: { name: '둔갑 너구리',   lv: 17, hp: 1400, ac: -3, dmg: [11, 16], exp: 750,  h: 68, aggro: 1, step: .5, boss: 1 },
-  bonepup: { name: '뼈다귀 강아지', lv: 20, hp: 170,  ac: -4, dmg: [10, 15], exp: 34,   h: 30,  aggro: 1, step: .4 },
-  mongdal: { name: '몽달귀신',      lv: 22, hp: 200,  ac: -5, dmg: [11, 17], exp: 40,   h: 42,  aggro: 1, step: .5 },
-  skel:    { name: '해골 병사',     lv: 24, hp: 240,  ac: -7, dmg: [13, 19], exp: 48,   h: 42,  aggro: 1, step: .5 },
-  reaper:  { name: '저승사자',      lv: 28, hp: 4000, ac: -9, dmg: [20, 28], exp: 2500, h: 80, aggro: 1, step: .55, boss: 1 },
+  bonepup: { name: '뼈다귀 강아지', lv: 20, hp: 170,  ac: -4, dmg: [10, 15], exp: 34,   h: 30,  aggro: 1, undead: 1, step: .4 },
+  mongdal: { name: '몽달귀신',      lv: 22, hp: 200,  ac: -5, dmg: [11, 17], exp: 40,   h: 42,  aggro: 1, undead: 1, step: .5 },
+  skel:    { name: '해골 병사',     lv: 24, hp: 240,  ac: -7, dmg: [13, 19], exp: 48,   h: 42,  aggro: 1, undead: 1, step: .5 },
+  reaper:  { name: '저승사자',      lv: 28, hp: 4000, ac: -9, dmg: [20, 28], exp: 2500, h: 80, aggro: 1, step: .55, boss: 1, undead: 1 },
   general: { name: '대나무 장군',   lv: 22, hp: 2500, ac: -6, dmg: [15, 22], exp: 1500, h: 73, aggro: 1, step: .55, boss: 1 },
 };
 
