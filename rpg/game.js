@@ -1154,11 +1154,13 @@ let hasteShow = 0;
 function drinkHaste() {
   const s = P.inv.find(x => x.i === 'haste');
   if (!s || dead) { log('초록 물약이 없어요', 'warn'); return; }
+  const cap = 30 * 60000;   // 여러 개 마시면 시간이 쌓여요 (최대 30분)
+  if ((P.haste || 0) > cap - 60000) { log('초록 물약은 30분까지만 쌓을 수 있어요', 'warn'); return; }
   s.n--; if (s.n <= 0) P.inv.splice(P.inv.indexOf(s), 1);
-  P.haste = ITEMS.haste.sec * 1000;
+  P.haste = Math.min(cap, Math.max(0, P.haste || 0) + ITEMS.haste.sec * 1000); P.hasteMax = P.haste;
   SND.potion(); addNum(player.px, player.py - 40, '빨라졌어요!', 'heal');
   fx.push({ k: 'heal', x: player.px, y: player.py, t: 0, d: .6 });
-  log('초록 물약을 마셨어요. 5분 동안 걷기와 공격이 빨라져요', 'sys');
+  log(`초록 물약을 마셨어요. ${Math.ceil(P.haste / 60000)}분 동안 걷기와 공격이 빨라져요`, 'sys');
   dirty = true; updateHUD(); if (wins.includes('inv')) renderInv();
 }
 // 단축키 1~4: 가방에서 아이템을 골라 넣어요 (리니지처럼 아이템 위에서 숫자 누르기, 또는 칸을 누르고 아이템 고르기)
@@ -1194,7 +1196,7 @@ function renderQuick() {
   });
 }
 // 받은 버프: 상태창 왼쪽 위에 그림과 남은 시간 (새 버프는 BUFFS에 한 줄 추가)
-const BUFFS = [{ id: 'haste', img: 'i-haste', left: () => P.haste, max: () => ITEMS.haste.sec * 1000 }];
+const BUFFS = [{ id: 'haste', img: 'i-haste', left: () => P.haste, max: () => Math.max(ITEMS.haste.sec * 1000, P.hasteMax || 0) }];
 function renderBuffs() {
   const box = $('buffs'); if (!box) return;
   const on = BUFFS.filter(b => b.left() > 0);
@@ -1333,7 +1335,7 @@ function closeWin(w, quiet) {
 function closeAllWins() { while (wins.length) closeWin(true); }
 
 function gearInfo(it) {
-  if (it.i) { const d = ITEMS[it.i]; return `<b>${d.name}</b>` + (it.i === 'potion' ? `<br>HP ${d.heal} 회복` : it.i === 'haste' ? '<br>5분 동안 걷기와 공격이 빨라져요' : it.i === 'ret' ? '<br>읽으면 마을로 돌아가요' : it.i === 'tele' ? '<br>지금 사냥터 안 아무 곳으로 순간이동해요' : `<br>${it.i === 'wscroll' ? '무기' : '방어구'}를 한 단계 강화해요`); }
+  if (it.i) { const d = ITEMS[it.i]; return `<b>${d.name}</b>` + (it.i === 'potion' ? `<br>HP ${d.heal} 회복` : it.i === 'haste' ? '<br>5분 동안 걷기와 공격이 빨라져요<br><span class="dim">여러 개 마시면 30분까지 쌓여요</span>' : it.i === 'ret' ? '<br>읽으면 마을로 돌아가요' : it.i === 'tele' ? '<br>지금 사냥터 안 아무 곳으로 순간이동해요' : `<br>${it.i === 'wscroll' ? '무기' : '방어구'}를 한 단계 강화해요`); }
   if (it.g === 'w') {
     const d = WEAPONS[it.k], [a, b] = weaponRange(it);
     return `<b>${itemName(it)}</b><br>${WTYPE[d.type]} · ${d.tier}단계<br>데미지 ${a === b ? a : a + '~' + b} · 한 대 ${d.spd}초` +
