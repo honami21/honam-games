@@ -43,6 +43,14 @@ const ACCS = {
   ring_tank:  { name: '분노의 반지',     slot: 'ring', cls: 'tank',  tier: 2, con: 1, regen: 3 },
 };
 const CLS_NAME = { sword: '검사', bow: '궁수', mage: '마법사', tank: '전사' };
+// 검사 스킬 (용기 사용, 레벨이 되면 하나씩 열려요). 용기: 때리면 +5, 치명타 +10, 맞으면 +3, 싸움이 끝나면 1초에 3씩 줄어요
+const COURAGE = { max: 100, hit: 5, crit: 10, hurt: 3, decay: 3 };
+const SKILLS = { sword: [
+  { k: 'q', name: '힘껏 베기', img: 'sk-sword-1', lv: 5, cost: 20, cd: 3, mult: 2, txt: '앞의 몬스터를 한 번 세게 베어요 (데미지 2배)' },
+  { k: 'w', name: '돌려 베기', img: 'sk-sword-2', lv: 10, cost: 40, cd: 5, mult: 1.2, area: 1, txt: '둘레 한 칸의 몬스터를 모두 베어요 (데미지 1.2배)' },
+  { k: 'e', name: '기합', img: 'sk-sword-3', lv: 15, cost: 30, cd: 30, rush: 10, txt: '10초 동안 공격이 빨라져요' },
+  { k: 'r', name: '용기 폭발', img: 'sk-sword-4', lv: 20, cost: 100, cd: 20, mult: 4, txt: '용기를 모두 모아 큰 한 방 (데미지 4배)' },
+] };
 const ACC_DROP = 0.1;   // 우두머리를 잡으면 10% 확률로 8개 중 하나
 const SLOTS = ['weapon', 'helm', 'armor', 'cloak', 'glove', 'boots', 'shield', 'neck', 'ring'];
 const SLOT_NAME = { weapon: '무기', helm: '투구', armor: '갑옷', cloak: '망토', glove: '장갑', boots: '고무신', shield: '방패', neck: '목걸이', ring: '반지' };

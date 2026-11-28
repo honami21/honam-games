@@ -209,6 +209,46 @@ function fightDist(px, py, m, mx = m.x, my = m.y) {
   return (dx === 3 && dy >= 0 && dy <= 1) ? 2 : Math.max(dx, Math.abs(dy)) + 2;
 }
 const HERO = () => isBow() ? '궁수' : '검사';
+const isSword = () => !!P && !isBow() && (P.cls || 'sword') === 'sword';
+const mySkills = () => (P && SKILLS[isBow() ? 'bow' : (P.cls || 'sword')]) || [];
+let rushT = 0, skCD = {}, skShow = 0, skName = '';
+function gainSp(n) { P.spMax = COURAGE.max; P.sp = Math.min(COURAGE.max, (P.sp || 0) + n); }
+// 스킬 쓰기 (Q W E R)
+function useSkill(i) {
+  const s = mySkills()[i];
+  if (!s) { log('이 직업의 스킬은 아직 준비 중이에요', 'warn'); return; }
+  if (P.lv < s.lv) { log(`${josa(s.name, '은는')} 레벨 ${s.lv}에 배워요`, 'warn'); return; }
+  if ((skCD[s.k] || 0) > 0) { log(`${josa(s.name, '은는')} ${Math.ceil(skCD[s.k])}초 뒤에 다시 쓸 수 있어요`, 'warn'); return; }
+  if ((P.sp || 0) < s.cost) { log(`용기가 모자라요 (${s.cost} 필요)`, 'warn'); return; }
+  if (dead) return;
+  const p = player, near = m => m && m.kind === 'mon' && !m.dying && units.includes(m) && fightDist(p.x, p.y, m) <= reachTo(m) + 1;
+  skName = s.name + '!';
+  if (s.rush) { rushT = s.rush; log(`<b>${s.name}!</b> 공격이 빨라져요`, 'sys'); fx.push({ k: 'spark', x: p.px, y: p.py - 40, t: 0, d: .5, n: 18, col: '#ffd23e' }); SND.coin(); }
+  else if (s.area) {
+    const ms = units.filter(near); if (!ms.length) { log('둘레에 몬스터가 없어요', 'warn'); return; }
+    fx.push({ k: 'club', x: p.px, y: p.py - 30, dir: p.face, t: 0, d: .3, crit: true });
+    atkAnim = { t: 0, hit: true, m: ms[0], type: 'sword', wind: .06 }; atkCD = Math.max(atkCD, .3);
+    ms.forEach(m => doHit(m, 'sword', s.mult));
+  } else {
+    if (!near(tgt)) { log('먼저 몬스터 가까이에서 싸워야 해요', 'warn'); return; }
+    faceTo(p, tgt); atkAnim = { t: 0, hit: true, m: tgt, type: 'sword', wind: .06 }; atkCD = Math.max(atkCD, .3);
+    doHit(tgt, 'club', s.mult);
+  }
+  P.sp -= s.cost; skCD[s.k] = s.cd; fightT = 0; renderSkills(); updateHUD();
+}
+function renderSkills() {
+  if (!P) return;
+  const ss = mySkills();
+  document.querySelectorAll('.bbtn.sk').forEach((b, i) => {
+    const s = ss[i], cd = s ? Math.ceil(skCD[s.k] || 0) : 0, lock = !s || P.lv < s.lv;
+    b.classList.toggle('lock', lock); b.classList.toggle('low', !lock && (P.sp || 0) < s.cost);
+    const im = b.querySelector('img'), src = s ? `img/${s.img}.png` : '';
+    if (im.getAttribute('src') !== src) { if (src) im.setAttribute('src', src); else im.removeAttribute('src'); }
+    b.querySelector('.nm').textContent = s ? (lock ? 'Lv ' + s.lv : s.name) : '';
+    b.querySelector('.cd').textContent = cd > 0 ? cd : '';
+    b.title = s ? `${s.name} (${s.k.toUpperCase()}) · 레벨 ${s.lv} · 용기 ${s.cost}\n${s.txt}` + (s.cd > 3 ? `\n다시 쓰기 ${s.cd}초` : '') : '스킬 준비 중';
+  });
+}
 // 장신구가 더해 주는 능력치
 function accBonus(k) { let v = 0; for (const s of ['neck', 'ring']) { const it = P.eq[s]; if (it && it.g === 'c') v += ACCS[it.k][k] || 0; } return v; }
 const ST = k => P[k] + accBonus(k);
@@ -928,7 +968,7 @@ function faceTo(u, t) { if (t.x !== u.x) u.face = t.x > u.x ? 1 : -1; }
 
 // 공격: 휘두르기 준비 → 때리는 순간 판정 → 마무리
 function startAttack(m) {
-  const w = W_OF(); const spd = (w ? w.spd : .7) * (hasted() ? HASTE : 1);
+  const w = W_OF(); const spd = (w ? w.spd : .7) * (hasted() ? HASTE : 1) * (rushT > 0 ? .7 : 1);
   atkCD = spd; atkAnim = { t: 0, hit: false, m, type: w ? w.type : 'sword', wind: w && w.type === 'bow' ? Math.min(.28, spd * .4) : Math.min(.09, spd * .25) };
   if (pending > 0) pending--;
 }
@@ -954,8 +994,11 @@ function drawShot(s) {
   const w = 46 * UK * 1.4, hh = w * im.height / im.width;
   g.save(); g.translate(x, y); g.rotate(Math.atan2(s.ty - s.y0, s.tx - s.x0)); g.drawImage(im, -w / 2, -hh / 2, w, hh); g.restore();
 }
-function doHit(m, type) {
-  const r = rollAttack(playerAttacker(), { ac: m.d.ac, lv: m.d.lv });
+function doHit(m, type, mult = 1) {
+  const att = playerAttacker(); if (mult > 1) att.hit += 100;   // 스킬은 거의 빗나가지 않아요
+  const r = rollAttack(att, { ac: m.d.ac, lv: m.d.lv });
+  if (mult > 1 && !r.miss) { r.dmg = Math.max(1, Math.floor(Math.max(1, r.dmg) * mult)); r.block = false; r.skill = true; }
+  else if (!r.miss && !r.block && isSword()) gainSp(r.crit ? COURAGE.crit : COURAGE.hit);
   const mx = m.px + (m.ox || 0), my = m.py + (m.oy || 0) - m.d.h * .45;
   const dir = Math.sign(m.px - player.px) || player.face;
   if (r.miss) { addNum(mx, my - 10, '빗나감', 'miss'); SND.miss(); fx.push({ k: 'whiff', x: mx - dir * 10, y: my, dir, t: 0, d: .18 }); return; }
@@ -969,8 +1012,8 @@ function doHit(m, type) {
   m.flash = .08; m.kx = dir * (type === 'club' ? 12 : 7); m.ky = 0; m.sq = 1;
   fx.push({ k: type, x: mx, y: my, dir, t: 0, d: type === 'club' ? .24 : type === 'sword' ? .16 : .12, crit: r.crit });
   fx.push({ k: 'spark', x: mx, y: my, t: 0, d: .3, n: r.crit ? 14 : 8, col: r.crit ? '#ffd23e' : '#fff6d0' });
-  addNum(mx, my - 14, String(r.dmg), r.crit ? 'crit' : 'hit');
-  SND.hit(type, r.crit);
+  addNum(mx, my - 14, String(r.dmg), r.crit || r.skill ? 'crit' : 'hit', r.skill ? skName : '');
+  SND.hit(type, r.crit || r.skill);
   m.dmgShow = 4; m.angry = true;
   if (kill) killMonster(m);
 }
@@ -1091,7 +1134,7 @@ function monAttack(m) {
     const sh = P.cls === 'tank' && P.eq.shield ? ARMORS[P.eq.shield.k] : null;
     if (sh && Math.random() * 100 < (sh.blk || 0)) { addNum(px, py, '막음', 'block'); SND.block(); P.rage = Math.min(100, (P.rage || 0) + 10); return; }
     if (r.block) r.dmg = 1;   // 다른 직업은 방어도로 0이 되어도 1은 들어와요
-    P.hp -= r.dmg; hurtT = .18; idleT = 0; fightT = 0;
+    P.hp -= r.dmg; hurtT = .18; idleT = 0; fightT = 0; if (isSword()) gainSp(COURAGE.hurt);
     addNum(px, py, String(r.dmg), 'hurt'); SND.hurt();
     shake.a = Math.max(shake.a, m.d.boss ? 6 : 2.5); shake.t = .15;
     $('hurtv').classList.remove('on'); void $('hurtv').offsetWidth; $('hurtv').classList.add('on');
@@ -1112,7 +1155,7 @@ function die() {
 }
 
 /* ================= 효과·숫자 ================= */
-function addNum(x, y, text, kind) { nums.push({ x: x + rnd(-6, 6), y, text, kind, t: 0 }); }
+function addNum(x, y, text, kind, label) { nums.push({ x: x + rnd(-6, 6), y, text, kind, t: 0, label }); }
 let bannerT = 0;
 function banner(html, sec = 1.8) { const b = $('banner'); b.innerHTML = html; b.classList.add('show'); clearTimeout(bannerT); bannerT = setTimeout(() => b.classList.remove('show'), sec * 1000); }
 function log(html, cls = '') {
@@ -1469,7 +1512,7 @@ function updateHUD() {
   const mh = maxHP();
   $('hpfill').style.width = clamp(P.hp / mh * 100, 0, 100) + '%';
   $('hptxt').textContent = Math.max(0, Math.ceil(P.hp)) + ' / ' + mh;
-  { const sp = $('spfill'), c = P.cls || 'sword'; if (sp.dataset.c !== c) { sp.dataset.c = c; sp.className = c; $('spname').textContent = ({ sword: '용기', bow: '집중', mage: '정신력', tank: '분노' })[c] || '용기'; } $('sptxt').textContent = (P.sp || 0) + ' / ' + (P.spMax || 0); }   // 직업 게이지 (스킬이 생기면 채워져요)
+  { const sp = $('spfill'), c = P.cls || 'sword'; if (sp.dataset.c !== c) { sp.dataset.c = c; sp.className = c; $('spname').textContent = ({ sword: '용기', bow: '집중', mage: '정신력', tank: '분노' })[c] || '용기'; } if (isSword()) P.spMax = COURAGE.max; $('sptxt').textContent = Math.floor(P.sp || 0) + ' / ' + (P.spMax || 0); sp.style.width = (P.spMax ? clamp((P.sp || 0) / P.spMax * 100, 0, 100) : 0) + '%'; }   // 직업 게이지 (스킬이 생기면 채워져요)
   $('xpfill').style.width = (P.lv >= MAX_LV ? 100 : P.exp / needExp(P.lv) * 100) + '%';
   $('xptxt').textContent = P.lv >= MAX_LV ? '최고 레벨' : (P.exp / needExp(P.lv) * 100).toFixed(1) + '%';
   $('lv').textContent = P.lv;
@@ -1701,7 +1744,7 @@ function drawNum(n) {
   g.font = (n.kind === 'hit' || n.kind === 'crit' || n.kind === 'hurt' ? '700 ' : '') + size + 'px Fredoka, "Do Hyeon", sans-serif';
   g.textAlign = 'center'; g.lineJoin = 'round'; g.lineWidth = size > 30 ? 7 : 5; g.strokeStyle = n.kind === 'crit' ? '#7a2a00' : 'rgba(20,14,40,.9)';
   g.strokeText(n.text, 0, 0); g.fillStyle = col; g.fillText(n.text, 0, 0);
-  if (n.kind === 'crit') { g.font = '15px "Do Hyeon", sans-serif'; g.lineWidth = 4; g.strokeText('치명타!', 0, -size * .8); g.fillStyle = '#fff3b0'; g.fillText('치명타!', 0, -size * .8); }
+  if (n.kind === 'crit') { g.font = '15px "Do Hyeon", sans-serif'; g.lineWidth = 4; const lb = n.label || '치명타!'; g.strokeText(lb, 0, -size * .8); g.fillStyle = '#fff3b0'; g.fillText(lb, 0, -size * .8); }
   g.restore();
 }
 
@@ -2011,6 +2054,10 @@ function update(dt) {
   playerThink(dt);
   // 회복: 가만히 있으면 더 빨리
   idleT += dt; regenT += dt; fightT += dt;
+  if (rushT > 0 && (rushT -= dt) <= 0) { rushT = 0; log('기합이 끝났어요', 'sys'); }
+  for (const k in skCD) if (skCD[k] > 0) skCD[k] = Math.max(0, skCD[k] - dt);
+  if (isSword() && fightT >= 4 && P.sp > 0) P.sp = Math.max(0, P.sp - COURAGE.decay * dt);   // 싸움이 끝나면 용기가 천천히 줄어요
+  if ((skShow -= dt) <= 0) { skShow = .25; renderSkills(); updateHUD(); }
   if (atkAnim || (tgt && tgt.kind === 'mon' && auto)) fightT = 0;   // 싸우는 중(맞거나 때린 뒤 4초)에는 HP가 차지 않아요
   if (regenT >= 2 && !dead && fightT >= 4) { regenT = 0; const mh = maxHP(); if (P.hp < mh) { P.hp = Math.min(mh, P.hp + regenAmt() * (idleT > 3 && !atkAnim ? 3 : 1)); updateHUD(); } }
   if (atkAnim || player.moving) idleT = 0;
@@ -2114,6 +2161,8 @@ function bindUI() {
       const it = hov && P.inv[+hov.dataset.inv];
       if (it && it.i) setQuick(+k - 1, it.i); else useQuick(+k - 1);
     }
+    else if ('qwer'.includes(k) && k.length === 1) { e.preventDefault(); useSkill('qwer'.indexOf(k)); }
+    else if ('ㅂㅈㄷㄱ'.includes(k) && k.length === 1) { e.preventDefault(); useSkill('ㅂㅈㄷㄱ'.indexOf(k)); }
     else if (k === 'i' || k === 'ㅑ') openWin('inv');
     else if (k === 'c' || k === 'ㅊ') openWin('char');
     else if (k === 'm' || k === 'ㅡ') toggleBig();
@@ -2123,6 +2172,7 @@ function bindUI() {
   document.addEventListener('visibilitychange', () => { if (document.hidden) save(true); else checkCloud(); });   // 다시 보면 다른 기기 기록부터 확인
   $('sync-go').addEventListener('click', () => location.reload());
   document.querySelectorAll('.bbtn.qs').forEach(b => b.addEventListener('click', () => { if (qDrag.done) return; useQuick(+b.dataset.k); }));
+  document.querySelectorAll('.bbtn.sk').forEach((b, i) => { b.addEventListener('click', e => { e.stopPropagation(); useSkill(i); }); ['pointerdown', 'touchstart'].forEach(t => b.addEventListener(t, e => e.stopPropagation())); });
   // 단축키 끌어다 놓기: 가방 아이템 → 1~4 칸에 넣기, 칸 → 다른 칸으로 옮기기, 칸 → 바깥(맵)에 놓으면 빼기
   const qGhost = $('qghost');
   const qsAt = (x, y) => { const el = document.elementFromPoint(x, y); const b = el && el.closest('.bbtn.qs'); return b ? +b.dataset.k : -1; };
