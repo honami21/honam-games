@@ -207,11 +207,18 @@
   .win h3 { font-weight:normal; font-size:22px; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
   .win h3 .sp { flex:1; }
   .win h3.grab { cursor:grab; touch-action:none; user-select:none; } .win h3.grab:active { cursor:grabbing; }
-  .win .x { width:34px; height:34px; border-radius:50%; border:2px solid var(--line); background:#fff; font-size:20px; line-height:1; cursor:pointer; font-family:Fredoka,sans-serif; color:var(--ink); }
+  .win .x { display:inline-flex; align-items:center; justify-content:center; padding:0 0 1px; flex:none; width:34px; height:34px; border-radius:50%; border:2px solid var(--line); background:#fff; font-size:20px; line-height:1; cursor:pointer; font-family:Fredoka,sans-serif; color:var(--ink); }
   .coins { display:inline-flex; align-items:center; gap:4px; font-family:Fredoka,sans-serif; font-size:17px; }
   .coins img { width:22px; height:22px; }
   #store-grid { display:grid; grid-template-columns:repeat(8,1fr); gap:4px; margin:8px 0 10px; }
   .store-hint b { font-weight:normal; color:var(--ink); margin-left:4px; }
+  #qtybox { position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.35); pointer-events:auto; }
+  #qtybox.hidden { display:none; }
+  #qtybox .qb { background:#fffaf0; border:3px solid var(--line); border-radius:18px; padding:16px; width:min(340px, calc(100% - 32px)); text-align:center; font-size:18px; }
+  #qtybox .qrow { display:flex; gap:6px; justify-content:center; margin-top:12px; }
+  #qtybox button { flex:1; font:inherit; font-size:16px; padding:8px 0 6px; border:2px solid var(--line); border-radius:12px; background:#fff; cursor:pointer; }
+  #qtybox button.ok { background:var(--sun); }
+  #qtybox input { width:70px; flex:none; font:inherit; font-size:18px; text-align:center; border:2px solid var(--line); border-radius:12px; }
   .store-coin { display:flex; gap:6px; align-items:center; }
   .store-coin input { flex:1; min-width:0; font:inherit; font-size:15px; padding:6px 10px; border:2px solid var(--line); border-radius:12px; background:#fff; }
   #eq-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:5px; margin-bottom:10px; }
@@ -352,7 +359,8 @@
   @media (max-width:600px) {
     #bar { flex-wrap:wrap; gap:6px; padding:6px 8px; bottom:max(8px, env(safe-area-inset-bottom)); border-radius:18px; }
     #bar .bars { flex:1 1 calc(100% - 110px); }
-    #bar .bbtn { flex:1 1 34px; min-width:0; height:46px; padding:2px; border-radius:12px; }
+    #bar .bbtn { flex:0 0 calc((100% - 30px) / 6); min-width:0; height:46px; padding:2px; border-radius:12px; margin:0; }   /* 두 줄 6칸이 위아래로 딱 맞게 */
+    #bar #pmini { display:none; }   /* 빈 칸이 줄 앞에 틈을 만들지 않게 */
     #bar .bbtn.qs { order:2; } #bar #b-inv, #bar #b-char { order:3; } #bar .brk { display:block; order:4; flex:0 0 100%; height:0; } #bar .bbtn.sk { order:5; } #bar #b-snd, #bar .pmenu .bbtn.kbgm-btn { order:6; }
     #bar .bbtn.sk img { width:30px; height:30px; }
     #bar .bbtn img { width:24px; height:24px; } #bar .bbtn svg { width:20px; height:20px; }
@@ -360,6 +368,13 @@
     .win { max-height:calc(100% - 190px); }
   }
   /* 휴대폰 가로: 창은 오른쪽에 좁게 */
+  /* 휴대폰 세로: 창고를 열면 위쪽은 창고, 아래쪽은 가방으로 나눠 보여요 */
+  @media (max-width:600px) {
+    body.storing #w-store { left:8px !important; right:8px !important; top:52px !important; width:auto !important; max-height:calc(42% - 52px); padding:10px 12px; }
+    body.storing #w-inv { left:8px !important; right:8px !important; top:42% !important; width:auto !important; max-height:calc(58% - var(--barh, 140px) - 24px); padding:10px 12px; }
+    body.storing #w-store h3, body.storing #w-inv h3 { font-size:19px; margin-bottom:6px; }
+    #w-store .store-hint { font-size:12px; } #store-grid { gap:3px; margin:6px 0 8px; }
+  }
   @media (max-height:520px) and (min-width:601px) {   /* 휴대폰 가로: 단축키·스킬·메뉴 12칸이 한 줄에 들어가게 */
     #bar { gap:5px; } #bar .bars { flex:0 1 150px; min-width:0; } #bar .bbtn { flex:1 1 0; min-width:0; max-width:60px; padding:2px; } #bar .bbtn img { width:24px; height:24px; } #bar .bbtn svg { width:18px; height:18px; }
   }
@@ -488,6 +503,11 @@
   <div id="store-grid"></div>
   <div class="store-coin"><input id="store-amt" type="number" min="0" inputmode="numeric" placeholder="엽전 (비우면 전부)"><button class="game-btn white small" id="store-in" type="button">맡기기</button><button class="game-btn sun small" id="store-out" type="button">찾기</button></div>
 </div>
+<div id="qtybox" class="hidden"><div class="qb">
+  <div id="qty-title"></div>
+  <div class="qrow"><button type="button" data-q="-10">-10</button><button type="button" data-q="-1">-1</button><input id="qty-n" type="number" min="1" inputmode="numeric"><button type="button" data-q="1">+1</button><button type="button" data-q="10">+10</button></div>
+  <div class="qrow"><button type="button" data-q="all">전부</button><button type="button" class="ok" data-q="ok">옮기기</button><button type="button" data-q="no">취소</button></div>
+</div></div>
 <div class="win hidden" id="w-guide">
   <h3>순간이동 문 <span class="sp"></span><button class="x" type="button">×</button></h3>
   <div id="guide-time"></div>

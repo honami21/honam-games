@@ -53,7 +53,7 @@ const SKILLS = { sword: [
 ] };
 const ACC_DROP = 0.1;   // 우두머리를 잡으면 10% 확률로 8개 중 하나
 const SLOTS = ['weapon', 'helm', 'armor', 'cloak', 'glove', 'boots', 'shield', 'neck', 'ring'];
-const SLOT_NAME = { weapon: '무기', helm: '투구', armor: '갑옷', cloak: '망토', glove: '장갑', boots: '고무신', shield: '방패', neck: '목걸이', ring: '반지' };
+const SLOT_NAME = { weapon: '무기', helm: '투구', armor: '갑옷', cloak: '망토', glove: '장갑', boots: '신발', shield: '방패', neck: '목걸이', ring: '반지' };
 
 // 쌓이는 아이템
 const ITEMS = {
@@ -65,8 +65,10 @@ const ITEMS = {
   ascroll: { name: '방어구 강화 부적', img: 'i-ascroll', sell: 15 },
 };
 
-// 강화 규칙 (확정): 무기 안전 +6·최대 +10, 방어구 안전 +4·최대 +7, 안전선을 넘으면 매 단계 25%, 실패하면 사라짐
-const ENCH = { w: { safe: 6, max: 10 }, a: { safe: 4, max: 7 }, rate: 0.25 };
+// 강화 규칙: 무기 안전 +6·최대 +10, 방어구 안전 +4·최대 +7. 안전선을 넘으면 단계마다 성공 확률이 달라요(2026-11-28), 실패하면 사라짐
+// rates[n] = +n으로 올라갈 확률. 무기는 +7부터 단계마다 명중 +3% (hitPer)
+const ENCH = { w: { safe: 6, max: 10, rates: { 7: .4, 8: .25, 9: .15, 10: .1 }, hitPer: 3 }, a: { safe: 4, max: 7, rates: { 5: .4, 6: .3, 7: .25 } } };
+const enchRate = (kind, en) => ENCH[kind].rates[en + 1] || 0;
 
 // 몬스터 (디자인 문서 4장 표). h=화면 키, aggro=먼저 덤비는지, step=한 칸 걷는 시간
 const MONS = {
