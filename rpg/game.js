@@ -98,6 +98,11 @@ const SND = (() => {
     fail() { noise(.6, .8, 'highpass', 3000, 600); tone('sawtooth', 300, 60, .5, .35); [1800, 2400, 3100].forEach((f, i) => tone('triangle', f, f * .9, .08, .12, .05 + i * .07)); },
     charge(d) { tone('sine', 220, 880, d, .2); noise(d, .12, 'bandpass', 400, 3000, 4); },
     tick() { tone('square', 900, 900, .03, .08); },
+    // 검사 스킬 소리
+    skQ() { noise(.12, .7, 'bandpass', 3000, 600, 1.2); tone('sawtooth', 300, 70, .25, .5, .02); tone('sine', 120, 40, .3, .9, .04); },
+    skW() { noise(.45, .55, 'bandpass', 500, 3500, 2.5); tone('triangle', 300, 900, .4, .2); noise(.15, .5, 'highpass', 2000, 5000, 1, .3); },
+    skE() { tone('sawtooth', 110, 220, .35, .35); tone('square', 220, 440, .35, .15, .05); noise(.4, .35, 'lowpass', 400, 2500, 1); [523, 784].forEach((f, i) => tone('triangle', f, f, .18, .2, .25 + i * .08)); },
+    skR() { tone('sine', 900, 200, .25, .25); tone('sine', 90, 30, .9, 1, .12); noise(.8, .9, 'lowpass', 2500, 120, 1, .12); [1046, 1318, 1568].forEach((f, i) => tone('triangle', f, f, .3, .15, .15 + i * .05)); },
     die() { [392, 330, 262, 196].forEach((f, i) => tone('triangle', f, f, .3, .3, i * .14)); },
     boss() { tone('sawtooth', 110, 110, .6, .3); tone('sawtooth', 165, 165, .6, .22, .02); noise(.6, .3, 'lowpass', 300, 100); },
     warp() { tone('sine', 300, 1200, .4, .3); noise(.4, .2, 'bandpass', 800, 4000, 3); },
@@ -222,8 +227,8 @@ function useSkill(i) {
   if ((P.sp || 0) < s.cost) { log(`용기가 모자라요 (${s.cost} 필요)`, 'warn'); return; }
   if (dead) return;
   const p = player, near = m => m && m.kind === 'mon' && !m.dying && units.includes(m) && fightDist(p.x, p.y, m) <= reachTo(m) + 1;
-  skName = s.name + '!';
-  if (s.rush) { rushT = s.rush; log(`<b>${s.name}!</b> 10초 동안 공격이 빨라져요`, 'sys'); fx.push({ k: 'skE', x: p.px, y: p.py + CELL * .3, t: 0, d: .5 }); fx.push({ k: 'spark', x: p.px, y: p.py - 40, t: 0, d: .5, n: 18, col: '#ff8a3a' }); shake.a = Math.max(shake.a, 4); shake.t = .2; SND.coin(); renderBuffs(); }
+  skName = s.name + '!'; (SND['sk' + s.k.toUpperCase()] || (() => {}))();
+  if (s.rush) { rushT = s.rush; log(`<b>${s.name}!</b> 10초 동안 공격이 빨라져요`, 'sys'); fx.push({ k: 'skE', x: p.px, y: p.py + CELL * .3, t: 0, d: .5 }); fx.push({ k: 'spark', x: p.px, y: p.py - 40, t: 0, d: .5, n: 18, col: '#ff8a3a' }); shake.a = Math.max(shake.a, 4); shake.t = .2; renderBuffs(); }
   else if (s.area) {
     const ms = units.filter(near); if (!ms.length) { log('둘레에 몬스터가 없어요', 'warn'); return; }
     fx.push({ k: 'skW', x: p.px, y: p.py, t: 0, d: .45 });
